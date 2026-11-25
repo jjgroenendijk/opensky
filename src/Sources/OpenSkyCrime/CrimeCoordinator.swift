@@ -206,7 +206,7 @@ public final class CrimeCoordinator {
     }
 
     func factionName(_ faction: ReferenceKey) -> String {
-        CrimeCore.factionName(faction, in: reporter?.runtime.factions)
+        TrespassAndNames(owner: self).factionName(faction)
     }
 
     // MARK: - Hooks
@@ -230,7 +230,7 @@ public final class CrimeCoordinator {
         assaultedActors.insert(target)
         let outcome = reporter.reportAssault(on: target)
         assaultBlows[target] = AssaultBlows(outcome: outcome)
-        note(outcome, as: "Assault")
+        TrespassAndNames(owner: self).note(outcome, as: "Assault")
     }
 
     /// A death is murder when the player struck the victim first. A one-hit
@@ -247,7 +247,7 @@ public final class CrimeCoordinator {
         }
         let outcome = reporter.reportMurder(of: victim)
         murders[victim] = outcome
-        note(outcome, as: "Murder")
+        TrespassAndNames(owner: self).note(outcome, as: "Murder")
     }
 
     /// The `KILL` crime status: murder when the player struck first, reported
@@ -266,35 +266,7 @@ public final class CrimeCoordinator {
     /// tick, as the game does, so an owner opening the shop ends it at once. A seen
     /// trespasser is warned and, after the grace period, charged (`TrespassWatch`).
     public func advanceTrespass(by seconds: Double = 0) {
-        let location = world.currentCellLocation
-        let trespassing = isTrespass(at: location)
-        let entered = lastPlayerCell != location
-        if entered || (trespassing && !isPlayerTrespassing) {
-            lastPlayerCell = location
-            trespassWatch.enterNewCell()
-            if trespassing {
-                storyEvents?.reportStoryEvent(.trespass(witness: nil, location: nil, crimeGold: 0))
-            }
-        }
-        if trespassing != isPlayerTrespassing {
-            isPlayerTrespassing = trespassing
-        }
-        guard isPlayerTrespassing, let reporter else { return }
-        let step = trespassWatch.advance(
-            seconds: seconds,
-            seen: reporter.witnesses.isWitnessed(.player),
-            offLimits: world.isOffLimits(location),
-            settings: reporter.runtime.settings
-        )
-        if let remaining = step.warning {
-            lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
-            pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
-            if let witness = reporter.witnesses.witnesses(of: .player).first {
-                pendingCommands.append(.sayTopic("TRES", by: witness))
-            }
-        } else if step.charges {
-            reportTrespass(in: location)
-        }
+        TrespassAndNames(owner: self).advanceTrespass(by: seconds)
     }
 
     /// An owned interior the owner has not opened and the player may not be in.
@@ -310,7 +282,10 @@ public final class CrimeCoordinator {
         guard
             let reporter, let owner = owners.cellOwner(at: location),
             !owners.playerMayEnter(owner) else { return }
-        note(reporter.reportTrespass(in: location, owner: owner), as: "Trespass")
+        TrespassAndNames(owner: self).note(
+            reporter.reportTrespass(in: location, owner: owner),
+            as: "Trespass"
+        )
     }
 
     /// A seen pick of a lock the player may not open. UESP "Skyrim:Crime" prices it
@@ -321,7 +296,7 @@ public final class CrimeCoordinator {
         let verdict = reporter.verdict(on: lock)
         guard verdict.isTheft, let owner = verdict.owner else { return 0 }
         let outcome = reporter.reportTrespass(in: crimeCell(of: lock), owner: owner)
-        note(outcome, as: "Lockpicking")
+        TrespassAndNames(owner: self).note(outcome, as: "Lockpicking")
         return outcome.gold
     }
 
@@ -330,10 +305,6 @@ public final class CrimeCoordinator {
         pendingCommands.append(.showNotice(
             crimeTexts.bountyNotice(gold: gold, added: added, faction: factionName(faction))
         ))
-    }
-
-    private func note(_ outcome: CrimeOutcome, as label: String) {
-        lastCrime = .recorded(outcome, label: label, faction: outcome.faction.map(factionName))
     }
 }
 
@@ -352,5 +323,63 @@ extension CrimeCoordinator {
 
     public func crimeActor(_ key: ReferenceKey) -> CrimeActor {
         owners.crimeActor(key)
+    }
+}
+
+extension CrimeCoordinator {
+    /// Steps trespass and names factions.
+    struct TrespassAndNames {
+        let owner: CrimeCoordinator
+
+        func factionName(_ faction: ReferenceKey) -> String {
+            CrimeCore.factionName(faction, in: owner.reporter?.runtime.factions)
+        }
+
+        func advanceTrespass(by seconds: Double = 0) {
+            let crimeTexts = owner.crimeTexts
+            let storyEvents = owner.storyEvents
+            let world = owner.world
+            let location = world.currentCellLocation
+            let trespassing = owner.isTrespass(at: location)
+            let entered = owner.lastPlayerCell != location
+            if entered || (trespassing && !owner.isPlayerTrespassing) {
+                owner.lastPlayerCell = location
+                owner.trespassWatch.enterNewCell()
+                if trespassing {
+                    storyEvents?.reportStoryEvent(.trespass(
+                        witness: nil,
+                        location: nil,
+                        crimeGold: 0
+                    ))
+                }
+            }
+            if trespassing != owner.isPlayerTrespassing {
+                owner.isPlayerTrespassing = trespassing
+            }
+            guard owner.isPlayerTrespassing, let reporter = owner.reporter else { return }
+            let step = owner.trespassWatch.advance(
+                seconds: seconds,
+                seen: reporter.witnesses.isWitnessed(.player),
+                offLimits: world.isOffLimits(location),
+                settings: reporter.runtime.settings
+            )
+            if let remaining = step.warning {
+                owner.lastCrime = .trespassWarning(secondsLeft: Int(remaining.rounded(.up)))
+                owner.pendingCommands.append(.showNotice(crimeTexts.trespassWarning))
+                if let witness = reporter.witnesses.witnesses(of: .player).first {
+                    owner.pendingCommands.append(.sayTopic("TRES", by: witness))
+                }
+            } else if step.charges {
+                owner.reportTrespass(in: location)
+            }
+        }
+
+        func note(_ outcome: CrimeOutcome, as label: String) {
+            owner.lastCrime = .recorded(
+                outcome,
+                label: label,
+                faction: outcome.faction.map(owner.factionName)
+            )
+        }
     }
 }

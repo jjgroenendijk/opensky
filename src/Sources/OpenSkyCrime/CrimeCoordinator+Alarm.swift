@@ -18,206 +18,261 @@ extension CrimeCoordinator {
     ) {
         let id = alarm.add(event, faction: faction, gold: gold)
         for key in direct where key != event.perpetrator && key != .player && !world.isDead(key) {
-            join(key, crime: id)
+            AlarmSteps(owner: self).join(key, crime: id)
         }
-        broadcast(id)
+        AlarmSteps(owner: self).broadcast(id)
     }
 
     /// One tick of `seconds` real time for every Alarm package.
     func advanceAlarms(by seconds: Double) {
-        guard !alarm.witnesses.isEmpty || !alarm.fighters.isEmpty else { return }
-        let feet = Dictionary(
-            world.livingActors().map { ($0.key, $0.feet) }, uniquingKeysWith: { first, _ in first }
-        )
-        for key in alarm.witnesses.keys.sorted() {
-            guard let witness = alarm.witnesses[key] else { continue }
-            if world.isDead(key) || feet[key] == nil {
-                finish(key)
-                continue
-            }
-            switch witness.role {
-            case .takeBack: stepTakeBack(key, witness, seconds: seconds, feet: feet[key])
-            case .pursue: stepPursuit(key, witness, seconds: seconds)
-            case .fight, .done, .flee: finish(key)
-            }
-        }
-        dropSettledFights(living: feet)
+        AlarmSteps(owner: self).advanceAlarms(by: seconds)
     }
 
     // MARK: - Hearing
 
-    private func broadcast(_ id: Int) {
-        guard
-            let crime = alarm.crimes[id], crime.takenBy == nil,
-            let origin = criminalFeet(crime.criminal)
-        else { return }
-        let followers = Set(world.playerFollowers())
-        for observer in world.livingActors() {
-            let key = observer.key
-            guard
-                key != crime.criminal, key != .player, !followers.contains(key),
-                runsNoOtherAlarm(key, criminal: crime.criminal, crime: id),
-                !world.isInCombat(key),
-                let current = alarm.crimes[id],
-                CrimeAlarmRules.hears(
-                    hearer(key, distance: simd_distance(observer.feet, origin), crime: current),
-                    current
-                )
-            else { continue }
-            join(key, crime: id)
-        }
-    }
-
-    /// An actor already running an alarm against another criminal, or holding this
-    /// crime, does not hear it again.
-    private func runsNoOtherAlarm(_ key: ReferenceKey, criminal: ReferenceKey, crime: Int) -> Bool {
-        guard let witness = alarm.witnesses[key] else { return true }
-        return !witness.crimes.contains(crime) && alarm.criminal(of: witness) == criminal
-    }
-
-    private func hearer(_ key: ReferenceKey, distance: Float, crime: AlarmCrime) -> AlarmHearer {
-        let profile = world.socialProfile(of: key)
-        let crimeFaction = profile?.crimeFaction
-        return AlarmHearer(
-            distance: distance,
-            policedFaction: policedFaction(of: key),
-            crimeFaction: crimeFaction,
-            sharedCrimeFactions: crimeFaction.map(sharedCrimeFactions(of:)) ?? [],
-            isHostile: isHostile(key, toward: crime.criminal, profile: profile)
-        )
-    }
-
     /// The factions in the `CRGR` form list of `faction`.
     func sharedCrimeFactions(of faction: ReferenceKey) -> Set<ReferenceKey> {
-        guard
-            let resolved = reporter?.runtime.factions.faction(key: faction),
-            let list = resolved.faction.sharedCrimeFactionList,
-            let lists = owners.formLists,
-            let listID = lists.resolvedID(list, fromPlugin: resolved.sourcePlugin),
-            let entries = lists.flattened(listID)?.entries
-        else { return [] }
-        return Set(entries.compactMap { $0.map(ReferenceKey.init(resolved:)) })
-    }
-
-    private func isHostile(
-        _ key: ReferenceKey, toward criminal: ReferenceKey, profile: ActorSocialProfile?
-    ) -> Bool {
-        guard let profile else { return false }
-        let terms = world.alarmReaction(of: key, toward: criminal)
-        var reaction = CrimeAlarmRules.reaction(
-            relationship: terms?.relationship, faction: terms?.faction
-        )
-        if
-            criminal == .player,
-            let faction = profile.crimeFaction, guards.resisted.contains(faction)
-        {
-            reaction = .enemy
-        }
-        return CrimeAlarmRules.isHostile(
-            aggression: profile.aiData.aggression,
-            reaction: reaction,
-            isAngry: criminal == .player && alarm.angry.contains(key),
-            criminalTargetsWitness: criminal != .player && alarm.crimes.values.contains {
-                $0.criminal == criminal && $0.victim == key
-            }
-        )
+        AlarmSteps(owner: self).sharedCrimeFactions(of: faction)
     }
 
     // MARK: - Joining and deciding
 
-    private func join(_ key: ReferenceKey, crime id: Int) {
-        if let faction = policedFaction(of: key) {
-            guardTakes(key, crime: id, policing: faction)
-            return
-        }
-        var witness = alarm.witnesses[key] ?? AlarmWitness(crimes: [], role: .done)
-        witness.crimes.append(id)
-        alarm.witnesses[key] = witness
-        decide(key)
+    // MARK: - Steps
+
+    // MARK: - Reads
+}
+
+extension CrimeCoordinator {
+    /// A theft or a caught pickpocket by the player sets or clears the theft mark.
+    func noteTheftMark() {
+        AlarmSteps(owner: self).noteTheftMark()
     }
 
-    /// The first guard takes the crime, and moves its gold to its own faction when the
-    /// two differ. A guard past the cap of one criminal does nothing.
-    private func guardTakes(
-        _ guardKey: ReferenceKey,
-        crime id: Int,
-        policing faction: ReferenceKey
-    ) {
-        guard var crime = alarm.crimes[id], crime.takenBy == nil else { return }
-        let answering = alarm.answering[crime.criminal, default: []]
-        guard answering.contains(guardKey) || answering.count < CrimeAlarmRules.guardCap else {
-            return
+    /// A caught pickpocket: the target says its line. A faction that ignores
+    /// pickpocketing charges nothing, and the target lets it go.
+    func reactToPickpocket(_ event: CrimeEvent, outcome: CrimeOutcome) {
+        AlarmSteps(owner: self).reactToPickpocket(event, outcome: outcome)
+    }
+}
+
+extension CrimeCoordinator {
+    public var alarmReadout: CrimeAlarmReadout {
+        AlarmSteps(owner: self).alarmReadout
+    }
+}
+
+extension CrimeCoordinator {
+    /// Runs the alarm: who hears a crime, who joins, takes back, or pursues.
+    struct AlarmSteps {
+        let owner: CrimeCoordinator
+
+        func advanceAlarms(by seconds: Double) {
+            let world = owner.world
+            guard !owner.alarm.witnesses.isEmpty || !owner.alarm.fighters.isEmpty else { return }
+            let feet = Dictionary(
+                world.livingActors().map { ($0.key, $0.feet) },
+                uniquingKeysWith: { first, _ in first }
+            )
+            for key in owner.alarm.witnesses.keys.sorted() {
+                guard let witness = owner.alarm.witnesses[key] else { continue }
+                if world.isDead(key) || feet[key] == nil {
+                    finish(key)
+                    continue
+                }
+                switch witness.role {
+                case .takeBack: stepTakeBack(key, witness, seconds: seconds, feet: feet[key])
+                case .pursue: stepPursuit(key, witness, seconds: seconds)
+                case .fight, .done, .flee: finish(key)
+                }
+            }
+            dropSettledFights(living: feet)
         }
-        if faction != crime.faction, crime.criminal == .player {
-            moveGold(of: crime, to: faction)
-        }
-        crime.takenBy = guardKey
-        crime.faction = faction
-        alarm.crimes[id] = crime
-        alarm.answering[crime.criminal, default: []].insert(guardKey)
-        var witness = alarm.witnesses[guardKey] ?? AlarmWitness(crimes: [], role: .pursue)
-        witness.crimes.append(id)
-        witness.role = .pursue
-        alarm.witnesses[guardKey] = witness
-        if crime.criminal != .player {
-            alarm.fight(guardKey, against: crime.criminal)
-            sendAway(crime.criminal, from: guardKey)
-            refreshGuardHostility()
-        }
-        for (key, other) in alarm.witnesses where key != guardKey && other.crimes.contains(id) {
-            if other.role == .takeBack || other.role == .flee {
-                finish(key)
+
+        func broadcast(_ id: Int) {
+            let world = owner.world
+            guard
+                let crime = owner.alarm.crimes[id], crime.takenBy == nil,
+                let origin = criminalFeet(crime.criminal)
+            else { return }
+            let followers = Set(world.playerFollowers())
+            for observer in world.livingActors() {
+                let key = observer.key
+                guard
+                    key != crime.criminal, key != .player, !followers.contains(key),
+                    runsNoOtherAlarm(key, criminal: crime.criminal, crime: id),
+                    !world.isInCombat(key),
+                    let current = owner.alarm.crimes[id],
+                    CrimeAlarmRules.hears(
+                        hearer(key, distance: simd_distance(observer.feet, origin), crime: current),
+                        current
+                    )
+                else { continue }
+                join(key, crime: id)
             }
         }
-    }
 
-    private func moveGold(of crime: AlarmCrime, to faction: ReferenceKey) {
-        guard let reporter, crime.gold > 0 else { return }
-        reporter.modifyCrimeGold(by: -crime.gold, violent: crime.violent, of: crime.faction)
-        reporter.modifyCrimeGold(by: crime.gold, violent: crime.violent, of: faction)
-        if let index = pendingReports.firstIndex(where: {
-            $0.faction == crime.faction && $0.gold == crime.gold && $0.victim == crime.victim
-        }) {
-            pendingReports[index].faction = faction
+        /// An actor already running an alarm against another criminal, or holding this
+        /// crime, does not hear it again.
+        func runsNoOtherAlarm(_ key: ReferenceKey, criminal: ReferenceKey, crime: Int) -> Bool {
+            guard let witness = owner.alarm.witnesses[key] else { return true }
+            return !witness.crimes.contains(crime) && owner.alarm.criminal(of: witness) == criminal
         }
-    }
 
-    /// An NPC criminal that is not fighting runs from the guard.
-    private func sendAway(_ criminal: ReferenceKey, from guardKey: ReferenceKey) {
-        guard
-            !world.isInCombat(criminal),
-            let from = criminalFeet(criminal),
-            let pursuer = world.livingActors().first(where: { $0.key == guardKey })?.feet
-        else { return }
-        _ = world.moveActor(criminal, to: CrimeAlarmRules.fleePoint(
-            criminal: from, from: pursuer, distance: Self.criminalFleeDistance
-        ))
-    }
-
-    private func decide(_ key: ReferenceKey) {
-        guard let witness = alarm.witnesses[key], witness.role != .pursue else { return }
-        for id in witness.crimes where alarm.crimes[id]?.takenBy == nil {
-            broadcast(id)
-        }
-        guard let current = alarm.witnesses[key] else { return }
-        let views = current.crimes.compactMap { alarm.crimes[$0] }.map { crime in
-            AlarmCrimeView(
-                isTaken: crime.takenBy != nil,
-                mayTakeBack: !current.gaveUpTakingBack && crime.takenBy == nil
-                    && mayTakeBack(key, crime),
-                fights: CrimeAlarmRules.isLesser(crime.kind)
-                    ? isHostile(key, toward: crime.criminal, profile: world.socialProfile(of: key))
-                    : crime.victim == key
+        func hearer(_ key: ReferenceKey, distance: Float, crime: AlarmCrime) -> AlarmHearer {
+            let world = owner.world
+            let profile = world.socialProfile(of: key)
+            let crimeFaction = profile?.crimeFaction
+            return AlarmHearer(
+                distance: distance,
+                policedFaction: owner.policedFaction(of: key),
+                crimeFaction: crimeFaction,
+                sharedCrimeFactions: crimeFaction.map(owner.sharedCrimeFactions(of:)) ?? [],
+                isHostile: isHostile(key, toward: crime.criminal, profile: profile)
             )
         }
-        let decision = CrimeAlarmRules.decide(
-            isGuard: false, crimes: views, theftMark: alarm.theftMark.isSet
-        )
-        apply(decision, to: key)
-    }
 
+        func sharedCrimeFactions(of faction: ReferenceKey) -> Set<ReferenceKey> {
+            let owners = owner.owners
+            guard
+                let resolved = owner.reporter?.runtime.factions.faction(key: faction),
+                let list = resolved.faction.sharedCrimeFactionList,
+                let lists = owners.formLists,
+                let listID = lists.resolvedID(list, fromPlugin: resolved.sourcePlugin),
+                let entries = lists.flattened(listID)?.entries
+            else { return [] }
+            return Set(entries.compactMap { $0.map(ReferenceKey.init(resolved:)) })
+        }
+
+        func isHostile(
+            _ key: ReferenceKey, toward criminal: ReferenceKey, profile: ActorSocialProfile?
+        ) -> Bool {
+            let world = owner.world
+            guard let profile else { return false }
+            let terms = world.alarmReaction(of: key, toward: criminal)
+            var reaction = CrimeAlarmRules.reaction(
+                relationship: terms?.relationship, faction: terms?.faction
+            )
+            if
+                criminal == .player,
+                let faction = profile.crimeFaction, owner.guards.resisted.contains(faction)
+            {
+                reaction = .enemy
+            }
+            return CrimeAlarmRules.isHostile(
+                aggression: profile.aiData.aggression,
+                reaction: reaction,
+                isAngry: criminal == .player && owner.alarm.angry.contains(key),
+                criminalTargetsWitness: criminal != .player && owner.alarm.crimes.values.contains {
+                    $0.criminal == criminal && $0.victim == key
+                }
+            )
+        }
+
+        func join(_ key: ReferenceKey, crime id: Int) {
+            if let faction = owner.policedFaction(of: key) {
+                guardTakes(key, crime: id, policing: faction)
+                return
+            }
+            var witness = owner.alarm.witnesses[key] ?? AlarmWitness(crimes: [], role: .done)
+            witness.crimes.append(id)
+            owner.alarm.witnesses[key] = witness
+            decide(key)
+        }
+
+        /// The first guard takes the crime, and moves its gold to its own faction when the
+        /// two differ. A guard past the cap of one criminal does nothing.
+        func guardTakes(
+            _ guardKey: ReferenceKey,
+            crime id: Int,
+            policing faction: ReferenceKey
+        ) {
+            guard var crime = owner.alarm.crimes[id], crime.takenBy == nil else { return }
+            let answering = owner.alarm.answering[crime.criminal, default: []]
+            guard answering.contains(guardKey) || answering.count < CrimeAlarmRules.guardCap else {
+                return
+            }
+            if faction != crime.faction, crime.criminal == .player {
+                moveGold(of: crime, to: faction)
+            }
+            crime.takenBy = guardKey
+            crime.faction = faction
+            owner.alarm.crimes[id] = crime
+            owner.alarm.answering[crime.criminal, default: []].insert(guardKey)
+            var witness = owner.alarm.witnesses[guardKey] ?? AlarmWitness(crimes: [], role: .pursue)
+            witness.crimes.append(id)
+            witness.role = .pursue
+            owner.alarm.witnesses[guardKey] = witness
+            if crime.criminal != .player {
+                owner.alarm.fight(guardKey, against: crime.criminal)
+                sendAway(crime.criminal, from: guardKey)
+                owner.refreshGuardHostility()
+            }
+            for (key, other) in owner.alarm.witnesses
+                where key != guardKey && other.crimes.contains(id)
+            {
+                if other.role == .takeBack || other.role == .flee {
+                    finish(key)
+                }
+            }
+        }
+
+        func moveGold(of crime: AlarmCrime, to faction: ReferenceKey) {
+            guard let reporter = owner.reporter, crime.gold > 0 else { return }
+            reporter.modifyCrimeGold(by: -crime.gold, violent: crime.violent, of: crime.faction)
+            reporter.modifyCrimeGold(by: crime.gold, violent: crime.violent, of: faction)
+            if let index = owner.pendingReports.firstIndex(where: {
+                $0.faction == crime.faction && $0.gold == crime.gold && $0.victim == crime.victim
+            }) {
+                owner.pendingReports[index].faction = faction
+            }
+        }
+
+        /// An NPC criminal that is not fighting runs from the guard.
+        func sendAway(_ criminal: ReferenceKey, from guardKey: ReferenceKey) {
+            let world = owner.world
+            guard
+                !world.isInCombat(criminal),
+                let from = criminalFeet(criminal),
+                let pursuer = world.livingActors().first(where: { $0.key == guardKey })?.feet
+            else { return }
+            _ = world.moveActor(criminal, to: CrimeAlarmRules.fleePoint(
+                criminal: from, from: pursuer, distance: CrimeCoordinator.criminalFleeDistance
+            ))
+        }
+
+        func decide(_ key: ReferenceKey) {
+            let world = owner.world
+            guard let witness = owner.alarm.witnesses[key], witness.role != .pursue else { return }
+            for id in witness.crimes where owner.alarm.crimes[id]?.takenBy == nil {
+                broadcast(id)
+            }
+            guard let current = owner.alarm.witnesses[key] else { return }
+            let views = current.crimes.compactMap { owner.alarm.crimes[$0] }.map { crime in
+                AlarmCrimeView(
+                    isTaken: crime.takenBy != nil,
+                    mayTakeBack: !current.gaveUpTakingBack && crime.takenBy == nil
+                        && mayTakeBack(key, crime),
+                    fights: CrimeAlarmRules.isLesser(crime.kind)
+                        ? isHostile(
+                            key,
+                            toward: crime.criminal,
+                            profile: world.socialProfile(of: key)
+                        )
+                        : crime.victim == key
+                )
+            }
+            let decision = CrimeAlarmRules.decide(
+                isGuard: false, crimes: views, theftMark: owner.alarm.theftMark.isSet
+            )
+            apply(decision, to: key)
+        }
+    }
+}
+
+extension CrimeCoordinator.AlarmSteps {
     /// The pickpocket target, the item's owner, or a member of the owning faction.
-    private func mayTakeBack(_ key: ReferenceKey, _ crime: AlarmCrime) -> Bool {
+    func mayTakeBack(_ key: ReferenceKey, _ crime: AlarmCrime) -> Bool {
+        let world = owner.world
         guard
             crime.criminal == .player, crime.kind == .theft || crime.kind == .pickpocket,
             let owner = crime.victim
@@ -230,34 +285,37 @@ extension CrimeCoordinator {
             || profile?.memberships.isMember(of: owner) == true
     }
 
-    private func apply(_ decision: (role: AlarmRole, angry: Bool), to key: ReferenceKey) {
-        guard var witness = alarm.witnesses[key], let criminal = alarm.criminal(of: witness) else {
+    func apply(_ decision: (role: AlarmRole, angry: Bool), to key: ReferenceKey) {
+        let world = owner.world
+        guard
+            var witness = owner.alarm.witnesses[key],
+            let criminal = owner.alarm.criminal(of: witness)
+        else {
             return
         }
         witness.role = decision.role
         witness.elapsed = 0
-        alarm.witnesses[key] = witness
+        owner.alarm.witnesses[key] = witness
         switch decision.role {
         case .fight:
-            alarm.fight(key, against: criminal)
+            owner.alarm.fight(key, against: criminal)
             if decision.angry {
-                alarm.angry.insert(key)
+                owner.alarm.angry.insert(key)
             }
-            refreshGuardHostility()
+            owner.refreshGuardHostility()
         case .takeBack:
             world.suspendPackage(for: key)
-            pendingCommands.append(.sayTopic("STEA", by: key))
+            owner.pendingCommands.append(.sayTopic("STEA", by: key))
         case .pursue, .done, .flee:
             break
         }
-        lastAlarm = .decided(name: world.actorName(key), role: decision.role)
+        owner.lastAlarm = .decided(name: world.actorName(key), role: decision.role)
     }
 
-    // MARK: - Steps
-
-    private func stepTakeBack(
+    func stepTakeBack(
         _ key: ReferenceKey, _ witness: AlarmWitness, seconds: Double, feet: SIMD3<Float>?
     ) {
+        let world = owner.world
         var witness = witness
         witness.elapsed += max(0, seconds)
         guard let player = world.playerFeet, let feet else { return }
@@ -267,7 +325,7 @@ extension CrimeCoordinator {
         }
         guard witness.elapsed < CrimeAlarmRules.takeBackSeconds else {
             witness.gaveUpTakingBack = true
-            alarm.witnesses[key] = witness
+            owner.alarm.witnesses[key] = witness
             world.stopActor(key)
             world.resumePackage(for: key)
             decide(key)
@@ -277,32 +335,39 @@ extension CrimeCoordinator {
             _ = world.moveActor(key, to: player)
             witness.lastTarget = player
         }
-        alarm.witnesses[key] = witness
+        owner.alarm.witnesses[key] = witness
     }
 
     /// The stolen items go back to the witness, and those crimes are deleted.
-    private func takeBack(_ key: ReferenceKey, _ witness: AlarmWitness) {
+    func takeBack(_ key: ReferenceKey, _ witness: AlarmWitness) {
+        let world = owner.world
         var returned = 0
         for id in witness.crimes {
-            guard let crime = alarm.crimes[id], mayTakeBack(key, crime) else { continue }
+            guard let crime = owner.alarm.crimes[id], mayTakeBack(key, crime) else { continue }
             if
                 let item = crime.stolenItem,
                 world.giveBack(item, count: crime.stolenCount, to: key)
             {
                 returned += Int(crime.stolenCount)
             }
-            reporter?.modifyCrimeGold(by: -crime.gold, violent: crime.violent, of: crime.faction)
-            pendingReports.removeAll {
-                $0.faction == crime.faction && $0.gold == crime.gold && $0.victim == crime.victim
+            owner.reporter?.modifyCrimeGold(
+                by: -crime.gold,
+                violent: crime.violent,
+                of: crime.faction
+            )
+            owner.pendingReports.removeAll {
+                $0.faction == crime.faction && $0.gold == crime.gold && $0.victim == crime
+                    .victim
             }
-            alarm.crimes[id] = nil
+            owner.alarm.crimes[id] = nil
         }
-        lastAlarm = .tookBack(name: world.actorName(key), items: returned)
+        owner.lastAlarm = .tookBack(name: world.actorName(key), items: returned)
         finish(key)
     }
 
-    private func stepPursuit(_ key: ReferenceKey, _ witness: AlarmWitness, seconds: Double) {
-        guard let criminal = alarm.criminal(of: witness) else {
+    func stepPursuit(_ key: ReferenceKey, _ witness: AlarmWitness, seconds: Double) {
+        let world = owner.world
+        guard let criminal = owner.alarm.criminal(of: witness) else {
             finish(key)
             return
         }
@@ -312,8 +377,8 @@ extension CrimeCoordinator {
             }
             return
         }
-        let owed = witness.crimes.compactMap { alarm.crimes[$0]?.faction }
-            .contains { crimeGold(of: $0) > 0 }
+        let owed = witness.crimes.compactMap { owner.alarm.crimes[$0]?.faction }
+            .contains { owner.crimeGold(of: $0) > 0 }
         guard owed else {
             finish(key)
             return
@@ -322,98 +387,96 @@ extension CrimeCoordinator {
         witness.sinceLine += max(0, seconds)
         if witness.sinceLine >= CrimeAlarmRules.pursueLineSeconds, !world.isDialogueOpen {
             witness.sinceLine = 0
-            pendingCommands.append(.sayTopic("PURS", by: key))
+            owner.pendingCommands.append(.sayTopic("PURS", by: key))
         }
-        alarm.witnesses[key] = witness
+        owner.alarm.witnesses[key] = witness
     }
 
     /// Ends a witness's package and hands it back to its schedule.
-    private func finish(_ key: ReferenceKey) {
-        guard let witness = alarm.witnesses.removeValue(forKey: key) else { return }
+    func finish(_ key: ReferenceKey) {
+        let world = owner.world
+        guard let witness = owner.alarm.witnesses.removeValue(forKey: key) else { return }
         if witness.role == .takeBack {
             world.stopActor(key)
             world.resumePackage(for: key)
         }
-        for id in witness.crimes where !alarm.witnesses.values.contains(where: {
+        for id in witness.crimes where !owner.alarm.witnesses.values.contains(where: {
             $0.crimes.contains(id)
         }) {
-            alarm.crimes[id] = nil
+            owner.alarm.crimes[id] = nil
         }
-        alarm.releaseAnswering()
+        owner.alarm.releaseAnswering()
     }
 
     /// A fight ends when either side is gone, or for the player once nothing is owed.
-    private func dropSettledFights(living: [ReferenceKey: SIMD3<Float>]) {
-        let owesNothing = (reporter?.runtime.ledger().totalGold ?? 0) <= 0
+    func dropSettledFights(living: [ReferenceKey: SIMD3<Float>]) {
+        let owesNothing = (owner.reporter?.runtime.ledger().totalGold ?? 0) <= 0
         var changed = false
-        for (witness, criminals) in alarm.fighters {
+        for (witness, criminals) in owner.alarm.fighters {
             let kept = criminals.filter { criminal in
                 criminal == .player ? !owesNothing : living[criminal] != nil
             }
             guard living[witness] == nil || kept != criminals || kept.isEmpty else { continue }
-            alarm.fighters[witness] = living[witness] == nil || kept.isEmpty ? nil : kept
+            owner.alarm.fighters[witness] = living[witness] == nil || kept.isEmpty ? nil : kept
             changed = true
         }
         if changed {
-            refreshGuardHostility()
+            owner.refreshGuardHostility()
         }
     }
 
-    // MARK: - Reads
-
-    private func criminalFeet(_ criminal: ReferenceKey) -> SIMD3<Float>? {
-        criminal == .player
+    func criminalFeet(_ criminal: ReferenceKey) -> SIMD3<Float>? {
+        let world = owner.world
+        return criminal == .player
             ? world.playerFeet
             : world.livingActors().first { $0.key == criminal }?.feet
     }
-}
 
-extension CrimeCoordinator {
-    /// A theft or a caught pickpocket by the player sets or clears the theft mark.
     func noteTheftMark() {
+        let world = owner.world
         let day = Int((world.gameSeconds ?? 0) / 86400)
-        alarm.theftMark.note(day: day)
+        owner.alarm.theftMark.note(day: day)
     }
 
-    /// A caught pickpocket: the target says its line. A faction that ignores
-    /// pickpocketing charges nothing, and the target lets it go.
     func reactToPickpocket(_ event: CrimeEvent, outcome: CrimeOutcome) {
         guard event.kind == .pickpocket, event.perpetrator == .player, let target = event.victim
         else { return }
         if outcome.refusal == .factionIgnoresKind {
-            pendingCommands.append(.sayTopic("PICN", by: target))
+            owner.pendingCommands.append(.sayTopic("PICN", by: target))
             return
         }
-        pendingCommands.append(.sayTopic("PICC", by: target))
-        noteTheftMark()
+        owner.pendingCommands.append(.sayTopic("PICC", by: target))
+        owner.noteTheftMark()
     }
-}
 
-extension CrimeCoordinator {
-    public var alarmReadout: CrimeAlarmReadout {
+    var alarmReadout: CrimeAlarmReadout {
+        let owners = owner.owners
+        let world = owner.world
         var readout = CrimeAlarmReadout(
-            witnesses: alarm.witnesses.keys.sorted().compactMap { key in
-                alarm.witnesses[key].map {
+            witnesses: owner.alarm.witnesses.keys.sorted().compactMap { key in
+                owner.alarm.witnesses[key].map {
                     CrimeAlarmReadout.Witness(
-                        key: key, role: $0.role.rawValue, criminal: alarm.criminal(of: $0),
+                        key: key, role: $0.role.rawValue,
+                        criminal: owner.alarm.criminal(of: $0),
                         crimes: $0.crimes.count
                     )
                 }
             },
-            fighters: alarm.fighters.keys.sorted().map {
+            fighters: owner.alarm.fighters.keys.sorted().map {
                 CrimeAlarmReadout.Fighter(
-                    witness: $0, criminals: (alarm.fighters[$0] ?? []).sorted()
+                    witness: $0, criminals: (owner.alarm.fighters[$0] ?? []).sorted()
                 )
             },
-            angry: alarm.angry.sorted(),
-            theftMarkDay: alarm.theftMark.day,
-            openCrimes: alarm.crimes.count,
-            last: lastAlarm.text,
-            jail: jailStay,
-            jailFollowers: jailFollowers
+            angry: owner.alarm.angry.sorted(),
+            theftMarkDay: owner.alarm.theftMark.day,
+            openCrimes: owner.alarm.crimes.count,
+            last: owner.lastAlarm.text,
+            jail: owner.jailStay,
+            jailFollowers: owner.jailFollowers
         )
         readout.trespass = CrimeAlarmReadout.Trespass(
-            isTrespassing: isPlayerTrespassing, isWarnedToLeave: isPlayerWarnedToLeave,
+            isTrespassing: owner.isPlayerTrespassing,
+            isWarnedToLeave: owner.isPlayerWarnedToLeave,
             isCellOpened: owners.isCellOpened(at: world.currentCellLocation)
         )
         return readout

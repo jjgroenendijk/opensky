@@ -19,16 +19,7 @@ extension CrimeCoordinator {
     public func assistStanding(
         of actor: ReferenceKey, judgedBy helper: ReferenceKey
     ) -> CrimeAssistStanding {
-        if !(alarm.answering[actor] ?? []).isEmpty {
-            return .criminal
-        }
-        guard
-            actor == .player,
-            let faction = world.socialProfile(of: helper)?.crimeFaction,
-            guards.resisted.contains(faction)
-        else { return .clean }
-        let since = (world.gameSeconds ?? 0) - (guards.resistedAt[faction] ?? -.infinity)
-        return since <= Self.resistedCrimeSeconds ? .criminal : .criminalWhileAGuardFights
+        AssistRules(owner: self).assistStanding(of: actor, judgedBy: helper)
     }
 
     /// Whether `key` polices a crime faction as a guard.
@@ -40,23 +31,52 @@ extension CrimeCoordinator {
     /// does while its crime faction counts the player as an enemy, or once the crimes it
     /// saw add up to `knownCrimeAttackGold`.
     public func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
-        guard let runtime = reporter?.runtime else { return false }
-        if let faction = policedFaction(of: key) {
-            let entry = runtime.ledger().entry(for: faction)
-            return runtime.settings.attacksOnSight(
-                nonViolent: entry?.nonViolentGold ?? 0, violent: entry?.violentGold ?? 0
-            )
+        AssistRules(owner: self).attacksPlayerOnSightForCrimes(key)
+    }
+}
+
+extension CrimeCoordinator {
+    /// Decides whether a crime makes an actor help or attack on sight.
+    struct AssistRules {
+        let owner: CrimeCoordinator
+
+        func assistStanding(
+            of actor: ReferenceKey, judgedBy helper: ReferenceKey
+        ) -> CrimeAssistStanding {
+            let world = owner.world
+            if !(owner.alarm.answering[actor] ?? []).isEmpty {
+                return .criminal
+            }
+            guard
+                actor == .player,
+                let faction = world.socialProfile(of: helper)?.crimeFaction,
+                owner.guards.resisted.contains(faction)
+            else { return .clean }
+            let since = (world.gameSeconds ?? 0) - (owner.guards.resistedAt[faction] ?? -.infinity)
+            return since <= CrimeCoordinator
+                .resistedCrimeSeconds ? .criminal : .criminalWhileAGuardFights
         }
-        if
-            let faction = world.socialProfile(of: key)?.crimeFaction,
-            guards.resisted.contains(faction)
-        {
-            return true
+
+        func attacksPlayerOnSightForCrimes(_ key: ReferenceKey) -> Bool {
+            let world = owner.world
+            guard let runtime = owner.reporter?.runtime else { return false }
+            if let faction = owner.policedFaction(of: key) {
+                let entry = runtime.ledger().entry(for: faction)
+                return runtime.settings.attacksOnSight(
+                    nonViolent: entry?.nonViolentGold ?? 0, violent: entry?.violentGold ?? 0
+                )
+            }
+            if
+                let faction = world.socialProfile(of: key)?.crimeFaction,
+                owner.guards.resisted.contains(faction)
+            {
+                return true
+            }
+            let known = (owner.alarm.witnesses[key]?.crimes ?? [])
+                .compactMap { owner.alarm.crimes[$0] }
+                .filter { $0.criminal == .player }
+                .reduce(Int32(0)) { $0 + $1.gold }
+            return known >= CrimeCoordinator.knownCrimeAttackGold
         }
-        let known = (alarm.witnesses[key]?.crimes ?? [])
-            .compactMap { alarm.crimes[$0] }
-            .filter { $0.criminal == .player }
-            .reduce(Int32(0)) { $0 + $1.gold }
-        return known >= Self.knownCrimeAttackGold
     }
 }
