@@ -101,6 +101,16 @@ struct AgentDebugTests {
     }
 
     @Test func aTeleportBeforeTheWorldLoadsIsRefused() {
+    @Test func aFormConditionParameterTakesPlayerOrHex() throws {
+        #expect(try AgentWorldAdapter.conditionParameter("player", isFormID: true) == 0x14)
+        #expect(try AgentWorldAdapter.conditionParameter("Player", isFormID: true) == 0x14)
+        #expect(try AgentWorldAdapter.conditionParameter("0001A2B3", isFormID: true) == 0x1A2B3)
+        #expect(try AgentWorldAdapter.conditionParameter("14", isFormID: false) == 14)
+        #expect(throws: AgentFailure.self) {
+            try AgentWorldAdapter.conditionParameter("player", isFormID: false)
+        }
+    }
+
         #expect(throws: AgentFailure.self) { try world.perform(.teleport(.position([0, 0, 0]))) }
     }
 

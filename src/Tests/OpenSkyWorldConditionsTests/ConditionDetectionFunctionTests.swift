@@ -156,6 +156,21 @@ struct ConditionDetectionFunctionTests {
         #expect(result.tally.unresolvedParameters == [Self.getDetected: 1])
     }
 
+    /// `PlayerRef` has no placed entry in the index, and still names the player.
+    @Test func thePlayerAsTheParameterReadsThePairWithThePlayer() throws {
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        var pair = DetectionPairState()
+        pair.state = .detected
+        context.detection = DetectionResolution(
+            pairs: [DetectionPairKey(observer: Self.observerKey, target: .player): pair],
+            positions: [:]
+        )
+        let result = try Self.evaluate(
+            Self.getDetected, 0, 1, parameter1: FormID.playerReference.rawValue, context: context
+        )
+        #expect(result.outcome == .true)
+    }
+
     @Test func anUnplacedReferenceMakesTheDistanceUnavailableRatherThanZero() throws {
         let context = try Self.detectingContext(placesTarget: false)
         let result = try Self.evaluate(Self.getDistance, 0, 0, context: context)

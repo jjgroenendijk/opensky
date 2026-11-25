@@ -6,6 +6,8 @@ import OpenSkyAgentControl
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkySessionInterface
+import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 extension AgentWorldAdapter {
     func conditionState(_ probe: AgentConditionProbe) throws(AgentFailure) -> AgentJSON {
@@ -18,8 +20,13 @@ extension AgentWorldAdapter {
         let target = try probe.target.map { text throws(AgentFailure) in
             try hub.resolveReference(text)
         }
+        // A reference parameter is indexed too, so the function can find a loaded actor.
+        // A number or an unloaded form names no loaded reference, and adds nothing.
+        let named = [probe.parameter, probe.parameter2]
+            .compactMap { $0.flatMap(FormID.init(hexText:)) }
+            .compactMap { hub.game.streamer.referenceEntry(formID: $0)?.key }
         var evaluator = ConditionEvaluator(context: game.runtimeState.conditionContext(
-            indexing: [subject.key] + (target.map { [$0.key] } ?? [])
+            indexing: [subject.key] + (target.map { [$0.key] } ?? []) + named
         ))
         evaluator.context.subject = subject.key
         evaluator.context.target = target?.key
@@ -60,6 +67,9 @@ extension AgentWorldAdapter {
         _ text: String, isFormID: Bool
     ) throws(AgentFailure) -> UInt32 {
         if isFormID {
+            if text.caseInsensitiveCompare("player") == .orderedSame {
+                return FormID.playerReference.rawValue
+            }
             guard let formID = FormID(hexText: text) else {
                 throw AgentFailure(.invalidArgument, "param '\(text)' is not a hex FormID")
             }
