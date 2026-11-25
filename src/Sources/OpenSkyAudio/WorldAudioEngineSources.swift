@@ -392,8 +392,11 @@ extension WorldAudioEngine {
     /// Detaches sources whose stream completed; called from the audio tick.
     /// `onSourceFinished` fires only here, so it means "played to the end", not
     /// stopped or evicted. Dialogue subtitles rely on that.
-    public func retireFinishedSources() {
-        for source in sources where source.streamer?.isFinished == true || source.bufferFinished {
+    public func retireFinishedSources(only: Set<Int>? = nil) {
+        for source in sources
+            where only?.contains(source.id) ?? true
+            && (source.streamer?.isFinished == true || source.bufferFinished)
+        {
             let id = source.id
             stop(source)
             onSourceFinished?(id)

@@ -25,6 +25,8 @@ public final class SessionAudio {
     public var soundRumble: ((SoundRumble) -> Void)?
     /// The wall-clock time of the last sound mix step, which also runs in menus.
     var soundMixWallTime: Double?
+    /// The wall-clock time of the last music step in a paused world; nil while it runs.
+    var pausedMusicWallTime: Double?
     /// Music director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var musicDirector: WorldMusicDirector?
     /// Footstep director, fed from the pause-aware audio hook with the bridge's graph
