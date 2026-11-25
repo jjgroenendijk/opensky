@@ -59,10 +59,7 @@ extension EffectsBlastsAdapter {
 
     /// The sound index is built from the base plugin, so only its sounds play.
     public func playExplosionSound(_ sound: ReferenceKey, at position: SIMD3<Float>) {
-        guard
-            case let .plugin(name, objectID) = sound,
-            name == EffectsBasePlugin.name.lowercased() else { return }
-        game.audio.soundDirector?.forcePlaySound(formID: FormID(objectID), position: position)
+        BlastObjects(owner: self).playExplosionSound(sound, at: position)
     }
 
     public func startExplosionImageSpace(_ modifier: ReferenceKey, strength: Float) {
@@ -93,19 +90,7 @@ extension EffectsBlastsAdapter {
 
     /// The resident placed objects with `DEST` data inside the radius. Actors are left out.
     public func explosionObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
-        guard radius > 0, let bridge = game.scripts.bridge else { return [] }
-        let streamer = game.streamer
-        let entries = streamer.interiorScene.map { $0.references.sortedEntries() }
-            ?? streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
-        return entries.compactMap { entry in
-            guard let placed = entry.placedReference else { return nil }
-            let position = placed.placement.position
-            guard
-                simd_distance(position, center) <= radius,
-                bridge.destructionHealthLeft(of: entry.key) != nil
-            else { return nil }
-            return MeleeTarget(key: entry.key, feet: position)
-        }
+        BlastObjects(owner: self).explosionObjects(within: radius, of: center)
     }
 
     public func applyDestructionDamage(_ amount: Float, to object: ReferenceKey) -> Bool {
@@ -115,22 +100,7 @@ extension EffectsBlastsAdapter {
     /// A new reference at the blast, in its cell or the cell around the point, owned
     /// as its source is.
     public func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool {
-        guard let formID = game.effects.records.loadOrderFormID(placement.base) else {
-            return false
-        }
-        let position = placement.position
-        let cell = placement.location ?? game.streamer.interiorScene?.location
-            ?? .exterior(CellCoordinate(containing: position))
-        let spawn = ReferenceSpawnState(
-            base: formID, location: cell,
-            placement: PlacedReference.Placement(position: position, rotation: placement.rotation)
-        )
-        let key = game.worldState.allocateGeneratedKey()
-        game.worldState.set(spawn, for: key, in: cell)
-        if let source = placement.ownerSource, let owner = game.crime.crimeOwner(of: source) {
-            game.scripts.bridge?.setScriptedOwner(owner, of: key)
-        }
-        return true
+        BlastObjects(owner: self).placeExplosionObject(placement)
     }
 
     public func showExplosionModel(_ path: String, at position: SIMD3<Float>) {
@@ -223,5 +193,60 @@ extension EffectsBlastsAdapter {
                 .resolve(dataSet: id, material: nil)
         else { return }
         game.combatWorld.playImpact(resolved, at: position)
+    }
+}
+
+extension EffectsBlastsAdapter {
+    /// Plays explosion sounds and finds and places the objects an explosion touches.
+    struct BlastObjects {
+        let owner: EffectsBlastsAdapter
+
+        func playExplosionSound(_ sound: ReferenceKey, at position: SIMD3<Float>) {
+            let game = owner.game
+            guard
+                case let .plugin(name, objectID) = sound,
+                name == EffectsBasePlugin.name.lowercased() else { return }
+            game.audio.soundDirector?.forcePlaySound(formID: FormID(objectID), position: position)
+        }
+
+        func explosionObjects(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget] {
+            let game = owner.game
+            guard radius > 0, let bridge = game.scripts.bridge else { return [] }
+            let streamer = game.streamer
+            let entries = streamer.interiorScene.map { $0.references.sortedEntries() }
+                ?? streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
+            return entries.compactMap { entry in
+                guard let placed = entry.placedReference else { return nil }
+                let position = placed.placement.position
+                guard
+                    simd_distance(position, center) <= radius,
+                    bridge.destructionHealthLeft(of: entry.key) != nil
+                else { return nil }
+                return MeleeTarget(key: entry.key, feet: position)
+            }
+        }
+
+        func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool {
+            let game = owner.game
+            guard let formID = game.effects.records.loadOrderFormID(placement.base) else {
+                return false
+            }
+            let position = placement.position
+            let cell = placement.location ?? game.streamer.interiorScene?.location
+                ?? .exterior(CellCoordinate(containing: position))
+            let spawn = ReferenceSpawnState(
+                base: formID, location: cell,
+                placement: PlacedReference.Placement(
+                    position: position,
+                    rotation: placement.rotation
+                )
+            )
+            let key = game.worldState.allocateGeneratedKey()
+            game.worldState.set(spawn, for: key, in: cell)
+            if let source = placement.ownerSource, let owner = game.crime.crimeOwner(of: source) {
+                game.scripts.bridge?.setScriptedOwner(owner, of: key)
+            }
+            return true
+        }
     }
 }

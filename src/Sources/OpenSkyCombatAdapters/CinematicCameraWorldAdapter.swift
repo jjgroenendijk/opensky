@@ -97,18 +97,11 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         target: ReferenceKey?,
         projectile: Int?
     ) -> CameraConditionResolution {
-        var facts = anchors.cameraShotFacts(attacker: attacker, target: target)
-        if
-            facts.isAvailable,
-            let shot = game.combat.liveProjectiles.first(where: { $0.id == projectile }),
-            let spell = shot.payload.spell
-        {
-            CameraShotFacts.noteSpell(
-                &facts, projectile: shot.profile.kind,
-                delivery: spell.delivery, castingType: spell.castingType
-            )
-        }
-        return facts
+        ShotFacts(owner: self).cameraShotFacts(
+            attacker: attacker,
+            target: target,
+            projectile: projectile
+        )
     }
 
     public func cameraTrack(model: String) -> NIFCameraTrack? {
@@ -121,13 +114,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
 
     /// Behind the shot, facing along its flight.
     public func cinematicProjectileAnchor(_ id: Int) -> CinematicAnchor? {
-        guard let shot = game.combat.liveProjectiles.first(where: { $0.id == id }) else {
-            return nil
-        }
-        let velocity = shot.state.velocity
-        return CinematicAnchor(
-            position: shot.position, yaw: atan2(-velocity.x, velocity.y), focusHeight: 0
-        )
+        ShotFacts(owner: self).cinematicProjectileAnchor(id)
     }
 
     public func cinematicTargetIsDead(_ key: ReferenceKey) -> Bool {
@@ -218,5 +205,43 @@ struct CinematicAnchorReads {
             yaw: actor.yaw,
             focusHeight: CinematicAnchor.chestHeight * actor.scale
         )
+    }
+}
+
+extension CinematicCameraWorldAdapter {
+    /// Reads the facts of a camera shot and the anchor of a projectile.
+    struct ShotFacts {
+        let owner: CinematicCameraWorldAdapter
+
+        func cameraShotFacts(
+            attacker: ReferenceKey,
+            target: ReferenceKey?,
+            projectile: Int?
+        ) -> CameraConditionResolution {
+            let game = owner.game
+            var facts = owner.anchors.cameraShotFacts(attacker: attacker, target: target)
+            if
+                facts.isAvailable,
+                let shot = game.combat.liveProjectiles.first(where: { $0.id == projectile }),
+                let spell = shot.payload.spell
+            {
+                CameraShotFacts.noteSpell(
+                    &facts, projectile: shot.profile.kind,
+                    delivery: spell.delivery, castingType: spell.castingType
+                )
+            }
+            return facts
+        }
+
+        func cinematicProjectileAnchor(_ id: Int) -> CinematicAnchor? {
+            let game = owner.game
+            guard let shot = game.combat.liveProjectiles.first(where: { $0.id == id }) else {
+                return nil
+            }
+            let velocity = shot.state.velocity
+            return CinematicAnchor(
+                position: shot.position, yaw: atan2(-velocity.x, velocity.y), focusHeight: 0
+            )
+        }
     }
 }

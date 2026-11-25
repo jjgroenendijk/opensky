@@ -66,11 +66,7 @@ extension RagdollRecoveryAdapter {
     }
 
     public func bleedoutThreshold(of key: ReferenceKey) -> Float? {
-        guard
-            let base = game.streamer.referenceEntry(key: key)?.placedActor?.base,
-            let resolver = game.combatRecords?.actorValueBaselines?.resolver
-        else { return nil }
-        return resolver.characterClass(ofBase: base)?.bleedoutDefault
+        RecoveryReads(owner: self).bleedoutThreshold(of: key)
     }
 
     public func blocksBleedoutRecovery(of key: ReferenceKey) -> Bool {
@@ -164,20 +160,7 @@ extension RagdollRecoveryAdapter {
 
     /// The water test of a get-up: the body root, then the ground below it.
     private func getsUpSwimming(_ key: ReferenceKey, root: SIMD3<Float>) -> Bool {
-        let collision = game.streamer.collision
-        let height = PlayerCapsule.standard.height * (game.streamer.npcHeightScale?(key) ?? 1)
-        let probe = root + SIMD3(0, 0, 1)
-        let hit = InteractionRay(
-            origin: probe, direction: SIMD3(0, 0, -1),
-            maximumDistance: 1 + height * ActorStateGraphCore.getUpGroundProbeShare
-        ).flatMap { collision.nearestCollisionHit(ray: $0)?.position.z }
-        let terrain = (collision.sampleTerrain(at: SIMD2(root.x, root.y))?.height)
-            .flatMap { $0 <= probe.z ? $0 : nil }
-        let ground = [hit, terrain].compactMap(\.self).max()
-        return ActorStateGraphCore.getsUpSwimming(
-            waterSurface: collision.water(at: root)?.surface,
-            rootHeight: root.z, actorHeight: height, groundBelow: ground
-        )
+        RecoveryReads(owner: self).getsUpSwimming(key, root: root)
     }
 
     public func endKnockdown(_ key: ReferenceKey) {
@@ -193,5 +176,39 @@ extension RagdollRecoveryAdapter {
             return nil
         }
         return duration
+    }
+}
+
+extension RagdollRecoveryAdapter {
+    /// Reads an actor's bleedout threshold and whether it gets up swimming.
+    struct RecoveryReads {
+        let owner: RagdollRecoveryAdapter
+
+        func bleedoutThreshold(of key: ReferenceKey) -> Float? {
+            let game = owner.game
+            guard
+                let base = game.streamer.referenceEntry(key: key)?.placedActor?.base,
+                let resolver = game.combatRecords?.actorValueBaselines?.resolver
+            else { return nil }
+            return resolver.characterClass(ofBase: base)?.bleedoutDefault
+        }
+
+        func getsUpSwimming(_ key: ReferenceKey, root: SIMD3<Float>) -> Bool {
+            let game = owner.game
+            let collision = game.streamer.collision
+            let height = PlayerCapsule.standard.height * (game.streamer.npcHeightScale?(key) ?? 1)
+            let probe = root + SIMD3(0, 0, 1)
+            let hit = InteractionRay(
+                origin: probe, direction: SIMD3(0, 0, -1),
+                maximumDistance: 1 + height * ActorStateGraphCore.getUpGroundProbeShare
+            ).flatMap { collision.nearestCollisionHit(ray: $0)?.position.z }
+            let terrain = (collision.sampleTerrain(at: SIMD2(root.x, root.y))?.height)
+                .flatMap { $0 <= probe.z ? $0 : nil }
+            let ground = [hit, terrain].compactMap(\.self).max()
+            return ActorStateGraphCore.getsUpSwimming(
+                waterSurface: collision.water(at: root)?.surface,
+                rootHeight: root.z, actorHeight: height, groundBelow: ground
+            )
+        }
     }
 }
