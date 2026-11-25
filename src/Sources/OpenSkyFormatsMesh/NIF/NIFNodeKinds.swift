@@ -97,28 +97,41 @@ nonisolated extension NIFFile {
     /// Every `BSValueNode` the model draws, in model space. A hidden subtree, such
     /// as a later damage stage, and the inactive children of a switch hold none.
     public func addOnNodes() throws -> [NIFAddOnNode] {
+        try AddOnNodeWalk(file: self).addOnNodes()
+    }
+}
+
+nonisolated extension NIFFile {
+    /// The walk behind `addOnNodes`.
+    struct AddOnNodeWalk {
+        let file: NIFFile
+    }
+}
+
+nonisolated extension NIFFile.AddOnNodeWalk {
+    func addOnNodes() throws -> [NIFAddOnNode] {
         var found: [NIFAddOnNode] = []
-        for root in roots {
-            var stack = NIFGraphStack(root: root, parent: walkParent(ofRoot: root))
+        for root in file.roots {
+            var stack = NIFGraphStack(root: root, parent: file.walkParent(ofRoot: root))
             while let visit = stack.next() {
                 guard
-                    visit.ref >= 0, Int(visit.ref) < blocks.count,
+                    visit.ref >= 0, Int(visit.ref) < file.blocks.count,
                     visit.depth <= 64 else { continue }
                 let index = Int(visit.ref)
                 guard stack.enter(index) else { continue }
-                let block = blocks[index]
+                let block = file.blocks[index]
                 let node: NIFNode
                 if block.typeName == NIFSwitchNode.typeName {
-                    node = try NIFSwitchNode(data: block.data, header: header).activeNode
+                    node = try NIFSwitchNode(data: block.data, header: file.header).activeNode
                 } else if NIFNode.traversedTypes.contains(block.typeName) {
-                    node = try NIFNode(data: block.data, header: header)
+                    node = try NIFNode(data: block.data, header: file.header)
                 } else {
                     continue
                 }
                 guard !node.object.isHidden else { continue }
                 let world = visit.parent * node.object.localTransform
                 if block.typeName == NIFValueNode.typeName {
-                    let value = try NIFValueNode(data: block.data, header: header)
+                    let value = try NIFValueNode(data: block.data, header: file.header)
                     found.append(NIFAddOnNode(
                         name: node.object.name, index: value.value, transform: world,
                         flags: value.flags
