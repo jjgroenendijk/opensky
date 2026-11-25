@@ -144,55 +144,9 @@ public struct NPCMover {
         water: (sample: WaterReading?, swimSurface: Float?),
         world: NPCMovementWorld
     ) {
-        let (step, frameTime) = pace
-        let neighbours = neighbours
-        let radius = capsule.radius
-        let race = world.waterPushRace(actor)
-        let configuration = configuration
-        let query: WalkController.CollisionQuery = ignoresStatics
-            ? world.vehicleQuery(for: actor) : world.collisionQuery(for: actor)
-        var (longBody, yaw) = (longBody, yaw)
-        longBody?.stepHeight = configuration.stepHeight.value
-        let groundSampler = ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround
-        let before = controller.feetPosition
-        var asked = NPCMoveStepReadout(speed: step.speed, yaw: yaw)
-        controller.update(
-            frameTime: frameTime,
-            yaw: yaw,
-            sampleGround: groundSampler,
-            collisionQuery: query
-        ) { state in
-            var plan = LocomotionStepPlan()
-            let remaining = SIMD2(
-                waypoint.x - state.feetPosition.x,
-                waypoint.y - state.feetPosition.y
-            )
-            let wanted = min(step.speed * state.dt, simd_length(remaining))
-            let direction = simd_length(remaining) > 0
-                ? NPCAvoidance.steer(
-                    direction: remaining,
-                    from: SIMD2(state.feetPosition.x, state.feetPosition.y),
-                    radius: radius,
-                    neighbours: neighbours
-                ) : .zero
-            plan.horizontalDisplacement = direction * wanted
-            asked.note(wanted: plan.horizontalDisplacement)
-            if let longBody {
-                let push = longBody.largestPush(
-                    pose: (state.feetPosition, yaw), displacement: plan.horizontalDisplacement,
-                    ground: { groundSampler($0)?.height }, query: query
-                )
-                asked.note(push)
-                plan.horizontalDisplacement += push.added
-            }
-            plan.swimSurfaceHeight = water.swimSurface
-            plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
-            plan.applyCurrent(
-                water.sample, state: state, configuration: configuration, race: race
-            )
-            return plan
-        }
-        lastStep = asked.moving(by: controller.feetPosition - before)
+        lastStep = WalkStep(owner: self, waypoint: waypoint).walk(
+            controller: &controller, pace: pace, water: water, world: world
+        )
     }
 
     private mutating func advancePastReachedWaypoints() {
@@ -327,5 +281,71 @@ extension NPCMovementWorld {
     /// The trigger volumes the capsule stands in.
     func triggers(around capsule: PlayerCapsule, feet: SIMD3<Float>) -> Set<ReferenceKey> {
         triggersAt(PlayerCapsuleState(capsule: capsule, feetPosition: feet))
+    }
+}
+
+extension NPCMover {
+    /// Moves the walk controller one step toward a waypoint, with avoidance and water.
+    struct WalkStep {
+        let owner: NPCMover
+        let waypoint: SIMD3<Float>
+
+        func walk(
+            controller: inout WalkController,
+            pace: (step: NPCMoverStepPlan, frameTime: Float),
+            water: (sample: WaterReading?, swimSurface: Float?),
+            world: NPCMovementWorld
+        ) -> NPCMoveStepReadout {
+            let (step, frameTime) = pace
+            let neighbours = owner.neighbours
+            let radius = owner.capsule.radius
+            let race = world.waterPushRace(owner.actor)
+            let configuration = owner.configuration
+            let query: WalkController.CollisionQuery = owner.ignoresStatics
+                ? world.vehicleQuery(for: owner.actor) : world.collisionQuery(for: owner.actor)
+            var (longBody, yaw) = (owner.longBody, owner.yaw)
+            longBody?.stepHeight = configuration.stepHeight.value
+            let groundSampler = owner.ignoresStatics
+                ? owner.staticFloorSampler(world: world) : world.sampleGround
+            let before = controller.feetPosition
+            var asked = NPCMoveStepReadout(speed: step.speed, yaw: yaw)
+            controller.update(
+                frameTime: frameTime,
+                yaw: yaw,
+                sampleGround: groundSampler,
+                collisionQuery: query
+            ) { state in
+                var plan = LocomotionStepPlan()
+                let remaining = SIMD2(
+                    waypoint.x - state.feetPosition.x,
+                    waypoint.y - state.feetPosition.y
+                )
+                let wanted = min(step.speed * state.dt, simd_length(remaining))
+                let direction = simd_length(remaining) > 0
+                    ? NPCAvoidance.steer(
+                        direction: remaining,
+                        from: SIMD2(state.feetPosition.x, state.feetPosition.y),
+                        radius: radius,
+                        neighbours: neighbours
+                    ) : .zero
+                plan.horizontalDisplacement = direction * wanted
+                asked.note(wanted: plan.horizontalDisplacement)
+                if let longBody {
+                    let push = longBody.largestPush(
+                        pose: (state.feetPosition, yaw), displacement: plan.horizontalDisplacement,
+                        ground: { groundSampler($0)?.height }, query: query
+                    )
+                    asked.note(push)
+                    plan.horizontalDisplacement += push.added
+                }
+                plan.swimSurfaceHeight = water.swimSurface
+                plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
+                plan.applyCurrent(
+                    water.sample, state: state, configuration: configuration, race: race
+                )
+                return plan
+            }
+            return asked.moving(by: controller.feetPosition - before)
+        }
     }
 }

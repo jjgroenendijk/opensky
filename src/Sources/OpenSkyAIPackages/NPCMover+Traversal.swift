@@ -19,16 +19,7 @@ extension NPCMover {
     /// does not flicker between swimming and wading at the edge.
     /// The surface to swim against, or nil to walk (`SwimRule.swims`).
     func swimSurface(_ water: WaterReading?) -> Float? {
-        guard let surface = water?.surface, surface.isFinite else { return nil }
-        let contact = SwimContact(
-            submersion: SwimRule.submersion(
-                surface: surface, feetHeight: controller.feetPosition.z, bodyHeight: capsule.height
-            ),
-            wasSwimming: isSwimming,
-            hasGroundBelow: controller.isGrounded,
-            isRising: controller.verticalVelocity > 0
-        )
-        return SwimRule.swims(contact) ? surface : nil
+        SwimSurface(owner: self).swimSurface(water)
     }
 
     /// Near on the ground, and within one capsule height up or down. A patrol marker
@@ -159,5 +150,27 @@ extension NPCMover {
         guard let next, previous != next else { return }
         currentCell = next
         emissions.persistence.append(persistence(reason: .cellHandoff))
+    }
+}
+
+extension NPCMover {
+    /// Finds the water surface a swimming actor follows.
+    struct SwimSurface {
+        let owner: NPCMover
+
+        func swimSurface(_ water: WaterReading?) -> Float? {
+            let capsule = owner.capsule
+            guard let surface = water?.surface, surface.isFinite else { return nil }
+            let contact = SwimContact(
+                submersion: SwimRule.submersion(
+                    surface: surface, feetHeight: owner.controller.feetPosition.z,
+                    bodyHeight: capsule.height
+                ),
+                wasSwimming: owner.isSwimming,
+                hasGroundBelow: owner.controller.isGrounded,
+                isRising: owner.controller.verticalVelocity > 0
+            )
+            return SwimRule.swims(contact) ? surface : nil
+        }
     }
 }

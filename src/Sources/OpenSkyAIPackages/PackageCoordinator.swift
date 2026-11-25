@@ -261,20 +261,7 @@ public final class PackageCoordinator {
     }
 
     public var processReadout: [String: Double] {
-        let turn = offscreen.turn
-        let timescale = (world as? any OffscreenScheduleWorld)?.offscreenTimescale
-            ?? GameClock.defaultTimescale
-        return [
-            "high": Double(registeredActors.count),
-            "middleHigh": 0,
-            "middleLow": Double(offscreen.count(of: .middleLow)),
-            "low": Double(offscreen.count(of: .low)),
-            "lowUpdateGameSeconds": OffscreenScheduleCore.updateSeconds(timescale: timescale),
-            "lowPassPlace": Double(turn.place),
-            "lowPassLength": Double(turn.waiting.count),
-            "overBudgetCount": Double(turn.overBudgetCount),
-            "budgetMilliseconds": offscreen.lastBudget
-        ]
+        FrameSteps(host: self).processReadout
     }
 
     weak let world: (any PackageWorld)?
@@ -334,67 +321,7 @@ public final class PackageCoordinator {
     /// Reconciles residency, then evaluates scheduled boundaries. An actor
     /// that leaves residency stops being simulated.
     public func advance(by delta: Float = 0) {
-        placeAtPackagePlaces()
-        guard
-            var runtime,
-            let world,
-            let residents = world.packageResidents(),
-            let clock = world.packageClock
-        else { return }
-        var bases = ActorPackageRuntime.residentBases(residents)
-        if world.packageDrivesPlayer {
-            bases[.player] = Self.playerBase
-        }
-        let change = PackageCore.reconcile(registered: registeredActors, residents: bases)
-        absentSeconds = absentSeconds.filter { bases[$0.key] == nil }
-        for actor in change.departed {
-            let away = (absentSeconds[actor] ?? 0) + delta
-            absentSeconds[actor] = away
-            guard away >= Self.departureGraceSeconds else { continue }
-            absentSeconds[actor] = nil
-            runtime.unregister(actor: actor)
-            registeredActors.removeValue(forKey: actor)
-            executions.removeValue(forKey: actor)
-            heldSteps.removeValue(forKey: actor)
-            seatTurns.removeValue(forKey: actor)
-            mounts.removeValue(forKey: actor)
-            movement.drop(actor)
-        }
-        for arrival in change.arrived {
-            let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)
-            guard
-                attempt({
-                    try runtime.register(actor: arrival.actor, base: arrival.base, roll: roll) })
-                != nil
-            else { continue }
-            registeredActors[arrival.actor] = arrival.base
-        }
-
-        sharesFrameContext = true
-        defer {
-            sharesFrameContext = false
-            frameContext = nil
-        }
-        let live = { self.conditionContext(clock: clock) }
-        aliasRefreshSeconds -= delta
-        if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
-            aliasRefreshSeconds = Self.aliasRefreshInterval
-            offscreen.aliasStacks = world.packageAliasStacks()
-            runtime.setAliasStacks(
-                offscreen.aliasStacks, actors: registeredActors.keys.sorted(), clock: clock
-            ) { self.conditionContext(clock: clock) }
-        }
-        applySituations(to: &runtime, clock: clock, delta: delta, context: live)
-        runtime.advance(clock: clock) { _ in live() }
-        self.runtime = runtime
-        placeArrivals(change.arrived.map(\.actor), clock: clock)
-        if let offscreenWorld = world as? any OffscreenScheduleWorld {
-            offscreen.advance(
-                world: offscreenWorld, clock: clock, frameSeconds: delta,
-                residents: Set(bases.keys), context: live
-            )
-        }
-        advanceTrees(by: delta)
+        FrameSteps(host: self).advance(by: delta)
     }
 
     /// Holds `actor` out of scheduled selection, as a conversation does.
@@ -546,5 +473,104 @@ extension PackageCoordinator {
 extension PackageCoordinator {
     public func recordMove(_ result: NPCMoveCommandResult, for actor: ReferenceKey) {
         lastMoves[actor] = result
+    }
+}
+
+extension PackageCoordinator {
+    /// Advances the packages by one frame and reports the process levels.
+    struct FrameSteps {
+        let host: PackageCoordinator
+
+        var processReadout: [String: Double] {
+            let offscreen = host.offscreen
+            let world = host.world
+            let turn = offscreen.turn
+            let timescale = (world as? any OffscreenScheduleWorld)?.offscreenTimescale
+                ?? GameClock.defaultTimescale
+            return [
+                "high": Double(host.registeredActors.count),
+                "middleHigh": 0,
+                "middleLow": Double(offscreen.count(of: .middleLow)),
+                "low": Double(offscreen.count(of: .low)),
+                "lowUpdateGameSeconds": OffscreenScheduleCore.updateSeconds(timescale: timescale),
+                "lowPassPlace": Double(turn.place),
+                "lowPassLength": Double(turn.waiting.count),
+                "overBudgetCount": Double(turn.overBudgetCount),
+                "budgetMilliseconds": offscreen.lastBudget
+            ]
+        }
+
+        func advance(by delta: Float = 0) {
+            let offscreen = host.offscreen
+            host.placeAtPackagePlaces()
+            guard
+                var runtime = host.runtime,
+                let world = host.world,
+                let residents = world.packageResidents(),
+                let clock = world.packageClock
+            else { return }
+            var bases = ActorPackageRuntime.residentBases(residents)
+            if world.packageDrivesPlayer {
+                bases[.player] = PackageCoordinator.playerBase
+            }
+            let change = PackageCore.reconcile(registered: host.registeredActors, residents: bases)
+            host.absentSeconds = host.absentSeconds.filter { bases[$0.key] == nil }
+            depart(change.departed, delta: delta, runtime: &runtime)
+            for arrival in change.arrived {
+                let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)
+                guard
+                    attempt({
+                        try runtime.register(actor: arrival.actor, base: arrival.base, roll: roll)
+                    })
+                    != nil
+                else { continue }
+                host.registeredActors[arrival.actor] = arrival.base
+            }
+
+            host.sharesFrameContext = true
+            defer {
+                host.sharesFrameContext = false
+                host.frameContext = nil
+            }
+            let live = { host.conditionContext(clock: clock) }
+            host.aliasRefreshSeconds -= delta
+            if host.aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
+                host.aliasRefreshSeconds = PackageCoordinator.aliasRefreshInterval
+                offscreen.aliasStacks = world.packageAliasStacks()
+                runtime.setAliasStacks(
+                    offscreen.aliasStacks, actors: host.registeredActors.keys.sorted(), clock: clock
+                ) { host.conditionContext(clock: clock) }
+            }
+            host.applySituations(to: &runtime, clock: clock, delta: delta, context: live)
+            runtime.advance(clock: clock) { _ in live() }
+            host.runtime = runtime
+            host.placeArrivals(change.arrived.map(\.actor), clock: clock)
+            if let offscreenWorld = world as? any OffscreenScheduleWorld {
+                offscreen.advance(
+                    world: offscreenWorld, clock: clock, frameSeconds: delta,
+                    residents: Set(bases.keys), context: live
+                )
+            }
+            host.advanceTrees(by: delta)
+        }
+
+        /// An actor away for the departure grace leaves the package runtime.
+        private func depart(
+            _ departed: [ReferenceKey], delta: Float, runtime: inout ActorPackageRuntime
+        ) {
+            for actor in departed {
+                let away = (host.absentSeconds[actor] ?? 0) + delta
+                host.absentSeconds[actor] = away
+                guard away >= PackageCoordinator.departureGraceSeconds else { continue }
+                host.absentSeconds[actor] = nil
+                runtime.unregister(actor: actor)
+                host.registeredActors.removeValue(forKey: actor)
+                host.executions.removeValue(forKey: actor)
+                host.heldSteps.removeValue(forKey: actor)
+                host.seatTurns.removeValue(forKey: actor)
+                host.mounts.removeValue(forKey: actor)
+                host.movement.drop(actor)
+            }
+        }
     }
 }
