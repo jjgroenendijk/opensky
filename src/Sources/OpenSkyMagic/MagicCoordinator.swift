@@ -147,10 +147,7 @@ public final class MagicCoordinator {
 
 extension MagicCoordinator {
     func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
-        guard let store = effects?.effects, let resolved = store.effect(key: effect) else {
-            return nil
-        }
-        return store.associatedItem(of: resolved)
+        ItemLinks(owner: self).associatedItem(of: effect)
     }
 }
 
@@ -201,7 +198,7 @@ extension MagicCoordinator {
 
     /// How much the Enchanting skill adds to a made enchantment, from its setting.
     var enchantingSkillFactor: Float {
-        rules.enchanting.skillFactor
+        ItemLinks(owner: self).enchantingSkillFactor
     }
 
     public var magicMenu: MagicMenu {
@@ -467,5 +464,27 @@ extension MagicCoordinator {
 extension MagicCoordinator {
     var heldStaves: HeldStaves {
         HeldStaves(coordinator: self)
+    }
+}
+
+extension MagicCoordinator {
+    /// Finds the item of an effect and the enchanting skill factor.
+    struct ItemLinks {
+        let owner: MagicCoordinator
+
+        func associatedItem(of effect: ReferenceKey) -> ResolvedFormID? {
+            guard
+                let store = owner.effects?.effects,
+                let resolved = store.effect(key: effect)
+            else {
+                return nil
+            }
+            return store.associatedItem(of: resolved)
+        }
+
+        var enchantingSkillFactor: Float {
+            let rules = owner.rules
+            return rules.enchanting.skillFactor
+        }
     }
 }

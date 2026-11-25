@@ -55,19 +55,31 @@ extension MagicCoordinator {
     }
 
     public func playerCasting() -> PlayerCastingReadout? {
-        guard let caster else { return nil }
-        let book = world.actorValueHolder(for: .player).map(caster.spellbook.state(of:))
-        let hands = SpellHand.allCases.map { hand in
-            PlayerCastingHand(
-                hand: hand,
-                phase: caster.phase(of: hand, on: .player),
-                spell: caster.state(of: hand, on: .player).spell,
-                readied: book?.spell(in: hand),
-                pressed: castingState.castPressed.contains(hand),
-                heldBySheathedPress: castingState.sheathedPress.contains(hand),
-                wantsCast: castingCues.wantsCast(hand)
-            )
+        CastingReadouts(owner: self).playerCasting()
+    }
+}
+
+extension MagicCoordinator {
+    /// Reads what the player casts.
+    struct CastingReadouts {
+        let owner: MagicCoordinator
+
+        func playerCasting() -> PlayerCastingReadout? {
+            let world = owner.world
+            guard let caster = owner.caster else { return nil }
+            let book = world.actorValueHolder(for: .player).map(caster.spellbook.state(of:))
+            let hands = SpellHand.allCases.map { hand in
+                PlayerCastingHand(
+                    hand: hand,
+                    phase: caster.phase(of: hand, on: .player),
+                    spell: caster.state(of: hand, on: .player).spell,
+                    readied: book?.spell(in: hand),
+                    pressed: owner.castingState.castPressed.contains(hand),
+                    heldBySheathedPress: owner.castingState.sheathedPress.contains(hand),
+                    wantsCast: owner.castingCues.wantsCast(hand)
+                )
+            }
+            return PlayerCastingReadout(hands: hands, cues: owner.castingCues.castingCueText)
         }
-        return PlayerCastingReadout(hands: hands, cues: castingCues.castingCueText)
     }
 }
