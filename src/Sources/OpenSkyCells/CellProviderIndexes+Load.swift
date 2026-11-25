@@ -92,7 +92,7 @@ nonisolated extension CellProviderIndexes {
         )
         async let records = RecordStores.load(context)
         let built = try progress.measure(.assetLibraries) {
-            try makeRunner(
+            try RunnerFactory.makeRunner(
                 plugins: context,
                 assets: RunnerAssets(
                     fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad,
@@ -130,14 +130,14 @@ nonisolated extension CellProviderIndexes {
     }
 
     /// The runner and the builder values the main actor keeps.
-    private struct BuiltRunner {
+    fileprivate struct BuiltRunner {
         let runner: SerialCellBuildRunner
         let formIDResolver: FormIDResolver
         let placedRecords: PlacedRecordLookup
     }
 
     /// Where the asset libraries read from.
-    private struct RunnerAssets {
+    fileprivate struct RunnerAssets {
         let fileSystem: any GameFileSource
         let device: any MTLDevice
         let cache: AssetCacheReader?
@@ -147,60 +147,6 @@ nonisolated extension CellProviderIndexes {
         let decodesInParallel: Bool
         /// Times the streamer's builds by asset phase, for the benchmark's arrivals.
         let loadPhases: LoadPhaseRecorder?
-    }
-
-    /// Hands the new builder straight to the runner, so no other code holds it.
-    private static func makeRunner(
-        plugins context: LoadContext,
-        assets: RunnerAssets,
-        localizationLanguage: String,
-        terrainLODConfigurationStore: TerrainLODConfigurationStore
-    ) throws -> BuiltRunner {
-        let fileSystem: any GameFileSource = assets.loadPhases
-            .map { PhaseTimedFileSource(base: assets.fileSystem, recorder: $0) } ?? assets
-            .fileSystem
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: assets.device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: assets.device, textures: textures)
-        textures.assetCache = assets.cache
-        meshes.assetCache = assets.cache
-        if let control = assets.fastLoad, assets.cache != nil {
-            textures.fastLoader = try FastTextureLoader(device: assets.device, control: control)
-        }
-        let builder = CellSceneBuilder(
-            file: context.file,
-            meshes: meshes,
-            textures: textures,
-            fileSystem: fileSystem,
-            pluginName: context.pluginName,
-            plugins: context.plugins,
-            localizationLanguage: localizationLanguage,
-            terrainLODConfigurationStore: terrainLODConfigurationStore
-        )
-        builder.collisionModels?.assetCache = assets.cache
-        builder.decodesInParallel = assets.decodesInParallel
-        builder.leveling = context.leveling
-        builder.loadPhases = assets.loadPhases
-        builder.formIDIndexStore = assets.cache
-            .map { RecordIndexCacheFolder(cacheRoot: $0.store.root) }
-        // The record stores build in parallel meanwhile, so this overlaps them.
-        if LoadOptimisations.isOn(.prebuildIndexes) {
-            builder.prepareIndexes(worldspace: FirstRenderCell.worldspaceEditorID)
-        }
-        let formIDResolver = builder.formIDResolver
-        let placedRecords = builder.referenceBuilder.placedRecords
-        let lodPrebuild = builder.distantLODBuilder.map {
-            DistantLODPrebuild(of: $0, worldspace: FirstRenderCell.worldspaceEditorID)
-        }
-        let runner = SerialCellBuildRunner(
-            provider: BuilderCellSceneProvider(
-                builder: builder,
-                worldspaceEditorID: FirstRenderCell.worldspaceEditorID
-            ),
-            lodPrebuild: lodPrebuild
-        )
-        return BuiltRunner(
-            runner: runner, formIDResolver: formIDResolver, placedRecords: placedRecords
-        )
     }
 
     /// Item names resolve through the string tables while the index is built.
@@ -308,5 +254,68 @@ nonisolated extension CellProviderIndexes.WorldRecords {
         formLists = FormListStore(plugins: context.plugins)
         encounterZones = EncounterZoneStore(plugins: context.plugins)
         miscStatSources = MiscStatSources(loadOrder: context.loadOrder)
+    }
+}
+
+nonisolated extension CellProviderIndexes {
+    /// Builds the cell runner from the loaded plugins and assets.
+    enum RunnerFactory {
+        /// Hands the new builder straight to the runner, so no other code holds it.
+        fileprivate static func makeRunner(
+            plugins context: LoadContext,
+            assets: RunnerAssets,
+            localizationLanguage: String,
+            terrainLODConfigurationStore: TerrainLODConfigurationStore
+        ) throws -> BuiltRunner {
+            let fileSystem: any GameFileSource = assets.loadPhases
+                .map { PhaseTimedFileSource(base: assets.fileSystem, recorder: $0) } ?? assets
+                .fileSystem
+            let textures = try TextureLibrary(fileSystem: fileSystem, device: assets.device)
+            let meshes = MeshLibrary(
+                fileSystem: fileSystem,
+                device: assets.device,
+                textures: textures
+            )
+            textures.assetCache = assets.cache
+            meshes.assetCache = assets.cache
+            if let control = assets.fastLoad, assets.cache != nil {
+                textures.fastLoader = try FastTextureLoader(device: assets.device, control: control)
+            }
+            let builder = CellSceneBuilder(
+                file: context.file,
+                meshes: meshes,
+                textures: textures,
+                fileSystem: fileSystem,
+                pluginName: context.pluginName,
+                plugins: context.plugins,
+                localizationLanguage: localizationLanguage,
+                terrainLODConfigurationStore: terrainLODConfigurationStore
+            )
+            builder.collisionModels?.assetCache = assets.cache
+            builder.decodesInParallel = assets.decodesInParallel
+            builder.leveling = context.leveling
+            builder.loadPhases = assets.loadPhases
+            builder.formIDIndexStore = assets.cache
+                .map { RecordIndexCacheFolder(cacheRoot: $0.store.root) }
+            // The record stores build in parallel meanwhile, so this overlaps them.
+            if LoadOptimisations.isOn(.prebuildIndexes) {
+                builder.prepareIndexes(worldspace: FirstRenderCell.worldspaceEditorID)
+            }
+            let formIDResolver = builder.formIDResolver
+            let placedRecords = builder.referenceBuilder.placedRecords
+            let lodPrebuild = builder.distantLODBuilder.map {
+                DistantLODPrebuild(of: $0, worldspace: FirstRenderCell.worldspaceEditorID)
+            }
+            let runner = SerialCellBuildRunner(
+                provider: BuilderCellSceneProvider(
+                    builder: builder,
+                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+                ),
+                lodPrebuild: lodPrebuild
+            )
+            return BuiltRunner(
+                runner: runner, formIDResolver: formIDResolver, placedRecords: placedRecords
+            )
+        }
     }
 }
