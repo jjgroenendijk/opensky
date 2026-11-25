@@ -35,69 +35,19 @@ nonisolated public struct PendingCrimeReport: Equatable, Sendable {
 extension CrimeCoordinator {
     /// A seen crime by the player that cost gold. It stays open for the window.
     func track(_ event: CrimeEvent, outcome: CrimeOutcome, witnesses: [ReferenceKey]) {
-        guard outcome.gold > 0, let faction = outcome.faction, !witnesses.isEmpty else { return }
-        if event.perpetrator == .player {
-            pendingReports.append(PendingCrimeReport(
-                faction: faction, gold: outcome.gold, violent: event.kind.isViolent,
-                witnesses: witnesses, victim: event.victim, crime: event.kind.storyCrimeType
-            ))
-        }
-        raiseAlarm(event, faction: faction, gold: outcome.gold, direct: witnesses)
-        // After the alarm, so this theft's own witnesses decide without its mark.
-        if event.kind == .theft, event.perpetrator == .player, event.victim != nil {
-            noteTheftMark()
-        }
+        ReportSteps(owner: self).track(event, outcome: outcome, witnesses: witnesses)
     }
 
     /// What every recorded crime changes besides the bounty: the stats, a caught
     /// pickpocket's line, and the theft mark of a theft no witness charged.
     func recorded(_ event: CrimeEvent, outcome: CrimeOutcome) {
-        count(event)
-        reactToPickpocket(event, outcome: outcome)
-        if
-            event.kind == .theft, event.perpetrator == .player, event.victim != nil,
-            outcome.gold <= 0
-        {
-            noteTheftMark()
-        }
+        ReportSteps(owner: self).recorded(event, outcome: outcome)
     }
 
     /// One tick of `seconds` real time: erases each open crime whose witnesses all
     /// died inside the window, and makes each crime past the window final.
     public func advanceReports(by seconds: Double = 0) {
-        countBountyChanges()
-        advanceAlarms(by: seconds)
-        guard !pendingReports.isEmpty, let reporter else { return }
-        pendingReports = pendingReports.compactMap { report in
-            var report = report
-            report.age += max(0, seconds)
-            guard report.age > PendingCrimeReport.firstCheck else { return report }
-            if
-                report.age < PendingCrimeReport.window,
-                report.witnesses.allSatisfy({ world.isDead($0) })
-            {
-                erase(report, reporter: reporter)
-                return nil
-            }
-            guard report.age >= PendingCrimeReport.window else { return report }
-            storyEvents?.reportStoryEvent(.crimeGold(
-                (.player, report.victim), crimeFaction: report.faction, gold: report.gold,
-                crime: report.crime
-            ))
-            lastCrime = .reportFinal(gold: report.gold, faction: factionName(report.faction))
-            return nil
-        }
-    }
-
-    private func erase(_ report: PendingCrimeReport, reporter: CrimeReporter) {
-        let removed = min(
-            report.gold,
-            reporter.runtime.crimeGold(of: report.faction, violent: report.violent)
-        )
-        reporter.modifyCrimeGold(by: -removed, violent: report.violent, of: report.faction)
-        lastCrime = .reportLost(gold: removed, faction: factionName(report.faction))
-        pendingCommands.append(.showNotice(crimeTexts.witnessKilled))
-        showBountyNotice(gold: removed, added: false, faction: report.faction)
+        ReportSteps(owner: self).advanceReports(by: seconds)
     }
 
     /// Takes back an assault charge: its gold, its open report, and its count.
@@ -114,7 +64,7 @@ extension CrimeCoordinator {
 
     /// The crime faction `key` polices as a guard, or nil.
     func policedFaction(of key: ReferenceKey) -> ReferenceKey? {
-        world.policedFaction(of: key, guardFaction: reporter?.runtime.factions.guardFactionKey)
+        ReportSteps(owner: self).policedFaction(of: key)
     }
 }
 
@@ -130,21 +80,110 @@ extension CrimeCoordinator {
     /// The journal's crime stats (<https://ck.uesp.net/wiki/QueryStat_-_Game>). The
     /// container menu counts pickpockets itself.
     func count(_ event: CrimeEvent) {
-        guard event.perpetrator == .player else { return }
-        switch event.kind {
-        case .theft where event.stolenCount > 0:
-            pendingCommands.append(event.isHorseTheft
-                ? .incrementStat("Horses Stolen", by: 1)
-                : .incrementStat("Items Stolen", by: event.stolenCount))
-            if let faction = event.crimeFaction, event.stolenValue > 0 {
-                pendingCommands.append(.stoleFromFaction(
-                    faction, value: event.stolenValue, witnessed: event.witnessed
+        ReportSteps(owner: self).count(event)
+    }
+}
+
+extension CrimeCoordinator {
+    /// Tracks reported crimes until they settle.
+    struct ReportSteps {
+        let owner: CrimeCoordinator
+
+        func track(_ event: CrimeEvent, outcome: CrimeOutcome, witnesses: [ReferenceKey]) {
+            guard
+                outcome.gold > 0, let faction = outcome.faction,
+                !witnesses.isEmpty else { return }
+            if event.perpetrator == .player {
+                owner.pendingReports.append(PendingCrimeReport(
+                    faction: faction, gold: outcome.gold, violent: event.kind.isViolent,
+                    witnesses: witnesses, victim: event.victim, crime: event.kind.storyCrimeType
                 ))
             }
-        case .assault: pendingCommands.append(.incrementStat("Assaults", by: 1))
-        case .murder: pendingCommands.append(.incrementStat("Murders", by: 1))
-        case .trespass: pendingCommands.append(.incrementStat("Trespasses", by: 1))
-        default: break
+            owner.raiseAlarm(event, faction: faction, gold: outcome.gold, direct: witnesses)
+            // After the alarm, so this theft's own witnesses decide without its mark.
+            if event.kind == .theft, event.perpetrator == .player, event.victim != nil {
+                owner.noteTheftMark()
+            }
+        }
+
+        func recorded(_ event: CrimeEvent, outcome: CrimeOutcome) {
+            owner.count(event)
+            owner.reactToPickpocket(event, outcome: outcome)
+            if
+                event.kind == .theft, event.perpetrator == .player, event.victim != nil,
+                outcome.gold <= 0
+            {
+                owner.noteTheftMark()
+            }
+        }
+
+        func advanceReports(by seconds: Double = 0) {
+            let storyEvents = owner.storyEvents
+            let world = owner.world
+            owner.countBountyChanges()
+            owner.advanceAlarms(by: seconds)
+            guard !owner.pendingReports.isEmpty, let reporter = owner.reporter else { return }
+            owner.pendingReports = owner.pendingReports.compactMap { report in
+                var report = report
+                report.age += max(0, seconds)
+                guard report.age > PendingCrimeReport.firstCheck else { return report }
+                if
+                    report.age < PendingCrimeReport.window,
+                    report.witnesses.allSatisfy({ world.isDead($0) })
+                {
+                    erase(report, reporter: reporter)
+                    return nil
+                }
+                guard report.age >= PendingCrimeReport.window else { return report }
+                storyEvents?.reportStoryEvent(.crimeGold(
+                    (.player, report.victim), crimeFaction: report.faction, gold: report.gold,
+                    crime: report.crime
+                ))
+                owner.lastCrime = .reportFinal(
+                    gold: report.gold,
+                    faction: owner.factionName(report.faction)
+                )
+                return nil
+            }
+        }
+
+        func erase(_ report: PendingCrimeReport, reporter: CrimeReporter) {
+            let crimeTexts = owner.crimeTexts
+            let removed = min(
+                report.gold,
+                reporter.runtime.crimeGold(of: report.faction, violent: report.violent)
+            )
+            reporter.modifyCrimeGold(by: -removed, violent: report.violent, of: report.faction)
+            owner.lastCrime = .reportLost(gold: removed, faction: owner.factionName(report.faction))
+            owner.pendingCommands.append(.showNotice(crimeTexts.witnessKilled))
+            owner.showBountyNotice(gold: removed, added: false, faction: report.faction)
+        }
+
+        func policedFaction(of key: ReferenceKey) -> ReferenceKey? {
+            let world = owner.world
+            return world.policedFaction(
+                of: key,
+                guardFaction: owner.reporter?.runtime.factions.guardFactionKey
+            )
+        }
+
+        func count(_ event: CrimeEvent) {
+            guard event.perpetrator == .player else { return }
+            switch event.kind {
+            case .theft where event.stolenCount > 0:
+                owner.pendingCommands.append(event.isHorseTheft
+                    ? .incrementStat("Horses Stolen", by: 1)
+                    : .incrementStat("Items Stolen", by: event.stolenCount))
+                if let faction = event.crimeFaction, event.stolenValue > 0 {
+                    owner.pendingCommands.append(.stoleFromFaction(
+                        faction, value: event.stolenValue, witnessed: event.witnessed
+                    ))
+                }
+            case .assault: owner.pendingCommands.append(.incrementStat("Assaults", by: 1))
+            case .murder: owner.pendingCommands.append(.incrementStat("Murders", by: 1))
+            case .trespass: owner.pendingCommands.append(.incrementStat("Trespasses", by: 1))
+            default: break
+            }
         }
     }
 }

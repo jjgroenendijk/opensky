@@ -43,20 +43,31 @@ extension CrimeCoordinator {
     /// Compares the player's bounties with the last tick's and counts each change,
     /// so a script, a fine, and a crime all count alike. The first look only records.
     func countBountyChanges() {
-        guard let runtime = reporter?.runtime else { return }
-        let bounties = Dictionary(
-            runtime.ledger().entries.map { ($0.faction, $0.gold) }
-        ) { first, _ in first }
-        defer { lastBounties = bounties }
-        guard let previous = lastBounties else { return }
-        for faction in Set(bounties.keys).union(previous.keys).sorted() {
-            let record = runtime.factions.faction(key: faction)?.faction
-            pendingCommands += BountyStatistics.commands(
-                editorID: record?.editorID,
-                counts: record.map { $0.tracksCrime && !$0.flags.contains(.hiddenFromNPC) }
-                    ?? false,
-                old: previous[faction] ?? 0, new: bounties[faction] ?? 0
-            )
+        BountyCount(owner: self).countBountyChanges()
+    }
+}
+
+extension CrimeCoordinator {
+    /// Counts the bounty changes for the statistics.
+    struct BountyCount {
+        let owner: CrimeCoordinator
+
+        func countBountyChanges() {
+            guard let runtime = owner.reporter?.runtime else { return }
+            let bounties = Dictionary(
+                runtime.ledger().entries.map { ($0.faction, $0.gold) }
+            ) { first, _ in first }
+            defer { owner.lastBounties = bounties }
+            guard let previous = owner.lastBounties else { return }
+            for faction in Set(bounties.keys).union(previous.keys).sorted() {
+                let record = runtime.factions.faction(key: faction)?.faction
+                owner.pendingCommands += BountyStatistics.commands(
+                    editorID: record?.editorID,
+                    counts: record.map { $0.tracksCrime && !$0.flags.contains(.hiddenFromNPC) }
+                        ?? false,
+                    old: previous[faction] ?? 0, new: bounties[faction] ?? 0
+                )
+            }
         }
     }
 }

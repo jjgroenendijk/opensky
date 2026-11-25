@@ -20,129 +20,21 @@ extension CrimeCoordinator {
     }
 
     func stepGuardResponse() {
-        guard let runtime = reporter?.runtime, let now = world.gameSeconds else {
-            return
-        }
-        finishConversationIfClosed(runtime: runtime, now: now)
-        let ledger = runtime.ledger()
-        for faction in guards.resisted where ledger.gold(for: faction) <= 0 {
-            guards.forgive(faction)
-        }
-        for faction in guards.expiredResistance(now: now) {
-            guards.forgive(faction)
-        }
-        refreshGuardHostility()
-        guard ledger.totalGold > 0, !world.isDialogueOpen else {
-            releasePursuers(except: nil)
-            return
-        }
-        let actions = guards.actions(
-            guards: world.guardCandidates(
-                guardFaction: reporter?.runtime.factions.guardFactionKey
-            ),
-            bounty: { ledger.entry(for: $0) },
-            values: { runtime.factions.crimeValues(of: $0) },
-            settings: runtime.settings,
-            now: now
-        )
-        releasePursuers(except: actions.first.map(CrimeCore.guardKey(of:)))
-        for action in actions {
-            carryOut(action, now: now)
-        }
+        GuardSteps(owner: self).stepGuardResponse()
     }
 
     /// Hands the player's bounties to the hostility derivation.
     func refreshGuardHostility() {
-        guard let runtime = reporter?.runtime else { return }
-        pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
-            ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted,
-            settings: runtime.settings, alarmFighters: alarm.fighters
-        )))
+        GuardSteps(owner: self).refreshGuardHostility()
     }
 
     /// Every guard of `faction` turns hostile. The readout's resist control and
     /// a closed arrest conversation both come through here.
     func resistArrest(with faction: ReferenceKey) {
-        if case let .confront(guardKey, _, _) = guards.active {
-            world.resumePackage(for: guardKey)
-        }
-        guards.resist(faction, now: world.gameSeconds ?? 0)
-        lastGuard = .resisted(faction: factionName(faction))
-        refreshGuardHostility()
+        GuardSteps(owner: self).resistArrest(with: faction)
     }
 
     // MARK: - Private
-
-    private func carryOut(_ action: GuardAction, now: Double) {
-        switch action {
-        case let .pursue(guardKey, faction):
-            pursue(guardKey, crimeFaction: faction)
-        case let .confront(guardKey, faction, bounty):
-            confront(guardKey, crime: (faction, bounty), action: action, now: now)
-        }
-    }
-
-    private func confront(
-        _ guardKey: ReferenceKey,
-        crime: (faction: ReferenceKey, bounty: Int32),
-        action: GuardAction,
-        now: Double
-    ) {
-        world.stopActor(guardKey)
-        pursuitTargets[guardKey] = nil
-        guards.begin(action)
-        world.beginDialogue(with: guardKey)
-        guard world.isDialogueOpen else {
-            // No dialogue index, or the menu refused: hold this guard off
-            // rather than retrying every frame.
-            guards.end(settled: false, now: now)
-            world.resumePackage(for: guardKey)
-            lastGuard = .conversationFailed(reason: world.lastDialogueOutcome)
-            return
-        }
-        lastGuard = .confronted(bounty: crime.bounty, faction: factionName(crime.faction))
-    }
-
-    private func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {
-        guard let player = world.playerFeet, CrimeCore.needsRepath(
-            lastTarget: pursuitTargets[guardKey],
-            player: player
-        ) else {
-            return
-        }
-        world.suspendPackage(for: guardKey)
-        guard let result = world.moveActor(guardKey, to: player) else { return }
-        pursuitTargets[guardKey] = player
-        lastGuard = .pursuing(faction: factionName(faction), move: result)
-    }
-
-    /// Hands every pursuing guard but `kept` back to its package.
-    private func releasePursuers(except kept: ReferenceKey?) {
-        for guardKey in pursuitTargets.keys where guardKey != kept {
-            pursuitTargets[guardKey] = nil
-            world.stopActor(guardKey)
-            world.resumePackage(for: guardKey)
-        }
-    }
-
-    /// A conversation that closes with the bounty still owed is resisting
-    /// arrest (<https://en.uesp.net/wiki/Skyrim:Crime>). One that closes with it
-    /// cleared, without a fine or jail, sent the guard away quietly.
-    private func finishConversationIfClosed(runtime: CrimeRuntime, now: Double) {
-        guard
-            world.isDialogueOpen == false,
-            case let .confront(guardKey, faction, _) = guards.active
-        else { return }
-        if runtime.crimeGold(of: faction) > 0 {
-            resistArrest(with: faction)
-        } else {
-            guards.end(settled: true, now: now)
-            world.resumePackage(for: guardKey)
-            // A bribe, a Thane's status, or the Thieves Guild sent the guard away
-            // quietly, so the victims forget the catch (UESP "Skyrim:Pickpocket").
-            pendingCommands.append(.settlePickpocketCatches(faction, forgotten: true))
-        }
-    }
 }
 
 /// One blow between two actors, by who struck it.
@@ -157,25 +49,7 @@ extension CrimeCoordinator {
     /// is self-defense. UESP "Skyrim:Crime": "Self-defense against an unprovoked assault
     /// is legal".
     func reportActorAssault(on target: ReferenceKey, by aggressor: ReferenceKey) {
-        guard target != aggressor, aggressor != .player else { return }
-        let strike = ActorStrike(aggressor: aggressor, target: target)
-        let answered = ActorStrike(aggressor: target, target: aggressor)
-        guard
-            !actorFirstStrikes.contains(answered),
-            policedFaction(of: aggressor) == nil,
-            let faction = crimeFaction(in: crimeCell(of: target) ?? world.currentCellLocation),
-            target == .player || world.protects(faction, target)
-        else { return }
-        actorFirstStrikes.insert(strike)
-        raiseAlarm(
-            CrimeEvent(
-                kind: .assault, perpetrator: aggressor, victim: target, crimeFaction: faction,
-                witnessed: true
-            ),
-            faction: faction, gold: 0, direct: target == .player ? [] : [target]
-        )
-        lastGuard = .actorCriminal(name: world.actorName(aggressor), faction: factionName(faction))
-        refreshGuardHostility()
+        GuardSteps(owner: self).reportActorAssault(on: target, by: aggressor)
     }
 }
 
@@ -219,5 +93,169 @@ nonisolated extension FactionStore {
     /// The crime values of the faction `key` names, or nil.
     func crimeValues(of key: ReferenceKey) -> Faction.CrimeValues? {
         faction(key: key)?.faction.crimeValues
+    }
+}
+
+extension CrimeCoordinator {
+    /// Runs the guards' response to the player's crimes.
+    struct GuardSteps {
+        let owner: CrimeCoordinator
+
+        func stepGuardResponse() {
+            let world = owner.world
+            guard let runtime = owner.reporter?.runtime, let now = world.gameSeconds else {
+                return
+            }
+            finishConversationIfClosed(runtime: runtime, now: now)
+            let ledger = runtime.ledger()
+            for faction in owner.guards.resisted where ledger.gold(for: faction) <= 0 {
+                owner.guards.forgive(faction)
+            }
+            for faction in owner.guards.expiredResistance(now: now) {
+                owner.guards.forgive(faction)
+            }
+            owner.refreshGuardHostility()
+            guard ledger.totalGold > 0, !world.isDialogueOpen else {
+                releasePursuers(except: nil)
+                return
+            }
+            let actions = owner.guards.actions(
+                guards: world.guardCandidates(
+                    guardFaction: owner.reporter?.runtime.factions.guardFactionKey
+                ),
+                bounty: { ledger.entry(for: $0) },
+                values: { runtime.factions.crimeValues(of: $0) },
+                settings: runtime.settings,
+                now: now
+            )
+            releasePursuers(except: actions.first.map(CrimeCore.guardKey(of:)))
+            for action in actions {
+                carryOut(action, now: now)
+            }
+        }
+
+        func refreshGuardHostility() {
+            guard let runtime = owner.reporter?.runtime else { return }
+            owner.pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
+                ledger: runtime.ledger(), factions: runtime.factions,
+                resisted: owner.guards.resisted,
+                settings: runtime.settings, alarmFighters: owner.alarm.fighters
+            )))
+        }
+
+        func resistArrest(with faction: ReferenceKey) {
+            let world = owner.world
+            if case let .confront(guardKey, _, _) = owner.guards.active {
+                world.resumePackage(for: guardKey)
+            }
+            owner.guards.resist(faction, now: world.gameSeconds ?? 0)
+            owner.lastGuard = .resisted(faction: owner.factionName(faction))
+            owner.refreshGuardHostility()
+        }
+
+        func carryOut(_ action: GuardAction, now: Double) {
+            switch action {
+            case let .pursue(guardKey, faction):
+                pursue(guardKey, crimeFaction: faction)
+            case let .confront(guardKey, faction, bounty):
+                confront(guardKey, crime: (faction, bounty), action: action, now: now)
+            }
+        }
+
+        func confront(
+            _ guardKey: ReferenceKey,
+            crime: (faction: ReferenceKey, bounty: Int32),
+            action: GuardAction,
+            now: Double
+        ) {
+            let world = owner.world
+            world.stopActor(guardKey)
+            owner.pursuitTargets[guardKey] = nil
+            owner.guards.begin(action)
+            world.beginDialogue(with: guardKey)
+            guard world.isDialogueOpen else {
+                // No dialogue index, or the menu refused: hold this guard off
+                // rather than retrying every frame.
+                owner.guards.end(settled: false, now: now)
+                world.resumePackage(for: guardKey)
+                owner.lastGuard = .conversationFailed(reason: world.lastDialogueOutcome)
+                return
+            }
+            owner.lastGuard = .confronted(
+                bounty: crime.bounty,
+                faction: owner.factionName(crime.faction)
+            )
+        }
+
+        func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {
+            let world = owner.world
+            guard let player = world.playerFeet, CrimeCore.needsRepath(
+                lastTarget: owner.pursuitTargets[guardKey],
+                player: player
+            ) else {
+                return
+            }
+            world.suspendPackage(for: guardKey)
+            guard let result = world.moveActor(guardKey, to: player) else { return }
+            owner.pursuitTargets[guardKey] = player
+            owner.lastGuard = .pursuing(faction: owner.factionName(faction), move: result)
+        }
+
+        /// Hands every pursuing guard but `kept` back to its package.
+        func releasePursuers(except kept: ReferenceKey?) {
+            let world = owner.world
+            for guardKey in owner.pursuitTargets.keys where guardKey != kept {
+                owner.pursuitTargets[guardKey] = nil
+                world.stopActor(guardKey)
+                world.resumePackage(for: guardKey)
+            }
+        }
+
+        /// A conversation that closes with the bounty still owed is resisting
+        /// arrest (<https://en.uesp.net/wiki/Skyrim:Crime>). One that closes with it
+        /// cleared, without a fine or jail, sent the guard away quietly.
+        func finishConversationIfClosed(runtime: CrimeRuntime, now: Double) {
+            let world = owner.world
+            guard
+                world.isDialogueOpen == false,
+                case let .confront(guardKey, faction, _) = owner.guards.active
+            else { return }
+            if runtime.crimeGold(of: faction) > 0 {
+                owner.resistArrest(with: faction)
+            } else {
+                owner.guards.end(settled: true, now: now)
+                world.resumePackage(for: guardKey)
+                // A bribe, a Thane's status, or the Thieves Guild sent the guard away
+                // quietly, so the victims forget the catch (UESP "Skyrim:Pickpocket").
+                owner.pendingCommands.append(.settlePickpocketCatches(faction, forgotten: true))
+            }
+        }
+
+        func reportActorAssault(on target: ReferenceKey, by aggressor: ReferenceKey) {
+            let world = owner.world
+            guard target != aggressor, aggressor != .player else { return }
+            let strike = ActorStrike(aggressor: aggressor, target: target)
+            let answered = ActorStrike(aggressor: target, target: aggressor)
+            guard
+                !owner.actorFirstStrikes.contains(answered),
+                owner.policedFaction(of: aggressor) == nil,
+                let faction = owner
+                    .crimeFaction(in: owner.crimeCell(of: target) ?? world.currentCellLocation),
+                target == .player || world.protects(faction, target)
+            else { return }
+            owner.actorFirstStrikes.insert(strike)
+            owner.raiseAlarm(
+                CrimeEvent(
+                    kind: .assault, perpetrator: aggressor, victim: target, crimeFaction: faction,
+                    witnessed: true
+                ),
+                faction: faction, gold: 0, direct: target == .player ? [] : [target]
+            )
+            owner.lastGuard = .actorCriminal(
+                name: world.actorName(aggressor),
+                faction: owner.factionName(faction)
+            )
+            owner.refreshGuardHostility()
+        }
     }
 }
