@@ -144,6 +144,9 @@ struct AIAdapterPartsTests {
             .packageAction(.shout(target, at: Self.actor), actor: Self.actor) == .failed)
         let find = PackageAction.find(target, center: .zero, radius: 0)
         #expect(adapter.worlds.packageAction(find, actor: Self.actor) == .found([]))
+        let weapons = Package.Target(rawKind: 2, value: 11, countOrDistance: 0)
+        let findWeapon = PackageAction.find(weapons, center: .zero, radius: 0)
+        #expect(adapter.worlds.packageAction(findWeapon, actor: Self.actor) == .found([]))
     }
 
     @Test func aPackageNearTheActorUsesItsLivePosition() {
