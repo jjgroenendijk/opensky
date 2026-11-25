@@ -116,7 +116,7 @@ extension CrimeWorldAdapter {
     public func alarmReaction(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> AlarmReactionTerms? {
-        factions.alarmReaction(of: observer, toward: target)
+        AlarmReads(owner: self).alarmReaction(of: observer, toward: target)
     }
 
     public func playerFollowers() -> [ReferenceKey] {
@@ -153,5 +153,18 @@ extension CrimeWorldAdapter {
 
     public func beginDialogue(with speaker: ReferenceKey) {
         actors.beginDialogue(with: speaker)
+    }
+}
+
+extension CrimeWorldAdapter {
+    /// Reads how an actor reacts to a crime.
+    struct AlarmReads {
+        let owner: CrimeWorldAdapter
+
+        func alarmReaction(
+            of observer: ReferenceKey, toward target: ReferenceKey
+        ) -> AlarmReactionTerms? {
+            owner.factions.alarmReaction(of: observer, toward: target)
+        }
     }
 }

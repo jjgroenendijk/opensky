@@ -80,6 +80,8 @@ public final class StoryWorldAdapter {
         frames.socialSearch
     }
 
+    public private(set) lazy var socialWorlds = SocialWorlds(socialSearch: socialSearch)
+
     var socialActs: StorySocialActsAdapter {
         frames.socialActs
     }
@@ -115,7 +117,7 @@ public final class StoryWorldAdapter {
     /// `KILL`. The murder is settled first, so the crime status can say whether
     /// it was reported. The rank is unchanged by the death.
     public func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
-        frames.events.reportKill(victim: victim, killer: killer)
+        StoryEvents(host: self).reportKill(victim: victim, killer: killer)
     }
 
     public var questRuntime: QuestRuntime? {
@@ -130,9 +132,7 @@ public final class StoryWorldAdapter {
     /// A new game starts the same listed quests again over the cleared state, and its
     /// actors start at their packages' places.
     public func rerunSessionStart() {
-        storyManager.social.reset()
-        runSessionStart(lists: sessionStartLists)
-        game.packages.placeActorsAtPackagePlaces()
+        StoryEvents(host: self).rerunSessionStart()
     }
 }
 
@@ -145,14 +145,14 @@ extension StoryWorldAdapter: QuestStarting {
 extension StoryWorldAdapter: StoryEventReporting {
     /// An event with no `L1` takes the location of its `R1`, or the player's.
     public func reportStoryEvent(_ event: StoryEventData) {
-        storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
+        StoryEvents(host: self).reportStoryEvent(event)
     }
 }
 
 extension StoryWorldAdapter: StoryManagerWorld {
     /// With the dialogue facts, because event nodes such as `ADIA` test voice types.
     public func conditionContext() -> ConditionContext {
-        game.dialogueWorld.conditionContext()
+        StoryEvents(host: self).conditionContext()
     }
 
     public var questStarter: (any QuestStarting)? {
@@ -164,7 +164,7 @@ extension StoryWorldAdapter: SceneWorld {}
 
 extension StoryWorldAdapter: PapyrusStoryBridge {
     public func sendStoryEvent(_ event: StoryEventData) -> Bool {
-        !(storyManager.fire(event)?.startedQuests.isEmpty ?? true)
+        StoryEvents(host: self).sendStoryEvent(event)
     }
 
     public func startScene(_ scene: FormID, force: Bool) -> Bool {
@@ -395,5 +395,38 @@ final class StoryFrameSteps {
 
     var sceneCast: StorySceneCastAdapter {
         StorySceneCastAdapter(game: hosts)
+    }
+}
+
+extension StoryWorldAdapter {
+    /// Reports kills and story events and reruns the session start.
+    struct StoryEvents {
+        let host: StoryWorldAdapter
+
+        func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
+            let frames = host.frames
+            frames.events.reportKill(victim: victim, killer: killer)
+        }
+
+        func rerunSessionStart() {
+            let game = host.game
+            host.storyManager.social.reset()
+            host.runSessionStart(lists: host.sessionStartLists)
+            game.packages.placeActorsAtPackagePlaces()
+        }
+
+        func reportStoryEvent(_ event: StoryEventData) {
+            let game = host.game
+            host.storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
+        }
+
+        func conditionContext() -> ConditionContext {
+            let game = host.game
+            return game.dialogueWorld.conditionContext()
+        }
+
+        func sendStoryEvent(_ event: StoryEventData) -> Bool {
+            !(host.storyManager.fire(event)?.startedQuests.isEmpty ?? true)
+        }
     }
 }

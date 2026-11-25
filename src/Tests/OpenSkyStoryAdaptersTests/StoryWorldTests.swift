@@ -174,7 +174,7 @@ struct StoryWorldTests {
             isDead: false,
             isInScene: false
         )
-        #expect(adapter.socialCanSee(one, one))
+        #expect(adapter.socialWorlds.socialCanSee(one, one))
         #expect(host.fakeAiWorld.perceptionHasLineOfSightCalls.count == 1)
     }
 
@@ -184,7 +184,7 @@ struct StoryWorldTests {
             CombatActorObservation(key: Self.actor, feet: .zero),
             CombatActorObservation(key: Self.killer, feet: .zero, isDead: true)
         ]
-        let frame = try #require(adapter.socialFrame(partners: []))
+        let frame = try #require(adapter.socialWorlds.socialFrame(partners: []))
         #expect(frame.actors.map(\.isInScene) == [true, false])
         #expect(frame.actors.map(\.isDead) == [false, true])
         #expect(!frame.isInterior)

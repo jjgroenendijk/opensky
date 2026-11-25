@@ -83,41 +83,7 @@ extension StoryAmbientTalkAdapter {
     /// The fighters grouped by target say their detection lines, such as when they lose
     /// the target or find it again.
     private func sayDetectionLines(_ ambient: AmbientSpeechFrame) {
-        guard
-            let loop = game.combat.loop,
-            let player = game.gameSession?.walkController.feetPosition
-        else { return }
-        let actors = game.actorWorld.combatActors()
-        witnessDeaths(among: actors) { [scripts = game.scripts] victim in
-            scripts.bridge?.scriptedState(of: victim).form(ScriptedStateName.killer)
-        }
-        let free = Dictionary(ambient.speakers.map { ($0.key, $0) }) { first, _ in first }
-        var positions: [ReferenceKey: SIMD3<Float>] = [.player: player]
-        for actor in actors {
-            positions[actor.key] = actor.feet
-        }
-        let members = actors.compactMap { actor -> DetectionMember? in
-            guard !actor.isDead, let target = loop.combatTarget(of: actor.key) else { return nil }
-            let speaker = free[actor.key]
-            return DetectionMember(
-                key: actor.key, target: target, feet: actor.feet,
-                isSearching: loop.activity(of: actor.key) == .searching,
-                canSpeak: speaker?.isFree == true
-                    && (speaker?.distanceToPlayer ?? .infinity) <= Self.detectionHearingDistance
-            )
-        }
-        let frame = DetectionDialogueFrame(
-            members: members, now: ambient.now, targetPositions: positions,
-            deadTargets: Set(actors.filter(\.isDead).map(\.key)), playerFeet: player
-        )
-        for line in game.dialogue.detectionLines(frame) {
-            guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { continue }
-            let seconds = sceneLines.lineDuration(of: info, speaker: line.request.speaker)
-                ?? SceneLine.defaultSeconds
-            sceneLines.speak(
-                info: line.info, speaker: line.request.speaker, lookAt: nil, seconds: seconds
-            )
-        }
+        AmbientTalkReads(owner: self).sayDetectionLines(ambient)
     }
 
     /// Each actor that died since the last pass is seen by the living actors near it.
@@ -222,29 +188,7 @@ extension StoryAmbientTalkAdapter {
     }
 
     private func ambientSpeechFrame(now: Double) -> AmbientSpeechFrame? {
-        guard let player = game.gameSession?.walkController.feetPosition else { return nil }
-        let inScenes = game.scenes.actorsInScenes()
-        let conversation = game.dialogue.conversationSpeaker
-        let perception = game.perception.runtime
-        let loop = game.combat.loop
-        let speakers = game.actorWorld.combatActors().map { actor in
-            let flags = game.packages.runtime?.currentPackage(for: actor.key)?
-                .package.general.interruptFlags ?? 0
-            let state = perception?.state(observer: actor.key, target: .player).state
-            return AmbientSpeaker(
-                key: actor.key,
-                distanceToPlayer: simd_distance(actor.feet, player),
-                seesPlayer: state == .detected,
-                isFighting: loop?.phase(of: actor.key)?.isEngaged ?? false,
-                isFree: !actor.isDead && !inScenes.contains(actor.key) && actor.key != conversation
-                    && !game.storyManager.social.isWatchingCombat(actor.key),
-                allowsHello: flags & 0x01 != 0,
-                allowsIdleChatter: flags & Self.idleChatterFlag != 0
-            )
-        }
-        return AmbientSpeechFrame(
-            speakers: speakers, now: now, playerInConversation: conversation != nil
-        )
+        AmbientTalkReads(owner: self).ambientSpeechFrame(now: now)
     }
 
     // The author named these idles, so they play without their own conditions.
@@ -257,4 +201,82 @@ public struct DelayedLine {
     public let speaker: ReferenceKey
     public let lookAt: ReferenceKey?
     public let seconds: Float
+}
+
+extension StoryAmbientTalkAdapter {
+    /// Builds the detection lines and the ambient speech frame from the session's ports.
+    struct AmbientTalkReads {
+        let owner: StoryAmbientTalkAdapter
+
+        func sayDetectionLines(_ ambient: AmbientSpeechFrame) {
+            let game = owner.game
+            let sceneLines = owner.sceneLines
+            guard
+                let loop = game.combat.loop,
+                let player = game.gameSession?.walkController.feetPosition
+            else { return }
+            let actors = game.actorWorld.combatActors()
+            owner.witnessDeaths(among: actors) { [scripts = game.scripts] victim in
+                scripts.bridge?.scriptedState(of: victim).form(ScriptedStateName.killer)
+            }
+            let free = Dictionary(ambient.speakers.map { ($0.key, $0) }) { first, _ in first }
+            var positions: [ReferenceKey: SIMD3<Float>] = [.player: player]
+            for actor in actors {
+                positions[actor.key] = actor.feet
+            }
+            let members = actors.compactMap { actor -> DetectionMember? in
+                guard
+                    !actor.isDead,
+                    let target = loop.combatTarget(of: actor.key) else { return nil }
+                let speaker = free[actor.key]
+                return DetectionMember(
+                    key: actor.key, target: target, feet: actor.feet,
+                    isSearching: loop.activity(of: actor.key) == .searching,
+                    canSpeak: speaker?.isFree == true
+                        && (speaker?.distanceToPlayer ?? .infinity) <= StoryAmbientTalkAdapter
+                        .detectionHearingDistance
+                )
+            }
+            let frame = DetectionDialogueFrame(
+                members: members, now: ambient.now, targetPositions: positions,
+                deadTargets: Set(actors.filter(\.isDead).map(\.key)), playerFeet: player
+            )
+            for line in game.dialogue.detectionLines(frame) {
+                guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { continue }
+                let seconds = sceneLines.lineDuration(of: info, speaker: line.request.speaker)
+                    ?? SceneLine.defaultSeconds
+                sceneLines.speak(
+                    info: line.info, speaker: line.request.speaker, lookAt: nil, seconds: seconds
+                )
+            }
+        }
+
+        func ambientSpeechFrame(now: Double) -> AmbientSpeechFrame? {
+            let game = owner.game
+            guard let player = game.gameSession?.walkController.feetPosition else { return nil }
+            let inScenes = game.scenes.actorsInScenes()
+            let conversation = game.dialogue.conversationSpeaker
+            let perception = game.perception.runtime
+            let loop = game.combat.loop
+            let speakers = game.actorWorld.combatActors().map { actor in
+                let flags = game.packages.runtime?.currentPackage(for: actor.key)?
+                    .package.general.interruptFlags ?? 0
+                let state = perception?.state(observer: actor.key, target: .player).state
+                return AmbientSpeaker(
+                    key: actor.key,
+                    distanceToPlayer: simd_distance(actor.feet, player),
+                    seesPlayer: state == .detected,
+                    isFighting: loop?.phase(of: actor.key)?.isEngaged ?? false,
+                    isFree: !actor.isDead && !inScenes.contains(actor.key) && actor
+                        .key != conversation
+                        && !game.storyManager.social.isWatchingCombat(actor.key),
+                    allowsHello: flags & 0x01 != 0,
+                    allowsIdleChatter: flags & StoryAmbientTalkAdapter.idleChatterFlag != 0
+                )
+            }
+            return AmbientSpeechFrame(
+                speakers: speakers, now: now, playerInConversation: conversation != nil
+            )
+        }
+    }
 }
