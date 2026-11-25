@@ -61,9 +61,7 @@ public final class PlayerGrabAdapter: PlayerGrabPort {
         self.settings = settings
         self.isEnabled = isEnabled
         useKey = GrabUseKey(holdDelay: settings.holdDelay)
-        stage?.gameSession.worldTick.register(.grab) { [weak self] delta in
-            self?.steer(delta: delta)
-        }
+        PlayerGrabTick.register(self, stage: stage)
     }
 
     public var grabReadout: PlayerGrabReadout {
@@ -326,5 +324,15 @@ extension PlayerGrabAdapter {
             return nil
         }
         return bodies.indices.contains(body ?? 0) ? bodies[body ?? 0].position : nil
+    }
+}
+
+/// Steers the held object on each world tick.
+@MainActor
+enum PlayerGrabTick {
+    static func register(_ grab: PlayerGrabAdapter, stage: SessionStage?) {
+        stage?.gameSession.worldTick.register(.grab) { [weak grab] delta in
+            grab?.steer(delta: delta)
+        }
     }
 }
