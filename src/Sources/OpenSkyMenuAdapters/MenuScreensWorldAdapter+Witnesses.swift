@@ -26,7 +26,7 @@ extension MenuScreensWorldAdapter: GiftMenuWorld {}
 /// Witnesses that forward to the narrow parts of `MenuScreensWorldAdapter`.
 extension MenuScreensWorldAdapter {
     public func bookContent(_ item: FormID) -> BookContent? {
-        craftingDesk.bookContent(item)
+        MenuBookReads(game: craftingDesk.game, items: craftingDesk.items).bookContent(item)
     }
 
     public func readBook(_ item: FormID) -> String? {
@@ -34,7 +34,8 @@ extension MenuScreensWorldAdapter {
     }
 
     public func noteBookRead(_ item: FormID, reference: FormID?) {
-        craftingDesk.noteBookRead(item, reference: reference)
+        MenuBookReads(game: craftingDesk.game, items: craftingDesk.items)
+            .noteBookRead(item, reference: reference)
     }
 
     public var carriedBooks: [FormID] {

@@ -28,6 +28,13 @@ struct CraftingDeskWitnessTests {
         #expect(session.menuViewOffsetValue?.horizontalFOVDegrees == 10)
     }
 
+    @Test func aBookNeedsTheItemStoreAndAReadNeedsTheScripts() {
+        let screens = MenuScreensWorldAdapter(game: host)
+        #expect(screens.bookContent(FormID(0x100)) == nil)
+        screens.noteBookRead(FormID(0x100), reference: FormID(0x200))
+        screens.noteBookRead(FormID(0x100), reference: nil)
+    }
+
     @Test func theCraftingDeskReadsTheOpenStationAndItsTexts() {
         let screens = MenuScreensWorldAdapter(game: host)
         let readout = host.fakeInventory.craftingReadout
