@@ -109,7 +109,7 @@ nonisolated extension ArcheryShotPhase {
 
 extension CombatCoordinator {
     public var playerActionFacts: ActorActionFacts? {
-        shared.melee.map { PlayerActionFacts.facts(melee: $0, archery: shared.archery) }
+        ActionFactReads(owner: self).playerActionFacts
     }
 }
 
@@ -123,5 +123,17 @@ enum PlayerActionFacts {
             facts.attackState = phase.attackState
         }
         return facts
+    }
+}
+
+extension CombatCoordinator {
+    /// Reads the player's action facts for the behaviour graph.
+    struct ActionFactReads {
+        let owner: CombatCoordinator
+
+        var playerActionFacts: ActorActionFacts? {
+            let shared = owner.shared
+            return shared.melee.map { PlayerActionFacts.facts(melee: $0, archery: shared.archery) }
+        }
     }
 }

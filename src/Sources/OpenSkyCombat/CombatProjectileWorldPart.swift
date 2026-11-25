@@ -26,31 +26,7 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
     /// The candidates are the living hostile actors in combat, without the mount the
     /// player rides.
     func projectileAutoAim(from shooter: ProjectileShooter) -> ProjectileAimPick? {
-        let world = shared.world
-        guard let loop = shared.loop, let fovY = world.playerViewFOVYRadians else { return nil }
-        let mount = world.playerMount
-        let view = ProjectileAimView(fovYRadians: fovY, aspect: world.playerViewAspect ?? 1)
-        let candidates = world.residentActors().compactMap { actor -> ProjectileAimCandidate? in
-            guard
-                !actor.isDead, actor.key != mount, world.hostility(of: actor.key) == .hostile,
-                loop.activity(of: actor.key) != .notFighting
-            else { return nil }
-            let height = actor.capsule.height * actor.scale
-            return ProjectileAimCandidate(
-                key: actor.key, centre: actor.feet + SIMD3(0, 0, height / 2),
-                top: actor.feet + SIMD3(0, 0, height)
-            )
-        }
-        guard
-            let target = ProjectileAutoAim.pick(
-                candidates, from: shooter.origin, forward: shooter.aim, view: view
-            )
-        else { return nil }
-        let hand = shared.melee?.weapon.handType ?? .handToHand
-        return ProjectileAimPick(
-            target: target,
-            rightHandIsFree: !(hand.isRanged || hand == .staff || hand == .spell)
-        )
+        AimAndDamage(owner: self).projectileAutoAim(from: shooter)
     }
 
     func projectileTargets() -> [MeleeTarget] {
@@ -66,30 +42,7 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
     func applyProjectileDamage(
         _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
     ) -> Bool {
-        guard !shared.perks.deflectsArrow(target) else { return false }
-        let damage = shared.damage
-        guard shooter == projectileShooter.key else {
-            return damage.applyHealthDamage(amount, to: target, attacker: shooter, kind: .ranged)
-        }
-        let weapon = shared.gear.playerWeapon()
-        let blow = CombatBlow(
-            attacker: shooter, weapon: weapon?.formID,
-            handType: CombatHandType(weapon: weapon?.animationType) == .crossbow
-                ? .crossbow : .bow,
-            baseDamage: amount
-        )
-        let strikes = shared.strikes
-        let strike = strikes.strike(blow, on: target)
-        strikes.reportSneakAttack(strike, ranged: true)
-        strikes.countCriticalStats(strike, blow: blow, on: target)
-        strikes.reportCriticalStrike(strike, blow: blow, on: target)
-        let landed = damage.applyHealthDamage(
-            strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged
-        )
-        if landed {
-            shared.perks.applyPerkHitSpell(blow, on: target)
-        }
-        return landed
+        AimAndDamage(owner: self).applyProjectileDamage(amount, to: target, from: shooter)
     }
 
     func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool {
@@ -177,5 +130,77 @@ extension CombatProjectileWorldPart {
         projectiles.arrows = data.arrows
         projectiles.magicWorld = data.magicWorld
         return ArcheryRuntime(settings: data.archery, projectiles: projectiles, world: self)
+    }
+}
+
+extension CombatProjectileWorldPart {
+    /// Picks the auto-aim target of a shot and applies the damage of a hit.
+    struct AimAndDamage {
+        let owner: CombatProjectileWorldPart
+
+        func projectileAutoAim(from shooter: ProjectileShooter) -> ProjectileAimPick? {
+            let world = owner.shared.world
+            guard
+                let loop = owner.shared.loop,
+                let fovY = world.playerViewFOVYRadians else { return nil }
+            let mount = world.playerMount
+            let view = ProjectileAimView(fovYRadians: fovY, aspect: world.playerViewAspect ?? 1)
+            let candidates = world.residentActors().compactMap { actor -> ProjectileAimCandidate? in
+                guard
+                    !actor.isDead, actor.key != mount, world.hostility(of: actor.key) == .hostile,
+                    loop.activity(of: actor.key) != .notFighting
+                else { return nil }
+                let height = actor.capsule.height * actor.scale
+                return ProjectileAimCandidate(
+                    key: actor.key, centre: actor.feet + SIMD3(0, 0, height / 2),
+                    top: actor.feet + SIMD3(0, 0, height)
+                )
+            }
+            guard
+                let target = ProjectileAutoAim.pick(
+                    candidates, from: shooter.origin, forward: shooter.aim, view: view
+                )
+            else { return nil }
+            let hand = owner.shared.melee?.weapon.handType ?? .handToHand
+            return ProjectileAimPick(
+                target: target,
+                rightHandIsFree: !(hand.isRanged || hand == .staff || hand == .spell)
+            )
+        }
+
+        @discardableResult
+        func applyProjectileDamage(
+            _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
+        ) -> Bool {
+            guard !owner.shared.perks.deflectsArrow(target) else { return false }
+            let damage = owner.shared.damage
+            guard shooter == owner.projectileShooter.key else {
+                return damage.applyHealthDamage(
+                    amount,
+                    to: target,
+                    attacker: shooter,
+                    kind: .ranged
+                )
+            }
+            let weapon = owner.shared.gear.playerWeapon()
+            let blow = CombatBlow(
+                attacker: shooter, weapon: weapon?.formID,
+                handType: CombatHandType(weapon: weapon?.animationType) == .crossbow
+                    ? .crossbow : .bow,
+                baseDamage: amount
+            )
+            let strikes = owner.shared.strikes
+            let strike = strikes.strike(blow, on: target)
+            strikes.reportSneakAttack(strike, ranged: true)
+            strikes.countCriticalStats(strike, blow: blow, on: target)
+            strikes.reportCriticalStrike(strike, blow: blow, on: target)
+            let landed = damage.applyHealthDamage(
+                strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged
+            )
+            if landed {
+                owner.shared.perks.applyPerkHitSpell(blow, on: target)
+            }
+            return landed
+        }
     }
 }

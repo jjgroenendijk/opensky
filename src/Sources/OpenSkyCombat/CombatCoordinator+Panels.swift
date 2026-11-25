@@ -20,25 +20,11 @@ extension CombatCoordinator {
     }
 
     public var projectileReadout: ProjectileReadout {
-        var readout = shared.archery?.projectiles.readout ?? ProjectileReadout()
-        readout.lastKillCamCheck = shared.lastKillCamCheck
-        return readout
+        PanelReadouts(owner: self).projectileReadout
     }
 
     public var assistReadout: CombatAssistReadout {
-        var readout = CombatAssistReadout()
-        if let loop = shared.loop {
-            readout.tracks = loop.attackTracks.keys.sorted().compactMap { key in
-                loop.attackTracks[key].map {
-                    .init(attacker: key, target: $0.target, aim: $0.aim, refreshes: $0.refreshes)
-                }
-            }
-            readout.watches = loop.dangerWatches
-            readout.threats = loopWorld.combatDangerThreats()
-        }
-        readout.autoAim = shared.archery?.projectiles.lastAutoAim
-        readout.reactions = shared.hitReactions
-        return readout
+        PanelReadouts(owner: self).assistReadout
     }
 }
 
@@ -83,5 +69,42 @@ extension CombatLoopSnapshot {
         usesTemperament = shared.usesTemperament
         combatAI = shared.combatAI
         isInInterior = shared.world.isInInterior
+    }
+}
+
+extension CombatCoordinator {
+    /// Builds the projectile and assist readouts.
+    struct PanelReadouts {
+        let owner: CombatCoordinator
+
+        var projectileReadout: ProjectileReadout {
+            let shared = owner.shared
+            var readout = shared.archery?.projectiles.readout ?? ProjectileReadout()
+            readout.lastKillCamCheck = shared.lastKillCamCheck
+            return readout
+        }
+
+        var assistReadout: CombatAssistReadout {
+            let loopWorld = owner.loopWorld
+            let shared = owner.shared
+            var readout = CombatAssistReadout()
+            if let loop = shared.loop {
+                readout.tracks = loop.attackTracks.keys.sorted().compactMap { key in
+                    loop.attackTracks[key].map {
+                        .init(
+                            attacker: key,
+                            target: $0.target,
+                            aim: $0.aim,
+                            refreshes: $0.refreshes
+                        )
+                    }
+                }
+                readout.watches = loop.dangerWatches
+                readout.threats = loopWorld.combatDangerThreats()
+            }
+            readout.autoAim = shared.archery?.projectiles.lastAutoAim
+            readout.reactions = shared.hitReactions
+            return readout
+        }
     }
 }

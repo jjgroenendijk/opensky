@@ -31,64 +31,79 @@ nonisolated public struct CombatArrowShot: Equatable, Sendable {
 extension CombatLoopWorldPart {
     /// False when the shooter carries no arrow or the session has no archery.
     func fireCombatArrow(_ shot: CombatArrowShot) -> Bool {
-        let key = shot.shooter.key
-        let gear = shared.world.gearReads
-        guard
-            let archery = shared.archery, let items = shared.items,
-            let arrow = CombatCore.arrow(
-                equipped: gear.equippedItems(of: key).map(\.item),
-                carried: gear.carriedItems(of: key),
-                bolts: shot.bow.handType == .crossbow,
-                resolve: items.archeryAmmunition
-            )
-        else { return false }
-        let origin = shot.shooter.feet
-            + SIMD3(0, 0, shot.shooter.capsule.eyeHeight * shot.shooter.scale)
-        let centre = shot.target.feet + SIMD3(0, 0, shot.target.capsule.height / 2)
-        var random = shared.archeryRandom
-        let aimed = NPCArcheryAim.noisy(
-            NPCArcheryAim.lead(
-                from: origin, to: centre, velocity: shot.targetVelocity,
-                speed: arrow.profile.speed
-            ),
-            random: &random
-        )
-        let gravity = ProjectileFlight.worldGravity * arrow.profile.gravityFactor
-        let maximum = NPCArcheryAim.maximumSpread(
-            skill: archerySkill(of: key), coneDegrees: archery.settings.npcSpreadDegrees
-        )
-        let direction = NPCArcheryAim.spread(
-            NPCArcheryAim.ballistic(
-                from: origin, to: aimed, speed: arrow.profile.speed, gravity: gravity
-            ),
-            maximum: maximum, random: &random
-        )
-        shared.archeryRandom = random
-        var payload = ArrowPayload(
-            damage: ArcheryDamage.resolve(
-                bowDamage: shot.bow.damage, arrowDamage: arrow.damage, skill: 0
-            ),
-            weapon: shot.bow.weapon,
-            ammunition: arrow.item
-        )
-        payload.spendsAmmunition = false
-        payload.stagger = shot.bow.stagger
-        payload.handType = shot.bow.handType
-        var fired = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))
-        fired.tiltsUp = false
-        let shooter = ProjectileShooter(
-            key: key, origin: origin, aim: direction, isFirstPerson: false,
-            location: shared.world.cellLocation(of: key)
-        )
-        return archery.projectiles.fire(fired, from: shooter) != nil
+        ArcheryShots(owner: self).fireCombatArrow(shot)
     }
 
     /// The shooter's Archery skill, or the starting value without actor values.
     private func archerySkill(of key: ReferenceKey) -> Float {
-        guard
-            let index = ActorValueIdentity.index(named: "Archery"),
-            let skill = shared.world.actorValues(of: key)?(index)
-        else { return ArcheryDamage.defaultArcherySkill }
-        return skill
+        ArcheryShots(owner: self).archerySkill(of: key)
+    }
+}
+
+extension CombatLoopWorldPart {
+    /// Fires the arrows of NPC archers and reads their archery skill.
+    struct ArcheryShots {
+        unowned let owner: CombatLoopWorldPart
+
+        func fireCombatArrow(_ shot: CombatArrowShot) -> Bool {
+            let key = shot.shooter.key
+            let gear = owner.shared.world.gearReads
+            guard
+                let archery = owner.shared.archery, let items = owner.shared.items,
+                let arrow = CombatCore.arrow(
+                    equipped: gear.equippedItems(of: key).map(\.item),
+                    carried: gear.carriedItems(of: key),
+                    bolts: shot.bow.handType == .crossbow,
+                    resolve: items.archeryAmmunition
+                )
+            else { return false }
+            let origin = shot.shooter.feet
+                + SIMD3(0, 0, shot.shooter.capsule.eyeHeight * shot.shooter.scale)
+            let centre = shot.target.feet + SIMD3(0, 0, shot.target.capsule.height / 2)
+            var random = owner.shared.archeryRandom
+            let aimed = NPCArcheryAim.noisy(
+                NPCArcheryAim.lead(
+                    from: origin, to: centre, velocity: shot.targetVelocity,
+                    speed: arrow.profile.speed
+                ),
+                random: &random
+            )
+            let gravity = ProjectileFlight.worldGravity * arrow.profile.gravityFactor
+            let maximum = NPCArcheryAim.maximumSpread(
+                skill: owner.archerySkill(of: key), coneDegrees: archery.settings.npcSpreadDegrees
+            )
+            let direction = NPCArcheryAim.spread(
+                NPCArcheryAim.ballistic(
+                    from: origin, to: aimed, speed: arrow.profile.speed, gravity: gravity
+                ),
+                maximum: maximum, random: &random
+            )
+            owner.shared.archeryRandom = random
+            var payload = ArrowPayload(
+                damage: ArcheryDamage.resolve(
+                    bowDamage: shot.bow.damage, arrowDamage: arrow.damage, skill: 0
+                ),
+                weapon: shot.bow.weapon,
+                ammunition: arrow.item
+            )
+            payload.spendsAmmunition = false
+            payload.stagger = shot.bow.stagger
+            payload.handType = shot.bow.handType
+            var fired = ProjectileShot(profile: arrow.profile, payload: .arrow(payload))
+            fired.tiltsUp = false
+            let shooter = ProjectileShooter(
+                key: key, origin: origin, aim: direction, isFirstPerson: false,
+                location: owner.shared.world.cellLocation(of: key)
+            )
+            return archery.projectiles.fire(fired, from: shooter) != nil
+        }
+
+        func archerySkill(of key: ReferenceKey) -> Float {
+            guard
+                let index = ActorValueIdentity.index(named: "Archery"),
+                let skill = owner.shared.world.actorValues(of: key)?(index)
+            else { return ArcheryDamage.defaultArcherySkill }
+            return skill
+        }
     }
 }

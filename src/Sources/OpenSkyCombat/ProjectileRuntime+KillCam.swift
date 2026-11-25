@@ -13,21 +13,35 @@ extension ProjectileRuntime {
     func turnForKillCam(
         _ projectile: inout LiveProjectile, shot: ProjectileShot, aimTarget: ReferenceKey?
     ) {
-        guard let aim = world?.projectileKillCamAim(for: projectile, aimTarget: aimTarget)
-        else { return }
-        let origin = projectile.launchPosition
-        let gravity = ProjectileFlight.worldGravity * shot.flightProfile.gravityFactor
-        let ballistic = NPCArcheryAim.ballistic(
-            from: origin, to: aim, speed: simd_length(projectile.state.velocity), gravity: gravity
-        )
-        projectile.state = ProjectileFlight.launch(
-            from: origin,
-            along: ProjectileAutoAim.turned(
-                projectile.launchDirection, toward: ballistic,
-                atMost: RangedKillCam.largestTurnDegrees
-            ),
-            profile: shot.flightProfile,
-            speedScale: shot.speedScale
-        )
+        KillCamTurn(owner: self).turnForKillCam(&projectile, shot: shot, aimTarget: aimTarget)
+    }
+}
+
+extension ProjectileRuntime {
+    /// Turns a shot for the kill camera.
+    struct KillCamTurn {
+        let owner: ProjectileRuntime
+
+        func turnForKillCam(
+            _ projectile: inout LiveProjectile, shot: ProjectileShot, aimTarget: ReferenceKey?
+        ) {
+            guard let aim = owner.world?.projectileKillCamAim(for: projectile, aimTarget: aimTarget)
+            else { return }
+            let origin = projectile.launchPosition
+            let gravity = ProjectileFlight.worldGravity * shot.flightProfile.gravityFactor
+            let ballistic = NPCArcheryAim.ballistic(
+                from: origin, to: aim, speed: simd_length(projectile.state.velocity),
+                gravity: gravity
+            )
+            projectile.state = ProjectileFlight.launch(
+                from: origin,
+                along: ProjectileAutoAim.turned(
+                    projectile.launchDirection, toward: ballistic,
+                    atMost: RangedKillCam.largestTurnDegrees
+                ),
+                profile: shot.flightProfile,
+                speedScale: shot.speedScale
+            )
+        }
     }
 }

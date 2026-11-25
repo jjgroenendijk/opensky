@@ -13,20 +13,7 @@ import simd
 extension ProjectileRuntime {
     /// Looks ahead along the flight when the timer is due, and notes where the world is.
     func lookAhead(_ projectile: inout LiveProjectile) {
-        guard projectile.state.age >= projectile.nextConeLook, let world else { return }
-        projectile.nextConeLook = projectile.state.age + max(magicWorld.coneEnvironmentTimer, 0)
-        let direction = ProjectileFlight.normalized(projectile.state.velocity)
-        let distance = max(magicWorld.coneEnvironmentDistance, 0)
-        guard distance > 0, simd_length_squared(direction) > 0 else { return }
-        let hit = world.sweepProjectile(
-            ShapeSweepQuery.sphere(
-                center: projectile.position, radius: 0, direction: direction,
-                maximumDistance: distance
-            )
-        )
-        projectile.coneStop = hit.map { projectile.state.travelled + $0.distance }
-        projectile.coneWall = hit?.reference
-        projectile.coneWallMaterial = hit?.material
+        ConeLookAhead(owner: self).lookAhead(&projectile)
     }
 
     /// The first actor this step touches, else the wall the look ahead found once the
@@ -56,5 +43,34 @@ extension ProjectileRuntime {
             reference: projectile.coneWall, material: projectile.coneWallMaterial,
             normal: -ProjectileFlight.normalized(projectile.state.velocity)
         )
+    }
+}
+
+extension ProjectileRuntime {
+    /// Looks ahead along a projectile's cone.
+    struct ConeLookAhead {
+        let owner: ProjectileRuntime
+
+        func lookAhead(_ projectile: inout LiveProjectile) {
+            guard
+                projectile.state.age >= projectile.nextConeLook,
+                let world = owner.world else { return }
+            projectile.nextConeLook = projectile.state.age + max(
+                owner.magicWorld.coneEnvironmentTimer,
+                0
+            )
+            let direction = ProjectileFlight.normalized(projectile.state.velocity)
+            let distance = max(owner.magicWorld.coneEnvironmentDistance, 0)
+            guard distance > 0, simd_length_squared(direction) > 0 else { return }
+            let hit = world.sweepProjectile(
+                ShapeSweepQuery.sphere(
+                    center: projectile.position, radius: 0, direction: direction,
+                    maximumDistance: distance
+                )
+            )
+            projectile.coneStop = hit.map { projectile.state.travelled + $0.distance }
+            projectile.coneWall = hit?.reference
+            projectile.coneWallMaterial = hit?.material
+        }
     }
 }
