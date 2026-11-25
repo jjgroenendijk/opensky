@@ -54,46 +54,12 @@ public struct AgentActorReadoutAdapter {
 
 extension AgentActorReadoutAdapter {
     public func cellState(at position: SIMD3<Float>) -> AgentJSON {
-        let streamer = game.streamer
-        if let interior = streamer.interiorScene {
-            return ["interior": true, "name": .string(interior.summary.cellName)]
-        }
-        let grid = CellCoordinate(containing: position)
-        return [
-            "interior": false, "x": .init(Int(grid.x)), "y": .init(Int(grid.y)),
-            "name": .init(streamer.composition.cells[grid]?.summary.cellName)
-        ]
+        CellAndTarget(owner: self).cellState(at: position)
     }
 
     /// Null only when the view ray met nothing; with no target, only `rayHit`.
     public func targetState() -> AgentJSON {
-        let streamer = game.streamer
-        let rayHit: AgentJSON = streamer.interactionRayHit.map { hit in
-            [
-                "ref": .formID(hit.reference.rawValue),
-                "base": streamer.referenceEntry(formID: hit.reference)?.placedReference.map {
-                    AgentJSON.formID($0.base.rawValue)
-                } ?? .null,
-                "distance": .init(hit.distance),
-                "usable": .bool(streamer.residentInteraction(reference: hit.reference) != nil)
-            ]
-        } ?? .null
-        guard let target = streamer.interactionTarget else {
-            guard case .object = rayHit else { return .null }
-            return ["rayHit": rayHit]
-        }
-        // The verb the HUD shows, laid on at run time, not the cell build's fallback.
-        let interaction = game.inventory.craftingBench.labelled(target.interaction)
-        return [
-            "ref": .formID(interaction.reference.rawValue),
-            "base": .formID(interaction.base.rawValue),
-            "name": .string(interaction.name),
-            "action": .string(interaction.actionLabel),
-            "distance": .init(target.distance),
-            "position": .init(interaction.position),
-            "theft": .bool(game.inventory.itemPanels.targetOwnership()?.isTheft == true),
-            "rayHit": rayHit
-        ]
+        CellAndTarget(owner: self).targetState()
     }
 
     /// The nearest `detailed` actors get a full row and the others a short one, so the
@@ -291,5 +257,56 @@ extension AgentActorReadoutAdapter {
             "lineOfSight": .bool(pair.hasLineOfSight),
             "inViewCone": .bool(pair.isInViewCone)
         ])
+    }
+}
+
+extension AgentActorReadoutAdapter {
+    /// Reads the cell at a place and the player's target.
+    struct CellAndTarget {
+        let owner: AgentActorReadoutAdapter
+
+        func cellState(at position: SIMD3<Float>) -> AgentJSON {
+            let game = owner.game
+            let streamer = game.streamer
+            if let interior = streamer.interiorScene {
+                return ["interior": true, "name": .string(interior.summary.cellName)]
+            }
+            let grid = CellCoordinate(containing: position)
+            return [
+                "interior": false, "x": .init(Int(grid.x)), "y": .init(Int(grid.y)),
+                "name": .init(streamer.composition.cells[grid]?.summary.cellName)
+            ]
+        }
+
+        func targetState() -> AgentJSON {
+            let game = owner.game
+            let streamer = game.streamer
+            let rayHit: AgentJSON = streamer.interactionRayHit.map { hit in
+                [
+                    "ref": .formID(hit.reference.rawValue),
+                    "base": streamer.referenceEntry(formID: hit.reference)?.placedReference.map {
+                        AgentJSON.formID($0.base.rawValue)
+                    } ?? .null,
+                    "distance": .init(hit.distance),
+                    "usable": .bool(streamer.residentInteraction(reference: hit.reference) != nil)
+                ]
+            } ?? .null
+            guard let target = streamer.interactionTarget else {
+                guard case .object = rayHit else { return .null }
+                return ["rayHit": rayHit]
+            }
+            // The verb the HUD shows, laid on at run time, not the cell build's fallback.
+            let interaction = game.inventory.craftingBench.labelled(target.interaction)
+            return [
+                "ref": .formID(interaction.reference.rawValue),
+                "base": .formID(interaction.base.rawValue),
+                "name": .string(interaction.name),
+                "action": .string(interaction.actionLabel),
+                "distance": .init(target.distance),
+                "position": .init(interaction.position),
+                "theft": .bool(game.inventory.itemPanels.targetOwnership()?.isTheft == true),
+                "rayHit": rayHit
+            ]
+        }
     }
 }

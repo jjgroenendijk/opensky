@@ -25,35 +25,7 @@ import OpenSkyWorldState
 
 extension AgentWorldAdapter {
     public func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling {
-        switch command {
-        case .teleport, .view:
-            return try .waiting(moveJob(command).wait)
-        case let .setTime(hour):
-            game.runtimeState.setGameClockHour(hour)
-            return done(["hour": .init(game.runtimeState.runtimeStateClock.hourOfDay)])
-        case let .weather(editorID):
-            return try done(render.forceWeather(editorID))
-        case .setActorValue, .modActorValue, .addItem, .removeItem:
-            return try done(items.changeActor(command))
-        case .setQuestStage, .world:
-            return try done(scriptedChange(command))
-        case .kill, .resurrect, .decapitate, .flight, .drunk, .knock, .knockdown, .perk,
-             .beastForm, .eyes, .link, .paired, .translate:
-            return try done(actorDebug(command))
-        case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
-             .loadScreen, .sound, .settings:
-            return try done(render.renderDebug(command))
-        case .raceMenu, .skillsMenu, .gamepad, .fastTravel, .newGame:
-            return try done(menuDebug(command))
-        case let .benchmark(request):
-            return try view.benchmark(request)
-        case .favor, .teammate, .relationship:
-            return try done(objects.followerDebug(command))
-        case .sit, .stand, .passTime:
-            return try done(behaviour.performFurniture(command))
-        case .subGraphEvent, .subGraphVariable:
-            return try done(objects.driveSubGraphs(command))
-        }
+        try DebugCommands(owner: self).perform(command)
     }
 
     /// The changes a script or a console line makes: a quest stage or a world change.
@@ -132,5 +104,45 @@ extension AgentWorldAdapter {
 
     public func teleportJob(to place: SavePlayerPlace) throws(AgentFailure) -> AgentTeleportJob {
         try AgentTeleportJob(hub: hub, place: place)
+    }
+}
+
+extension AgentWorldAdapter {
+    /// Runs the agent's debug commands.
+    struct DebugCommands {
+        let owner: AgentWorldAdapter
+
+        func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling {
+            switch command {
+            case .teleport, .view:
+                return try .waiting(owner.moveJob(command).wait)
+            case let .setTime(hour):
+                owner.game.runtimeState.setGameClockHour(hour)
+                return owner
+                    .done(["hour": .init(owner.game.runtimeState.runtimeStateClock.hourOfDay)])
+            case let .weather(editorID):
+                return try owner.done(owner.render.forceWeather(editorID))
+            case .setActorValue, .modActorValue, .addItem, .removeItem:
+                return try owner.done(owner.items.changeActor(command))
+            case .setQuestStage, .world:
+                return try owner.done(owner.scriptedChange(command))
+            case .kill, .resurrect, .decapitate, .flight, .drunk, .knock, .knockdown, .perk,
+                 .beastForm, .eyes, .link, .paired, .translate:
+                return try owner.done(owner.actorDebug(command))
+            case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
+                 .loadScreen, .sound, .settings:
+                return try owner.done(owner.render.renderDebug(command))
+            case .raceMenu, .skillsMenu, .gamepad, .fastTravel, .newGame:
+                return try owner.done(owner.menuDebug(command))
+            case let .benchmark(request):
+                return try owner.view.benchmark(request)
+            case .favor, .teammate, .relationship:
+                return try owner.done(owner.objects.followerDebug(command))
+            case .sit, .stand, .passTime:
+                return try owner.done(owner.behaviour.performFurniture(command))
+            case .subGraphEvent, .subGraphVariable:
+                return try owner.done(owner.objects.driveSubGraphs(command))
+            }
+        }
     }
 }

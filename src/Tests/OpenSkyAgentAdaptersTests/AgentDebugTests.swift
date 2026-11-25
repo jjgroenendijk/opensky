@@ -86,18 +86,18 @@ struct AgentDebugTests {
             ReferenceKey.player: VehicleLink(carrier: horse, seat: .bone("SaddleBone"))
         ]
 
-        #expect(AgentTeleportJob.sitsOnCart(.player, links: seated))
-        #expect(!AgentTeleportJob.sitsOnCart(.player, links: mounted))
-        #expect(!AgentTeleportJob.sitsOnCart(.player, links: [:]))
+        #expect(AgentTeleportJob.CartSeats.sitsOnCart(.player, links: seated))
+        #expect(!AgentTeleportJob.CartSeats.sitsOnCart(.player, links: mounted))
+        #expect(!AgentTeleportJob.CartSeats.sitsOnCart(.player, links: [:]))
 
         let vehicles = FakeVehiclePort()
         let world = FakeVehicleWorldPort()
         world.vehicles = vehicles
         vehicles.core.links = mounted
-        AgentTeleportJob.leaveCartSeat(vehicleWorld: world, session: nil)
+        AgentTeleportJob.CartSeats.leaveCartSeat(vehicleWorld: world, session: nil)
         #expect(world.detachCalls.isEmpty)
         vehicles.core.links = seated
-        AgentTeleportJob.leaveCartSeat(vehicleWorld: world, session: nil)
+        AgentTeleportJob.CartSeats.leaveCartSeat(vehicleWorld: world, session: nil)
         #expect(world.detachCalls == [.player])
     }
 
