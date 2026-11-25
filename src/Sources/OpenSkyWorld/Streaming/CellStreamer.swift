@@ -50,7 +50,7 @@ public final class CellStreamer {
 
     /// The asset cache sizes, when the runner keeps a cache.
     public var cachedAssetCounts: CachedAssetCounts? {
-        (runner as? SerialCellBuildRunner)?.cachedAssetCounts
+        ExteriorSwitch(owner: self).cachedAssetCounts
     }
 
     public let sink: SceneSink
@@ -302,9 +302,7 @@ extension CellStreamer {
     /// recenters the grid at `position` in `editorID`. The runner must already
     /// build in `editorID`, or have that change queued.
     func switchExterior(to editorID: String, at position: SIMD3<Float>) {
-        builds.resetExterior(at: position)
-        worldspaceEditorID = editorID
-        events.onWorldspaceChanged(editorID)
+        ExteriorSwitch(owner: self).switchExterior(to: editorID, at: position)
     }
 
     /// Starts the exterior at `position` while no cell has framed the view yet,
@@ -440,4 +438,23 @@ extension CellStreamer {
 /// The NPC movement engine, a part of the actor part.
 struct CellNPCMovers {
     let streamer: CellStreamer
+}
+
+extension CellStreamer {
+    /// Reads cached asset counts and switches the exterior.
+    struct ExteriorSwitch {
+        let owner: CellStreamer
+
+        var cachedAssetCounts: CachedAssetCounts? {
+            let runner = owner.runner
+            return (runner as? SerialCellBuildRunner)?.cachedAssetCounts
+        }
+
+        func switchExterior(to editorID: String, at position: SIMD3<Float>) {
+            let events = owner.events
+            owner.builds.resetExterior(at: position)
+            owner.worldspaceEditorID = editorID
+            events.onWorldspaceChanged(editorID)
+        }
+    }
 }

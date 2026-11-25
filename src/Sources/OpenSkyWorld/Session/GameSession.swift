@@ -63,7 +63,7 @@ public final class GameSession: RenderFrameDriver {
 
     /// The view's vertical field of view, with the bow zoom applied.
     public var viewFOVYRadians: Float {
-        MatrixMath.zoomedFieldOfView(rigSteps.sessionFOVYRadians, share: bowZoomViewShare)
+        FrameInputs(owner: self).viewFOVYRadians
     }
 
     /// What the world sim, animation, and particles run at.
@@ -167,15 +167,7 @@ public final class GameSession: RenderFrameDriver {
     // MARK: - RenderFrameDriver
 
     public func prepareLiveFrame() -> RenderFrameInput {
-        let started = Stopwatch()
-        movementSteps.advanceCamera()
-        // Streaming may setScene synchronously before this frame encodes.
-        frameSteps(freeFlyCamera.position)
-        clockSteps.advanceGameClockFromWallClock()
-        clockSteps.updateWorldSimFromWallClock()
-        weatherSteps.updateWeatherFromWallClock()
-        lastSimulationMS = started.milliseconds
-        return frameInput
+        FrameInputs(owner: self).prepareLiveFrame()
     }
 
     public func finishLiveFrame() {
@@ -202,35 +194,7 @@ public final class GameSession: RenderFrameDriver {
 
     /// Everything the renderer draws this frame, read after every system has run.
     public var frameInput: RenderFrameInput {
-        var view = freeFlyCamera
-        view.yaw += menuViewOffset.yaw
-        view.pitch = FreeFlyCamera.clampPitch(view.pitch + menuViewOffset.pitch)
-        var input = RenderFrameInput(view: view)
-        input.extraHorizontalFOVRadians = MatrixMath.radians(
-            fromDegrees: menuViewOffset.horizontalFOVDegrees
-        )
-        input.movementMode = movementMode
-        input.actorCameraScene = dialogueCameraSteps.actorCameraScene(eye: view.position)
-        input.fovYRadians = viewFOVYRadians
-        input.horizontalFOVRadians = rigs.cinematicCameraState.pose?.horizontalFieldOfView
-        input.timeOfDay = timeOfDay
-        input.wind = wind
-        input.weather = sky.currentResolvedWeather
-        input.celestial = sky.celestialSky
-        input.precipitationTuning = sky.precipitationTuning
-        input.interiorFog = sky.interiorFogOverride
-        input.imageSpace = imageSpace
-        input.instancePoses = instancePoses
-        input.rigs = RenderRigs(
-            body: rigs.playerBody, arms: rigs.playerFirstPersonRig, visibility: rigVisibility
-        )
-        input.ui = uiScene
-        input.isPaused = worldSimPaused
-        input.timeScale = effectiveWorldTimeScale
-        input.roofAbove = motion.collisionQuery.map { query in
-            { PrecipitationRoofOcclusion.isOccluded(above: $0, query: query) }
-        }
-        return input
+        FrameInputs(owner: self).frameInput
     }
 
     /// Fractional hour of day in [0, 24), projected from the game clock.
@@ -338,5 +302,68 @@ extension GameSession {
     /// The game clock and the world simulation tick.
     public struct ClockSteps {
         let session: GameSession
+    }
+}
+
+extension GameSession {
+    /// Builds the render frame input and the view field of view.
+    struct FrameInputs {
+        let owner: GameSession
+
+        var viewFOVYRadians: Float {
+            MatrixMath.zoomedFieldOfView(
+                owner.rigSteps.sessionFOVYRadians,
+                share: owner.bowZoomViewShare
+            )
+        }
+
+        func prepareLiveFrame() -> RenderFrameInput {
+            let frameSteps = owner.frameSteps
+            let started = Stopwatch()
+            owner.movementSteps.advanceCamera()
+            // Streaming may setScene synchronously before this frame encodes.
+            frameSteps(owner.freeFlyCamera.position)
+            owner.clockSteps.advanceGameClockFromWallClock()
+            owner.clockSteps.updateWorldSimFromWallClock()
+            owner.weatherSteps.updateWeatherFromWallClock()
+            owner.lastSimulationMS = started.milliseconds
+            return owner.frameInput
+        }
+
+        var frameInput: RenderFrameInput {
+            let motion = owner.motion
+            let rigs = owner.rigs
+            let sky = owner.sky
+            var view = owner.freeFlyCamera
+            view.yaw += owner.menuViewOffset.yaw
+            view.pitch = FreeFlyCamera.clampPitch(view.pitch + owner.menuViewOffset.pitch)
+            var input = RenderFrameInput(view: view)
+            input.extraHorizontalFOVRadians = MatrixMath.radians(
+                fromDegrees: owner.menuViewOffset.horizontalFOVDegrees
+            )
+            input.movementMode = owner.movementMode
+            input.actorCameraScene = owner.dialogueCameraSteps.actorCameraScene(eye: view.position)
+            input.fovYRadians = owner.viewFOVYRadians
+            input.horizontalFOVRadians = rigs.cinematicCameraState.pose?.horizontalFieldOfView
+            input.timeOfDay = owner.timeOfDay
+            input.wind = owner.wind
+            input.weather = sky.currentResolvedWeather
+            input.celestial = sky.celestialSky
+            input.precipitationTuning = sky.precipitationTuning
+            input.interiorFog = sky.interiorFogOverride
+            input.imageSpace = owner.imageSpace
+            input.instancePoses = owner.instancePoses
+            input.rigs = RenderRigs(
+                body: rigs.playerBody, arms: rigs.playerFirstPersonRig,
+                visibility: owner.rigVisibility
+            )
+            input.ui = owner.uiScene
+            input.isPaused = owner.worldSimPaused
+            input.timeScale = owner.effectiveWorldTimeScale
+            input.roofAbove = motion.collisionQuery.map { query in
+                { PrecipitationRoofOcclusion.isOccluded(above: $0, query: query) }
+            }
+            return input
+        }
     }
 }
