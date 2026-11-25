@@ -48,41 +48,6 @@ extension MeleeCombatRuntime {
         }
     }
 
-    /// The hit of the swing in progress, with its power or bash terms.
-    func resolveDamage(
-        on target: ReferenceKey, weapon: MeleeWeaponProfile, world: any MeleeCombatWorld
-    ) -> MeleeDamageResult {
-        var strike = world.meleeStrike(blow(world: world, weapon: weapon), on: target)
-        if strikeKind == .power {
-            strike.powerMultiplier *= 1 + powerAttacks.damageBonus
-        }
-        var swing = weapon
-        if strikeKind.isBash {
-            let source = world.meleeBashSource()
-            swing = weapon.dealing(damage: strike.bashMultiplier * MeleeBash.damage(
-                BashSource(
-                    weaponDamage: weapon.damage,
-                    shieldRating: source.shieldRating,
-                    blockSkill: source.blockSkill
-                ),
-                isPlayer: true,
-                isPower: strikeKind == .powerBash,
-                settings: powerAttacks
-            ))
-        }
-        return MeleeDamage.resolve(
-            weapon: swing,
-            block: world.meleeBlock(of: target),
-            settings: settings,
-            blockSkill: world.meleeBlockSkill(of: target),
-            isPowerAttack: strikeKind.isPowerAttack,
-            bonusMultiplier: world.meleeBlockMultiplier(of: target),
-            attackMultiplier: strikeKind.isBash
-                ? 1 : world.meleeAttackMultiplier(handType: weapon.handType),
-            strike: strike
-        )
-    }
-
     /// The swing in progress, as the perk terms read it.
     func blow(world: any MeleeCombatWorld, weapon: MeleeWeaponProfile) -> CombatBlow {
         CombatBlow(
@@ -174,5 +139,42 @@ nonisolated enum MeleeBash: Sendable {
         let power = isPower ? PowerAttackSettings.powerBashMultiplier : 1
         let factor = range.factor(blockSkill: source.blockSkill, isPlayer: isPlayer)
         return base * 0.5 * factor * power
+    }
+}
+
+extension MeleeSwingDamage {
+    /// The hit of the swing in progress, with its power or bash terms.
+    func resolveDamage(
+        on target: ReferenceKey, weapon: MeleeWeaponProfile, world: any MeleeCombatWorld
+    ) -> MeleeDamageResult {
+        var strike = world.meleeStrike(owner.blow(world: world, weapon: weapon), on: target)
+        if owner.strikeKind == .power {
+            strike.powerMultiplier *= 1 + owner.powerAttacks.damageBonus
+        }
+        var swing = weapon
+        if owner.strikeKind.isBash {
+            let source = world.meleeBashSource()
+            swing = weapon.dealing(damage: strike.bashMultiplier * MeleeBash.damage(
+                BashSource(
+                    weaponDamage: weapon.damage,
+                    shieldRating: source.shieldRating,
+                    blockSkill: source.blockSkill
+                ),
+                isPlayer: true,
+                isPower: owner.strikeKind == .powerBash,
+                settings: owner.powerAttacks
+            ))
+        }
+        return MeleeDamage.resolve(
+            weapon: swing,
+            block: world.meleeBlock(of: target),
+            settings: owner.settings,
+            blockSkill: world.meleeBlockSkill(of: target),
+            isPowerAttack: owner.strikeKind.isPowerAttack,
+            bonusMultiplier: world.meleeBlockMultiplier(of: target),
+            attackMultiplier: owner.strikeKind.isBash
+                ? 1 : world.meleeAttackMultiplier(handType: weapon.handType),
+            strike: strike
+        )
     }
 }

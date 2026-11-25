@@ -36,7 +36,7 @@ struct ProjectilePayloadLanding {
         let arrow = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
         playImpact(of: impact, projectile: projectile)
-        pushStruckBody(projectile, impact: impact)
+        ProjectileBodyPush(explosions: explosions).pushStruckBody(projectile, impact: impact)
         damageStruckObject(projectile, impact: impact)
         detonateExplosion(of: projectile, impact: impact)
         return Report(appliedDamage: arrow.damage, spellHit: spellHit, keptArrow: arrow.kept)
@@ -199,9 +199,15 @@ struct ProjectilePayloadLanding {
         else { return }
         world?.applyProjectileDestruction(arrow.damage.applied, to: reference)
     }
+}
+
+/// Pushes the loose body a projectile struck.
+@MainActor
+struct ProjectileBodyPush {
+    let explosions: ExplosionRuntime?
 
     /// Pushes the loose body a projectile struck by its `PROJ` impact force, along its flight.
-    private func pushStruckBody(_ projectile: LiveProjectile, impact: ProjectileImpact) {
+    func pushStruckBody(_ projectile: LiveProjectile, impact: ProjectileImpact) {
         guard
             !impact.isActor, let reference = impact.reference,
             let impulses = explosions?.impulses, let world = impulses.world,

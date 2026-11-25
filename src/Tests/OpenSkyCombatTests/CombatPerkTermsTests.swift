@@ -98,9 +98,10 @@ struct CombatPerkTermsTests {
         world.values[Self.guardKey] = [damageResist: 100]
         let items = try ItemDefinitionStore(file: SpellStoreFixture.plugin(records: []))
         let coordinator = Self.coordinator(world, items: items)
-        let full = coordinator.shared.strikes.armorFraction(of: Self.guardKey, against: Self.sword)
+        let armor = CombatShared.CombatArmor(shared: coordinator.shared)
+        let full = armor.armorFraction(of: Self.guardKey, against: Self.sword)
         world.perkFactors[.modTargetDamageResistance] = 0.5
-        let halved = coordinator.shared.strikes.armorFraction(
+        let halved = armor.armorFraction(
             of: Self.guardKey,
             against: Self.sword
         )
