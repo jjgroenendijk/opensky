@@ -185,7 +185,8 @@ extension AgentWorldAdapter: AgentControlWorld {
         AgentWorldStatus(
             worldReady: isWorldReady,
             titleMenuOpen: game.titleMenu.isOpen,
-            dataRoot: dataRoot?.dataURL.path(percentEncoded: false)
+            dataRoot: dataRoot?.dataURL.path(percentEncoded: false),
+            quitting: quitScheduled
         )
     }
 

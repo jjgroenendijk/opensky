@@ -61,6 +61,7 @@ struct AgentCommandRouterTests {
         ))?
             .get())
         #expect(status["running"] == false)
+        #expect(status["quitting"] == false)
         #expect(status["protocolVersion"]?.intValue == AgentProtocol.version)
         #expect(failureCode(router.handle(AgentRequest(command: "state.player"), now: 0))
             == .notReady)
