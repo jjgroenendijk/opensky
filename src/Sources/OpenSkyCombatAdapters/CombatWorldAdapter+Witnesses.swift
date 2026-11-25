@@ -269,6 +269,10 @@ extension CombatWorldAdapter {
         motion.faceActor(key, toward: point)
     }
 
+    public func lookActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?) {
+        motion.game.headTracking.setLookTarget(target, for: key, seconds: seconds)
+    }
+
     public func stopActor(_ key: ReferenceKey) {
         motion.stopActor(key)
     }

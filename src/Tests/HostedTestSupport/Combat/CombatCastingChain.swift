@@ -300,6 +300,14 @@ extension CombatCastingChain: CombatLoopWorld {
         caster.cancel(.right, on: casterHolder)
     }
 
+    public func lookCombatActor(_: ReferenceKey, at _: ReferenceKey?, seconds _: Float?) {}
+
+    public func combatAimPoint(
+        of _: CombatActorObservation, at _: SIMD3<Float>, velocity _: SIMD3<Float>
+    ) -> SIMD3<Float>? {
+        nil
+    }
+
     @discardableResult
     public func moveCombatActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
         true

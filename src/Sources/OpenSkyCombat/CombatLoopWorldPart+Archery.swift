@@ -34,6 +34,12 @@ extension CombatLoopWorldPart {
         ArcheryShots(owner: self).fireCombatArrow(shot)
     }
 
+    func combatAimPoint(
+        of shooter: CombatActorObservation, at point: SIMD3<Float>, velocity: SIMD3<Float>
+    ) -> SIMD3<Float>? {
+        ArcheryShots(owner: self).aimPoint(of: shooter, at: point, velocity: velocity)
+    }
+
     /// The shooter's Archery skill, or the starting value without actor values.
     private func archerySkill(of key: ReferenceKey) -> Float {
         ArcheryShots(owner: self).archerySkill(of: key)
@@ -44,6 +50,26 @@ extension CombatLoopWorldPart {
     /// Fires the arrows of NPC archers and reads their archery skill.
     struct ArcheryShots {
         unowned let owner: CombatLoopWorldPart
+
+        func aimPoint(
+            of shooter: CombatActorObservation, at point: SIMD3<Float>, velocity: SIMD3<Float>
+        ) -> SIMD3<Float>? {
+            let gear = owner.shared.world.gearReads
+            let bow = owner.combatWeapon(of: shooter.key)
+            guard
+                let items = owner.shared.items,
+                let arrow = CombatCore.arrow(
+                    equipped: gear.equippedItems(of: shooter.key).map(\.item),
+                    carried: gear.carriedItems(of: shooter.key),
+                    bolts: bow.handType == .crossbow,
+                    resolve: items.archeryAmmunition
+                )
+            else { return nil }
+            let origin = shooter.feet + SIMD3(0, 0, shooter.capsule.eyeHeight * shooter.scale)
+            return NPCArcheryAim.lead(
+                from: origin, to: point, velocity: velocity, speed: arrow.profile.speed
+            )
+        }
 
         func fireCombatArrow(_ shot: CombatArrowShot) -> Bool {
             let key = shot.shooter.key

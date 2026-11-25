@@ -2,6 +2,7 @@
 
 public import OpenSkyBehavior
 @testable public import OpenSkyCombat
+public import OpenSkyCombatInterface
 @testable public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -12,6 +13,14 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    public func lookCombatActor(_: ReferenceKey, at _: ReferenceKey?, seconds _: Float?) {}
+
+    public func combatAimPoint(
+        of _: CombatActorObservation, at _: SIMD3<Float>, velocity _: SIMD3<Float>
+    ) -> SIMD3<Float>? {
+        nil
+    }
+
     /// A world without factions has no NPC foes.
     public func combatReaction(of _: ReferenceKey, toward _: ReferenceKey) -> ActorReaction? {
         nil

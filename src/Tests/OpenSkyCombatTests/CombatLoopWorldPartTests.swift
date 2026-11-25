@@ -152,7 +152,14 @@ struct CombatLoopWorldPartTests {
             targetVelocity: SIMD3(0, 100, 0), bow: part.combatWeapon(of: Self.foe)
         ))
         #expect(coordinator.shared.archeryRandom != before)
+        // The aim leads a moving target along its velocity.
+        let shooter = CombatActorObservation(key: Self.foe, feet: .zero)
+        let aim = try #require(part.combatAimPoint(
+            of: shooter, at: SIMD3(1000, 0, 0), velocity: SIMD3(0, 100, 0)
+        ))
+        #expect(aim.y > 0)
         world.equipped[Self.foe] = [(item: FormID(0x800), temperLevel: 0)]
+        #expect(part.combatAimPoint(of: shooter, at: SIMD3(1000, 0, 0), velocity: .zero) == nil)
         #expect(!part.fireCombatArrow(CombatArrowShot(
             shooter: CombatActorObservation(key: Self.foe, feet: .zero),
             target: MeleeTarget(key: .player, feet: SIMD3(1000, 0, 0)),
@@ -265,6 +272,9 @@ struct CombatLoopWorldPartTests {
         #expect(part.moveCombatActor(Self.foe, to: SIMD3(1, 0, 0)))
         #expect(part.moveCombatActor(Self.foe, to: SIMD3(2, 0, 0), pace: .run))
         part.turnCombatActor(Self.foe, toward: .zero)
+        part.lookCombatActor(Self.foe, at: .player, seconds: 5)
+        #expect(world.looks[Self.foe]?.target == .player)
+        #expect(world.looks[Self.foe]?.seconds == 5)
         part.stopCombatMovement(of: Self.foe)
         part.resumeCombatPackage(for: Self.foe)
         #expect(!part.playCombatClip(.stagger, on: Self.foe))

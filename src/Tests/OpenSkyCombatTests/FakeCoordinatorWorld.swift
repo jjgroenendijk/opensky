@@ -227,6 +227,11 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
 
     func stopActor(_: ReferenceKey) {}
 
+    var looks: [ReferenceKey: (target: ReferenceKey?, seconds: Float?)] = [:]
+    func lookActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?) {
+        looks[key] = (target, seconds)
+    }
+
     func resumePackage(for _: ReferenceKey) {}
 
     func raisePlayerGraphEvent(_ name: String) -> Bool {

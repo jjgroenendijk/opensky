@@ -155,6 +155,8 @@ public protocol CombatWorld: AnyObject {
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, pace: CombatPace?) -> Bool
     /// Turns `key` in place to face `point`.
     func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>)
+    /// Holds `key`'s head on `target` for `seconds`, or until changed when nil.
+    func lookActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?)
     /// Whether `key`'s race flies (`RACE` flag 0x80).
     func actorFlies(_ key: ReferenceKey) -> Bool
     /// Whether `key`'s race is a child race (`RACE` flag Child).

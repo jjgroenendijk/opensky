@@ -1,5 +1,5 @@
 // The aggro radius of the AI Data tab: an actor warns a stranger that comes near, and
-// attacks one that comes nearer or stays. docs/engine/combat-behavior.md#aggro-radius.
+// attacks one that comes nearer or stays. docs/engine/aggro-radius.md.
 
 import Foundation
 public import OpenSkyFormatsESM

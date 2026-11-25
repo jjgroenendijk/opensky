@@ -36,6 +36,7 @@ public protocol CombatMotionHost: AnyObject, SendableMetatype {
     var aiWorld: any AIWorldPort { get }
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var headTracking: any HeadTrackingPort { get }
     var packages: any PackagePort { get }
     var ragdoll: any RagdollPort { get }
     var scripts: any ScriptPort { get }

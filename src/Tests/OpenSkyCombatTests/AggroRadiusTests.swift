@@ -1,5 +1,5 @@
 // The aggro radius: the zones, the warn timer, and the loop turning a warned actor
-// hostile (docs/engine/combat-behavior.md#aggro-radius).
+// hostile (docs/engine/aggro-radius.md).
 
 import OpenSkyActorsInterface
 @testable import OpenSkyCombat
