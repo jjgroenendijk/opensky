@@ -160,6 +160,15 @@ public final class WorldMusicDirector {
         }
     }
 
+    /// The game's music plays on in menus, so a paused world still fades, ends, and
+    /// starts this director's own tracks; every other sound stays frozen.
+    public func tickWhilePaused(deltaTime: Float) {
+        let owned = Set(retiringSourceIDs + [currentSourceID].compactMap(\.self))
+        engine.advanceFades(deltaTime: deltaTime, only: owned)
+        engine.retireFinishedSources(only: owned)
+        tick(deltaTime: deltaTime)
+    }
+
     // MARK: - Readout entry points (stage 4 verification surface)
 
     /// MUSC editor ids the readout can offer, sorted. Empty without music data.

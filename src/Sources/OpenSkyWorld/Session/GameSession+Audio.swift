@@ -19,6 +19,7 @@ extension GameSession.AudioSteps {
     /// the listener pose stays where it was when the pause began.
     public func updateAudioFromWallClock() {
         updateSoundMix(now: session.renderer.wallClock.now)
+        updatePausedMusic(now: session.renderer.wallClock.now)
         let delta = session.audio.audioClock.advance(
             to: session.renderer.wallClock.now,
             paused: session.worldSimPaused
@@ -68,6 +69,18 @@ extension GameSession.AudioSteps {
             deltaTime: deltaTime,
             purgeRadius: session.loadedGridRadius + 1
         )
+    }
+
+    /// Steps the music on the wall clock while the world is paused, so the level-up
+    /// track starts in its menu. See docs/engine/music.md#special-music.
+    func updatePausedMusic(now: Double) {
+        guard session.worldSimPaused else {
+            session.audio.pausedMusicWallTime = nil
+            return
+        }
+        let seconds = session.audio.pausedMusicWallTime.map { Float(max(now - $0, 0)) } ?? 0
+        session.audio.pausedMusicWallTime = now
+        session.audio.musicDirector?.tickWhilePaused(deltaTime: seconds)
     }
 
     /// Steps the sound mix on the wall clock, so a menu's fade runs while the world is paused.

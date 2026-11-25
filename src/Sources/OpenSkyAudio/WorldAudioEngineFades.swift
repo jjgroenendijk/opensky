@@ -95,10 +95,11 @@ extension WorldAudioEngine {
     /// `tick(listenerCell:deltaTime:)`, which the renderer only calls on
     /// unpaused frames — so a paused world freezes fades without a time jump on
     /// resume.
-    public func advanceFades(deltaTime: Float) {
+    /// `only` limits the step to those sources, as music in a paused world needs.
+    public func advanceFades(deltaTime: Float, only: Set<Int>? = nil) {
         guard deltaTime > 0 else { return }
         var finished: [ActiveAudioSource] = []
-        for source in sources {
+        for source in sources where only?.contains(source.id) ?? true {
             guard var fade = source.activeFade else { continue }
             fade.advance(by: deltaTime)
             source.fadeGain = fade.currentGain

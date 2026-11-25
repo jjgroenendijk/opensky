@@ -53,6 +53,20 @@ struct WorldMusicSpecialTests {
         #expect(director.playSpecialMusic(.death) == .noSpecialMusic("DTMS"))
     }
 
+    /// The level-up menu pauses the world, and its track still fades in there.
+    @Test func aPausedWorldStillFadesTheSpecialTrackIn() throws {
+        let engine = try MusicDirectorFixture.makeRunningEngine()
+        let director = MusicDirectorFixture.makeDirector(engine: engine, musicStore: Self.store())
+        director.handleMusicContext(MusicFixture.context(cellMusicType: 0x20))
+        director.tick(deltaTime: 1.0 / 60)
+        director.playSpecialMusic(.levelUp)
+        let special = try #require(engine.sources.first { $0.name == "music\\special\\e.xwm" })
+        let before = special.fadeGain
+        director.tickWhilePaused(deltaTime: 0.5)
+        #expect(special.fadeGain > before)
+        #expect(director.currentStateName == "special")
+    }
+
     @Test func combatUsesTheBattleMusicAndCutsASpecialMoment() throws {
         let engine = try MusicDirectorFixture.makeRunningEngine()
         let director = MusicDirectorFixture.makeDirector(engine: engine, musicStore: Self.store())
