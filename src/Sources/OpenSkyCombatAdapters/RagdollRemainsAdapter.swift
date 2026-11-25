@@ -45,31 +45,6 @@ extension RagdollRemainsAdapter {
     static let explodableFlag: UInt8 = 0x08
     static let absoluteChanceFlag: UInt8 = 0x40
 
-    /// Only a drawn weapon falls; a sheathed one stays on the belt.
-    public func dropWeapon(of key: ReferenceKey) -> Bool {
-        let streamer = game.streamer
-        guard
-            game.actorPlayback(for: key)?.weaponsDrawn == true,
-            let holder = streamer.inventoryHolder(of: key),
-            let actor = streamer.referenceEntry(key: key)?.placedActor,
-            let cell = streamer.cellLocation(of: key)
-        else { return false }
-        let feet = actor.placement.position
-        var position = feet
-        if
-            let pose = poseReads.ragdollPose(of: key),
-            let hand = game.animatedPose(for: key)?[ActorAttachmentBone.drawnWeapon]
-        {
-            let world = pose.actorToWorld * hand.columns.3
-            position = SIMD3(world.x, world.y, feet.z)
-        }
-        position.z += Self.droppedWeaponLift
-        return game.inventory.itemActions.dropWeapon(
-            of: holder,
-            at: DropPlacement(location: cell, position: position, rotation: .zero)
-        ) != nil
-    }
-
     /// The head part of the race's `BPTD`: part type 1, or a part marked severable.
     public func severableNode(of key: ReferenceKey) -> String? {
         guard let parts = bodyParts(of: key)?.record.parts else { return nil }
@@ -162,5 +137,37 @@ extension RagdollRemainsAdapter {
         guard let race = race(of: key), let plugin = loadOrderPlugin else { return nil }
         return game.combatRecords?.presentationRecords?.bodyParts
             .resolve(race.details.bodyPartData, fromPlugin: plugin)
+    }
+}
+
+/// Drops a dead actor's drawn weapon at its hand.
+@MainActor
+struct RagdollWeaponDrop {
+    let game: any RagdollRemainsHost
+    let poseReads: RagdollPoseReadsAdapter
+
+    /// Only a drawn weapon falls; a sheathed one stays on the belt.
+    func dropWeapon(of key: ReferenceKey) -> Bool {
+        let streamer = game.streamer
+        guard
+            game.actorPlayback(for: key)?.weaponsDrawn == true,
+            let holder = streamer.inventoryHolder(of: key),
+            let actor = streamer.referenceEntry(key: key)?.placedActor,
+            let cell = streamer.cellLocation(of: key)
+        else { return false }
+        let feet = actor.placement.position
+        var position = feet
+        if
+            let pose = poseReads.ragdollPose(of: key),
+            let hand = game.animatedPose(for: key)?[ActorAttachmentBone.drawnWeapon]
+        {
+            let world = pose.actorToWorld * hand.columns.3
+            position = SIMD3(world.x, world.y, feet.z)
+        }
+        position.z += RagdollRemainsAdapter.droppedWeaponLift
+        return game.inventory.itemActions.dropWeapon(
+            of: holder,
+            at: DropPlacement(location: cell, position: position, rotation: .zero)
+        ) != nil
     }
 }

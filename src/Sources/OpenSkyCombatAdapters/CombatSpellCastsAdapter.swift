@@ -1,5 +1,5 @@
 import OpenSkyActorsInterface
-public import OpenSkyCombat
+import OpenSkyCombat
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -27,21 +27,6 @@ extension CombatSpellCastsAdapter {
     /// Vanilla NPCs cast from either hand. OpenSky picks the right one, which
     /// is a simplification, not an observation.
     public static let castHand = SpellHand.right
-
-    public func castingFacts(of key: ReferenceKey) -> CombatCastingFacts? {
-        guard
-            let runtime = game.magic.caster,
-            let values = game.actorValues.runtime,
-            let holder = game.actorWorld.actorValueHolder(for: key)
-        else { return nil }
-        game.magic.itemUse.grantAuthoredSpells(to: holder)
-        return CombatCastingFacts(
-            magicka: values.current(of: holder).magicka,
-            spells: runtime.spellbook.knownSpells(of: holder)
-                .map { candidate($0, runtime: runtime) },
-            shouts: game.magic.shoutVoice.npcShouts(of: holder).compactMap(shoutOption)
-        )
-    }
 
     /// The first of `spells` whose type is Disease. The ids are in the load-order space.
     public func disease(among spells: [FormID]) -> ReferenceKey? {
@@ -71,22 +56,6 @@ extension CombatSpellCastsAdapter {
     public func shout(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool {
         guard let holder = game.actorWorld.actorValueHolder(for: key) else { return false }
         return game.magic.shoutVoice.npcShout(spell, by: holder)
-    }
-
-    /// A shout as its strongest word with a spell. An NPC has no Shout Recovery Mult, so
-    /// the word's own recovery time is the cooldown.
-    private func shoutOption(_ shout: ResolvedShout) -> CombatSpellOption? {
-        guard let word = shout.words.last(where: { $0.spell != nil }), let spell = word.spell
-        else { return nil }
-        return CombatSpellOption(
-            spell: spell.key,
-            cost: 0,
-            range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
-            purpose: .shout,
-            cooldownSeconds: game.magicWorld.shoutCooldown(
-                recovery: word.entry.recoveryTime, multiplier: 1
-            )
-        )
     }
 
     @discardableResult
@@ -122,38 +91,78 @@ extension CombatSpellCastsAdapter {
         runtime.cancel(Self.castHand, on: holder)
     }
 
-    private func candidate(
-        _ spell: ResolvedSpell,
-        runtime: any CasterRuntimePort
-    ) -> CombatSpellCandidate {
-        let delivery = spell.data?.delivery ?? .selfTarget
-        return CombatSpellCandidate(
-            option: CombatSpellOption(
-                spell: spell.key,
-                cost: Float(spell.cost.cost),
-                range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
-                chargeSeconds: max(0, spell.data?.chargeTime ?? 0),
-                isConcentration: spell.data?.castingType == .concentration
-            ),
-            isSpell: spell.spellType == .spell,
-            targetsSelf: delivery == .selfTarget,
-            isDeliverable: SpellDelivery.isImplemented(
-                delivery,
-                castingType: spell.data?.castingType
-            ),
-            isHostile: spell.effects.contains {
-                $0.effect?.effect.data?.flags.contains(.hostile) == true
-            },
-            fitsHand: runtime.spellbook.occupancy(of: spell, in: Self.castHand) != nil,
-            restoresHealth: spell.effects.contains(where: Self.restoresHealth)
-        )
-    }
-
     /// A value modifier on Health that is not detrimental, such as Healing.
     private static func restoresHealth(_ effect: ResolvedSpellEffect) -> Bool {
         guard let data = effect.effect?.effect.data else { return false }
         return data.archetype == .valueModifier
             && data.relatedActorValue == ActorValueIdentity.index(named: "Health")
             && !data.flags.contains(.detrimental) && !data.flags.contains(.hostile)
+    }
+}
+
+extension CombatSpellCastsAdapter {
+    /// The spells and shouts an NPC can cast, for the combat loop.
+    struct CastingFactsReads {
+        let game: any CombatSpellCastsHost
+
+        func castingFacts(of key: ReferenceKey) -> CombatCastingFacts? {
+            guard
+                let runtime = game.magic.caster,
+                let values = game.actorValues.runtime,
+                let holder = game.actorWorld.actorValueHolder(for: key)
+            else { return nil }
+            game.magic.itemUse.grantAuthoredSpells(to: holder)
+            return CombatCastingFacts(
+                magicka: values.current(of: holder).magicka,
+                spells: runtime.spellbook.knownSpells(of: holder)
+                    .map { candidate($0, runtime: runtime) },
+                shouts: game.magic.shoutVoice.npcShouts(of: holder).compactMap(shoutOption)
+            )
+        }
+
+        /// A shout as its strongest word with a spell. An NPC has no Shout Recovery Mult, so
+        /// the word's own recovery time is the cooldown.
+        private func shoutOption(_ shout: ResolvedShout) -> CombatSpellOption? {
+            guard let word = shout.words.last(where: { $0.spell != nil }), let spell = word.spell
+            else { return nil }
+            return CombatSpellOption(
+                spell: spell.key,
+                cost: 0,
+                range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
+                purpose: .shout,
+                cooldownSeconds: game.magicWorld.shoutCooldown(
+                    recovery: word.entry.recoveryTime, multiplier: 1
+                )
+            )
+        }
+
+        private func candidate(
+            _ spell: ResolvedSpell,
+            runtime: any CasterRuntimePort
+        ) -> CombatSpellCandidate {
+            let delivery = spell.data?.delivery ?? .selfTarget
+            return CombatSpellCandidate(
+                option: CombatSpellOption(
+                    spell: spell.key,
+                    cost: Float(spell.cost.cost),
+                    range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
+                    chargeSeconds: max(0, spell.data?.chargeTime ?? 0),
+                    isConcentration: spell.data?.castingType == .concentration
+                ),
+                isSpell: spell.spellType == .spell,
+                targetsSelf: delivery == .selfTarget,
+                isDeliverable: SpellDelivery.isImplemented(
+                    delivery,
+                    castingType: spell.data?.castingType
+                ),
+                isHostile: spell.effects.contains {
+                    $0.effect?.effect.data?.flags.contains(.hostile) == true
+                },
+                fitsHand: runtime.spellbook
+                    .occupancy(of: spell, in: CombatSpellCastsAdapter.castHand) != nil,
+                restoresHealth: spell.effects
+                    .contains(where: CombatSpellCastsAdapter.restoresHealth)
+            )
+        }
     }
 }
