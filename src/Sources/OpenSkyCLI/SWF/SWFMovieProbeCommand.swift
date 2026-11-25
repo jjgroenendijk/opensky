@@ -23,7 +23,7 @@ enum SWFMovieProbeCommand {
             SystemMenuMovieBridge.prepare(runtime: runtime)
             for name in captures {
                 runtime.registerHostFunction(name) { call in
-                    SWFSystemMenuCommand.printArguments(name, call.arguments)
+                    SWFMovieProbeSteps.printArguments(name, call.arguments)
                     return .undefined
                 }
             }
@@ -48,7 +48,7 @@ enum SWFMovieProbeCommand {
             SWFSystemMenuCommand.printLog(runtime, stage: "step \(index) \(step)")
         }
         for path in dumps {
-            SWFSystemMenuCommand.printNode(path, runtime: runtime)
+            SWFMovieProbeSteps.printNode(path, runtime: runtime)
         }
         let focus = runtime.focusTarget
         print(
@@ -70,7 +70,7 @@ enum SWFMovieProbeCommand {
     /// An empty path calls a GameDelegate callback.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
         if step.hasPrefix("point:") || step.hasPrefix("click:") {
-            try SWFSystemMenuCommand.pointer(step, runtime: runtime)
+            try SWFMovieProbeSteps.pointer(step, runtime: runtime)
             return
         }
         if step.hasPrefix("focus:") {
