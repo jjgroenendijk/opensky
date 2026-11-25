@@ -48,7 +48,8 @@ extension AgentChangesAdapter {
         case let .activate(reference, activator): try activate(reference, by: activator)
         case let .release(sound): try releaseSound(sound)
         case let .grab(reference): try grab(reference)
-        case let .decal(reference, height): try placeDecal(on: reference, height: height)
+        case let .decal(reference, height):
+            try AgentSkinDecal(hub: hub, game: game).placeDecal(on: reference, height: height)
         case let .spawn(base, anchor): try spawn(base, at: anchor)
         case let .detectionEvent(level): try makeDetectionEvent(level)
         }
@@ -203,44 +204,6 @@ extension AgentChangesAdapter {
         ]
     }
 
-    /// A one-handed blade's hit on the actor's side that faces the player: its impact
-    /// for the actor's race material, struck at the actor, so the decal rides the body.
-    private func placeDecal(on text: String, height: Float) throws(AgentFailure) -> AgentJSON {
-        let key = try hub.resolveReference(text).key
-        guard let actor = game.actorWorld.combatActor(key: key) else {
-            throw AgentFailure(.invalidArgument, "\(text) is no loaded actor")
-        }
-        let material = game.combatWorld.impactMaterial(of: key)
-        guard var impact = game.combatWorld.impact(
-            dataSetEditorID: Self.bladeImpacts, material: material
-        ) else { throw AgentFailure(.failed, "no blade impact for \(text)'s material") }
-        impact.target = key
-        let player = game.actorWorld.combatActor(key: .player)?.feet ?? actor.feet
-        var toward = SIMD2(player.x - actor.feet.x, player.y - actor.feet.y)
-        toward = simd_length(toward) > 0 ? simd_normalize(toward) : SIMD2(0, 1)
-        let point = actor.feet + SIMD3(toward * Self.bodyRadius, height)
-        let before = skinDecalBones(of: key).count
-        game.combatWorld.playImpact(impact, at: point)
-        let bones = skinDecalBones(of: key)
-        return try [
-            "ref": formJSON(key), "position": .init(point),
-            "placed": .bool(bones.count > before), "skinDecals": .array(bones.map { .string($0) })
-        ]
-    }
-
-    /// The impact data set a one-handed sword's `INAM` names in Skyrim.esm.
-    private static let bladeImpacts = "WPNzBlade1HandImpactSet"
-
-    /// The bone each skin decal on the actor rides, or `feet`.
-    private func skinDecalBones(of actor: ReferenceKey) -> [String] {
-        let skin = game.effects.skinDecals
-        return skin.owners.filter { $0.value == actor }.keys.sorted()
-            .map { skin.bones[$0] ?? "feet" }
-    }
-
-    /// About the radius of a person's body, so the point lies on the skin, not inside it.
-    private static let bodyRadius: Float = 15
-
     private func spawn(_ base: String, at anchor: String) throws(AgentFailure) -> AgentJSON {
         let baseKey = try form(base)
         let anchorKey = try reference(anchor)
@@ -277,4 +240,50 @@ extension AgentChangesAdapter {
         runtime.noteSoundEvent(owner: .player, level: level, at: feet)
         return ["level": .init(level), "position": .init(feet)]
     }
+}
+
+/// Places a blade's skin decal on an actor, for the agent's decal change.
+@MainActor
+struct AgentSkinDecal {
+    let hub: AgentHub
+    let game: any AgentChangesHost
+
+    /// A one-handed blade's hit on the actor's side that faces the player: its impact
+    /// for the actor's race material, struck at the actor, so the decal rides the body.
+    func placeDecal(on text: String, height: Float) throws(AgentFailure) -> AgentJSON {
+        let key = try hub.resolveReference(text).key
+        guard let actor = game.actorWorld.combatActor(key: key) else {
+            throw AgentFailure(.invalidArgument, "\(text) is no loaded actor")
+        }
+        let material = game.combatWorld.impactMaterial(of: key)
+        guard var impact = game.combatWorld.impact(
+            dataSetEditorID: Self.bladeImpacts, material: material
+        ) else { throw AgentFailure(.failed, "no blade impact for \(text)'s material") }
+        impact.target = key
+        let player = game.actorWorld.combatActor(key: .player)?.feet ?? actor.feet
+        var toward = SIMD2(player.x - actor.feet.x, player.y - actor.feet.y)
+        toward = simd_length(toward) > 0 ? simd_normalize(toward) : SIMD2(0, 1)
+        let point = actor.feet + SIMD3(toward * Self.bodyRadius, height)
+        let before = skinDecalBones(of: key).count
+        game.combatWorld.playImpact(impact, at: point)
+        let bones = skinDecalBones(of: key)
+        return try [
+            "ref": AgentChangesAdapter(hub: hub, game: game).formJSON(key),
+            "position": .init(point),
+            "placed": .bool(bones.count > before), "skinDecals": .array(bones.map { .string($0) })
+        ]
+    }
+
+    /// The impact data set a one-handed sword's `INAM` names in Skyrim.esm.
+    static let bladeImpacts = "WPNzBlade1HandImpactSet"
+
+    /// The bone each skin decal on the actor rides, or `feet`.
+    func skinDecalBones(of actor: ReferenceKey) -> [String] {
+        let skin = game.effects.skinDecals
+        return skin.owners.filter { $0.value == actor }.keys.sorted()
+            .map { skin.bones[$0] ?? "feet" }
+    }
+
+    /// About the radius of a person's body, so the point lies on the skin, not inside it.
+    static let bodyRadius: Float = 15
 }

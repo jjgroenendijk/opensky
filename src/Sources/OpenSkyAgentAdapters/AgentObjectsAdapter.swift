@@ -71,46 +71,6 @@ extension AgentObjectsAdapter {
         followers.favorState()
     }
 
-    func alarmState() -> AgentJSON {
-        let readout = game.crimeAlarmReadout
-        return [
-            "witnesses": .array(readout.witnesses.map { witness in
-                [
-                    "ref": alarmRef(witness.key), "role": .string(witness.role),
-                    "criminal": witness.criminal.map(alarmRef) ?? .null,
-                    "crimes": .init(witness.crimes)
-                ]
-            }),
-            "fighters": .array(readout.fighters.map { fighter in
-                [
-                    "ref": alarmRef(fighter.witness),
-                    "fights": .array(fighter.criminals.map(alarmRef))
-                ]
-            }),
-            "angry": .array(readout.angry.map(alarmRef)),
-            "theftMarkDay": readout.theftMarkDay.map { .init($0) } ?? .null,
-            "openCrimes": .init(readout.openCrimes),
-            "last": .string(readout.last),
-            "jail": readout.jail.map { stay in
-                [
-                    "sentenceDays": .init(stay.sentenceDays),
-                    "marker": alarmRef(stay.exteriorMarker),
-                    "inCell": .bool(stay.cell != nil)
-                ]
-            } ?? .null,
-            "jailFollowers": .array(readout.jailFollowers.map(alarmRef)),
-            "trespass": [
-                "trespassing": .bool(readout.trespass.isTrespassing),
-                "warned": .bool(readout.trespass.isWarnedToLeave),
-                "cellOpened": .bool(readout.trespass.isCellOpened)
-            ]
-        ]
-    }
-
-    private func alarmRef(_ key: ReferenceKey) -> AgentJSON {
-        key == .player ? .string("player") : hub.formID(of: key) ?? .string("\(key)")
-    }
-
     public func followerDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
         try followers.followerDebug(command)
     }
@@ -502,5 +462,52 @@ struct AgentFollowerCommands {
             "unlocks": .bool(task.unlocks),
             "crime": task.crime.map { .string($0.rawValue) } ?? .null
         ]
+    }
+}
+
+/// The crime alarm: who saw what, who fights, and any jail stay.
+@MainActor
+struct AgentAlarmReadout {
+    let hub: AgentHub
+    let game: any AgentObjectsHost
+
+    func alarmState() -> AgentJSON {
+        let readout = game.crimeAlarmReadout
+        return [
+            "witnesses": .array(readout.witnesses.map { witness in
+                [
+                    "ref": alarmRef(witness.key), "role": .string(witness.role),
+                    "criminal": witness.criminal.map(alarmRef) ?? .null,
+                    "crimes": .init(witness.crimes)
+                ]
+            }),
+            "fighters": .array(readout.fighters.map { fighter in
+                [
+                    "ref": alarmRef(fighter.witness),
+                    "fights": .array(fighter.criminals.map(alarmRef))
+                ]
+            }),
+            "angry": .array(readout.angry.map(alarmRef)),
+            "theftMarkDay": readout.theftMarkDay.map { .init($0) } ?? .null,
+            "openCrimes": .init(readout.openCrimes),
+            "last": .string(readout.last),
+            "jail": readout.jail.map { stay in
+                [
+                    "sentenceDays": .init(stay.sentenceDays),
+                    "marker": alarmRef(stay.exteriorMarker),
+                    "inCell": .bool(stay.cell != nil)
+                ]
+            } ?? .null,
+            "jailFollowers": .array(readout.jailFollowers.map(alarmRef)),
+            "trespass": [
+                "trespassing": .bool(readout.trespass.isTrespassing),
+                "warned": .bool(readout.trespass.isWarnedToLeave),
+                "cellOpened": .bool(readout.trespass.isCellOpened)
+            ]
+        ]
+    }
+
+    func alarmRef(_ key: ReferenceKey) -> AgentJSON {
+        key == .player ? .string("player") : hub.formID(of: key) ?? .string("\(key)")
     }
 }

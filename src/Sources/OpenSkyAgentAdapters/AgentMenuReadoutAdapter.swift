@@ -51,80 +51,6 @@ extension AgentMenuReadoutAdapter {
         rowsReadout.menuRows()
     }
 
-    public var menuState: AgentJSON {
-        var result: [String: AgentJSON] = [
-            "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
-            "top": .init(game.menuMode.topMenu?.name),
-            "worldPaused": .bool(game.menuMode.isWorldSimPaused),
-            "hud": screens.hudState,
-            "loading": screens.loadingState,
-            "movie": screens.movieFocusState,
-            "bink": screens.binkState,
-            "titles": screens.titlesState,
-            "map": screens.mapState,
-            "gamepad": screens.gamepadState
-        ]
-        if let rows = menuRows() {
-            result["rows"] = .array(rows.rows.map { .string($0) })
-            result["selected"] = .init(rows.selected)
-        }
-        if game.menuMode.topMenu == .craftingMenu {
-            let crafting = game.menuScreens.crafting
-            result["crafting"] = [
-                "tab": .string(crafting.readout.title),
-                "result": .string(crafting.lastResult),
-                "movieLoaded": .bool(crafting.movieState.isLoaded),
-                "movieError": .init(crafting.movieState.error),
-                "skill": .init(crafting.skillBar)
-            ]
-        }
-        if game.menuMode.topMenu == .dialogueMenu {
-            let snapshot = game.dialogueMenu.snapshot
-            result["dialogue"] = [
-                "subtitle": .init(snapshot.subtitle),
-                "unresolvedConditions": .init(snapshot.unresolvedConditionCount),
-                "rejected": .array(snapshot.rejections.map { row in
-                    [
-                        "topic": .string("\(row.topic)"),
-                        "reasons": .array(row.reasons.map { .string($0) })
-                    ]
-                })
-            ]
-        }
-        if game.menuMode.topMenu == MenuIdentifier.statsMenu {
-            result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
-        }
-        if game.systemMenu.isOpen {
-            result["systemPage"] = .string(game.systemMenu.model.page.rawValue)
-            result["topic"] = .init(game.systemMenu.topicPage?.openTopic?.title)
-            if let controls = game.systemMenu.controls {
-                result["controls"] = [
-                    "waitingForKey": .bool(controls.waitingForKey),
-                    "bindings": .array(controls.rows.map {
-                        ["action": .string($0.action), "key": .init($0.key)]
-                    })
-                ]
-            }
-            if let movie = game.systemMenu.movieDiagnostics {
-                result["systemMovie"] = [
-                    "state": movie.state.map { .init($0) } ?? .null, "faults": .init(movie.faults),
-                    "missing": .array(movie.missingNames.map { .string($0) })
-                ]
-            }
-        }
-        if game.menuMode.topMenu?.name == "TweenMenu" {
-            result["tween"] = screens.tweenState
-        }
-        if game.titleMenu.isOpen {
-            let snapshot = game.titleMenu.snapshot
-            result["credits"] = .bool(game.titleMenu.creditsShown)
-            // The movie's state shows the question New and Continue ask before they act.
-            result["titleState"] = .init(snapshot.movie.state)
-            result["titleResult"] = .init(snapshot.lastResult)
-        }
-        return .object(result)
-    }
-
     /// The page, the movies, and the perk sky line, such as "812 draws, turned 40°, ring".
     func skillsMenuState(_ snapshot: SkillsMenuSnapshot) -> AgentJSON {
         [
@@ -197,7 +123,7 @@ extension AgentMenuReadoutAdapter {
 }
 
 extension AgentMenuReadoutAdapter {
-    private var screens: AgentScreensAdapter {
+    var screens: AgentScreensAdapter {
         AgentScreensAdapter(hub: hub, game: hub.hosts)
     }
 }
@@ -293,5 +219,93 @@ struct AgentMenuRowsReadout {
             rows: snapshot.movie.rows,
             selected: snapshot.movie.selectedIndex ?? -1
         )
+    }
+}
+
+/// The agent's menu readout: the open menus and the state of the top one.
+@MainActor
+struct AgentMenuState {
+    let owner: AgentMenuReadoutAdapter
+
+    private var game: any AgentMenuReadoutHost {
+        owner.game
+    }
+
+    private var screens: AgentScreensAdapter {
+        owner.screens
+    }
+
+    var menuState: AgentJSON {
+        var result: [String: AgentJSON] = [
+            "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
+            "top": .init(game.menuMode.topMenu?.name),
+            "worldPaused": .bool(game.menuMode.isWorldSimPaused),
+            "hud": screens.hudState,
+            "loading": screens.loadingState,
+            "movie": screens.movieFocusState,
+            "bink": screens.binkState,
+            "titles": screens.titlesState,
+            "map": screens.mapState,
+            "gamepad": screens.gamepadState
+        ]
+        if let rows = owner.menuRows() {
+            result["rows"] = .array(rows.rows.map { .string($0) })
+            result["selected"] = .init(rows.selected)
+        }
+        if game.menuMode.topMenu == .craftingMenu {
+            let crafting = game.menuScreens.crafting
+            result["crafting"] = [
+                "tab": .string(crafting.readout.title),
+                "result": .string(crafting.lastResult),
+                "movieLoaded": .bool(crafting.movieState.isLoaded),
+                "movieError": .init(crafting.movieState.error),
+                "skill": .init(crafting.skillBar)
+            ]
+        }
+        if game.menuMode.topMenu == .dialogueMenu {
+            let snapshot = game.dialogueMenu.snapshot
+            result["dialogue"] = [
+                "subtitle": .init(snapshot.subtitle),
+                "unresolvedConditions": .init(snapshot.unresolvedConditionCount),
+                "rejected": .array(snapshot.rejections.map { row in
+                    [
+                        "topic": .string("\(row.topic)"),
+                        "reasons": .array(row.reasons.map { .string($0) })
+                    ]
+                })
+            ]
+        }
+        if game.menuMode.topMenu == MenuIdentifier.statsMenu {
+            result["skills"] = owner.skillsMenuState(game.skillsMenu.snapshot)
+        }
+        if game.systemMenu.isOpen {
+            result["systemPage"] = .string(game.systemMenu.model.page.rawValue)
+            result["topic"] = .init(game.systemMenu.topicPage?.openTopic?.title)
+            if let controls = game.systemMenu.controls {
+                result["controls"] = [
+                    "waitingForKey": .bool(controls.waitingForKey),
+                    "bindings": .array(controls.rows.map {
+                        ["action": .string($0.action), "key": .init($0.key)]
+                    })
+                ]
+            }
+            if let movie = game.systemMenu.movieDiagnostics {
+                result["systemMovie"] = [
+                    "state": movie.state.map { .init($0) } ?? .null, "faults": .init(movie.faults),
+                    "missing": .array(movie.missingNames.map { .string($0) })
+                ]
+            }
+        }
+        if game.menuMode.topMenu?.name == "TweenMenu" {
+            result["tween"] = screens.tweenState
+        }
+        if game.titleMenu.isOpen {
+            let snapshot = game.titleMenu.snapshot
+            result["credits"] = .bool(game.titleMenu.creditsShown)
+            // The movie's state shows the question New and Continue ask before they act.
+            result["titleState"] = .init(snapshot.movie.state)
+            result["titleResult"] = .init(snapshot.lastResult)
+        }
+        return .object(result)
     }
 }

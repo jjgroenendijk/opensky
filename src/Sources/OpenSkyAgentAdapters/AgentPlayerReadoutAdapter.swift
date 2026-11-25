@@ -99,7 +99,7 @@ extension AgentPlayerReadoutAdapter {
         result["firstPerson"] = statusReadout.firstPersonState(gameSession: gameSession)
         result["melee"] = statusReadout.meleeState()
         result["walk"] = statusReadout.walkState(gameSession: gameSession)
-        result.merge(statusReadout.playerStatusState()) { _, new in new }
+        result.merge(statusFlags.playerStatusState()) { _, new in new }
         result.merge(statusReadout.playerWeaponState(gameSession: gameSession)) { _, new in new }
         let status = gameSession.locomotion.status
         result["graph"] = [
@@ -140,12 +140,15 @@ extension AgentPlayerReadoutAdapter {
 
 extension AgentPlayerReadoutAdapter {
     var statusReadout: AgentPlayerStatusReadout {
-        AgentPlayerStatusReadout(hub: hub, game: game)
+        AgentPlayerStatusReadout(game: game)
+    }
+
+    private var statusFlags: AgentPlayerStatusFlags {
+        AgentPlayerStatusFlags(hub: hub, game: game)
     }
 }
 
 struct AgentPlayerStatusReadout {
-    let hub: AgentHub
     let game: any AgentPlayerReadoutHost
 
     /// The held staff and the bow zoom.
@@ -172,40 +175,6 @@ struct AgentPlayerStatusReadout {
         result["dialogueTurn"] = gameSession.dialogueTurnProgress.map { .init($0) } ?? .null
         result["dialogueAim"] = gameSession.dialogueSpeakerAim.map { .init($0) } ?? .null
         return result
-    }
-
-    /// The last fall and rumble, the death phase, and the locked controls.
-    func playerStatusState() -> [String: AgentJSON] {
-        let locks = game.playerControlLocks
-        return [
-            "lastFall": game.combat.lastFall.map { fall in
-                [
-                    "actor": .string("\(fall.actor)"), "height": .init(fall.height),
-                    "speed": .init(fall.speed), "damage": .init(fall.damage)
-                ]
-            } ?? .null,
-            "lastRumble": game.controllerRumble.lastRumble.map { rumble in
-                [
-                    "big": [.init(rumble.bigSeconds), .init(rumble.bigStrength)],
-                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)],
-                    "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
-                ]
-            } ?? .null,
-            "soundRumble": [
-                "small": .init(game.controllerRumble.soundMotors.small),
-                "big": .init(game.controllerRumble.soundMotors.big)
-            ],
-            "healthCues": render.healthCueState(),
-            "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
-            "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
-            "eyeTexture": actors.eyeTexture(of: .player),
-            "controls": [
-                "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
-                "savingDisabled": .bool(locks.savingDisabled),
-                "waitingDisabled": .bool(locks.waitingDisabled),
-                "chargenMessage": .bool(locks.showsChargenMessage)
-            ]
-        ]
     }
 
     /// `attackState` is the `GetAttackState` value conditions read.
@@ -235,14 +204,6 @@ struct AgentPlayerStatusReadout {
             "missingVariables": .array(snapshot.missingVariables.map(AgentJSON.string))
         ]
     }
-
-    var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: hub, game: hub.hosts)
-    }
-
-    var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: hub, game: hub.hosts)
-    }
 }
 
 extension AgentPlayerStatusReadout {
@@ -265,5 +226,46 @@ extension AgentPlayerStatusReadout {
             ]
         }
         return ["hands": .object(hands), "cues": .string(readout.cues)]
+    }
+}
+
+/// The player's last fall and rumble, death phase, and locked controls.
+@MainActor
+struct AgentPlayerStatusFlags {
+    let hub: AgentHub
+    let game: any AgentPlayerReadoutHost
+
+    /// The last fall and rumble, the death phase, and the locked controls.
+    func playerStatusState() -> [String: AgentJSON] {
+        let locks = game.playerControlLocks
+        return [
+            "lastFall": game.combat.lastFall.map { fall in
+                [
+                    "actor": .string("\(fall.actor)"), "height": .init(fall.height),
+                    "speed": .init(fall.speed), "damage": .init(fall.damage)
+                ]
+            } ?? .null,
+            "lastRumble": game.controllerRumble.lastRumble.map { rumble in
+                [
+                    "big": [.init(rumble.bigSeconds), .init(rumble.bigStrength)],
+                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)],
+                    "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
+                ]
+            } ?? .null,
+            "soundRumble": [
+                "small": .init(game.controllerRumble.soundMotors.small),
+                "big": .init(game.controllerRumble.soundMotors.big)
+            ],
+            "healthCues": AgentRenderAdapter(hub: hub, game: hub.hosts).healthCueState(),
+            "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
+            "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
+            "eyeTexture": AgentActorsAdapter(hub: hub, game: hub.hosts).eyeTexture(of: .player),
+            "controls": [
+                "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
+                "savingDisabled": .bool(locks.savingDisabled),
+                "waitingDisabled": .bool(locks.waitingDisabled),
+                "chargenMessage": .bool(locks.showsChargenMessage)
+            ]
+        ]
     }
 }
