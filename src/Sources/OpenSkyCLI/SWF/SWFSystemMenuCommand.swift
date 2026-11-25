@@ -108,7 +108,7 @@ enum SWFSystemMenuCommand {
     /// `point:<x>/<y>`, or `click:<x>/<y>`.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
         if step.hasPrefix("point:") || step.hasPrefix("click:") {
-            try SWFMovieProbeCommand.pointer(step, runtime: runtime)
+            try pointer(step, runtime: runtime)
         } else if step.hasPrefix("state:") {
             let name = String(step.dropFirst(6))
             guard
