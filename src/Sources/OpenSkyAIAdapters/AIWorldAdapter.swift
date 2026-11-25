@@ -82,6 +82,8 @@ public final class AIWorldAdapter {
     }
 
     public private(set) lazy var worlds = Worlds(self)
+    public private(set) lazy var furnitureWorlds = FurnitureWorlds(self)
+    public private(set) lazy var perceptionWorlds = PerceptionWorlds(self)
 
     public var bumps: AIBumpsAdapter {
         frames.bumps

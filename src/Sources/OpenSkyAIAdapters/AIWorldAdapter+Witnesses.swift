@@ -14,10 +14,10 @@ public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyNavigation
-public import OpenSkyPerception
-public import OpenSkyPerceptionInterface
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
-public import OpenSkyPlayer
+import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -86,58 +86,6 @@ extension AIWorldAdapter {
             seating.furnitureActorPosition(actor)
         }
 
-        public func furnitureIsSpecial(_ furniture: ReferenceKey) -> Bool {
-            seating.furnitureIsSpecial(furniture)
-        }
-
-        public func furnitureOwnerAllows(_ actor: ReferenceKey, _ furniture: ReferenceKey) -> Bool {
-            seating.furnitureOwnerAllows(actor, furniture)
-        }
-
-        public func furnitureActorTraits(_ actor: ReferenceKey) -> FurnitureActorTraits {
-            seating.furnitureActorTraits(actor)
-        }
-
-        public func furnitureActorHasKeyword(_ actor: ReferenceKey, _ keyword: FormID) -> Bool {
-            seating.furnitureActorHasKeyword(actor, keyword)
-        }
-
-        public func placeSeated(_ actor: ReferenceKey, in occupancy: FurnitureOccupancy) {
-            seating.placeSeated(actor, in: occupancy)
-        }
-
-        public func placeStanding(_ actor: ReferenceKey, from occupancy: FurnitureOccupancy) {
-            seating.placeStanding(actor, from: occupancy)
-        }
-
-        public func furnitureExitIsLoading(_ actor: ReferenceKey) -> Bool {
-            seating.furnitureExitIsLoading(actor)
-        }
-
-        public func furnitureMotion(of actor: ReferenceKey) -> FurnitureMotionSample? {
-            seating.furnitureMotion(of: actor)
-        }
-
-        public func moveFurnitureActor(_ actor: ReferenceKey, to pose: FurniturePose) {
-            seating.moveFurnitureActor(actor, to: pose)
-        }
-
-        public func finishStanding(_ actor: ReferenceKey, at pose: FurniturePose) {
-            seating.finishStanding(actor, at: pose)
-        }
-
-        public func residentFurniture() -> [ReferenceKey] {
-            seating.residentFurniture()
-        }
-
-        public func turnSeatedPlayerView(toYaw yaw: Float) {
-            seating.turnSeatedPlayerView(toYaw: yaw)
-        }
-
-        public func playerAskedToStand() {
-            seating.playerAskedToStand()
-        }
-
         public func isFurnitureInUse(
             _ furniture: ReferenceKey,
             marker: Int?,
@@ -152,24 +100,6 @@ extension AIWorldAdapter {
 
         public func lightLevel(at position: SIMD3<Float>) -> Float {
             perceptionSense.lightLevel(at: position)
-        }
-
-        public func perceptionCandidates() -> [PerceptionCandidate] {
-            perceptionSense.perceptionCandidates()
-        }
-
-        public func perceptionCandidates(
-            isDue: (ReferenceKey, SIMD3<Float>) -> Bool
-        ) -> (present: [ReferenceKey], fresh: [PerceptionCandidate]) {
-            perceptionSense.perceptionCandidates(isDue: isDue)
-        }
-
-        public func perceptionTargets() -> [PerceptionTarget] {
-            perceptionSense.perceptionTargets()
-        }
-
-        public func perceptionActorPairs() -> [DetectionPairKey] {
-            perceptionSense.perceptionActorPairs()
         }
 
         public func perceptionHasLineOfSight(
@@ -207,7 +137,7 @@ extension AIWorldAdapter {
             _ actor: ReferenceKey,
             to point: SIMD3<Float>
         ) -> NPCMoveCommandResult {
-            navigation.moveActor(actor, to: point)
+            PackageSteps(owner: self).moveActor(actor, to: point)
         }
 
         public func stopActor(_ actor: ReferenceKey) -> Bool {
@@ -233,7 +163,11 @@ extension AIWorldAdapter {
         public func packagePlace(
             of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
         ) -> PackagePlace? {
-            packageMoves.packagePlace(of: location, actor: actor, aliasQuest: aliasQuest)
+            PackageSteps(owner: self).packagePlace(
+                of: location,
+                actor: actor,
+                aliasQuest: aliasQuest
+            )
         }
 
         public func packageActorHoldsIdleMarker(_ actor: ReferenceKey) -> Bool {
@@ -263,10 +197,7 @@ extension AIWorldAdapter {
         }
 
         public func packageProcedure(_ event: PackageScriptEvent) {
-            if event.unlocksDoors {
-                _ = packageActs.references.unlockOwnedDoors(of: event.actor)
-            }
-            packageMoves.packageProcedure(event)
+            PackageSteps(owner: self).packageProcedure(event)
         }
 
         public func packageLeveledRoll(of actor: ReferenceKey, base: FormID) -> LeveledRoll? {
@@ -341,12 +272,40 @@ extension AIWorldAdapter {
     }
 }
 
-extension AIWorldAdapter.Worlds: FurnitureWorld {}
-extension AIWorldAdapter.Worlds: PlayerFurnitureDriving {}
 extension AIWorldAdapter.Worlds: PapyrusFurnitureBridge {}
 extension AIWorldAdapter.Worlds: PackageWorld {}
 extension AIWorldAdapter.Worlds: OffscreenScheduleWorld {}
 extension AIWorldAdapter.Worlds: AINavigationWorld {}
 extension AIWorldAdapter.Worlds: NPCAnimationWorld {}
-extension AIWorldAdapter.Worlds: PerceptionSessionWorld {}
 extension AIWorldAdapter.Worlds: AIWorldPort {}
+
+extension AIWorldAdapter.Worlds {
+    /// Moves package actors and runs package procedures.
+    struct PackageSteps {
+        let owner: AIWorldAdapter.Worlds
+
+        func moveActor(
+            _ actor: ReferenceKey,
+            to point: SIMD3<Float>
+        ) -> NPCMoveCommandResult {
+            let navigation = owner.navigation
+            return navigation.moveActor(actor, to: point)
+        }
+
+        func packagePlace(
+            of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
+        ) -> PackagePlace? {
+            let packageMoves = owner.packageMoves
+            return packageMoves.packagePlace(of: location, actor: actor, aliasQuest: aliasQuest)
+        }
+
+        func packageProcedure(_ event: PackageScriptEvent) {
+            let packageActs = owner.packageActs
+            let packageMoves = owner.packageMoves
+            if event.unlocksDoors {
+                _ = packageActs.references.unlockOwnedDoors(of: event.actor)
+            }
+            packageMoves.packageProcedure(event)
+        }
+    }
+}

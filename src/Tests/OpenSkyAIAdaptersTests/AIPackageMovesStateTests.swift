@@ -56,6 +56,7 @@ struct AIPackageMovesStateTests {
         #expect(adapter.worlds.packageActorPosition(Self.actor) == .one)
         #expect(adapter.worlds.packageActorPosition(.player) == nil)
         #expect(adapter.worlds.furnitureActorPosition(Self.actor) == .one)
+        #expect(adapter.furnitureWorlds.furnitureActorPosition(Self.actor) == .one)
     }
 
     @Test func onlyAnExteriorPackageActorFlies() {

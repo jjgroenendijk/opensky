@@ -113,10 +113,10 @@ struct AIAdapterPartsTests {
     @Test func anActorSeatsStandsAndRestsThroughThePoses() {
         let occupancy = FurnitureOccupancy(seat: Self.seat, entry: 1)
         let pose = FurniturePose(root: [10, 0, 0], heading: 0)
-        adapter.worlds.placeSeated(Self.actor, in: occupancy)
-        adapter.worlds.placeStanding(Self.actor, from: occupancy)
-        adapter.worlds.moveFurnitureActor(Self.actor, to: pose)
-        adapter.worlds.finishStanding(Self.actor, at: pose)
+        adapter.furnitureWorlds.placeSeated(Self.actor, in: occupancy)
+        adapter.furnitureWorlds.placeStanding(Self.actor, from: occupancy)
+        adapter.furnitureWorlds.moveFurnitureActor(Self.actor, to: pose)
+        adapter.furnitureWorlds.finishStanding(Self.actor, at: pose)
         #expect(host.fakeStreamer.actors.restActorCalls.map(\.actor) == [
             Self.actor,
             Self.actor,
@@ -185,15 +185,18 @@ struct AIAdapterPartsTests {
     @Test func aSeatedPlayerIsPlacedOnThePose() {
         let session = FakeGameSessionPort()
         host.gameSession = session
-        adapter.worlds.moveFurnitureActor(.player, to: FurniturePose(root: [10, 0, 0], heading: 0))
+        adapter.furnitureWorlds.moveFurnitureActor(
+            .player,
+            to: FurniturePose(root: [10, 0, 0], heading: 0)
+        )
         #expect(session.seatPlayerCalls.count == 1)
     }
 
     @Test func aFinishedRootMotionReportsItsEnd() throws {
         let idles = try #require(host.fakeIdleWorld.idles as? FakeIdlePort)
-        #expect(adapter.worlds.furnitureMotion(of: Self.actor) == nil)
+        #expect(adapter.furnitureWorlds.furnitureMotion(of: Self.actor) == nil)
         let motion = AnimationRootMotion(duration: 1, translations: [], rotations: [])
         idles.rootMotionResult = (motion: motion, elapsed: 2)
-        #expect(adapter.worlds.furnitureMotion(of: Self.actor)?.isFinished == true)
+        #expect(adapter.furnitureWorlds.furnitureMotion(of: Self.actor)?.isFinished == true)
     }
 }

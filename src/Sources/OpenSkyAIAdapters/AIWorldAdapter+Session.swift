@@ -59,7 +59,7 @@ extension AIWorldAdapter {
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }
         AINPCMovementSteps(hosts: game).register(on: streamer.actors)
-        gameSession.motion.playerFurniture = worlds
+        gameSession.motion.playerFurniture = furnitureWorlds
         frames.registerAIPackages(stage: stage)
         frames.registerAIPerception(stage: stage)
         frames.registerAIFurniture(stage: stage)

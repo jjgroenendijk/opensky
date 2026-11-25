@@ -105,10 +105,10 @@ struct AIActsSensesTests {
         session.locomotion.status.gaitValue = ScriptPathWaits.gait(forSpeed: 0)
         session.locomotion.status.lastPlanValue = LocomotionStepPlan()
         host.gameSession = session
-        let targets = adapter.worlds.perceptionTargets()
+        let targets = adapter.perceptionWorlds.perceptionTargets()
         #expect(targets.map(\.key) == [.player, Self.other])
         #expect(targets.last?.traits.isInvisible == false)
-        #expect(adapter.worlds.perceptionActorPairs()
+        #expect(adapter.perceptionWorlds.perceptionActorPairs()
             == [DetectionPairKey(observer: Self.actor, target: Self.other)])
     }
 
@@ -119,14 +119,14 @@ struct AIActsSensesTests {
         ]
         host.fakeFactions.hostilityResult = .hostile
         host.fakeDragonFlightWorld.isFlyingResult = true
-        let candidates = adapter.worlds.perceptionCandidates()
+        let candidates = adapter.perceptionWorlds.perceptionCandidates()
         #expect(candidates.map(\.isDead) == [false, true])
         let allHostile = candidates.allSatisfy(\.isHostile)
         let allFlying = candidates.allSatisfy(\.observer.isFlying)
         #expect(allHostile)
         #expect(allFlying)
         #expect(!candidates.contains { $0.hasPackage })
-        #expect(adapter.worlds.perceptionTargets().isEmpty)
+        #expect(adapter.perceptionWorlds.perceptionTargets().isEmpty)
         #expect(adapter.worlds.lightLevel(at: .zero) == 1)
     }
 
@@ -137,7 +137,7 @@ struct AIActsSensesTests {
         ]
         host.fakeFactions.hostilityResult = .hostile
         host.fakeDragonFlightWorld.isFlyingResult = false
-        let observer = try #require(adapter.worlds.perceptionCandidates().first?.observer)
+        let observer = try #require(adapter.perceptionWorlds.perceptionCandidates().first?.observer)
         #expect(abs(observer.heading.x) < 1e-5)
         #expect(abs(observer.heading.y - 1) < 1e-5)
     }
@@ -150,16 +150,17 @@ struct AIActsSensesTests {
         ]
         host.fakeFactions.hostilityResult = .hostile
         host.fakeDragonFlightWorld.isFlyingResult = false
-        let refresh = adapter.worlds.perceptionCandidates { key, _ in key == Self.actor }
+        let refresh = adapter.perceptionWorlds.perceptionCandidates { key, _ in key == Self.actor }
         #expect(refresh.present == [Self.actor, Self.other])
         #expect(refresh.fresh.map(\.observer.key) == [Self.actor])
-        let none = adapter.worlds.perceptionCandidates { _, _ in false }
+        let none = adapter.perceptionWorlds.perceptionCandidates { _, _ in false }
         #expect(none.present == [Self.actor, Self.other])
         #expect(none.fresh.isEmpty)
     }
 
     @Test func sightIsBlockedOnlyByStaticCollision() {
         #expect(adapter.worlds.perceptionHasLineOfSight(from: .zero, to: .zero))
+        #expect(adapter.perceptionWorlds.perceptionHasLineOfSight(from: .zero, to: .zero))
         host.fakeStreamer.collision.staticCollisionBlocksResult = true
         #expect(!adapter.worlds.perceptionHasLineOfSight(from: .zero, to: SIMD3(0, 100, 0)))
         #expect(host.fakeStreamer.collision.staticCollisionBlocksCalls.count == 1)
@@ -176,7 +177,7 @@ struct AIActsSensesTests {
         adapter.worlds.unseatPackageActor(Self.actor, from: nil)
         #expect(adapter.worlds.isFurnitureInUse(Self.other, marker: nil, ignoringReserved: true))
         adapter.worlds.setSittingRotation(degrees: 90)
-        adapter.worlds.playerAskedToStand()
+        adapter.furnitureWorlds.playerAskedToStand()
         #expect(host.fakeFurniture.reserveCalls.count == 1)
         #expect(host.fakeFurniture.releaseReservationsCalls == [Self.actor])
         #expect(host.fakeFurniture.setSittingRotationCalls == [90])
@@ -186,11 +187,12 @@ struct AIActsSensesTests {
 
     @Test func unknownFurnitureHasNoSeatsOrStation() {
         #expect(adapter.worlds.furnitureSeats(of: Self.other) == nil)
-        #expect(!adapter.worlds.furnitureIsSpecial(Self.other))
-        #expect(!adapter.worlds.furnitureActorHasKeyword(Self.actor, FormID(0x50)))
-        #expect(adapter.worlds.residentFurniture().isEmpty)
-        #expect(adapter.worlds.furnitureMotion(of: Self.actor) == nil)
-        #expect(!adapter.worlds.furnitureExitIsLoading(Self.actor))
+        #expect(adapter.furnitureWorlds.furnitureSeats(of: Self.other) == nil)
+        #expect(!adapter.furnitureWorlds.furnitureIsSpecial(Self.other))
+        #expect(!adapter.furnitureWorlds.furnitureActorHasKeyword(Self.actor, FormID(0x50)))
+        #expect(adapter.furnitureWorlds.residentFurniture().isEmpty)
+        #expect(adapter.furnitureWorlds.furnitureMotion(of: Self.actor) == nil)
+        #expect(!adapter.furnitureWorlds.furnitureExitIsLoading(Self.actor))
     }
 
     @Test func standingActorsSkipTheDeadAndTheRiders() {
