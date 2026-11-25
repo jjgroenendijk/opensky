@@ -23,7 +23,8 @@ extension MeleeCombatRuntime {
         )
         guard let target = hits.first?.target else { return false }
         let damage = strikeWeapons.reduce(0) {
-            $0 + resolveDamage(on: target, weapon: $1, world: world).applied
+            $0 + MeleeSwingDamage(owner: self)
+                .resolveDamage(on: target, weapon: $1, world: world).applied
         }
         return world.startMeleeKillMove(
             on: target, damage: damage,

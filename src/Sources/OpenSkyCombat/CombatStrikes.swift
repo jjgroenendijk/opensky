@@ -35,7 +35,10 @@ extension CombatShared {
                     family, at: .modSneakAttackMult, on: blow.attacker, subjects: attack
                 )
             }
-            strike.armorFraction = armorFraction(of: target, against: blow)
+            strike.armorFraction = CombatArmor(shared: shared).armorFraction(
+                of: target,
+                against: blow
+            )
             if
                 let mult = shared.world
                     .actorValues(of: blow.attacker)?(ActorValueIndex.attackDamageMult)
@@ -181,6 +184,31 @@ extension CombatShared {
             return !shared.world.awareness(of: target, toward: attacker).isDetected
         }
 
+        func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+            let isBlocking = target == .player && shared.melee?.state.isBlocking == true
+            return CombatCore.block(
+                of: target,
+                playerIsBlocking: isBlocking,
+                playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
+                machineBlock: target == .player ? nil : npcBlock(of: target)
+            )
+        }
+
+        /// An NPC with a shield blocks with it, so the shield formula applies (UESP
+        /// "Skyrim:Block").
+        func npcBlock(of target: ReferenceKey) -> MeleeBlockKind? {
+            guard let kind = shared.loop?.blockKind(of: target) else { return nil }
+            return shieldRating(of: target)
+                .map { MeleeBlockKind.shield(baseArmorRating: $0) } ?? kind
+        }
+    }
+}
+
+extension CombatShared {
+    /// The fraction of a blow a target's worn armour stops.
+    struct CombatArmor {
+        let shared: CombatShared
+
         /// The fraction of a blow `target`'s worn armour stops. Each piece passes the
         /// wearer's `Mod Armor Rating`, and the sum the attacker's `Mod Target Damage Resistance`.
         func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
@@ -227,24 +255,6 @@ extension CombatShared {
                 pieces: pieces,
                 settings: shared.weaponDamage
             )
-        }
-
-        func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-            let isBlocking = target == .player && shared.melee?.state.isBlocking == true
-            return CombatCore.block(
-                of: target,
-                playerIsBlocking: isBlocking,
-                playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
-                machineBlock: target == .player ? nil : npcBlock(of: target)
-            )
-        }
-
-        /// An NPC with a shield blocks with it, so the shield formula applies (UESP
-        /// "Skyrim:Block").
-        func npcBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-            guard let kind = shared.loop?.blockKind(of: target) else { return nil }
-            return shieldRating(of: target)
-                .map { MeleeBlockKind.shield(baseArmorRating: $0) } ?? kind
         }
     }
 }

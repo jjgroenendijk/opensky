@@ -336,7 +336,8 @@ public final class MeleeCombatRuntime {
         for object in objects {
             hitThisSwing.insert(object.target)
             for weapon in strikeWeapons {
-                let damage = resolveDamage(on: object.target, weapon: weapon, world: world)
+                let damage = MeleeSwingDamage(owner: self)
+                    .resolveDamage(on: object.target, weapon: weapon, world: world)
                 world.damageMeleeDestructible(object.target, amount: damage.applied)
             }
         }
@@ -348,7 +349,8 @@ public final class MeleeCombatRuntime {
     ) -> MeleeHitRecord {
         hitThisSwing.insert(hit.target)
         hitCount += 1
-        let damage = resolveDamage(on: hit.target, weapon: weapon, world: world)
+        let damage = MeleeSwingDamage(owner: self)
+            .resolveDamage(on: hit.target, weapon: weapon, world: world)
         let landing = MeleeBlowLanding(
             world: world, weapon: weapon, kind: strikeKind,
             skillUses: skillUses, staggers: staggers, impacts: impacts
@@ -376,4 +378,10 @@ private struct DrawnHands: Equatable {
 private enum RedrawPhase: Equatable {
     case sheathing(DrawnHands)
     case unequipped
+}
+
+/// The damage of the swing in progress, with its power or bash terms.
+@MainActor
+struct MeleeSwingDamage {
+    let owner: MeleeCombatRuntime
 }
