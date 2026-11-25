@@ -73,6 +73,20 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public var animationObjects: [IdleAnimationObject] = []
     /// How the first clip moves the actor, such as a chair exit stepping it aside.
     public var rootMotion: AnimationRootMotion?
+    /// The first clip's triggers that take the graph out of the state, such as the one near
+    /// the end of a cart exit clip. Without a live graph the idle ends at the first of them.
+    public var leavingTriggers: [BehaviorClipTriggerEvent] = []
+
+    /// Seconds into a first clip of `duration` at which the graph leaves the state, or nil
+    /// when no trigger fires before `planned` seconds.
+    public func leaveTime(
+        clipDuration duration: Float,
+        before planned: Float = .infinity
+    ) -> Float? {
+        leavingTriggers.map { $0.seconds(inClipOf: duration) }.min().flatMap {
+            $0 < planned ? $0 : nil
+        }
+    }
 
     /// Every clip path the plan plays, in order.
     public var clipPaths: [String] {

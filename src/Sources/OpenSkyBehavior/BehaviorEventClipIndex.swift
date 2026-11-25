@@ -30,6 +30,16 @@ nonisolated public struct BehaviorEventClip: Equatable, Sendable {
     public var followUps: [BehaviorClipSegment] = []
     /// Where the chain ends, so the next event is looked up from there.
     public var position: BehaviorStatePosition?
+    /// The lowercased events that take the graph out of the entered state, such as the
+    /// trigger near the end of a cart exit clip.
+    public var leavingEvents: Set<String> = []
+    /// Where the lookup found the first clip's generator.
+    var clipNode: BehaviorClipNode?
+
+    /// The first clip's triggers whose events leave the entered state.
+    public var leavingTriggers: [BehaviorClipTriggerEvent] {
+        triggers.filter { leavingEvents.contains($0.name.lowercased()) }
+    }
 }
 
 /// One state of one machine in one behavior file, as a reference spells the file.
@@ -37,6 +47,12 @@ nonisolated public struct BehaviorStatePosition: Hashable, Sendable {
     let file: String
     let machine: HKXPointerTarget
     let state: Int
+}
+
+/// One clip generator in one behavior file.
+nonisolated struct BehaviorClipNode: Equatable, Sendable {
+    let file: String
+    let target: HKXPointerTarget
 }
 
 /// A clip that a chain plays after the first one.
@@ -99,6 +115,8 @@ nonisolated public final class BehaviorEventClipIndex {
 
     private let load: Loader
     private var graphs: [String: GraphEvents?] = [:]
+    /// Each file's object parents, found by `parentLinks` once per file.
+    var parents: [String: [HKXPointerTarget: HKXPointerTarget]] = [:]
     /// A value in 0..<1 that picks the state a random-start machine enters, as a
     /// running graph rolls one.
     public var roll: Float = 0
@@ -115,8 +133,11 @@ nonisolated public final class BehaviorEventClipIndex {
         forEvent event: String, behaviorFile: String, from position: BehaviorStatePosition? = nil
     ) -> BehaviorEventClip? {
         let name = event.lowercased()
-        let found = position.flatMap { clip(forEvent: name, at: $0) }
+        var found = position.flatMap { clip(forEvent: name, at: $0) }
             ?? clip(forEvent: name, file: behaviorFile, depth: 0)
+        if let node = found?.clipNode {
+            found?.leavingEvents = leavingEvents(of: node, behaviorFile: behaviorFile)
+        }
         return found.map(chained)
     }
 

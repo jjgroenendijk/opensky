@@ -116,6 +116,7 @@ nonisolated public final class IdlePlaybackResolver {
         )
         plan.animationObjects = animationObjects(clipPaths: plan.clipPaths, project: project)
         plan.rootMotion = clip.generatorName.flatMap { rootMotion(generator: $0, project: project) }
+        plan.leavingTriggers = clip.leavingTriggers
         return plan
     }
 

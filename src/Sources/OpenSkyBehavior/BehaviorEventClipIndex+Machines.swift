@@ -46,6 +46,7 @@ nonisolated extension BehaviorEventClipIndex {
             )
             found.triggers = Self.triggers(of: clip, in: events)
             found.generatorName = clip.node.name
+            found.clipNode = BehaviorClipNode(file: descent.file, target: target)
             found.position = position
             return found
         }
