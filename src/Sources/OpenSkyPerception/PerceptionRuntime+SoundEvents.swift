@@ -48,28 +48,46 @@ extension PerceptionRuntime {
         soundEvents = soundEvents.filter { $0.value.event.age < DetectionEventRule.expireSeconds }
     }
 
-    /// An aggressive observer that perceives nothing of the target checks the target's
-    /// last event. A positive value makes it suspicious, with the event as the place to
-    /// search, and makes the target's stealth points wait.
+    /// An observer that perceives nothing of the target checks the target's last event,
+    /// then the nearest of its flying projectiles. A positive value makes it suspicious,
+    /// with the place to search, sets the pair's value to 0, and makes the target's
+    /// stealth points wait.
     func checkSoundEvent(
         key: DetectionPairKey, observer: PerceptionObserver, target: PerceptionTarget,
         inputs: DetectionInputs
     ) {
         guard
-            observer.isAggressive, let heard = soundEvents[key.target], var pair = pairs[key],
-            !pair.breakdown.isPerceiving, let world
+            DetectionEventRule.checks(observer: observer, target: target),
+            let pair = pairs[key], !pair.breakdown.isPerceiving
         else { return }
-        let event = heard.event
-        // An observer that heard the event stays suspicious for as long as the event lasts.
-        guard !heard.heardBy.contains(key.observer) else {
-            pairs[key] = pair.suspicious(of: event.position, settings: settings)
-            return
+        if let heard = soundEvents[key.target] {
+            // An observer that heard the event stays suspicious for as long as it lasts.
+            guard !heard.heardBy.contains(key.observer) else {
+                pairs[key] = pair.suspicious(of: heard.event.position, settings: settings)
+                return
+            }
+            if hears(heard.event, key: key, observer: observer, inputs: inputs) {
+                soundEvents[key.target]?.heardBy.insert(key.observer)
+                return
+            }
         }
+        guard let place = DetectionEventRule.nearestProjectile(of: target, from: observer.feet)
+        else { return }
+        let flying = DetectionSoundEvent(level: settings.actionSound(for: .normal), position: place)
+        _ = hears(flying, key: key, observer: observer, inputs: inputs)
+    }
+
+    private func hears(
+        _ event: DetectionSoundEvent, key: DetectionPairKey, observer: PerceptionObserver,
+        inputs: DetectionInputs
+    ) -> Bool {
+        guard let world, var pair = pairs[key], let target = targetIndex[key.target]
+        else { return false }
         let distance = simd_distance(observer.feet, event.position)
         let reach = DetectionEventRule.hearingDistance(
             level: event.level, isPlayerSound: key.target == .player
         )
-        guard distance <= reach else { return }
+        guard distance <= reach else { return false }
         lineOfSightQueryCount += 1
         let offset = SIMD2(event.position.x - observer.feet.x, event.position.y - observer.feet.y)
         let length = simd_length(offset)
@@ -84,15 +102,19 @@ extension PerceptionRuntime {
         let value = DetectionEventRule.value(
             of: event, sight: sight, inputs: inputs, settings: settings
         )
-        guard value > 0 else { return }
-        soundEvents[key.target]?.heardBy.insert(key.observer)
+        guard value > 0 else { return false }
         var pool = pools[key.target] ?? StealthPointPool(settings: stealthPoints)
         pool.holdRefill(for: stealthPoints.detectedEventWait)
         pool.cap(at: CombatTargetTrack.eventPointCap)
         pools[key.target] = pool
         tracks[key.target, default: CombatTargetTrack()].addSearchPlace(event.position)
         pair = pair.suspicious(of: event.position, settings: settings)
+        pair.breakdown = DetectionBreakdown(
+            soundFactor: pair.breakdown.soundFactor, visualFactor: pair.breakdown.visualFactor,
+            value: 0
+        )
         pairs[key] = pair
+        return true
     }
 }
 

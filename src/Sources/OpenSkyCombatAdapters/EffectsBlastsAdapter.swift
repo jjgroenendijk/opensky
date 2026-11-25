@@ -10,6 +10,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRenderCore
@@ -33,6 +34,7 @@ public protocol EffectsBlastsHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var hazardWorld: any HazardWorldPort { get }
     var hazards: any HazardPort { get }
+    var perception: any PerceptionPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
@@ -55,6 +57,15 @@ extension EffectsBlastsAdapter {
 
     public func applyExplosionDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
         game.combat.applyHealthDamage(amount, to: target, attacker: nil)
+    }
+
+    /// A record without a sound level sounds at the normal level.
+    public func noteExplosionSound(owner: ReferenceKey, level: UInt32?, at position: SIMD3<Float>) {
+        guard let runtime = game.perception.runtime else { return }
+        let level = level.flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
+        runtime.noteSoundEvent(
+            owner: owner, level: runtime.settings.actionSound(for: level), at: position
+        )
     }
 
     /// The sound index is built from the base plugin, so only its sounds play.

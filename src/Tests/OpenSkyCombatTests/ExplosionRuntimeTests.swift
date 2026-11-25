@@ -25,6 +25,7 @@ final class FakeExplosionWorld: ExplosionWorld {
     private(set) var models: [String] = []
     private(set) var lights: [ReferenceKey] = []
     private(set) var impacts: [ReferenceKey] = []
+    private(set) var detectionEvents: [ReferenceKey] = []
 
     func explosionTargets() -> [MeleeTarget] {
         targets
@@ -62,6 +63,32 @@ final class FakeExplosionWorld: ExplosionWorld {
 
     func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>) {
         impacts.append(dataSet)
+    }
+
+    func noteExplosionSound(owner: ReferenceKey, level _: UInt32?, at _: SIMD3<Float>) {
+        detectionEvents.append(owner)
+    }
+}
+
+/// A spell's or a script's blast makes a sound event only with an owner; a projectile's
+/// blast is its shooter's event already (docs/engine/detection-events.md).
+@MainActor
+struct ExplosionDetectionEventTests {
+    @Test func onlyAnOwnedBlastThatNoProjectileMadeIsAnEvent() {
+        let world = FakeExplosionWorld()
+        let runtime = ExplosionRuntime(world: world)
+        let spec = ExplosionSpec(name: "Blast", damage: 0, radius: 100)
+        let owner = ReferenceKey.generated(7)
+        runtime.detonate(spec, at: .zero, cause: .script)
+        runtime.detonate(
+            spec,
+            at: .zero,
+            cause: .projectile,
+            origin: ExplosionOrigin(shooter: owner)
+        )
+        #expect(world.detectionEvents.isEmpty)
+        runtime.detonate(spec, at: .zero, cause: .spell, origin: ExplosionOrigin(shooter: owner))
+        #expect(world.detectionEvents == [owner])
     }
 }
 

@@ -67,6 +67,8 @@ nonisolated public struct DetectionObserverState: Equatable, Sendable {
     public var isFightingAnother = false
     /// A Night Eye value above 0: the observer sees a light level 3 times higher.
     public var hasNightEye = false
+    /// What the observer's Ambush package makes of the target; nil without one.
+    public var ambush: DetectionAmbushRole?
 
     public init(
         isAlert: Bool = false, isSleeping: Bool = false, isFlying: Bool = false,

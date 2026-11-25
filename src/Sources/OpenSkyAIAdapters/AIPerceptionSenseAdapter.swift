@@ -84,6 +84,9 @@ extension AIPerceptionSenseAdapter {
             observer.blindness = detectionSense.blindness(of: actor.key)
             observer.hasNightEye = detectionSense.hasNightEye(actor.key)
             observer.combatTarget = game.combat.loop?.combatTarget(of: actor.key)
+            observer.ambush = game.packages.ambushArea(of: actor.key).map(Self.detectionArea)
+            let reaction = game.factions.reaction(of: actor.key, toward: .player)
+            observer.isFriendToPlayer = reaction == .ally || reaction == .friend
             return PerceptionCandidate(
                 observer: observer,
                 isDead: actor.isDead,
@@ -95,12 +98,29 @@ extension AIPerceptionSenseAdapter {
         return (present: actors.map(\.key), fresh: fresh)
     }
 
+    static func detectionArea(_ area: PackageAmbushArea) -> DetectionAmbushArea {
+        switch area {
+        case .everyone: .everyone
+        case let .within(center, radius): .within(center: center, radius: radius)
+        case .unmatched: .unmatched
+        }
+    }
+
     /// The player, then each NPC that another NPC attacks on sight.
     public func perceptionTargets() -> [PerceptionTarget] {
         guard let gameSession = game.gameSession else { return [] }
         let status = gameSession.locomotion.status
         let isMoving = simd_length_squared(status.lastPlan.horizontalDisplacement) > 0
-        return [playerTarget(status: status, isMoving: isMoving)] + actorTargets()
+        var targets = [playerTarget(status: status, isMoving: isMoving)] + actorTargets()
+        let flying = Dictionary(grouping: game.combat.liveProjectiles, by: \.shooter)
+        for index in targets.indices {
+            let key = targets[index].key
+            targets[index].projectiles = flying[key]?.map(\.state.position) ?? []
+            targets[index].isInCombat = key == .player
+                ? game.combat.loop?.isPlayerInCombat == true
+                : game.combat.loop?.phase(of: key)?.isEngaged == true
+        }
+        return targets
     }
 
     public func perceptionActorPairs() -> [DetectionPairKey] {

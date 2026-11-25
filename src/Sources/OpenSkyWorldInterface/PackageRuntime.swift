@@ -5,6 +5,15 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
+/// The target data of an Ambush package (`PKDT` type 9): who it waits for.
+nonisolated public enum PackageAmbushArea: Equatable, Sendable {
+    /// No target data: everyone.
+    case everyone
+    case within(center: SIMD3<Float>, radius: Float)
+    /// Target data OpenSky does not match yet.
+    case unmatched
+}
+
 nonisolated public struct PackageActorReadout: Equatable, Sendable {
     public let actor: ReferenceKey
     public let actorBase: FormID

@@ -38,6 +38,10 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     /// Who the observer fights, if anyone. Another target than the one judged weights
     /// its skill by `fSneakCombatMod`.
     public var combatTarget: ReferenceKey?
+    /// The target data of the observer's running Ambush package, or nil without one.
+    public var ambush: DetectionAmbushArea?
+    /// Its reaction to the player is Ally or Friend.
+    public var isFriendToPlayer = false
 
     public var name: String {
         label.text
@@ -103,6 +107,10 @@ nonisolated public struct PerceptionTarget: Equatable, Sendable {
     public let traits: DetectionTargetTraits
     /// FULL name when one resolves, else the editor ID, else the FormID.
     public let name: String
+    /// In combat: the player while an actor fights it, an NPC while it fights.
+    public var isInCombat = false
+    /// Where the target's own projectiles fly now.
+    public var projectiles: [SIMD3<Float>] = []
 
     public init(
         key: ReferenceKey,

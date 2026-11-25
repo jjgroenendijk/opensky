@@ -38,6 +38,8 @@ public protocol ExplosionWorld: AnyObject {
     /// Puts the new reference in the world. False when it cannot.
     @discardableResult
     func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool
+    /// `owner` made a detection sound event of the `EXPL` sound level at `position`.
+    func noteExplosionSound(owner: ReferenceKey, level: UInt32?, at position: SIMD3<Float>)
 }
 
 extension ExplosionWorld {
@@ -59,4 +61,6 @@ extension ExplosionWorld {
     public func placeExplosionObject(_: ExplosionObjectPlacement) -> Bool {
         false
     }
+
+    public func noteExplosionSound(owner _: ReferenceKey, level _: UInt32?, at _: SIMD3<Float>) {}
 }

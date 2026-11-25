@@ -142,6 +142,29 @@ struct AIActsSensesTests {
         #expect(abs(observer.heading.y - 1) < 1e-5)
     }
 
+    /// A running Ambush package gives the observer the area it waits on.
+    @Test func anAmbushPackageGivesTheObserverItsArea() throws {
+        host.fakeActorWorld.combatActorsResult = [
+            CombatActorObservation(key: Self.actor, feet: .zero, heading: 0)
+        ]
+        host.fakeFactions.hostilityResult = .hostile
+        host.fakeDragonFlightWorld.isFlyingResult = false
+        for (area, expected) in [
+            (PackageAmbushArea.everyone, DetectionAmbushArea.everyone),
+            (
+                .within(center: SIMD3(1, 2, 3), radius: 40),
+                .within(center: SIMD3(1, 2, 3), radius: 40)
+            ),
+            (.unmatched, .unmatched)
+        ] {
+            host.fakePackages.ambushAreaResult = area
+            let observer = try #require(
+                adapter.perceptionWorlds.perceptionCandidates().first?.observer
+            )
+            #expect(observer.ambush == expected)
+        }
+    }
+
     /// Only the actors `isDue` asks for are built; the rest are listed by key.
     @Test func aRefreshBuildsOnlyTheDueActors() {
         host.fakeActorWorld.combatActorsResult = [
