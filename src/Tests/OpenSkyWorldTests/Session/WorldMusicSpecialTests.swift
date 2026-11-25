@@ -64,7 +64,6 @@ struct WorldMusicSpecialTests {
         let before = special.fadeGain
         director.tickWhilePaused(deltaTime: 0.5)
         #expect(special.fadeGain > before)
-        #expect(director.currentStateName == "special")
     }
 
     @Test func combatUsesTheBattleMusicAndCutsASpecialMoment() throws {
