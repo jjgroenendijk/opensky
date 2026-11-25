@@ -245,25 +245,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     private static func installPointMethods(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Runtime.method(runtime, on: prototype, name: "add") { context in
-            try combine(context, sign: 1)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "subtract") { context in
-            try combine(context, sign: -1)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "clone") { context in
-            try combine(context, sign: 0)
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
-            let point = try coordinates(context.thisObject, context)
-            let text = { context.runtime.coercion.toString(.number($0)) }
-            return .string("(x=\(text(point.0)), y=\(text(point.1)))")
-        }
-        AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
-            let lhs = try coordinates(context.thisObject, context)
-            let rhs = try coordinates(context.argument(0).objectValue, context)
-            return .boolean(lhs == rhs)
-        }
+        PointNatives.installPointMethods(runtime, prototype: prototype)
     }
 
     /// `add`, `subtract`, and `clone` all build a new `Point`; `sign` is 0 for
@@ -289,5 +271,32 @@ nonisolated extension SWFMovieRuntime {
             context.interpreter.toNumber(object.lookup("x")?.property.value ?? .undefined),
             context.interpreter.toNumber(object.lookup("y")?.property.value ?? .undefined)
         )
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Installs the `Point` methods.
+    nonisolated enum PointNatives {
+        static func installPointMethods(_ runtime: AS2Runtime, prototype: AS2Object) {
+            AS2Runtime.method(runtime, on: prototype, name: "add") { context in
+                try SWFMovieRuntime.combine(context, sign: 1)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "subtract") { context in
+                try SWFMovieRuntime.combine(context, sign: -1)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "clone") { context in
+                try SWFMovieRuntime.combine(context, sign: 0)
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
+                let point = try SWFMovieRuntime.coordinates(context.thisObject, context)
+                let text = { context.runtime.coercion.toString(.number($0)) }
+                return .string("(x=\(text(point.0)), y=\(text(point.1)))")
+            }
+            AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
+                let lhs = try SWFMovieRuntime.coordinates(context.thisObject, context)
+                let rhs = try SWFMovieRuntime.coordinates(context.argument(0).objectValue, context)
+                return .boolean(lhs == rhs)
+            }
+        }
     }
 }

@@ -90,20 +90,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     private func runActions(of frame: SWFTimelineFrame, on node: SWFDisplayObject) {
-        guard !frame.actions.isEmpty else {
-            return
-        }
-        guard gotoDepth < SWFMovieRuntime.maximumGotoDepth else {
-            // A frame action that jumps its own clip re-enters this path; the
-            // dropped blocks are counted rather than silently skipped.
-            noteDroppedFrameActions(frame.actions.count)
-            return
-        }
-        gotoDepth += 1
-        defer { gotoDepth -= 1 }
-        for block in frame.actions {
-            AS2Interpreter.execute(in: runtime, block, target: node.object)
-        }
+        FrameActions(owner: self).runActions(of: frame, on: node)
     }
 
     // MARK: - Placement
@@ -143,27 +130,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
-        if let matrix = placement.matrix, !node.scriptOwnsMatrix {
-            node.matrix = matrix
-        }
-        if let colorTransform = placement.colorTransform, !node.scriptOwnsColor {
-            node.colorTransform = colorTransform
-        }
-        if let name = placement.name {
-            node.name = name
-            node.parent?.bindName(of: node)
-        }
-        if let clipDepth = placement.clipDepth {
-            node.clipDepth = clipDepth
-        }
-        node.effects.update(from: placement)
-        if let clipActions = placement.clipActions {
-            node.clipActions = clipActions
-            globalMouseHandlers.refresh(node)
-            if !clipActions.allEvents.isDisjoint(with: [.keyDown, .keyUp, .keyPress]) {
-                noteKeyClipHandler()
-            }
-        }
+        PlacementApply(owner: self).apply(placement, to: node)
     }
 
     /// A script-made instance, such as `attachMovie`: placed and constructed before
@@ -202,6 +169,63 @@ nonisolated extension SWFMovieRuntime {
             dispatchPlacementLifecycle(node, phase: .constructed)
             if let first = frames(of: node).first {
                 runActions(of: first, on: node)
+            }
+        }
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Applies a timeline placement to a clip.
+    nonisolated struct PlacementApply {
+        let owner: SWFMovieRuntime
+
+        func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
+            let globalMouseHandlers = owner.globalMouseHandlers
+            if let matrix = placement.matrix, !node.scriptOwnsMatrix {
+                node.matrix = matrix
+            }
+            if let colorTransform = placement.colorTransform, !node.scriptOwnsColor {
+                node.colorTransform = colorTransform
+            }
+            if let name = placement.name {
+                node.name = name
+                node.parent?.bindName(of: node)
+            }
+            if let clipDepth = placement.clipDepth {
+                node.clipDepth = clipDepth
+            }
+            node.effects.update(from: placement)
+            if let clipActions = placement.clipActions {
+                node.clipActions = clipActions
+                globalMouseHandlers.refresh(node)
+                if !clipActions.allEvents.isDisjoint(with: [.keyDown, .keyUp, .keyPress]) {
+                    owner.noteKeyClipHandler()
+                }
+            }
+        }
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Runs the actions of a timeline frame.
+    nonisolated struct FrameActions {
+        let owner: SWFMovieRuntime
+
+        func runActions(of frame: SWFTimelineFrame, on node: SWFDisplayObject) {
+            let runtime = owner.runtime
+            guard !frame.actions.isEmpty else {
+                return
+            }
+            guard owner.gotoDepth < SWFMovieRuntime.maximumGotoDepth else {
+                // A frame action that jumps its own clip re-enters this path; the
+                // dropped blocks are counted rather than silently skipped.
+                owner.noteDroppedFrameActions(frame.actions.count)
+                return
+            }
+            owner.gotoDepth += 1
+            defer { owner.gotoDepth -= 1 }
+            for block in frame.actions {
+                AS2Interpreter.execute(in: runtime, block, target: node.object)
             }
         }
     }

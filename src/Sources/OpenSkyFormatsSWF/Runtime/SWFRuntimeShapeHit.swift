@@ -12,36 +12,7 @@ nonisolated extension SWFMovieRuntime {
         at localPoint: SIMD2<Float>,
         remainingDepth: Int = SWFDisplayObject.maximumTreeDepth
     ) -> Bool {
-        switch node.content {
-        case let .shape(id):
-            guard let shape = movie.shape(id), SWFBoundsBox(rect: shape.bounds).contains(localPoint)
-            else {
-                return false
-            }
-            return hitMeshes.mesh(for: shape).contains(localPoint)
-        case .staticText, .editText:
-            return containsLocally(node, localPoint: localPoint)
-        case .clip:
-            if node.isButton {
-                return containsLocally(node, localPoint: localPoint)
-            }
-            guard remainingDepth > 0 else {
-                return false
-            }
-            return node.children.contains { child in
-                guard
-                    child.isVisible, child.clipDepth == nil,
-                    let inverse = SWFTransform(matrix: child.matrix).inverted
-                else {
-                    return false
-                }
-                return draws(
-                    child,
-                    at: inverse.apply(localPoint),
-                    remainingDepth: remainingDepth - 1
-                )
-            }
-        }
+        ShapeDraws(owner: self).draws(node, at: localPoint, remainingDepth: remainingDepth)
     }
 }
 
@@ -64,5 +35,52 @@ nonisolated extension SWFShapeMesh {
 
     private func cross(_ edge: SIMD2<Float>, _ offset: SIMD2<Float>) -> Float {
         edge.x * offset.y - edge.y * offset.x
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Collects the shape draws used for hit tests.
+    nonisolated struct ShapeDraws {
+        let owner: SWFMovieRuntime
+
+        func draws(
+            _ node: SWFDisplayObject,
+            at localPoint: SIMD2<Float>,
+            remainingDepth: Int = SWFDisplayObject.maximumTreeDepth
+        ) -> Bool {
+            let hitMeshes = owner.hitMeshes.cache
+            switch node.content {
+            case let .shape(id):
+                guard
+                    let shape = owner.movie.shape(id),
+                    SWFBoundsBox(rect: shape.bounds).contains(localPoint)
+                else {
+                    return false
+                }
+                return hitMeshes.mesh(for: shape).contains(localPoint)
+            case .staticText, .editText:
+                return owner.containsLocally(node, localPoint: localPoint)
+            case .clip:
+                if node.isButton {
+                    return owner.containsLocally(node, localPoint: localPoint)
+                }
+                guard remainingDepth > 0 else {
+                    return false
+                }
+                return node.children.contains { child in
+                    guard
+                        child.isVisible, child.clipDepth == nil,
+                        let inverse = SWFTransform(matrix: child.matrix).inverted
+                    else {
+                        return false
+                    }
+                    return owner.draws(
+                        child,
+                        at: inverse.apply(localPoint),
+                        remainingDepth: remainingDepth - 1
+                    )
+                }
+            }
+        }
     }
 }

@@ -36,16 +36,7 @@ nonisolated extension SWFMovieRuntime {
     /// True when the node itself can consume a mouse event, either through a
     /// handler member or a CLIPACTIONS mouse handler.
     func isMouseEnabled(_ node: SWFDisplayObject) -> Bool {
-        guard node.isClip else {
-            return false
-        }
-        if node.isButton {
-            return true
-        }
-        if let events = node.clipActions?.allEvents, !events.isDisjoint(with: .mouseEvents) {
-            return true
-        }
-        return Self.mouseHandlerNames.contains { node.object.lookup($0) != nil }
+        MouseEnabling().isMouseEnabled(node)
     }
 
     /// True when the point falls inside the node's own character bounds,
@@ -189,6 +180,24 @@ nonisolated extension SWFMovieRuntime {
             masks.contains { mask in
                 mask.range.contains(child.depth) && !mask.box.contains(point)
             }
+        }
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Says whether a clip takes mouse input.
+    nonisolated struct MouseEnabling {
+        func isMouseEnabled(_ node: SWFDisplayObject) -> Bool {
+            guard node.isClip else {
+                return false
+            }
+            if node.isButton {
+                return true
+            }
+            if let events = node.clipActions?.allEvents, !events.isDisjoint(with: .mouseEvents) {
+                return true
+            }
+            return SWFMovieRuntime.mouseHandlerNames.contains { node.object.lookup($0) != nil }
         }
     }
 }

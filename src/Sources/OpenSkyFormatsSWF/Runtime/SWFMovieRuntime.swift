@@ -52,8 +52,7 @@ nonisolated public final class SWFMovieRuntime {
     public let input = SWFRuntimeInputState()
     /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.
     public let timers = SWFRuntimeTimers()
-    /// Shape triangles for pointer hits, tessellated on the first hit of each shape.
-    let hitMeshes = SWFShapeCache()
+    let hitMeshes = HitMeshes()
     /// Both directions of the `GameDelegate` bridge, bounded.
     public internal(set) var invokeLog = SWFInvokeLog()
     /// Resolves a `$TOKEN` text when a field is read, as Scaleform's translator does.
@@ -315,5 +314,12 @@ nonisolated extension SWFMovie {
         default:
             return nil
         }
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Shape triangles for pointer hits, tessellated on the first hit of each shape.
+    nonisolated final class HitMeshes {
+        let cache = SWFShapeCache()
     }
 }

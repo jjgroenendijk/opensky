@@ -71,53 +71,11 @@ nonisolated extension SWFMovieRuntime {
     /// `setTextFormat(format)` sets the field's format. The forms with a character range
     /// are ignored, because a field draws in one format.
     private static func applyTextFormat(_ context: AS2CallContext) throws -> AS2Value {
-        guard
-            context.arguments.count == 1,
-            let owner = movieRuntime(context), let node = node(context),
-            let format = context.argument(0).objectValue
-        else {
-            return .undefined
-        }
-        let read = { (name: String) -> AS2Value? in
-            guard let value = format.lookup(name)?.property.value else { return nil }
-            switch value {
-            case .undefined, .null: return nil
-            default: return value
-            }
-        }
-        var parsed = SWFTextFormat()
-        if let font = read("font") {
-            parsed.font = try context.interpreter.toString(font)
-        }
-        if let size = read("size") {
-            let points = try context.interpreter.toNumber(size)
-            parsed.size = points.isFinite ? max(0, points) : nil
-        }
-        if let color = read("color") {
-            let rgb = try context.interpreter.toNumber(color)
-            parsed.color = rgb.isFinite ? SWFColor(rgb: Int(rgb)) : nil
-        }
-        node.textFormat = (node.textFormat ?? SWFTextFormat()).merged(with: parsed)
-        owner.markDirty()
-        return .undefined
+        try TextFormatNatives.applyTextFormat(context)
     }
 
     private static func textFormatObject(_ context: AS2CallContext) -> AS2Value {
-        let result = context.runtime.makeObject()
-        guard
-            let owner = movieRuntime(context), let node = node(context),
-            let field = owner.textField(of: node)
-        else {
-            return .object(result)
-        }
-        let font = field.fontClass ?? field.fontID.flatMap { id in
-            owner.movie.font(id)?.name ?? owner.movie.importedNames[id]
-        } ?? defaultTextFont
-        let color = field.color.map { Int($0.red) << 16 | Int($0.green) << 8 | Int($0.blue) } ?? 0
-        result.define(.string(font), for: "font")
-        result.define(.number(Double(field.fontHeight ?? 240) / 20), for: "size")
-        result.define(.number(Double(color)), for: "color")
-        return .object(result)
+        TextFormatNatives.textFormatObject(context)
     }
 }
 
@@ -128,5 +86,63 @@ nonisolated extension SWFColor {
             red: UInt8(truncatingIfNeeded: rgb >> 16), green: UInt8(truncatingIfNeeded: rgb >> 8),
             blue: UInt8(truncatingIfNeeded: rgb), alpha: 255
         )
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Runs the `TextFormat` methods of a text field.
+    nonisolated enum TextFormatNatives {
+        static func applyTextFormat(_ context: AS2CallContext) throws -> AS2Value {
+            guard
+                context.arguments.count == 1,
+                let owner = SWFMovieRuntime.movieRuntime(context),
+                let node = SWFMovieRuntime.node(context),
+                let format = context.argument(0).objectValue
+            else {
+                return .undefined
+            }
+            let read = { (name: String) -> AS2Value? in
+                guard let value = format.lookup(name)?.property.value else { return nil }
+                switch value {
+                case .undefined, .null: return nil
+                default: return value
+                }
+            }
+            var parsed = SWFTextFormat()
+            if let font = read("font") {
+                parsed.font = try context.interpreter.toString(font)
+            }
+            if let size = read("size") {
+                let points = try context.interpreter.toNumber(size)
+                parsed.size = points.isFinite ? max(0, points) : nil
+            }
+            if let color = read("color") {
+                let rgb = try context.interpreter.toNumber(color)
+                parsed.color = rgb.isFinite ? SWFColor(rgb: Int(rgb)) : nil
+            }
+            node.textFormat = (node.textFormat ?? SWFTextFormat()).merged(with: parsed)
+            owner.markDirty()
+            return .undefined
+        }
+
+        static func textFormatObject(_ context: AS2CallContext) -> AS2Value {
+            let result = context.runtime.makeObject()
+            guard
+                let owner = SWFMovieRuntime.movieRuntime(context),
+                let node = SWFMovieRuntime.node(context),
+                let field = owner.textField(of: node)
+            else {
+                return .object(result)
+            }
+            let font = field.fontClass ?? field.fontID.flatMap { id in
+                owner.movie.font(id)?.name ?? owner.movie.importedNames[id]
+            } ?? SWFMovieRuntime.defaultTextFont
+            let color = field.color
+                .map { Int($0.red) << 16 | Int($0.green) << 8 | Int($0.blue) } ?? 0
+            result.define(.string(font), for: "font")
+            result.define(.number(Double(field.fontHeight ?? 240) / 20), for: "size")
+            result.define(.number(Double(color)), for: "color")
+            return .object(result)
+        }
     }
 }

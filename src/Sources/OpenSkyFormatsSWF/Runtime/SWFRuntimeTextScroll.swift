@@ -9,14 +9,7 @@ nonisolated extension SWFMovieRuntime {
     /// to fit, and GFx `verticalAutoSize` grows the field to its lines, so a field with
     /// either set draws every line.
     func windowsLines(_ node: SWFDisplayObject) -> Bool {
-        guard
-            let field = textField(of: node), field.flags.multiline, field.flags.wordWrap,
-            !field.flags.autoSize
-        else {
-            return false
-        }
-        return isOff(node.object.lookup("textAutoSize")?.property.value)
-            && isOff(node.object.lookup("verticalAutoSize")?.property.value)
+        TextScrolling(owner: self).windowsLines(node)
     }
 
     /// The field's box. GFx `verticalAutoSize` fits the height to the laid-out lines plus
@@ -80,17 +73,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     func setTextScroll(_ value: AS2Value, of node: SWFDisplayObject) -> Bool {
-        guard textField(of: node) != nil else { return false }
-        let number = runtime.coercion.toNumber(value)
-        guard number.isFinite else { return true }
-        let shown = textScroll(of: node)
-        node.textScroll = min(max(1, Int(number)), maxScroll(of: node))
-        markDirty()
-        if node.textScroll != shown {
-            // CLIK's `ScrollBar` listens to its target field for `onScroller`.
-            broadcast("onScroller", from: node.object, arguments: [.object(node.object)])
-        }
-        return true
+        TextScrolling(owner: self).setTextScroll(value, of: node)
     }
 
     private func maxScroll(of node: SWFDisplayObject) -> Int {
@@ -111,5 +94,38 @@ nonisolated extension SWFMovieScene {
         guard let font = resolvedFont(for: field) else { return nil }
         let layout = SWFTextLayout.editText(field, font: font, content: content, firstLine: 0)
         return (layout.lineCount, layout.visibleLineCount)
+    }
+}
+
+extension SWFMovieRuntime {
+    /// Reads line wrapping and writes the scroll of a text field.
+    nonisolated struct TextScrolling {
+        let owner: SWFMovieRuntime
+
+        func windowsLines(_ node: SWFDisplayObject) -> Bool {
+            guard
+                let field = owner.textField(of: node), field.flags.multiline, field.flags.wordWrap,
+                !field.flags.autoSize
+            else {
+                return false
+            }
+            return owner.isOff(node.object.lookup("textAutoSize")?.property.value)
+                && owner.isOff(node.object.lookup("verticalAutoSize")?.property.value)
+        }
+
+        func setTextScroll(_ value: AS2Value, of node: SWFDisplayObject) -> Bool {
+            let runtime = owner.runtime
+            guard owner.textField(of: node) != nil else { return false }
+            let number = runtime.coercion.toNumber(value)
+            guard number.isFinite else { return true }
+            let shown = owner.textScroll(of: node)
+            node.textScroll = min(max(1, Int(number)), owner.maxScroll(of: node))
+            owner.markDirty()
+            if node.textScroll != shown {
+                // CLIK's `ScrollBar` listens to its target field for `onScroller`.
+                owner.broadcast("onScroller", from: node.object, arguments: [.object(node.object)])
+            }
+            return true
+        }
     }
 }
