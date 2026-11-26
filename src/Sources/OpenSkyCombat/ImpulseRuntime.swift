@@ -43,8 +43,6 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     func waterContacts(_ contacts: [WaterSample])
     /// Plays the sound of a loose body hitting something.
     func playCollision(_ collision: BodyCollision)
-    /// The resident destructible objects within `radius` of `center`, by their origin.
-    func impulseDestructibles(within radius: Float, of center: SIMD3<Float>) -> [MeleeTarget]
     /// Deals destruction damage from a body's impact. False when `object` is not destructible.
     func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool
 }
@@ -131,35 +129,46 @@ public final class ImpulseRuntime {
         world.waterContacts(samples.filter(\.isWading))
     }
 
+    /// Damage runs on contacts only, so a body that touches nothing costs nothing. An actor's
+    /// capsule is not in the body solver, so its contact is the capsule overlap. A body of
+    /// an actor (the biped layers) hurts no actor: that contact is the actors' push.
     private func strike(actors: [MeleeTarget], bodies: [ImpulseBody], world: any ImpulseWorld) {
         var nowTouching: Set<[ReferenceKey]> = []
         for body in bodies {
-            let speed = simd_length(body.velocity)
-            let damage = PhysicsDamage.damage(mass: body.mass, speed: speed, settings: settings)
-            guard damage > 0 else { continue }
-            for actor in actors where Self.touches(body, actor) {
-                let pair = [body.key, actor.key]
-                nowTouching.insert(pair)
-                guard !touching.contains(pair), world.applyPhysicsDamage(damage, to: actor.key)
-                else { continue }
-                record(.physicsDamage(body: body.key, struck: actor.key, damage: damage))
-            }
-            for object in world.impulseDestructibles(
-                within: body.boundingRadius + Self.objectReach, of: body.position
-            ) where object.key != body.key && Self.touches(body, object) {
-                let pair = [body.key, object.key]
+            strikeActors(actors, with: body, touching: &nowTouching, world: world)
+            for touch in body.touches {
+                let pair = [body.key, touch.struck]
                 nowTouching.insert(pair)
                 guard !touching.contains(pair) else { continue }
-                if world.applyPhysicsDestruction(damage, to: object.key) {
-                    record(.physicsDamage(body: body.key, struck: object.key, damage: damage))
+                let struck = PhysicsDamage.objectDamage(
+                    otherMass: touch.otherMass, speed: touch.speed, settings: settings
+                )
+                if struck > 0, world.applyPhysicsDestruction(struck, to: touch.struck) {
+                    record(.physicsDamage(body: body.key, struck: touch.struck, damage: struck))
                 }
             }
         }
         touching = nowTouching
     }
 
-    /// How far from a body's bounds a destructible object's origin is looked for.
-    static let objectReach: Float = 128
+    private func strikeActors(
+        _ actors: [MeleeTarget], with body: ImpulseBody,
+        touching nowTouching: inout Set<[ReferenceKey]>,
+        world: any ImpulseWorld
+    ) {
+        guard body.kind != .biped else { return }
+        let damage = PhysicsDamage.damage(
+            mass: body.mass, speed: simd_length(body.velocity), settings: settings
+        )
+        guard damage > 0 else { return }
+        for actor in actors where actor.key != body.key && Self.touches(body, actor) {
+            let pair = [body.key, actor.key]
+            nowTouching.insert(pair)
+            guard !touching.contains(pair), world.applyPhysicsDamage(damage, to: actor.key)
+            else { continue }
+            record(.physicsDamage(body: body.key, struck: actor.key, damage: damage))
+        }
+    }
 
     private func knockInFastWater(_ actors: [MeleeTarget], world: any ImpulseWorld) {
         var stillIn: Set<ReferenceKey> = []

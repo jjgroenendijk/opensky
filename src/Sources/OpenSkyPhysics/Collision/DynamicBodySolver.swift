@@ -126,6 +126,9 @@ nonisolated public enum DynamicBodySolver: Sendable {
         let substepTime = dt / Float(substeps)
         let isRagdoll = !joints.isEmpty
         scratch.staticShapes = DynamicStaticShapes(bodyCount: bodies.count)
+        for index in bodies.indices where !bodies[index].isSleeping {
+            bodies[index].touches.removeAll(keepingCapacity: true)
+        }
         for _ in 0 ..< substeps {
             for index in bodies.indices where !bodies[index].isSleeping {
                 integratePose(&bodies[index], dt: substepTime, stats: &stats)
@@ -141,6 +144,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
                 bodies[contact.body].lastSurface = DynamicSurfaceTouch(
                     material: contact.surfaceMaterial, point: contact.point
                 )
+                recordTouch(contact, bodies: &bodies)
             }
             stats.contactCount = max(stats.contactCount, contacts.count)
             stats.pairContactCount = max(
@@ -303,5 +307,33 @@ nonisolated extension SIMD3 where Scalar == Float {
 nonisolated extension SIMD4 where Scalar == Float {
     public var isFiniteVector4: Bool {
         x.isFinite && y.isFinite && z.isFinite && w.isFinite
+    }
+}
+
+nonisolated extension DynamicBodySolver {
+    /// Notes the contact on both bodies it joins, with the speed they meet at along its
+    /// normal before the solver separates them. The game tests damage on such an event.
+    static func recordTouch(_ contact: DynamicContact, bodies: inout [DynamicBody]) {
+        let body = bodies[contact.body]
+        let other = contact.other.map { bodies[$0] }
+        let relative = body.velocity(at: contact.point)
+            - (other?.velocity(at: contact.point) ?? .zero)
+        let speed = max(0, -simd_dot(relative, contact.normal))
+        if let other, let otherIndex = contact.other {
+            note(.body(other.key), speed: speed, on: &bodies[contact.body])
+            note(.body(body.key), speed: speed, on: &bodies[otherIndex])
+        } else if let reference = contact.shapeReference {
+            note(.shape(reference), speed: speed, on: &bodies[contact.body])
+        }
+    }
+
+    private static func note(
+        _ struck: DynamicBodyTouch.Struck, speed: Float, on body: inout DynamicBody
+    ) {
+        if let index = body.touches.firstIndex(where: { $0.struck == struck }) {
+            body.touches[index].speed = max(body.touches[index].speed, speed)
+        } else {
+            body.touches.append(DynamicBodyTouch(struck: struck, speed: speed))
+        }
     }
 }

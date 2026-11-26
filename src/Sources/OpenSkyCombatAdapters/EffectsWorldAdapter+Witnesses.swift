@@ -251,13 +251,6 @@ extension EffectsWorldAdapter {
         blasts.placeExplosionObject(placement)
     }
 
-    public func impulseDestructibles(
-        within radius: Float,
-        of center: SIMD3<Float>
-    ) -> [MeleeTarget] {
-        blasts.explosionObjects(within: radius, of: center)
-    }
-
     public func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool {
         blasts.applyDestructionDamage(amount, to: object)
     }

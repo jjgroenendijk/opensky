@@ -38,6 +38,25 @@ nonisolated public struct DynamicSurfaceTouch: Equatable, Sendable {
     }
 }
 
+/// One thing a body touched in the last step, as a contact event reports it.
+nonisolated public struct DynamicBodyTouch: Equatable, Sendable {
+    public enum Struck: Hashable, Sendable {
+        /// A static shape, by its placed reference.
+        case shape(FormID)
+        /// Another dynamic body.
+        case body(ReferenceKey)
+    }
+
+    public let struck: Struck
+    /// The fastest the two met along the contact normal in the step, units a second.
+    public var speed: Float
+
+    public init(struck: Struck, speed: Float) {
+        self.struck = struck
+        self.speed = speed
+    }
+}
+
 /// The unchanging half of a body: its collider, its inertia, and the material
 /// constants the solver reads. One definition per placed reference, shared by
 /// every step it lives through.
@@ -318,6 +337,8 @@ nonisolated public struct DynamicBody: Sendable {
     public var restingSteps = 0
     /// The surface of the last contact, for the collision sound.
     public var lastSurface: DynamicSurfaceTouch?
+    /// What the body touched in the last step it moved in, for physics damage.
+    public var touches: [DynamicBodyTouch] = []
     /// The impulses of the last substep's contacts, to start the next one from.
     var warmImpulses: [DynamicWarmImpulse] = []
 
