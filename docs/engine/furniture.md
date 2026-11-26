@@ -161,6 +161,21 @@ motion left it and faces its way. An exit clip without motion data leaves the ac
 `FurnitureSeat.standDistance` (48 units) out on the entry side, or on the root for the up
 side.
 
+A sit package that starts while the actor already sits in furniture the package accepts ends
+that step at once. The actor stays seated, with no stand-up, no new entry idle, and no event.
+This holds on every package check, for a package from a scene action or an alias alike.
+Furniture the new package does not accept makes the actor get up through its exit idle first,
+then walk to the new seat. An actor that cannot play the exit, such as one with no 3D, goes
+straight to the exit point. Nothing sends a seat idle again while the actor stays seated: when
+an idle a script played ends, the behaviour graph goes back to the seat loop.
+`ChairFurnitureExit` and `BedFurnitureExit`, raised at the end of an exit, free the furniture.
+
+The execution at Helgen needs this. `MQ101Scene4` gives the prisoner
+`MQ101PrisonerToChoppingBlock` from two actions in a row (phases 37 to 38, then 39 to 41), and
+phase 42 waits for the prisoner to die while the chop plays on the block. [WARNING] OpenSky
+stands the actor up at every package change and seats it again. That replays the entry idle and
+cuts the chop before its `KillActor`.
+
 A teleport or a cell change that takes the seated or rising player more than 256 units from
 the seat, or unloads the furniture, also ends the seat, without an exit idle.
 

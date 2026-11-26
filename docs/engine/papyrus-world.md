@@ -41,6 +41,11 @@ only the `WaitMenuMode` waits, and resumes the ones that are due, so such a time
 menu is open. `IsInMenuMode` is true while that call runs. Events, update timers, and the other waits
 stay paused. A resumed call that then waits on anything else goes on in world time.
 
+`Utility.Wait` counts real time, not game time, so the timescale does not change it. Each update
+adds at most 0.166 s, so a long frame does not end a wait early. A wait keeps counting after the
+script's reference unloads or is disabled. A wait of 0 or less resumes at once, and the longest
+wait is 86,400 s.
+
 - One fixed step ticks the scheduler, settles what woke, then drains the event queue up to the
   budget. Tests and the offscreen path drive this directly.
 - Advancing by a delta adds it to an accumulator and runs whole steps only, so the frame rate never

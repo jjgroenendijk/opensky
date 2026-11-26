@@ -109,13 +109,30 @@ from the same progress.
 
 ## Transition duration
 
-`WTHR` `DATA` "Trans Delta" is a byte that the parser scales to 0 ... 0.25. The Creation Kit
-wiki page "Weather" (<https://ck.uesp.net/wiki/Weather>) says it is the number of game hours
-the transition takes. OpenSky uses the scaled value as game hours. Most `Skyrim.esm` weathers
-store 125, which is 0.1225 game hours: about 22 real seconds at the default timescale of 20.
+A transition takes `0.01 + d / 255 × 0.24` game hours, with `d` the `WTHR` `DATA` "Trans Delta"
+byte of the incoming weather. So the shortest takes 0.01 game hours and the longest 0.25: 1.8 to
+45 real seconds at the default timescale of 20. Most `Skyrim.esm` weathers store 125, such as
+`SkyrimClear`, `SkyrimFog`, `SkyrimCloudy`, and `HelgenAttackWeather`. That is 0.1276 game hours,
+7.7 game minutes, about 23 real seconds.
 
-A delta of 0 (19 weathers in `Skyrim.esm`) switches at once, with no fade. The scaling is not
-confirmed against the game; the wiki gives the unit, not the range.
+The transition follows the game clock. The timescale changes its speed, it stops while the clock
+stops, and waiting or resting in a bed finishes it in one step. It ends when the progress passes 1.
+
+[WARNING] OpenSky scales the byte to 0 ... 0.25 game hours with no 0.01 floor, so a delta of 0
+switches at once.
+
+## The first weather
+
+Entering a worldspace applies its climate and clears the weather. A worldspace with no climate
+uses `DefaultClimate` (`0000015F`). The next update with no current weather takes the first of
+these, and puts it in at once:
+
+1. the override weather;
+2. the region's weather, drawn by chance, with a chance of 0 skipped; an interior with a sky uses
+   its cell's sky region;
+3. the base weather;
+4. the climate's weather list (`SkyrimClimate` lists `SkyrimCloudy` at 100);
+5. `DefaultWeather` (`0000015E`).
 
 ## Time-of-day blend
 
@@ -206,15 +223,61 @@ draws without clouds. Interiors draw no clouds.
 The `Weather` natives reach the weather system through the script world adapter
 (<https://ck.uesp.net/wiki/Weather_Script>):
 
-- `SetActive(bool abOverride = false, bool abAccelerate = false)` starts the weather with a
-  transition. `ForceActive(bool abOverride = false)` snaps to it. With the override, the weather is
-  forced, as from the Weather control, and stays until `ReleaseOverride()`. Without it, the next
-  reroll may replace the weather, and a forced weather wins over it.
+- `ForceActive(bool abOverride = false)` puts the weather in at once. It drops a running
+  transition and every waiting request, and resets rain, snow, and lightning. With the override,
+  the weather goes into the override slot. Without it, the weather becomes the base weather and
+  the override is cleared.
+- `SetActive(bool abOverride = false, bool abAccelerate = false)` only records a request. With the
+  override it replaces the override slot, so the last call wins, whichever script made it.
+  Without it, it sets the base weather. When no weather is current yet, it acts as `ForceActive`.
+- `ReleaseOverride()` clears the override. The next update chooses again, with a normal
+  transition.
 - `GetCurrentWeather()` returns the weather the sky shows or moves to.
 - `FindWeather(int auiType)` returns the first candidate of the current regions with that
   classification: 0 pleasant, 1 cloudy, 2 rainy, 3 snow. `GetClassification()` reads the same
   codes from the `DATA` flags, and -1 for none.
 
-`abAccelerate` makes the transition `fWeatherTransAccel` times faster (16 in `Skyrim.esm`).
-OpenSky reads the setting as a divisor of the fade's length. The CK settings list gives only
-the value, so the meaning is a guess from its name.
+Each frame the target is the override weather, else the region's weather, else the base weather.
+A request never gets lost. While a transition runs it waits, and only the last request per slot
+is kept:
+
+```mermaid
+flowchart TD
+  call[SetActive] --> any{A weather is current?}
+  any -- no --> force[Put in at once]
+  any -- yes --> slot[Store in the override or base slot]
+  slot --> frame[Each frame: target = override, else region, else base]
+  frame --> same{Target is current?}
+  same -- yes --> nothing[Nothing]
+  same -- no --> running{Transition runs?}
+  running -- yes --> frame
+  running -- no --> start[Current becomes outgoing, target becomes current]
+```
+
+An override ends on its own when more than `1 + 22 × (255 − volatility) / 255` game hours have
+passed since the last transition started. For `SkyrimClimate`, volatility 50, that is 18.7 game
+hours. A change of climate clears every weather, the override too. Going into an interior keeps
+the override. In an interior with no sky the weather stands still, and a change that starts there
+is instant.
+
+`abAccelerate` works only while a transition runs at the call. From then on the progress is
+`p0 + (p − p0) × (fWeatherTransAccel + 1)`, with `p0` the progress at the call and `p` the normal
+progress. `fWeatherTransAccel` is 16 in `Skyrim.esm`, so the rest runs 17 times faster. A second
+accelerate changes nothing, and the next weather fades at the normal speed.
+
+[WARNING] OpenSky starts a transition at every `SetActive` call, drops a request made while one
+runs, and divides the fade's length by `fWeatherTransAccel`.
+
+## The opening
+
+The opening's scripts change the weather several times (read from the install's scripts):
+
+- `MQ101` stage 10 calls `ForceActive(true)` on `SkyrimClear`.
+- `FXChargenFXScript`, on a reference near the cart road, runs once when the reference loads. It
+  calls `SetActive(true, false)` on `SkyrimFog`, waits 10 s, applies the chargen image space
+  modifier, and waits 75 s. It then calls `SetActive(true, false)` on `SkyrimCloudy`
+  (`00012F89`), and 65 s later disables and deletes itself.
+- `MQ101` stage 30 calls `ForceActive(true)` on `SkyrimClear` again.
+- `MQ101` stage 150 forces the attack weather.
+
+So the carts reach Helgen under a cloudy or clear sky, not in fog.

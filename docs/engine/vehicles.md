@@ -218,6 +218,12 @@ call `SetVehicle` (read with `openskycli pex`):
 So the game ends a link on its own when the exit state ends, and `ExitCartEnd` is the event that
 marks that moment. OpenSky takes any actor off its vehicle on that event.
 
+While seated, a rider reads `GetSitState` 3. `ExitCartBegin` frees it from the vehicle. From then
+on it moves like any actor, by its root motion through the character controller, with gravity and
+ground following ([actor graphs](/engine/actor-graphs.md#pose)). So the exit motion is not applied
+in the cart's frame. `ExitCartEnd` acts as `SetVehicle(None)`: the sit state goes back to 0 and the
+link clears. Neither event puts the rider on the ground; the controller does.
+
 ### How an exit state ends
 
 An exit state plays its clip once and then holds the last frame. It sends `ExitCartEnd` only

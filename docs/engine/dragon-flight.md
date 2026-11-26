@@ -150,6 +150,69 @@ Each step writes `TargetSpeed`, `PitchDelta`, `MoveDirZ`, `DistToGoal`, `TweenPo
 writes `Speed` and `TurnDelta` itself. The rider's `0_master.hkx` reads `PitchOffset`; OpenSky
 writes the mount's climb angle there. [INFO] That reading is OpenSky's.
 
+## What the game gives the graph
+
+In the game the dragon's graph does the smoothing, the speed changes, and the banking. The engine
+only writes targets and rates into the graph, every frame, for every actor:
+
+| Variable | Value |
+| --- | --- |
+| `Speed` | The current speed in units/s; crossing 5 sends a start or stop notice |
+| `TargetSpeed` | The speed the AI wants, in units/s, not smoothed |
+| `Pitch`, `Roll` | The body's pitch and roll, in degrees |
+| `PitchDelta` | The pitch rate, in degrees/s |
+| `TurnDelta` | Minus the heading rate, in degrees/s, so positive turns left; crossing 1 sends a notice |
+| `Direction` | The heading of travel against the facing, 0 to 1 |
+| `TimeDelta` | The frame time |
+
+In flight (phases 1 to 4) the engine also writes `MovementDirection`, the unit vector of travel.
+The graph works out `MoveDirZ` from it, and `FlightPitchBlendTarget` is the size of `MoveDirZ`.
+On a landing, hover, or grab path it writes `DistToGoal`, the units left on the path, with
+`HasTweenSpeed` true and `TweenSpeed` the path's speed; on any other path `HasTweenSpeed` is false.
+
+The graph then sets, from those values:
+
+- the target speed, `TargetSpeed` kept between 0 and a top speed that falls as
+  `|TurnDelta| + |PitchDelta|` grows; within 2,048 units of a landing it takes the tween speed;
+- the speed, moved toward the target by the graph's acceleration and deceleration, less a drag
+  of `0.5 × Speed² × Drag × 0.00001` per second; flap, glide, or feather follows from how the
+  speed compares with the target;
+- the bank, a blend of the bank clips by a smoothed `TurnDelta`; and the spine twist, by a
+  smoothed `PitchDelta` kept within ±25.
+
+So any frame-to-frame noise in `TurnDelta`, `PitchDelta`, `TargetSpeed`, or the direction of
+travel shows at once as jitter in the bank, the wing beats, and the twist. The graph's `Speed`,
+times the actor's scale, is the speed the dragon moves at when the graph sets `bSpeedSynced`.
+
+The flight path is a smooth curve from the dragon through the path's points, with a lead point
+ahead along its forward direction. Each frame the dragon moves along it by its speed times the
+frame time. The curve's direction gives the wanted heading and pitch, with roll 0. The
+orientation turns toward that along the shortest arc by the fraction
+`min(speed / top speed, 1) × 9 × frame time`, at most 1. So it closes in at 9 per second at
+full speed. The turn rate is capped by the movement type's turn-in-place speed; only an actor
+without one uses `fFlyingActorDefaultTurningSpeed` in flight. In phases 1 to 4 the character
+controller flies; in phases 0 and 5 it walks, so a perched dragon stands on the perch's collision.
+
+A package that sends a dragon to perch furniture lands it when the race can fly. Within
+`fAIMarkerDestinationRadius` (25 units) the dragon goes straight to phase 5. Otherwise, when it
+can fly and its graph's `Injured` is false, it cruises (phase 2) on a landing path that ends at the
+perch with the perch's own heading. A dragon that cannot fly walks there. The graph slows down
+from `DistToGoal` and `TweenSpeed`: it goes to the feather stop when the tween speed is below 5,
+the goal is within 2,048 units, and the speed is above 500.
+
+The clips set the phase with these events:
+
+| Event | `GetFlyingState` |
+| --- | --- |
+| `FlightTakeOff` | 1 |
+| `FlightCruising` | 2 |
+| `FlightHovering` | 3 |
+| `FlightLanding` | 4 |
+| `FlightPerching` | 5 |
+| `FlightLand` | 0 |
+
+Entering phase 1 sets the roll to 0 and keeps the heading.
+
 ## Clip events
 
 `DragonActorScript` registers for `DragonLandEffect`, `DragonTakeoffEffect`, the wing and tail
@@ -221,3 +284,5 @@ with the rider's orders and the breath step.
   timing are OpenSky's numbers. The lock range and what ends a lock are the game's
   ([combat assist](/engine/combat-assist.md#flying-mount-lock)).
 - [INFO] The rider's spell rule is OpenSky's, built from the UESP list.
+- OpenSky writes `MoveDirZ` itself, not `MovementDirection`, and steers with its own circle and
+  climb numbers, not the game's smoothed curve.

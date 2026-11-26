@@ -189,7 +189,8 @@ The head falls as one sphere body, 10 units in radius and 5 kg, against the stat
 ragdolls use. It starts at the head bone as the body is drawn, ragdoll included, so a head cut
 from a fallen body starts at its neck on the floor. It keeps the pose it was cut in. It flies 120
 units per second away from the blow and 160 units per second up, and turns at 6 radians per
-second about the axis across the blow. These numbers are OpenSky's choice; the game's throw is not measured.
+second about the axis across the blow. The game throws the head at 250 units per second and lets
+it bleed for 5 s; the split of the speed and the turn are OpenSky's choice.
 Once the head body sleeps, its resting place goes into the death state, and a save keeps it
 with the cut node. A cut body that loads with no resting place, such as one saved while the head
 still fell, drops its head from the neck. The head lasts as long as the body.

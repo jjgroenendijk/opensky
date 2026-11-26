@@ -72,6 +72,36 @@ and three after that, but never more than are unlocked.
 [WARNING] No source says how the game uses `fShoutTime1` and `fShoutTime2`. OpenSky reads them
 as the holds that reach the second and third word. The values fit the UESP text above.
 
+## An NPC shout
+
+The Shout package procedure (<https://ck.uesp.net/wiki/Shout_(Procedure)>) needs a shout record
+and a target; a generic shout type is matched against the actor's own spells, and with no match the
+procedure fails. Until there is a target, it waits. Each update it looks at the target and equips
+the shout. It is ready when:
+
+- without Just Headtrack, the actor stands at the location and faces the target within
+  `fAIShoutToleranceDegrees` (5°);
+- with Just Headtrack, the head aims at the target within 5°;
+- with Hold When Blocked, no other live actor stands nearer than the target within
+  `fAIAimBlockedToleranceDegrees` (10°) of the line to it.
+
+Once ready, and when the voice is free, the actor casts the word of its chosen word count (1 to 3)
+at the target. The procedure then waits for the spell to fire and the voice to be free, and is
+done. After `fAIShoutRetryDelaySeconds` (4 s) with nothing happening, it tries again.
+
+The cast runs this way:
+
+1. The actor plays the voice action. For a dragon the idle tree picks `shoutStart`, or
+   `shoutStartFireball` by a condition.
+2. The graph raises `BeginCastVoice`. After `fShoutTime1` (0.2 s) the first word is reached, and
+   after `fShoutTime2` (0.9 s) the second or third. An NPC takes the word count it chose; only the
+   player holds the key.
+3. At each word the actor speaks a line of the combat voice power topics. This is where a dragon's
+   shouted words come from.
+4. `Voice_SpellFire_Event` from the exhale clip fires the spell, and the recovery starts. The event
+   in the wrong step, or with no spell, stops the cast.
+5. A shout that has not fired after `fShoutTimeout` (8 s) is cancelled.
+
 ## Rumble
 
 A shout rumbles every controller with haptics, when the Gameplay page's Vibration switch is on.
@@ -90,4 +120,5 @@ stronger of the two. The frequency setting is used as the strength, which is Ope
 - When no graph raises `Voice_SpellFire_Event` within 1.5 s of the release, the spell fires
   anyway. This keeps a shout working on a body with no graph. The game has no such wait.
 - The graph picks the exhale clip; the engine does not tell it how many words were shouted.
-- Only the player shouts. An NPC's shout package is not cast.
+- Only the player shouts. An NPC's shout package is not cast, so a dragon in a scene neither
+  shouts nor speaks its words.

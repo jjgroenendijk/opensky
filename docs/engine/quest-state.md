@@ -277,6 +277,12 @@ only after the pass allows the start, so a refused start leaves nothing in the w
 Not done for this fill: "create in" (the new item goes into the anchor's inventory), the level
 (`ALCL`) of a leveled base, and deleting the reference when the quest stops.
 
+External Alias Reference (`ALEQ` plus `ALEA`) takes whatever alias `ALEA` of quest `ALEQ` holds
+when this quest starts ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). It fails
+when that quest is not running, its alias is empty, or the reference is inside a container. The
+location form fills from a location alias the same way. `MQ101DragonAttack` takes `Alduin`,
+`Ralof`, `Hadvar`, and the prisoners from `MQ101` this way. [WARNING] OpenSky leaves these empty.
+
 ### Find Matching Reference
 
 An alias with no fill subrecord but with match conditions, or with a near alias (`ALNA`), is a
