@@ -8,13 +8,27 @@ import OpenSkyWorldInterface
 import simd
 
 extension NPCMover {
-    func staticFloorSampler(world: NPCMovementWorld) -> WalkController.GroundSampler {
+    /// A long body reads the floor under each end, so one search over its area serves
+    /// every read of the frame.
+    func staticFloorSampler(
+        world: NPCMovementWorld, travel: Float
+    ) -> WalkController.GroundSampler {
+        let statics = world.collisionQuery(for: actor)
+        guard let longBody else { return staticFloorSampler(world: world, query: statics) }
+        let shared = SharedCandidateSearch(statics)
+        shared.cover(longBody.searchRegion(at: controller.feetPosition, yaw: yaw, travel: travel))
+        return staticFloorSampler(world: world, query: shared.query)
+    }
+
+    func staticFloorSampler(
+        world: NPCMovementWorld, query: @escaping WalkController.CollisionQuery
+    ) -> WalkController.GroundSampler {
         let legEnd = path.waypoints.indices.contains(waypointIndex)
             ? path.waypoints[waypointIndex] : legStart
         return NPCStaticFloor(
             capsule: capsule, feetHeight: controller.feetPosition.z,
             step: configuration.stepHeight.value, leg: (legStart, legEnd)
-        ).sampler(world: world, query: world.collisionQuery(for: actor))
+        ).sampler(world: world, query: query)
     }
 }
 

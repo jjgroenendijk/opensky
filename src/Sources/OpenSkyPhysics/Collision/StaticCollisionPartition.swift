@@ -64,18 +64,8 @@ nonisolated extension StaticCollisionShape {
         }
         var partitions: [StaticCollisionPartition] = []
         var failureCount = 0
-        for start in stride(
-            from: 0,
-            to: indices.count,
-            by: maximumTrianglesPerLeaf * 3
-        ) {
-            let end = min(start + maximumTrianglesPerLeaf * 3, indices.count)
-            if
-                let partition = trianglePartition(
-                    vertices: vertices,
-                    indices: Array(indices[start ..< end])
-                )
-            {
+        for group in spatialGroups(vertices: vertices, indices: indices) {
+            if let partition = trianglePartition(vertices: vertices, indices: group) {
                 partitions.append(partition)
             } else {
                 failureCount += 1
@@ -85,6 +75,49 @@ nonisolated extension StaticCollisionShape {
             partitions: partitions,
             failureCount: failureCount
         )
+    }
+
+    /// Splits the triangles at the median of their centres along the longest axis, again
+    /// and again, until each group fits a leaf. A leaf then covers a compact area, so a
+    /// query near one point meets few leaves and few triangles. A split by file order gave
+    /// leaves that each spanned the whole mesh.
+    static func spatialGroups(vertices: [SIMD3<Float>], indices: [UInt32]) -> [[UInt32]] {
+        var triangles: [(Int, SIMD3<Float>)] = []
+        var broken: [UInt32] = []
+        for triangle in 0 ..< indices.count / 3 {
+            let corners = indices[triangle * 3 ..< triangle * 3 + 3]
+            guard corners.allSatisfy({ Int($0) < vertices.count }) else {
+                broken += corners
+                continue
+            }
+            let centre = corners.reduce(SIMD3<Float>.zero) { $0 + vertices[Int($1)] } / 3
+            triangles.append((triangle, centre))
+        }
+        var groups: [[UInt32]] = []
+        var pending = triangles.isEmpty ? [] : [triangles[...]]
+        while let group = pending.popLast() {
+            guard group.count > maximumTrianglesPerLeaf else {
+                groups.append(group.flatMap { indices[$0.0 * 3 ..< $0.0 * 3 + 3] })
+                continue
+            }
+            var low = group.first?.1 ?? .zero
+            var high = low
+            for (_, centre) in group {
+                low = simd_min(low, centre)
+                high = simd_max(high, centre)
+            }
+            let size = high - low
+            let axis = size.x >= size.y && size.x >= size.z ? 0 : (size.y >= size.z ? 1 : 2)
+            let sorted = group.sorted { ($0.1[axis], $0.0) < ($1.1[axis], $1.0) }
+            let middle = sorted.count / 2
+            pending.append(sorted[middle...])
+            pending.append(sorted[..<middle])
+        }
+        // A triangle with a vertex past the end makes its own leaf, which then fails.
+        let leaf = maximumTrianglesPerLeaf * 3
+        return groups + stride(from: 0, to: broken.count, by: leaf).map {
+            Array(broken[$0 ..< min($0 + leaf, broken.count)])
+        }
     }
 
     private static func trianglePartition(

@@ -65,4 +65,31 @@ extension NPCMovementRuntimeTests {
         #expect(stopped)
         #expect(runtime.readouts().first?.commands?.stops == 1)
     }
+
+    /// A horse on a marker walk reads the floor under each end every step. One search over
+    /// its area serves every read of the frame.
+    @Test
+    func aLongBodyOnAMarkerWalkSearchesTheFloorOncePerFrame() throws {
+        let path = Self.path(
+            waypoints: [SIMD3(0, 0, 0), SIMD3(400, 0, 0)], target: SIMD3(400, 0, 0)
+        )
+        var start = Self.start(actor: actor, path: path)
+        start.longBody = LongBodyShape(halfExtents: SIMD3(15.23, 62.27, 28.42))
+        start.ignoresStatics = true
+        final class Count {
+            var searches = 0
+        }
+        let count = Count()
+        let world = Self.world(collisionQuery: { _ in
+            count.searches += 1
+            return []
+        })
+        var runtime = NPCMovementRuntime()
+        let started = runtime.start(start)
+        #expect(started)
+        runtime.advance(by: 0.1, world: world)
+        let step = try #require(runtime.readouts().first?.lastStep)
+        #expect(step.steps > 1)
+        #expect(count.searches == 1)
+    }
 }

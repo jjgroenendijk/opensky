@@ -143,6 +143,29 @@ struct LongBodyShapeTests {
         #expect(abs(into.resting.x - 3) < 0.1)
     }
 
+    /// A step searches the world for shapes once for the whole body, and reads the ground
+    /// twice per end: where it stands and where it goes.
+    @Test
+    func aStepSearchesOnceForAllItsParts() throws {
+        let shape = try #require(LongBodyShape(halfExtents: Self.horse))
+        let wall = DynamicBodyScene.box(center: SIMD3(300, 0, 40), half: SIMD3(50, 200, 40))
+        var searches = 0
+        var grounds = 0
+        _ = shape.largestPush(
+            pose: (.zero, 0), displacement: SIMD2(5, 0),
+            ground: { _ in
+                grounds += 1
+                return 0
+            },
+            query: { bounds in
+                searches += 1
+                return DynamicBodyScene.candidateQuery([wall])(bounds)
+            }
+        )
+        #expect(searches == 1)
+        #expect(grounds == 4)
+    }
+
     /// A human skeleton's bound gives the game's radius 18 and height 128; scale grows both.
     @Test
     func anUprightBoundGivesTheGamesCapsule() throws {
