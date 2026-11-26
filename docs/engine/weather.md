@@ -282,5 +282,6 @@ The opening's scripts change the weather several times (read from the install's 
 
 Stage 10 runs its first log entry, whose condition is the global `MQQuickstart` at 0. Stage 30
 also calls `ForceActive(true)` on `SkyrimClear`, but only in its second log entry, for
-`MQQuickstart` 1; a new game runs the first entry, which has no weather call. So in a new game the fog gives way
-to `SkyrimCloudy` about 85 s after the script starts, before the carts reach Helgen.
+`MQQuickstart` 1; a new game runs the first entry, which has no weather call. So in a new game
+the fog gives way to `SkyrimCloudy` about 85 s after the script starts, before the carts reach
+Helgen.
