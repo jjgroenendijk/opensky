@@ -54,5 +54,18 @@
       "Copies no code from CommonLibSSE-NG or SKSE",
       "Passes only interop facts, such as the weather FormID, through the bridge's JSON state into the Swift code"
     ]
+  },
+  {
+    "skills": [
+      "using-outside-sources"
+    ],
+    "query": "Ask a clean-room sub-agent how CommonLibSSE handles package activation and furniture use, and whether our package docs are right.",
+    "files": [],
+    "expected_behavior": [
+      "Starts one read-only Explore sub-agent, not several at once, and puts both questions in its prompt",
+      "Tells the sub-agent to ignore the offline wiki mirrors in .cache/ and to work from its own analysis",
+      "Lists the related docs/ pages in the prompt and asks for a Doc corrections section",
+      "Fixes each doc correction in the docs/ page along with the new behaviour"
+    ]
   }
 ]

@@ -67,18 +67,25 @@ it and returns a prose description. Because the sub-agent edits nothing, it cann
 with the main session's worktree.
 
 1. Look for a Tier 1 source first. Use Tier 2 only when no Tier 1 source covers the fact.
-2. Start an `Explore` sub-agent. Its prompt names the function or value, and says that the
-   reply must:
+2. Start an `Explore` sub-agent. Run one at a time; one read may carry several related
+   questions. Its prompt names the functions or values, lists the `docs/` pages that already
+   describe them, and says that the reply must:
    - describe only interop facts: inputs, outputs, edge cases, error results, constants
      visible from scripts or data files;
    - contain no code, pseudocode, offsets, addresses, field names, or class names from the
      source;
+   - come from its own analysis of the source and the game data. It ignores the offline
+     wiki mirrors in `.cache/`, because the read is the independent check on the wiki and
+     the docs, and a wiki can be wrong;
+   - end with "Doc corrections": for each listed page, the section and the claim that its
+     analysis shows wrong, and the information the page lacks;
    - name the file and commit it read.
 3. Check the reply against the same list. A reply that breaks it is thrown away. Do not
    carry any part of it into the repo, and start a new sub-agent with a stricter prompt.
 4. Write the description into the matching `docs/` page, citing the file and commit as
-   "behaviour described from". Document every behaviour the read returns, preferably with a
-   diagram (`writing-wiki-docs`, "Game behaviour read from the game").
+   "behaviour described from", and fix each doc correction there. Document every behaviour
+   the read returns, preferably with a diagram (`writing-wiki-docs`, "Game behaviour read
+   from the game").
 5. Implement from the description, in OpenSky's own names and structure.
 6. Confirm the behaviour in the reference game, driven through `openskycli reference`
    (`driving-the-running-game`), or record in the page that it is unconfirmed.
