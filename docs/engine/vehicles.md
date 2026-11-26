@@ -101,8 +101,11 @@ by the angle between the front axle and the body.
 
 ## Collision
 
+In the game, the cart's six bodies and five joints are simulated by the physics engine
+([wheels](#wheels)). The rest of this section is OpenSky's own rule.
+
 A towed cart's collision moves with the cart. The prisoner carriage's collision has several rigid
-bodies joined by hinge constraints, so the dynamic world does not simulate it. Instead the cell
+bodies joined by hinge constraints, so OpenSky's dynamic world does not simulate it. Instead the cell
 build takes the collision of every vehicle follower out of the static set. Each collision query
 places those shapes at the follower's live pose, moved from the pose the build placed them at.
 
