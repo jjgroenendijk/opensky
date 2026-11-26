@@ -153,7 +153,7 @@ The game checks a walker that cannot go on in three ways. None of them ends the 
 
 None of the three runs within about half the walker's radius of the path's end. A search that
 finds no route also fails the path. A walk has no overall time limit. Repeated failures at one
-spot lead to the fallback in [package schedules](/engine/package-schedules.md#a-walk-whose-path-fails).
+spot lead to the fallback in [a walk whose path fails](#a-walk-whose-path-fails).
 
 A Patrol procedure does not fail when its path fails. On a later update it asks for a new walk
 to the same point. It does not skip the point and does not turn back, so a blocked horse stands
@@ -170,6 +170,21 @@ the gate. The horse stands behind it and asks for the same point again until the
 OpenSky keeps its own stuck rule above: two seconds without progress, one new search, then the
 walk gives up. A Patrol then walks to the same point again on the next update. Other procedures
 fail as [package schedules](/engine/package-schedules.md#in-a-session) describes.
+
+## A walk whose path fails
+
+The game counts path failures per actor. A path that works sets the count to 0. A failure
+more than 50 units from the last one starts the count again at 1, so only failures at about the
+same spot add up.
+
+At 3 failures the game asks for two fallback paths to the goal, one of them for a very thin
+actor of radius 5. It takes a point on the path that works, 100 units back along it. The actor
+is moved to that point as soon as the point is off screen, or after 5 seconds.
+
+A patrol walks to the same point again ([blocked walks](#blocked-walks)). The
+Activate procedure plans the path again on later updates, with no time-out
+([activate procedure](/engine/activate-procedure.md#a-blocked-path)). Whether a travel package ends
+after a failure was not found.
 
 ## Position and triggers
 

@@ -12,7 +12,9 @@ Work for an object far from the camera runs less often than work for a near one.
 also updates far actors less often. One rule, the update bands, sets how often for every
 system that uses it, so a far actor moves, looks, and smokes at the same reduced rate.
 
-The bands and their rates are OpenSky's choice. The game does not state its own.
+The bands and their rates are OpenSky's choice. The game does not use distance bands for this: it
+switches each actor's package procedures between a full and a cheap version by its
+[process level](/engine/ai-process-levels.md#procedures-by-level).
 
 ## The bands
 

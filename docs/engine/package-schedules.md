@@ -218,10 +218,12 @@ perch. Otherwise a Sit never ends, as the
 ## Furniture
 
 A Sit package walks to a seat of its target furniture and sits there. A Sleep package does the
-same with a bed's sleep marker. A Creation Kit template whose procedure tree holds "Sit" is a
-sit package, even when the tree also holds "Wait", because the vanilla `SitTarget` tree is
-Sequence[Sit, Simultaneous[Sit, Wait]]. Which seat the actor takes, and what sitting does, is
-in [furniture](/engine/furniture.md).
+same with a bed's sleep marker. A template whose procedure tree holds "Sit" is a sit package, even
+when the tree also holds "Wait", because the vanilla `SitTarget` tree is
+Sequence[Sit, Simultaneous[Sit, Wait]]. An Activate procedure with a furniture target also seats the
+actor, and ends once the actor sits, as in the opening's `ActivateSpecialFurniture` packages
+([activate procedure](/engine/activate-procedure.md#at-the-target)). Which seat the actor takes,
+and what sitting does, is in [furniture](/engine/furniture.md).
 
 ## In a session
 
@@ -334,25 +336,18 @@ end fragments of the `MQ101` cart patrols set the stages that unload the carts t
 
 ## When a walk ends
 
-A walk that ends reports its rest pose after the movement runtime has stored its own state. A
-listener may start the next move right away, as a patrol does at each marker. If the report came
-during the runtime's update, that update would write back its older copy and drop the new move.
+In the game, a walk to a target that moves is planned again once the target is more than the
+smaller of 0.75 × reach and 300 units from the walk's goal
+([activate procedure](/engine/activate-procedure.md#reach)).
+
+In OpenSky, a walk that ends reports its rest pose after the movement runtime stored its own state,
+so a listener may start the next move at once, as a patrol does at each marker. A report during the
+runtime's update would be overwritten by that update's older copy.
 
 ## A walk whose path fails
 
-The game's Activate procedure has no time-out of its own: it plans a failed path again on later
-updates ([activate procedure](/engine/activate-procedure.md#a-blocked-path)).
-
-The game counts path failures per actor. A path that works sets the count to 0. A failure
-more than 50 units from the last one starts the count again at 1, so only failures at about the
-same spot add up.
-
-At 3 failures the game asks for two fallback paths to the goal, one of them for a very thin
-actor of radius 5. It takes a point on the path that works, 100 units back along it. The actor
-is moved to that point as soon as the point is off screen, or after 5 seconds.
-
-A patrol walks to the same point again ([blocked walks](/engine/navigation.md#blocked-walks)).
-Whether a travel package ends after a failure was not found.
+What the game does after a path fails, and how a patrol and an Activate procedure go on, is in
+[navigation](/engine/navigation.md#a-walk-whose-path-fails).
 
 ## Travel arrival
 
