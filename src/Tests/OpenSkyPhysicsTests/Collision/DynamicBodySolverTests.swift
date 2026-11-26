@@ -31,6 +31,22 @@ struct DynamicBodySolverTests {
         #expect(simd_length(body.linearVelocity) == 0)
     }
 
+    /// A contact is an event the damage rules read: what was struck, and how fast.
+    @Test
+    func aFallingBodyRecordsItsTouchOfTheFloor() {
+        let floor = DynamicBodyScene.floor()
+        let world = DynamicStepWorld(staticCandidates: DynamicBodyScene.query([floor]))
+        var bodies = [DynamicBodyScene.cube(key: .generated(1), center: SIMD3(0, 0, 30))]
+        bodies[0].linearVelocity = SIMD3(0, 0, -600)
+        var struck: [DynamicBodyTouch] = []
+        for _ in 0 ..< 10 where struck.isEmpty {
+            DynamicBodyScene.run(bodies: &bodies, world: world, steps: 1)
+            struck = bodies[0].touches
+        }
+        #expect(struck.map(\.struck) == [.shape(floor.reference)])
+        #expect((struck.first?.speed ?? 0) > 500)
+    }
+
     @Test
     func droppedSphereKeepsItsFloorAndSleeps() {
         let world = DynamicStepWorld(

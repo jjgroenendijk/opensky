@@ -93,6 +93,8 @@ nonisolated public struct DynamicContact: Sendable {
     let restitution: Float
     /// The `MATT` of what `body` touches: the static shape's, or the other body's.
     public var surfaceMaterial: FormID?
+    /// The placed reference of a static shape `body` touches.
+    public var shapeReference: FormID?
 }
 
 nonisolated enum DynamicBodyContacts: Sendable {

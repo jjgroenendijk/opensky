@@ -73,14 +73,11 @@ final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
         return true
     }
 
-    var destructibles: [MeleeTarget] = []
+    var destructibles: Set<ReferenceKey> = []
     private(set) var objectDamage: [ReferenceKey: Float] = [:]
 
-    func impulseDestructibles(within _: Float, of _: SIMD3<Float>) -> [MeleeTarget] {
-        destructibles
-    }
-
     func applyPhysicsDestruction(_ amount: Float, to object: ReferenceKey) -> Bool {
+        guard destructibles.contains(object) else { return false }
         objectDamage[object, default: 0] += amount
         return true
     }
@@ -192,15 +189,49 @@ struct ImpulseRuntimeTests {
         #expect(abs((world.damage[.player] ?? 0) - 5.5) < 0.0001)
     }
 
-    @Test func aFastHeavyBodyDamagesADestructibleObjectOncePerContact() {
+    @Test func aContactDamagesADestructibleObjectOnceByTheContactSpeed() {
         let runtime = ImpulseRuntime(world: world)
         world.surface = nil
         let barrel = ReferenceKey.generated(70)
-        world.destructibles = [MeleeTarget(key: barrel, feet: SIMD3(0, 0, 0))]
-        world.bodies = [body(at: SIMD3(10, 0, 50), mass: 60, speed: 1000)]
+        world.destructibles = [barrel]
+        var struck = body(at: SIMD3(10, 0, 50), mass: 60, speed: 1000)
+        struck.touches = [ImpulseTouch(struck: barrel, otherMass: 60, speed: 1000)]
+        world.bodies = [struck]
         runtime.advance()
         runtime.advance()
         #expect(abs((world.objectDamage[barrel] ?? 0) - 5.5) < 0.0001)
+    }
+
+    @Test func aBodyNearAnObjectItDoesNotTouchDoesNoDamage() {
+        let runtime = ImpulseRuntime(world: world)
+        world.surface = nil
+        let barrel = ReferenceKey.generated(70)
+        world.destructibles = [barrel]
+        world.bodies = [body(at: SIMD3(10, 0, 50), mass: 60, speed: 1000)]
+        runtime.advance()
+        #expect(world.objectDamage.isEmpty)
+    }
+
+    @Test func aMasslessSideCountsAsTheTopTierAgainstAnObject() {
+        let damage = PhysicsDamage.objectDamage(otherMass: 0, speed: 600, settings: .vanilla)
+        #expect(abs(damage - 10 * 1.06) < 0.0001)
+    }
+
+    @Test func exactlyTheMinimumSpeedDoesNoDamage() {
+        #expect(PhysicsDamage.damage(mass: 100, speed: 500, settings: .vanilla) == 0)
+        #expect(PhysicsDamage.damage(mass: 100, speed: 501, settings: .vanilla) > 0)
+    }
+
+    @Test func anActorsOwnBodyDoesNotHurtAnActor() {
+        let runtime = ImpulseRuntime(world: world)
+        world.surface = nil
+        world.actors = [MeleeTarget(key: .player, feet: SIMD3(0, 0, 0))]
+        world.bodies = [ImpulseBody(
+            key: .generated(8), reference: FormID(0x78), position: SIMD3(10, 0, 50),
+            velocity: SIMD3(1000, 0, 0), mass: 60, boundingRadius: 10, kind: .biped
+        )]
+        runtime.advance()
+        #expect(world.damage.isEmpty)
     }
 
     @Test func fastWaterKnocksDownAlongItsFlow() {

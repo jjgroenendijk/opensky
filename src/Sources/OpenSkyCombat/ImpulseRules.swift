@@ -75,6 +75,8 @@ nonisolated public struct ImpulseBody: Equatable, Sendable {
     public let material: FormID?
     /// The `MATT` of the surface the body last touched. Nil when unknown.
     public var surfaceMaterial: FormID?
+    /// What the body touched in the last physics step.
+    public var touches: [ImpulseTouch] = []
 
     public init(
         key: ReferenceKey, reference: FormID, position: SIMD3<Float>,
@@ -89,6 +91,21 @@ nonisolated public struct ImpulseBody: Equatable, Sendable {
         self.mass = mass
         self.boundingRadius = boundingRadius
         self.kind = kind
+    }
+}
+
+/// One contact event of a body: the reference it struck, the struck side's other mass
+/// (the body's own for a static reference), and the speed they met at.
+nonisolated public struct ImpulseTouch: Equatable, Sendable {
+    public let struck: ReferenceKey
+    /// The mass of the other side of the contact, seen from `struck`; zero for none.
+    public let otherMass: Float
+    public let speed: Float
+
+    public init(struck: ReferenceKey, otherMass: Float, speed: Float) {
+        self.struck = struck
+        self.otherMass = otherMass
+        self.speed = speed
     }
 }
 
@@ -224,16 +241,31 @@ nonisolated public enum GameplayImpulse {
 }
 
 nonisolated public enum PhysicsDamage {
+    /// A mass of zero counts as this much against an object that is not an actor.
+    public static let masslessObjectMass: Float = 10000
+
     /// The health a body of `mass` kilograms takes off an actor it strikes at `speed`
-    /// units per second. Zero below `fPhysicsDamageSpeedMin` or the lightest tier.
+    /// units per second. Zero at or below `fPhysicsDamageSpeedMin` or under the lightest tier.
     public static func damage(mass: Float, speed: Float, settings: ImpulseSettings) -> Float {
         guard
-            mass.isFinite, speed.isFinite, speed >= settings.physicsDamageSpeedMin,
+            mass.isFinite, speed.isFinite, speed > settings.physicsDamageSpeedMin,
             let tier = settings.physicsDamageTiers.filter({ mass >= $0.mass })
                 .max(by: { $0.mass < $1.mass })
         else { return 0 }
         let damage = tier.damage
             * (settings.physicsDamageSpeedBase + settings.physicsDamageSpeedMult * speed)
         return damage.isFinite ? max(damage, 0) : 0
+    }
+
+    /// The damage an object that is not an actor takes from a contact: the separating
+    /// speed and the other side's mass, where no mass counts as the top tier.
+    public static func objectDamage(
+        otherMass: Float, speed: Float, settings: ImpulseSettings
+    ) -> Float {
+        damage(
+            mass: otherMass > 0 ? otherMass : masslessObjectMass,
+            speed: speed,
+            settings: settings
+        )
     }
 }

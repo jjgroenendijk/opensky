@@ -12,6 +12,7 @@ import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -217,7 +218,33 @@ struct EffectsBodyContacts {
                 material: body.definition.material
             )
             impulseBody.surfaceMaterial = surfaceMaterial(of: body.lastSurface)
+            impulseBody.touches = body.isSleeping ? [] : touches(of: body)
             return impulseBody
+        }
+    }
+
+    /// Each side of a contact takes the other side's mass: the struck reference this body's,
+    /// and this body, from a static shape, none.
+    private func touches(of body: DynamicBody) -> [ImpulseTouch] {
+        body.touches.flatMap { touch -> [ImpulseTouch] in
+            switch touch.struck {
+            case let .body(key):
+                return [ImpulseTouch(
+                    struck: key,
+                    otherMass: body.definition.mass,
+                    speed: touch.speed
+                )]
+            case let .shape(reference):
+                let struck = game.streamer.referenceEntry(formID: reference).map {
+                    ImpulseTouch(
+                        struck: $0.key,
+                        otherMass: body.definition.mass,
+                        speed: touch.speed
+                    )
+                }
+                let itself = ImpulseTouch(struck: body.key, otherMass: 0, speed: touch.speed)
+                return (struck.map { [$0] } ?? []) + [itself]
+            }
         }
     }
 

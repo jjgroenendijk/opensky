@@ -44,7 +44,6 @@ struct EffectsDestructionWitnessTests {
         #expect(bridge.damageDestructibleCalls.count == 2)
         #expect(adapter.explosionObjects(within: 100, of: .zero).isEmpty)
         #expect(adapter.explosionObjects(within: 0, of: .zero).isEmpty)
-        #expect(adapter.impulseDestructibles(within: 100, of: .zero).isEmpty)
     }
 
     @Test func anUnknownPlacedObjectIsNotMade() {

@@ -85,7 +85,8 @@ nonisolated extension DynamicContactScratch {
                     depth: hit.depth,
                     friction: body.definition.friction,
                     restitution: body.definition.restitution,
-                    surfaceMaterial: shape.material
+                    surfaceMaterial: shape.material,
+                    shapeReference: shape.reference
                 ))
             }
         }

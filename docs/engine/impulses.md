@@ -128,10 +128,20 @@ flowchart TD
     F -- yes --> P[Separating speed and the other body's mass; no mass counts as 10,000]
 ```
 
-[WARNING] OpenSky differs. It tests nearness, not contact events: each frame, every moving body
-checks each actor its bounding sphere touches, and looks for destructible references within its
-reach among all the loaded references. It hurts at a speed of 500 too, and it does not skip the
-cases listed above.
+OpenSky runs both rules from the contacts its body solver reports. In each physics step the solver
+notes, for each body, the static references and the other bodies it touched, and the fastest the
+two met along the contact normal. A body that touches nothing does no damage work. One contact
+hurts once, until the two stop touching.
+
+- Against an object that is not an actor, the struck reference takes the second rule with the
+  body's mass. The body itself takes it too, with 10,000 for a static shape on the other side. A
+  reference that is not destructible takes nothing.
+- An actor's capsule is not in the body solver, so the contact with an actor is the overlap of
+  the body's bounding sphere and the actor's capsule. A body on a biped collision layer belongs
+  to an actor, so it hurts no actor.
+
+[WARNING] The player's extra test is not built. The 500 test of the second rule uses game units,
+not the physics engine's own.
 
 ## Collision sounds
 

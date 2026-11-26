@@ -1,12 +1,16 @@
 // The effects world pushes bodies and actors, and reads water and health, through its ports.
 
 import Foundation
+import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+@testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyGameData
+@testable import OpenSkyPhysics
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
+@testable import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -87,5 +91,41 @@ struct EffectsBodyImpulsesTests {
         #expect(adapter.knockActor(Self.actor, velocity: SIMD3(1, 0, 0), knockdown: true))
         #expect(adapter.knockActor(.player, velocity: SIMD3(1, 0, 0), knockdown: false))
         #expect(host.fakeStreamer.actors.knockActorCalls.map(\.actor) == [Self.actor])
+    }
+
+    /// A crate that touched a placed shape and another body: the shape's reference takes
+    /// the crate's mass, the crate takes none from the shape, and the body takes its mass.
+    @Test func aBodysTouchesNameWhatItStruckAndTheMassBehindIt() throws {
+        let crate = ReferenceKey.generated(1)
+        let other = ReferenceKey.generated(2)
+        let wall = ReferenceKey.plugin(name: "base.esm", objectID: 0x50)
+        var bodies = DynamicBodyWorld()
+        let volume = try #require(DynamicCollisionVolume.box(halfExtents: SIMD3(repeating: 10)))
+        bodies.setCell(.interior(FormID(0x10)), placements: [DynamicBodyPlacement(
+            key: crate, reference: FormID(0x200),
+            definition: DynamicBodyDefinition(volumes: [volume], mass: 20),
+            originPosition: .zero, orientation: .identityRotation
+        )])
+        bodies.bodies[0].touches = [
+            DynamicBodyTouch(struck: .shape(FormID(0x50)), speed: 600),
+            DynamicBodyTouch(struck: .body(other), speed: 300)
+        ]
+        host.fakeStreamer.dynamicBodiesValue = bodies
+        var name = Data()
+        name.appendUInt32(0x70)
+        let fields = ESMFixture.field("NAME", name) + ESMFixture.field("DATA", Data(count: 24))
+        let placed = try PlacedReference(record: ESMFixture.parseRecord(
+            ESMFixture.record("REFR", formID: 0x50, data: fields)
+        ))
+        host.fakeStreamer.referenceEntryFormIDResult = RuntimeReferenceEntry(
+            key: wall, formID: FormID(0x50), isPersistent: true, record: .reference(placed)
+        )
+
+        let touches = try #require(adapter.impulseBodies().first).touches
+        #expect(touches == [
+            ImpulseTouch(struck: wall, otherMass: 20, speed: 600),
+            ImpulseTouch(struck: crate, otherMass: 0, speed: 600),
+            ImpulseTouch(struck: other, otherMass: 20, speed: 300)
+        ])
     }
 }

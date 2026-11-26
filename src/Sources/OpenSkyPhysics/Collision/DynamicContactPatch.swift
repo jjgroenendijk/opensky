@@ -57,7 +57,8 @@ nonisolated enum DynamicContactPatch {
             depth: contacts.reduce(0) { max($0, $1.depth) },
             friction: first.friction,
             restitution: first.restitution,
-            surfaceMaterial: first.surfaceMaterial
+            surfaceMaterial: first.surfaceMaterial,
+            shapeReference: first.shapeReference
         )
     }
 
