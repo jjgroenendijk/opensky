@@ -79,10 +79,59 @@ setting exists, so large debris moves as clutter.
 
 ## Physics damage
 
-A loose body moving at `fPhysicsDamageSpeedMin` (500) units per second or faster hurts an
-actor its bounding sphere touches. The damage is the heaviest `fPhysicsDamage<n>Mass` tier
-the body reaches (20 kg: 1, 50 kg: 5, 100 kg: 10), times
-`fPhysicsDamageSpeedBase + fPhysicsDamageSpeedMult * speed`. One contact hurts once.
+A loose body hurts an actor when the physics simulation reports a collision between the body and
+the actor's collision. Nearness alone does nothing: the test runs only on a real contact event.
+
+The damage depends on the body's mass and speed. The speed is the length of the body's whole
+velocity, not only the part along the contact normal.
+
+| Body mass | Tier damage |
+| --- | --- |
+| Below 20 | 0 |
+| 20 up to 50 | 1 |
+| 50 up to 100 | 5 |
+| 100 or more | 10 |
+
+The damage is the tier damage times (1 + 0.0001 × speed) when the speed is greater than 500 units
+per second, and 0 otherwise. For example, a 100 kg body at 600 units per second does
+10 × 1.06 = 10.6 damage. At exactly 500 it does none. The lightest tier's 20 is set by
+`Skyrim.esm` (`GMST` `0010C1C3`); without it the tier starts at 10.
+
+A contact does no damage when:
+
+- the body has no mass, so its tier damage is 0;
+- the body belongs to the struck actor itself;
+- the body belongs to another actor of some kinds; such a contact goes to the actor-to-actor push
+  instead;
+- the struck actor is the player and one more test on the body fails. What it tests is not known.
+
+Whether one contact hurts once or every frame while the two touch is not known.
+
+A second rule handles a contact between a body and a reference that is not an actor. It runs for
+each side of the pair, and only when the struck reference carries a flag; this is most likely the
+destructible path. Here the speed is the separating speed at the contact point, the other body's
+mass counts, and a body with no mass counts as 10,000, the top tier. Its 500 test may use the
+physics engine's own units, which would make this damage rare. The same contact sends an impact
+event only when the separating speed times 69.99 is at least 60, except between some collision
+layer pairs.
+
+```mermaid
+flowchart TD
+    C[Physics contact event] --> A{Struck reference is an actor?}
+    A -- yes --> O{Body is the actor's own, or another actor's?}
+    O -- yes --> N[No damage]
+    O -- no --> S{Whole speed above 500?}
+    S -- no --> N
+    S -- yes --> D[Tier damage times 1 + 0.0001 x speed]
+    A -- no --> F{Struck reference has the flag?}
+    F -- no --> N
+    F -- yes --> P[Separating speed and the other body's mass; no mass counts as 10,000]
+```
+
+[WARNING] OpenSky differs. It tests nearness, not contact events: each frame, every moving body
+checks each actor its bounding sphere touches, and looks for destructible references within its
+reach among all the loaded references. It hurts at a speed of 500 too, and it does not skip the
+cases listed above.
 
 ## Collision sounds
 

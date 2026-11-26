@@ -81,6 +81,11 @@ cannot tip.
 
 ## Wheels
 
+In the game, the wheels are free hinge bodies in the physics simulation: contact and friction with
+the ground roll them, with no separate ground queries. The cart's six bodies and five joints are
+all simulated ([cart tow rig](/engine/cart-tow-rig.md)). OpenSky does not simulate them; it places
+the cart by its own ground queries and turns the wheels by distance, as below.
+
 A towed cart whose mesh has wheel nodes turns its wheels as it rolls. The cell build gives such a
 cart its own copy of the mesh, with each wheel's shapes bound to its node, the way an animated
 object is drawn ([object animation](/engine/object-animation.md)). Each wheel turns about the
@@ -105,7 +110,9 @@ A horse is not blocked by the cart it pulls, and a rider by the cart it sits on.
 and every actor linked by any chain of links to a towed cart, walks with a collision query that
 leaves out the moving collision of the towed carts in its own group. Another group's cart still
 blocks it, so at Helgen the second cart's horse stops behind the first cart, where both horses'
-patrols lead. A patrol leg that ignores static collision still meets the carts that are not its
+patrols lead: marker `000BB976` from stage 20, and `000BB97B` from stage 22
+([opening cart ride](/engine/opening-cart-ride.md#the-routes)). A patrol leg that ignores static
+collision still meets the carts that are not its
 own. A rider moves with its seat, so it cannot drift into
 a cart. A mounted escort's horse is neither, so a cart blocks it, with the front and back of its
 long body ([character shapes](/engine/character-shapes.md)). The cart's own ground search
@@ -141,7 +148,9 @@ A horse rider's root sits on the horse's `SaddleBone`, a node of
 horse's live pose every frame, so the rider moves with the horse's gait. Until the horse's skeleton
 loads, the rider sits on the horse's root.
 
-The horse walks the rider's package, so it is the horse that enters triggers. The rider plays the
+The horse walks the rider's package, so it is the horse that enters triggers. At Helgen this
+matters: the gate triggers fire only for the riders' horses, never for the cart horses
+([opening cart ride](/engine/opening-cart-ride.md#the-gate-triggers)). The rider plays the
 clips in `meshes\actors\character\animations\horse_rider\`: `idle.hkx` while the horse stands, and
 `walkforward.hkx` or `runforward.hkx` as the horse walks or runs. [WARNING] The walk and run names
 follow the horse's own folder; `idle.hkx` was seen on the install. A clip that does not load leaves

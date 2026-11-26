@@ -137,7 +137,9 @@ data; no source states the rule. `openskycli nif <mesh>` prints a mesh's markers
 The actor's entry side is the allowed side that faces where it stood. The idle runtime then
 plays the entry idle that the `ActionActivate` tree picks for the marker
 ([idles](/engine/idle-runtime.md)), and the actor's scripts get `OnSit`. An NPC also
-activates the furniture, so the furniture's scripts get `OnActivate`. The player's own
+activates the furniture, so the furniture's scripts get `OnActivate`. [WARNING] In the game this was
+not confirmed for an NPC seated by an [Activate procedure](/engine/activate-procedure.md); that path
+did not reach the generic activation. The player's own
 activation already sends that event. When a package seats the AI-driven player, as in the
 opening's walk to the chopping block, the package sends it instead. The block's script waits
 for that event before the scene goes on.

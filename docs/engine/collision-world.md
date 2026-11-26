@@ -78,6 +78,9 @@ simulated as a [dynamic rigid body](/engine/dynamic-bodies.md). Dynamic bodies g
 back to the same queries at their current pose. So the capsule, the interaction ray, and shape
 sweeps see one list of shapes, and do not need to know which kind each one is.
 
+In the game, NPC character bodies live in the same simulation as the movable bodies
+([walk mode](/engine/walk-mode.md#who-moves-the-capsule)).
+
 ## Streaming
 
 Collision builds in the same serial build call as the render scene, on the same queue. The NIF

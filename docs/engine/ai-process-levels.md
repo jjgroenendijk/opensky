@@ -96,6 +96,13 @@ in a cell that is loaded but not attached, the middle-high level, runs no packag
 detection. The update also skips an actor without 3D and an actor in certain life states. What
 the middle-low and low levels skip in detail was not found.
 
+## Procedures by level
+
+A package procedure runs in full at High and Middle-high, with walking, animation, and furniture
+use. At Middle-low and Low it runs a cheap version with no animation and no wait, and these actors
+have no 3D, so no collision shape. For example, an [Activate procedure](/engine/activate-procedure.md#low-process-levels)
+at Low counts a furniture target without the actor sitting down.
+
 ## In OpenSky
 
 OpenSky loads and attaches a cell in one step, so a loaded actor is always High, and

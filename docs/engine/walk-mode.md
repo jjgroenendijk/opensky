@@ -95,6 +95,14 @@ Sprint and a pending jump are dropped.
 
 ## Who moves the capsule
 
+In the game, a non-player actor with its 3D loaded is a character rigid body in the physics
+simulation (some actors, by a race or actor flag that is not known, use a proxy controller), and the
+floor holds it up through its contacts in the physics step. The player uses a
+proxy controller instead. Actors at the Middle-low and Low
+[process levels](/engine/ai-process-levels.md) have no 3D, so they have no collision shape; their
+package moves are simple moves. OpenSky moves every walker with its own capsule controller and
+ground tests, described below.
+
 One bridge is where input, the behavior graph, and the controller meet. Its rules:
 
 - Horizontal motion has exactly one source per fixed step. The bridge picks it and gives the

@@ -32,8 +32,19 @@ Activation queues `OnActivate(ObjectReference akActionRef)` on every script on t
 instance key order, with the activator as argument 0. A target with no scripts queues nothing, and
 the activation is still recorded.
 
-Every activation, from the use key or from a script, then activates the target's resident `XAPR`
-activate children, with the target as their activator. [Traps](/engine/traps.md) has the details.
+Every activation, from the use key, a script, or an NPC's package, then activates the target's
+resident `XAPR` activate children. The one exception is the player activating furniture: that
+activation skips the children. For each child, the delay its `XAPR` entry stores for this parent
+decides when:
+
+- a delay of 0 or less activates the child at once, with the parent as the activator;
+- a delay above 0 queues the parent. Each later update adds the frame time and activates every
+  child whose delay has passed, again with the parent as the activator. The parent leaves the
+  queue when all its children are done.
+
+A flag on the parent passes the original activator to the children instead of the parent; which
+flag is not known. A child with "parent activate only" refuses any activator that is not one of its
+parents, player or NPC. [Traps](/engine/traps.md) has the details.
 
 The use key goes through [interaction](/engine/interaction.md). The handler maps the event's form ID
 to a `ReferenceKey`, records the activation with the player as activator, and queues `OnActivate`.
