@@ -107,12 +107,12 @@ An NPC fights another NPC as well as the player. The rule is the game's
 actors its aggression and reaction make it hostile to, and it is hostile to a target that fights it,
 unless it counts that target an Ally or a Friend.
 
-- Once a second the loop finds each pair of living NPCs within 4096 units where the first is
-  hostile to the second. In the game, foes come from each High-level actor's detection pass. The
-  pass runs on a timer: after each pass the next comes a random 1 to 2 seconds later, or 2.5 to 5
-  seconds when the scene counts as complex. A combat target is picked again at once when it is no
-  longer valid, else 1 second after the last pick, or 3 seconds after a pick that changed it. The
-  player's allies are left out; they keep the rules above.
+- Each living NPC finds the NPCs within 4096 units that it is hostile to on its own detection
+  pass, as each High-level actor does in the game. After each pass the next comes a random 1 to 2
+  seconds later. The game waits 2.5 to 5 seconds when the scene counts as complex; OpenSky has no
+  such test. A combat target is picked again at once when it is no longer valid, else 1 second
+  after the last pick, or 3 seconds after a pick that changed it. The player's allies are left
+  out; they keep the rules above.
 - Perception tracks each such pair. When the observer detects its foe, it fights it.
 - An actor that an NPC fights, fights back. It engages without having to see the attacker.
 - A calm actor that helps an ally fighting an NPC fights that NPC too, through Assistance
@@ -123,7 +123,7 @@ unless it counts that target an Ally or a Friend.
   between two NPCs plays no combat music.
 - `openskycli game state actors` shows each actor's combat `target`.
 
-The interval and the range are OpenSky values. The game checks detection every 1 to 2 seconds per
+The range is an OpenSky value. The game checks detection every 1 to 2 seconds per
 actor ([detection](/engine/detection-schedule.md#who-runs-detection-in-the-game)).
 
 ## Who an assisting actor fights

@@ -113,4 +113,49 @@ struct FactionCoordinatorTests {
         #expect(decision.factionReaction == .neutral)
         #expect(!coordinator.isHostile(Self.bandit, toward: .player))
     }
+
+    /// A crime source that cannot compare itself, so each one clears the kept pairs.
+    private final class LoudCrime: CrimeHostilitySource {
+        let answer: ActorReaction
+
+        init(_ answer: ActorReaction) {
+            self.answer = answer
+        }
+
+        func crimeReaction(
+            of _: ActorSocialProfile,
+            toward _: ActorSocialProfile
+        ) -> ActorReaction? {
+            answer
+        }
+    }
+
+    private struct FixedCrime: CrimeHostilitySource, Equatable {
+        let answer: ActorReaction
+
+        func crimeReaction(
+            of _: ActorSocialProfile,
+            toward _: ActorSocialProfile
+        ) -> ActorReaction? {
+            answer
+        }
+    }
+
+    @Test func aPairKeepsItsReactionUntilTheRulesChange() throws {
+        let world = FakeWorld()
+        world.residents = [Self.bandit]
+        let coordinator = try Self.wired(world)
+        #expect(coordinator.reaction(of: Self.bandit, toward: .player) == .neutral)
+
+        coordinator.setCrimeHostility(FixedCrime(answer: .enemy))
+        #expect(coordinator.reaction(of: Self.bandit, toward: .player) == .enemy)
+        coordinator.setCrimeHostility(FixedCrime(answer: .enemy))
+        #expect(coordinator.reaction(of: Self.bandit, toward: .player) == .enemy)
+
+        coordinator.setCrimeHostility(LoudCrime(.friend))
+        #expect(coordinator.reaction(of: Self.bandit, toward: .player) == .friend)
+        coordinator.setCrimeHostility(NoCrimeHostility())
+        coordinator.setScriptedReactions([])
+        #expect(coordinator.reaction(of: Self.bandit, toward: .player) == .neutral)
+    }
 }

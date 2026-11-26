@@ -166,8 +166,11 @@ Two resets clear it:
 
 Whether faction relation changes, crime, or the player's factions reach these resets is not known.
 
-[WARNING] OpenSky does not cache the derivation. It is two component reads, a pair lookup, and a
-walk of two short lists, asked again for every pair on every combat update.
+OpenSky keeps each ordered pair's answer too. Its resets are wider than the game's: any write of a
+faction membership, a relationship rank, or a stored hostility, a load or a new game, a change of
+the scripted faction reactions, and a change of the crime rules clear every pair. An answer is
+given only while both actors are loaded, as before. [WARNING] OpenSky keeps the answer whatever the
+other actor's process level.
 
 ## Friendly fire
 

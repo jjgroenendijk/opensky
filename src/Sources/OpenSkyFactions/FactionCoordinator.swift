@@ -44,6 +44,8 @@ public final class FactionCoordinator {
 
     let store: WorldStateStore
     let world: any FactionWorld
+    /// Each ordered pair's answer, kept until something it reads is written.
+    private var pairs = HostilityPairCache()
 
     public init(store: WorldStateStore, world: any FactionWorld, data: FactionSessionData?) {
         self.store = store
@@ -69,6 +71,7 @@ public final class FactionCoordinator {
 
     /// Applies the reactions scripts set, replacing the earlier set.
     public func setScriptedReactions(_ entries: [FactionReactionOverride]) {
+        pairs.reset()
         relations?.setScriptedReactions(entries)
         runtime?.derivation.relations.setScriptedReactions(entries)
     }
@@ -111,25 +114,45 @@ public final class FactionCoordinator {
         of observer: ReferenceKey,
         toward target: ReferenceKey
     ) -> (isHostile: Bool, factionReaction: ActorReaction)? {
-        guard
-            let mine = profile(of: observer),
-            let theirs = profile(of: target),
-            let derivation = runtime?.derivation
-        else { return nil }
-        return (
-            derivation.decide(mine, toward: theirs).isHostile,
-            derivation.factionReaction(of: mine, toward: theirs) ?? .neutral
-        )
+        pairAnswer(of: observer, toward: target).map {
+            ($0.decision.isHostile, $0.factionReaction)
+        }
     }
 
     /// What `observer` makes of `target`: crime, then relationship rank, then factions.
     public func reaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction? {
+        pairAnswer(of: observer, toward: target)?.decision.reaction
+    }
+
+    /// The game keeps each pair's reaction once it is worked out, until a reset clears it
+    /// (docs/engine/hostility.md#memberships-at-runtime). Here a write of any membership,
+    /// relationship, or hostility, a load, or a change of the reaction or crime rules clears
+    /// every pair.
+    private func pairAnswer(
+        of observer: ReferenceKey, toward target: ReferenceKey
+    ) -> HostilityPairAnswer? {
+        pairs.expire(revision: store.revision(of: HostilityPairCache.readKinds))
+        let pair = HostilityPair(observer: observer, target: target)
+        // An actor that left has no profile, so it gets no answer, as before it was cached.
+        if
+            let known = pairs.answers[pair], world.actorValueHolder(for: observer) != nil,
+            world.actorValueHolder(for: target) != nil
+        {
+            return known
+        }
         guard
             let mine = profile(of: observer),
             let theirs = profile(of: target),
             let derivation = runtime?.derivation
         else { return nil }
-        return derivation.reaction(of: mine, toward: theirs)
+        let answer = HostilityPairAnswer(
+            decision: derivation.decide(mine, toward: theirs),
+            factionReaction: derivation.factionReaction(of: mine, toward: theirs) ?? .neutral
+        )
+        // Seeding the pair may have written the store; the answer holds from here on.
+        pairs.expire(revision: store.revision(of: HostilityPairCache.readKinds))
+        pairs.answers[pair] = answer
+        return answer
     }
 
     /// The player and every resident actor, seeded. An unstreamed actor has
@@ -168,9 +191,8 @@ public final class FactionCoordinator {
 
     /// What `key` makes of the player. Nil without a runtime or for the player.
     public func derivedHostilityDecision(of key: ReferenceKey) -> HostilityDecision? {
-        guard key != .player, let observer = world.actorValueHolder(for: key) else { return nil }
-        // Mutating, so it runs on the stored runtime instead of a copy of it.
-        return runtime?.decide(observer, toward: .player)
+        guard key != .player, runtime != nil else { return nil }
+        return pairAnswer(of: key, toward: .player)?.decision
     }
 
     /// The derived answer, or the stored override alone without a runtime.
@@ -189,7 +211,11 @@ public final class FactionCoordinator {
     }
 
     /// What the derivation reads about the player's bounties.
+    /// The crime system sends its snapshot every frame, so only a changed one clears the pairs.
     public func setCrimeHostility(_ source: any CrimeHostilitySource) {
+        if !source.answersAlike(runtime?.derivation.crime) {
+            pairs.reset()
+        }
         runtime?.derivation.crime = source
     }
 

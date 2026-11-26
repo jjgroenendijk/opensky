@@ -122,8 +122,13 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var foePairs: Set<CombatFoePair> = []
     /// NPC pairs an aggro radius turned into a fight: the observer attacks its target.
     var aggroFoePairs: Set<CombatFoePair> = []
-    /// Seconds until the next foe scan.
-    var foeScanWait: Float = 0
+    /// The pairs each NPC's own detection pass found, by observer.
+    var scannedFoes: [ReferenceKey: Set<CombatFoePair>] = [:]
+    /// Seconds until each NPC's next detection pass.
+    var foeScanWaits: [ReferenceKey: Float] = [:]
+    var foeScanRandom = ConditionRandom(seed: 0xF0E5_CA11)
+    /// Each fighting NPC's target pick: the target and the seconds until it picks again.
+    var targetPicks: [ReferenceKey: CombatTargetPick] = [:]
     /// Actors that fight an NPC that fights them, this step. They engage unseen.
     var retaliating: Set<ReferenceKey> = []
     /// Calm actors that joined an ally's fight against an NPC, with that NPC.
