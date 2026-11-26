@@ -47,6 +47,8 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     public internal(set) var mover: Int?
     /// What finds found, by the object-list input they fill.
     var objectLists: [Int8: [ReferenceKey]] = [:]
+    /// Activations made from each "Number to Activate" input while the package runs.
+    var spentCounts: [Int8: Int] = [:]
     /// Times the package was done: a `FNAM` procedure succeeded or the tree ran out.
     var completions = 0
     /// Set once the tree stopped for good.
@@ -140,6 +142,9 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     ) -> Entry {
         let setup = host.setup(for: leaf, objectLists: objectLists)
         var machine = PackageProcedureMachine(setup: setup.setup)
+        if let input = setup.setup.countInput {
+            machine.activations = spentCounts[input] ?? 0
+        }
         let produced = machine.start()
         running[leaf.node] = PackageRunningLeaf(leaf: leaf, machine: machine, setup: setup)
         collect(produced, from: leaf.node)
@@ -202,6 +207,9 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     }
 
     mutating func collect(_ produced: [PackageProcedureCommand], from node: Int) {
+        if let machine = running[node]?.machine, let input = machine.setup.countInput {
+            spentCounts[input] = max(spentCounts[input] ?? 0, machine.activations)
+        }
         for command in produced {
             if case .move = command {
                 mover = node

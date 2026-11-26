@@ -25,6 +25,8 @@ nonisolated enum PackageProcedureState: Equatable, Sendable {
     case searching(retrySeconds: Float)
     /// Waits for the world to finish an act, such as a spoken line.
     case acting(secondsRemaining: Float?)
+    /// An Activate at its target waits out the activate action before it activates.
+    case preparing(secondsRemaining: Float)
     /// A sandbox does one activity until its game-hour timer runs out.
     case sandboxing(SandboxActivity)
     /// A patrol walk that gave up asks for a walk to the same point on the next update.
@@ -91,6 +93,12 @@ nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
     var flag = false
     /// UseWeapon's "Allow Combat Start" input.
     var startsCombat = false
+    /// Activate's "Number to Activate" left, and the input that holds it, so a tree that
+    /// starts again sees the activations already made.
+    var activationCount = 1
+    var countInput: Int8?
+    /// An Activate whose target is furniture uses it: the actor sits instead.
+    var sitsInTarget = false
     /// False when the procedure has no place or target to walk to, so it acts where it is.
     var walks = true
     /// A Guard procedure's warning count and spacing, from the install.
@@ -132,6 +140,8 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     var lastGoal: SIMD3<Float>?
     /// The gait a follower last asked for.
     var pace: LocomotionGait?
+    /// Activations this machine made.
+    var activations = 0
     /// The warnings a guard gave the intruder now in its warn radius.
     var warnings = 0
     var warnCooldown: Float = 0
@@ -257,6 +267,12 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             state = remaining - delta <= 0 ? stateAfterAct :
                 .acting(secondsRemaining: remaining - delta)
             return []
+        case let .preparing(remaining):
+            guard remaining - delta <= 0 else {
+                state = .preparing(secondsRemaining: remaining - delta)
+                return []
+            }
+            return activateTarget()
         case let .rewalking(point):
             return move(to: point)
         case .waiting:
@@ -273,6 +289,9 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
 
     private mutating func handleResult(_ result: PackageActionResult) -> [PackageProcedureCommand] {
         guard state == .acting(secondsRemaining: nil) else { return [] }
+        if kind == .activate {
+            return activationCounted()
+        }
         switch result {
         case .done:
             state = stateAfterAct
@@ -319,5 +338,51 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         let angle = angleUnit * 2 * Float.pi
         let distance = radius * radiusUnit.squareRoot()
         return center + SIMD3(cos(angle) * distance, sin(angle) * distance, 0)
+    }
+}
+
+nonisolated extension PackageProcedureMachine {
+    /// Activate's count left, after the activations this machine made.
+    var activationsLeft: Int {
+        setup.activationCount - activations
+    }
+
+    /// An ordinary target waits this long after the activate action
+    /// (docs/engine/activate-procedure.md#at-the-target).
+    static let activateWaitSeconds: Float = 1
+
+    /// At the target: furniture is used, and any other target is activated after the wait.
+    mutating func arriveToActivate() -> [PackageProcedureCommand] {
+        guard setup.targets.indices.contains(targetIndex) else {
+            state = .failed
+            return []
+        }
+        if setup.sitsInTarget {
+            activations += 1
+            state = .seated
+            return [.sit]
+        }
+        state = .preparing(secondsRemaining: Self.activateWaitSeconds)
+        return []
+    }
+
+    mutating func activateTarget() -> [PackageProcedureCommand] {
+        guard setup.targets.indices.contains(targetIndex) else {
+            state = .failed
+            return []
+        }
+        activations += 1
+        return act(.activate(setup.targets[targetIndex]))
+    }
+
+    /// Each activation takes one from the count, even when it was refused, and is not
+    /// tried again. With count left the actor walks to the target again.
+    mutating func activationCounted() -> [PackageProcedureCommand] {
+        guard activationsLeft > 0 else {
+            state = .complete
+            return []
+        }
+        state = .ready
+        return start()
     }
 }

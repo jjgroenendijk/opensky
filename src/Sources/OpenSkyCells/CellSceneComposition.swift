@@ -36,6 +36,10 @@ nonisolated public struct CellSceneComposition {
     /// Above zero inside `batch`, which rebuilds the resident indexes once at its end.
     private var batchDepth = 0
 
+    /// Rises each time the resident cells or their references change, so a reader can
+    /// keep an index over them until the next change.
+    public private(set) var residentRevision: UInt64 = 0
+
     /// Every resident ACHR by key, so a per-actor read is one dictionary hit.
     public private(set) var actorPlacements: [ReferenceKey: ResidentActorPlacement] = [:]
 
@@ -418,6 +422,7 @@ nonisolated extension CellSceneComposition {
     }
 
     private mutating func reindexResidents() {
+        residentRevision &+= 1
         residentCollision = cells.values.map(\.staticCollision)
         residentWater = cells.values.map(\.waterVolumes).filter { !$0.volumes.isEmpty }
         residentActors = Self.mergedActorEntries(cells)

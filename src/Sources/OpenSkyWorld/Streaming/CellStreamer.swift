@@ -130,11 +130,16 @@ public final class CellStreamer {
     public var interiorScene: CellScene? {
         didSet {
             actorPoseRevision &+= 1
+            interiorRevision &+= 1
             interiorActorPlacements = interiorScene.map {
                 ResidentActorPlacement.index([(location: $0.location, references: $0.references)])
             }
         }
     }
+
+    private(set) var interiorRevision: UInt64 = 0
+    /// Each resident parent's activate children, and the resident revisions it was built at.
+    var activateChildIndex: (revision: SIMD2<UInt64>, children: [FormID: [ActivateChild]])?
 
     /// Nil outside an interior, where `composition` answers instead.
     private(set) var interiorActorPlacements: [ReferenceKey: ResidentActorPlacement]?
