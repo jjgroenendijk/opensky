@@ -4,15 +4,17 @@
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 
 extension CombatLoopRuntime {
-    /// How often the hostile NPC pairs are found again. An OpenSky value, the shortest
-    /// detection pass interval (`fDetectionUpdateTimeMin`).
-    static let foeScanSeconds: Float = 1
+    /// After each detection pass the next comes a random 1 to 2 seconds later
+    /// (docs/engine/combat.md#npc-foes). The game waits 2.5 to 5 seconds in a complex
+    /// scene; OpenSky has no such test yet.
+    static let foeScanSeconds: ClosedRange<Float> = 1 ... 2
     /// How far apart two NPCs may be to count as foes. An OpenSky value: the distance at
     /// which a fight breaks off.
     static let foeScanRange: Float = 4096
@@ -24,31 +26,40 @@ extension CombatLoopRuntime {
         return target == .player || commanders[target] == .player
     }
 
-    /// Finds again, once a second, each pair of living NPCs within the range where the
-    /// first attacks the second on sight. The player's allies are left out on both sides.
+    /// Each living NPC finds, on its own detection pass, the NPCs within the range that it
+    /// attacks on sight. The player's allies are left out on both sides.
     func scanFoes(_ actors: [CombatActorObservation], world: any CombatLoopWorld) {
-        foeScanWait -= Self.fixedStepSeconds
-        guard foeScanWait <= 0 else { return }
-        foeScanWait = Self.foeScanSeconds
         let player = world.combatPlayer.key
         let living = actors.filter {
             !$0.isDead && $0.key != player && commanders[$0.key] != player
         }
-        var pairs: Set<CombatFoePair> = []
+        let keys = Set(living.map(\.key))
         for observer in living {
-            for target in living where target.key != observer.key {
+            let wait = (foeScanWaits[observer.key] ?? 0) - Self.fixedStepSeconds
+            guard wait <= 0 else {
+                foeScanWaits[observer.key] = wait
+                continue
+            }
+            let range = Self.foeScanSeconds
+            let unit = Float(foeScanRandom.next() % 1001) / 1000
+            foeScanWaits[observer.key] = range
+                .lowerBound + (range.upperBound - range.lowerBound) * unit
+            scannedFoes[observer.key] = Set(living.compactMap { target in
                 guard
+                    target.key != observer.key,
                     simd_distance(observer.feet, target.feet) <= Self.foeScanRange,
                     world.combatIsHostile(observer.key, toward: target.key)
-                else { continue }
-                pairs.insert(CombatFoePair(observer: observer.key, target: target.key))
-            }
+                else { return nil }
+                return CombatFoePair(observer: observer.key, target: target.key)
+            })
         }
-        let keys = Set(living.map(\.key))
+        foeScanWaits = foeScanWaits.filter { keys.contains($0.key) }
+        scannedFoes = scannedFoes.filter { keys.contains($0.key) }
         aggroFoePairs = aggroFoePairs.filter {
             keys.contains($0.observer) && keys.contains($0.target)
         }
-        foePairs = pairs.union(aggroFoePairs)
+        let scanned = scannedFoes.values.reduce(into: Set<CombatFoePair>()) { $0.formUnion($1) }
+        foePairs = scanned.filter { keys.contains($0.target) }.union(aggroFoePairs)
     }
 
     /// The NPC each actor fights: the nearest one it attacks on sight and has detected,
@@ -61,7 +72,14 @@ extension CombatLoopRuntime {
     }
 }
 
-extension CombatLoopRuntime {}
+/// One NPC's last target pick, and the seconds until it picks again.
+nonisolated struct CombatTargetPick: Equatable, Sendable {
+    static let keptSeconds: Float = 1
+    static let changedSeconds: Float = 3
+
+    let target: ReferenceKey
+    var wait: Float
+}
 
 extension ActorReaction {
     /// Ally and Friend: a target the observer does not fight back.

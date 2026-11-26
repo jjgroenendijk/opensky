@@ -97,10 +97,25 @@ nonisolated public protocol CrimeHostilitySource: Sendable {
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
     ) -> ActorReaction?
+    /// True when `other` gives every pair the same answer, so a reaction kept from it holds.
+    func answersAlike(_ other: (any CrimeHostilitySource)?) -> Bool
+}
+
+nonisolated extension CrimeHostilitySource {
+    /// A source that cannot compare itself never answers alike.
+    public func answersAlike(_: (any CrimeHostilitySource)?) -> Bool {
+        false
+    }
+}
+
+nonisolated extension CrimeHostilitySource where Self: Equatable {
+    public func answersAlike(_ other: (any CrimeHostilitySource)?) -> Bool {
+        (other as? Self) == self
+    }
 }
 
 /// The crime term before crime exists.
-nonisolated public struct NoCrimeHostility: CrimeHostilitySource, Sendable {
+nonisolated public struct NoCrimeHostility: CrimeHostilitySource, Equatable, Sendable {
     public func crimeReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile

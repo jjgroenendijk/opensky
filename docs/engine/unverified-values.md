@@ -28,7 +28,8 @@ the detail and the sources it did find.
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
-| How often NPC foes are found, and how far apart | Once a second, within 4096 units | [combat loop](/engine/combat.md#npc-foes) |
+| How far apart NPC foes are found | Within 4096 units | [combat loop](/engine/combat.md#npc-foes) |
+| NPC foe search in a complex scene | Always 1 to 2 s; the game's complex-scene test is not built | [combat loop](/engine/combat.md#npc-foes) |
 | Which race attack spell a creature's blow rolls as its disease | The first Disease spell in the race's `ATKD` list, or in its `ATKR` race's | [Diseases](/engine/diseases.md#where-opensky-differs) |
 | How near a death an actor counts as its witness | 2048 units, with no detection check | [combat detection dialogue](/engine/combat-detection-dialogue.md#in-opensky) |
 | How long a package waits before it starts again after its walk gave up | 10 s | [package schedules](/engine/package-schedules.md#in-a-session) |
