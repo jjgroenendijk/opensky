@@ -7,7 +7,8 @@
 #   GAPS_OPTION  more gaps options, such as --only papyrus,perks or --limit 20
 #
 # Writes .logs/gaps/<UTC timestamp>/gaps.txt and summary.md, and prints the summary
-# table. A run of every section (no --only) also puts summary.md into README.md,
+# table. The fields section first builds the index store (tools/lint-index/build-index.sh)
+# and lists the record fields engine code reads in field-reads.tsv beside them. A run of every section (no --only) also puts summary.md into README.md,
 # between the gaps markers. The report holds names and counts only, no game content.
 set -eu
 
@@ -21,9 +22,25 @@ run_dir=$("$root/tools/run-dir.sh" gaps)
 echo "[INFO] run directory: $run_dir"
 
 every_section=1
+needs_fields=1
+previous=
 for arg in "$@"; do
     [ "$arg" = "--only" ] && every_section=0
+    if [ "$previous" = "--only" ]; then
+        case ",$arg," in *,fields,*) ;; *) needs_fields=0 ;; esac
+    fi
+    previous=$arg
 done
+
+if [ "$needs_fields" -eq 1 ]; then
+    (
+        cd "$root"
+        # shellcheck source=tools/lint-index/build-index.sh
+        . "$root/tools/lint-index/build-index.sh"
+        python3 tools/lint-index/record-field-reads.py "$store" . "$run_dir/field-reads.tsv"
+    )
+    set -- "$@" --field-reads "$run_dir/field-reads.tsv"
+fi
 
 status=0
 "$cli" gaps "$@" --summary-out "$run_dir/summary.md" >"$run_dir/gaps.txt" || status=$?

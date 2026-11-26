@@ -9,7 +9,7 @@ import OpenSkyGameData
 
 enum GapsCommand {
     static func run(context: CLIContext, arguments: GapsArguments) throws {
-        let gatherer = GapsGatherer(context: context)
+        let gatherer = try GapsGatherer(context: context, fieldReadsPath: arguments.fieldReads)
         var sections: [GapSection] = []
         for key in arguments.sections {
             let started = Date()
@@ -37,9 +37,34 @@ final class GapsGatherer {
     let context: CLIContext
     private(set) lazy var fileSystem = context.makeFileSystem()
     private(set) lazy var plugins = LoadOrderPlugins(ActivePluginFiles.load(root: context.root))
+    /// The fields engine code reads, when the fields section runs.
+    let fieldReads: RecordFieldReads?
+    /// One sweep serves the records and fields sections.
+    private(set) lazy var recordSweep: RecordCoverageSweep = {
+        var sweep = RecordCoverageSweep(countingFields: fieldReads != nil)
+        for plugin in plugins.plugins {
+            sweep.sweep(plugin.file)
+        }
+        return sweep
+    }()
 
-    init(context: CLIContext) {
+    init(context: CLIContext, fieldReadsPath: String?) throws {
         self.context = context
+        fieldReads = try fieldReadsPath.map(Self.loadFieldReads)
+    }
+
+    private static func loadFieldReads(path: String) throws -> RecordFieldReads {
+        let text: String
+        do {
+            text = try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+            throw CLIError.failure("cannot read the field reads list \(path): \(error)")
+        }
+        do {
+            return try RecordFieldReads(text: text)
+        } catch let .malformedLine(line) {
+            throw CLIError.failure("the field reads list \(path) is malformed at line \(line)")
+        }
     }
 
     func sections(for key: String) throws -> [GapSection] {
@@ -52,7 +77,8 @@ final class GapsGatherer {
         [
             "papyrus": { try [self.papyrus()] }, "events": { [self.events()] },
             "conditions": { try [self.conditions()] }, "records": { try [self.records()] },
-            "settings": { try [self.settings()] }, "magic": { try [self.magic()] },
+            "fields": { try [self.fields()] }, "settings": { try [self.settings()] },
+            "magic": { try [self.magic()] },
             "perks": perks, "packages": packages, "behavior": behavior,
             "animations": animations, "meshes": assets.meshes, "textures": assets.textures,
             "audio": assets.audio, "swf": swf
