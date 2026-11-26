@@ -50,6 +50,11 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     public var turns = VehicleWheelTurns()
     /// The cart's speed and swing, for the tow line's dynamics.
     public var motion = VehicleTowMotion()
+    /// The pose the cart last came to rest in, and the hitch it rested behind. While the
+    /// hitch stays there and the cart does not move, the pose holds with no ground search.
+    public var rest: VehicleTowRest?
+    /// How long the cart has moved slower than its rest limits behind a still hitch.
+    public var quietSeconds: Float = 0
 
     public init(
         length: Float,
@@ -75,6 +80,17 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
         self.rolled = rolled
         self.bodyHeading = bodyHeading
         self.turns = turns
+    }
+}
+
+/// A towed follower standing still behind a still hitch.
+nonisolated public struct VehicleTowRest: Equatable, Sendable {
+    public let hitch: SIMD3<Float>
+    public let pose: float4x4
+
+    public init(hitch: SIMD3<Float>, pose: float4x4) {
+        self.hitch = hitch
+        self.pose = pose
     }
 }
 

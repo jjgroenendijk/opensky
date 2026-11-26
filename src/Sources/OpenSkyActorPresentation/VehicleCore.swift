@@ -132,6 +132,8 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     mutating func setWheels(_ wheels: [SIMD2<Float>], for follower: ReferenceKey) {
         guard case var .towed(tow)? = links[follower]?.seat else { return }
         tow.wheels = wheels
+        tow.rest = nil
+        tow.quietSeconds = 0
         links[follower]?.seat = .towed(tow)
     }
 
@@ -200,13 +202,9 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return result
     }
 
-    /// Moves a towed follower along the line from where it was toward the hitch, so it
-    /// trails the carrier's path: to `length` behind it, or with `dt`, to where the tow
-    /// line's spring takes it. It rests on the ground under its wheels, or, before they
-    /// are known, on the ground under its origin and the hitch.
-    static func pull(
+    static func movedPose(
         _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?,
-        dt: Float = 0
+        dt: Float
     ) -> float4x4 {
         let previousHeading = tow.heading
         let distance = towDistance(&tow, hitch: hitch, ground: ground, dt: dt)

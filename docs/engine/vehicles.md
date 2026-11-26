@@ -327,3 +327,5 @@ before it got on no longer counts as where it is.
 ## Where OpenSky differs
 
 - The cart is not a set of joined physics bodies: it follows the horse on the tow line above.
+- A cart searches the ground under its wheels only while it moves. Once the cart and its hitch
+  stand still for half a second, it keeps its pose and searches nothing until the hitch moves.
