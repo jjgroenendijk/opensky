@@ -265,8 +265,9 @@ is instant.
 progress. `fWeatherTransAccel` is 16 in `Skyrim.esm`, so the rest runs 17 times faster. A second
 accelerate changes nothing, and the next weather fades at the normal speed.
 
-[WARNING] OpenSky starts a transition at every `SetActive` call, drops a request made while one
-runs, and divides the fade's length by `fWeatherTransAccel`.
+[WARNING] OpenSky starts a new transition at every `SetActive` call, even while one runs, instead
+of letting the request wait. It has no override expiry, and it divides the fade's length by
+`fWeatherTransAccel`.
 
 ## The opening
 
@@ -277,7 +278,9 @@ The opening's scripts change the weather several times (read from the install's 
   calls `SetActive(true, false)` on `SkyrimFog`, waits 10 s, applies the chargen image space
   modifier, and waits 75 s. It then calls `SetActive(true, false)` on `SkyrimCloudy`
   (`00012F89`), and 65 s later disables and deletes itself.
-- `MQ101` stage 30 calls `ForceActive(true)` on `SkyrimClear` again.
 - `MQ101` stage 150 forces the attack weather.
 
-So the carts reach Helgen under a cloudy or clear sky, not in fog.
+Stage 10 runs its first log entry, whose condition is the global `MQQuickstart` at 0. Stage 30
+also calls `ForceActive(true)` on `SkyrimClear`, but only in its second log entry, for
+`MQQuickstart` 1; a new game runs the first entry, which has no weather call. So in a new game the fog gives way
+to `SkyrimCloudy` about 85 s after the script starts, before the carts reach Helgen.
