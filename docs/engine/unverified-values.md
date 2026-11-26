@@ -137,6 +137,7 @@ the detail and the sources it did find.
 | Weapon change while drawn | Sheathe the old hand, then draw the new one | [combat graph names](/engine/combat-graph-names.md) |
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Cart tow line | Spring 6 rad/s at damping 0.35, play 24 units, wheel drag 0.4 per second, front axle swing 7 rad/s at damping 0.5 | [vehicles](/engine/vehicles.md#towing) |
+| When a towed cart counts as standing | Speed under 1 unit/s and front axle swing under 0.01 rad/s for 0.5 s, behind a hitch that has not moved | [vehicles](/engine/vehicles.md#where-opensky-differs) |
 | Dragon animation | A guess; its graph does not run | [actor animation](/engine/actor-animation.md) |
 | Dragon rider target lock | The candidates are taken nearest first; a lock that moves ends the attack order; the notification text is "No target in range."; Switch Target looks 60 degrees | [combat assist](/engine/combat-assist.md#in-opensky) |
 | Dismount without race data | 50 units left of the saddle, 65 up | [riding](/engine/riding.md#mounting-and-dismounting) |

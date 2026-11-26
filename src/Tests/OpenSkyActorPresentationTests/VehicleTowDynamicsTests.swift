@@ -70,6 +70,36 @@ struct VehicleTowDynamicsTests {
         #expect(abs((stopped.gaps.last ?? 0) - 200) < 1, "the line settles to its length")
     }
 
+    @Test func aStandingCartMakesNoGroundSearchAndMovesAgainWithItsHorse() {
+        var core = Self.towed()
+        _ = Self.drive(&core, from: 0, speed: 0, seconds: 1)
+        var searches = 0
+        let counted: (SIMD3<Float>) -> Float? = { _ in
+            searches += 1
+            return 0
+        }
+        let standing = Self.drive(&core, from: 0, speed: 0, seconds: 0.5, ground: counted)
+        #expect(searches == 0)
+        #expect(abs((standing.gaps.last ?? 0) - 200) < 0.01)
+        let moving = Self.drive(&core, from: 0, speed: 150, seconds: 0.5, ground: counted)
+        #expect(searches > 0)
+        #expect((moving.cartY.last ?? 0) > -190, "the cart starts 200 behind the horse")
+    }
+
+    /// The tow line chatters at the end of its play on a slope, and the cart still rests.
+    @Test func aCartStandingOnASlopeRestsToo() {
+        let slope: (SIMD3<Float>) -> Float? = { $0.y * 0.2 }
+        var core = Self.towed(ground: slope)
+        _ = Self.drive(&core, from: 0, speed: 0, seconds: 5, ground: slope)
+        var searches = 0
+        let counted: (SIMD3<Float>) -> Float? = { point in
+            searches += 1
+            return slope(point)
+        }
+        _ = Self.drive(&core, from: 0, speed: 0, seconds: 0.5, ground: counted)
+        #expect(searches == 0)
+    }
+
     @Test func aCartBelowItsHorseOnASlopeRollsBackALittle() {
         let slope: (SIMD3<Float>) -> Float? = { $0.y * 0.2 }
         var core = Self.towed(ground: slope)
