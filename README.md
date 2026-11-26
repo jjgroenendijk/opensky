@@ -30,7 +30,7 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-11-13 by `make rank-gaps`.
+Measured on 2026-11-26 by `make rank-gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
@@ -38,14 +38,15 @@ Measured on 2026-11-13 by `make rank-gaps`.
 | Papyrus events | 68 | 0 | 68 | 100% |
 | Condition functions | 258 | 0 | 258 | 100% |
 | Record types | 120 | 0 | 120 | 100% |
-| Game settings | 1618 | 30 | 1648 | 98% |
+| Record fields | 1575 | 451 | 2026 | 77% |
+| Game settings | 1628 | 20 | 1648 | 98% |
 | Magic effect archetypes | 37 | 0 | 37 | 100% |
 | Perk entry points | 68 | 0 | 68 | 100% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
 | AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
-| Behavior node classes | 52 | 2 | 54 | 96% |
-| Behavior features ignored | - | 0 | - | - |
+| Behavior node classes | 55 | 0 | 55 | 100% |
+| Behavior features ignored | - | 138 | - | - |
 | Havok classes | 100 | 0 | 100 | 100% |
 | Animation events | 145 | 0 | 145 | 100% |
 | Behavior graph variables | 696 | 0 | 696 | 100% |
