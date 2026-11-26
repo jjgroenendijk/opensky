@@ -306,7 +306,8 @@ extension NPCMover {
             var (longBody, yaw) = (owner.longBody, owner.yaw)
             longBody?.stepHeight = configuration.stepHeight.value
             let groundSampler = owner.ignoresStatics
-                ? owner.staticFloorSampler(world: world) : world.sampleGround
+                ? owner.staticFloorSampler(world: world, travel: step.speed * frameTime)
+                : world.sampleGround
             let before = controller.feetPosition
             var asked = NPCMoveStepReadout(speed: step.speed, yaw: yaw)
             controller.update(

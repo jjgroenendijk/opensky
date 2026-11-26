@@ -109,28 +109,49 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
                 largest = push
             }
         }
-        let ends = CapsuleWorldCollider(capsule: endCapsule)
-        for (index, start) in endFeet(at: feet, yaw: yaw, lift: 0).enumerated() {
+        let move = SIMD3(displacement.x, displacement.y, 0)
+        let ends = endFeet(at: feet, yaw: yaw, lift: 0).map { start in
             let here = SIMD2(start.x, start.y)
-            let there = here + displacement
-            let standing = SIMD3(here.x, here.y, (ground(here) ?? start.z) + stepHeight)
-            let rise = (ground(there) ?? start.z) - (ground(here) ?? start.z)
-            var push = Self.push(
-                ends, from: standing, move: SIMD3(displacement.x, displacement.y, rise),
-                query: query
+            let floor = ground(here) ?? start.z
+            let rise = (ground(here + displacement) ?? start.z) - floor
+            return (
+                start: SIMD3(here.x, here.y, floor + stepHeight),
+                move: move + SIMD3(0, 0, rise)
             )
+        }
+        let balls = bodyBallFeet(at: feet, yaw: yaw)
+        // One search for the whole body: each part then tests only the shapes found here.
+        let shapes = query(partBounds(ends.flatMap { [$0.start, $0.start + $0.move] }
+                + balls.flatMap { [$0, $0 + move] }))
+        let nearby: CapsuleWorldCollider.CandidateQuery = { bounds in
+            shapes.filter { $0.bounds.overlaps(bounds) }
+        }
+        let endCollider = CapsuleWorldCollider(capsule: endCapsule)
+        for (index, end) in ends.enumerated() {
+            var push = Self.push(endCollider, from: end.start, move: end.move, query: nearby)
             push.part = .end(index)
             keepLarger(push)
         }
         let body = CapsuleWorldCollider(capsule: .ball(radius: bodyRadius))
-        for (index, start) in bodyBallFeet(at: feet, yaw: yaw).enumerated() {
-            var push = Self.push(
-                body, from: start, move: SIMD3(displacement.x, displacement.y, 0), query: query
-            )
+        for (index, start) in balls.enumerated() {
+            var push = Self.push(body, from: start, move: move, query: nearby)
             push.part = .body(index)
             keepLarger(push)
         }
         return largest
+    }
+
+    /// A box round every part at each of `feet`, with room for the push out of a wall.
+    private func partBounds(_ feet: [SIMD3<Float>]) -> ModelBounds {
+        let radius = max(endRadius, bodyRadius)
+        var low = feet.first ?? .zero
+        var high = low
+        for point in feet {
+            low = simd_min(low, point)
+            high = simd_max(high, point)
+        }
+        let room = SIMD3<Float>(repeating: radius * 2 + 1)
+        return ModelBounds(min: low - room, max: high + room + SIMD3(0, 0, radius * 2))
     }
 
     /// The horizontal push a move meets. The move starts where the shape rests after the

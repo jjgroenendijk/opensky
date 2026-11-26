@@ -116,7 +116,7 @@ struct StaticCollisionWorldTests {
             max: SIMD3(32, 32, 16)
         ))
         let nearbyTriangleCount = nearby.reduce(0) { $0 + $1.triangleCount }
-        #expect(nearbyTriangleCount == 640)
+        #expect(nearbyTriangleCount == 600, "only the triangles at the origin")
         #expect(nearbyTriangleCount < 1200)
     }
 

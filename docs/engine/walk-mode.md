@@ -101,7 +101,13 @@ floor holds it up through its contacts in the physics step. The player uses a
 proxy controller instead. Actors at the Middle-low and Low
 [process levels](/engine/ai-process-levels.md) have no 3D, so they have no collision shape; their
 package moves are simple moves. OpenSky moves every walker with its own capsule controller and
-ground tests, described below.
+ground tests, described below. A long body such as a horse searches the world for shapes once per
+step for all its parts, and reads the ground twice under each end: where it stands and where it
+goes. On a marker walk those ground reads share one search per frame over the body's area. A large
+static triangle mesh is split into leaves of at most 64 triangles by where the
+triangles lie, so a test near one point meets few of them. In OpenSky an actor at a low process
+level has no package tree and no walk; the [unloaded actors](/engine/unloaded-actors.md) schedule
+moves it with no collision.
 
 One bridge is where input, the behavior graph, and the controller meet. Its rules:
 
