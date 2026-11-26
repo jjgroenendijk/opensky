@@ -76,14 +76,32 @@ nonisolated public struct ActivateChild: Equatable, Sendable {
     }
 }
 
+nonisolated extension ActivateChild {
+    /// Each parent's children among `entries`, in sequence order.
+    public static func index(
+        _ entries: some Sequence<RuntimeReferenceEntry>
+    ) -> [FormID: [ActivateChild]] {
+        var index: [FormID: [ActivateChild]] = [:]
+        for entry in entries {
+            let details = entry.placedReference?.details ?? entry.placedActor?.details
+            var seen: Set<FormID> = []
+            for parent in details?.activateParents ?? []
+                where seen.insert(parent.reference).inserted
+            {
+                let delay = parent.delay.isFinite ? Swift.max(0, parent.delay) : 0
+                index[parent.reference, default: []].append(ActivateChild(
+                    key: entry.key,
+                    delay: delay
+                ))
+            }
+        }
+        return index
+    }
+}
+
 nonisolated extension Sequence<RuntimeReferenceEntry> {
     /// The entries whose `XAPR` activate parents include `parent`, in sequence order.
     public func activateChildren(of parent: FormID) -> [ActivateChild] {
-        compactMap { entry in
-            let details = entry.placedReference?.details ?? entry.placedActor?.details
-            return details?.activateParents.first { $0.reference == parent }.map {
-                ActivateChild(key: entry.key, delay: $0.delay.isFinite ? Swift.max(0, $0.delay) : 0)
-            }
-        }
+        ActivateChild.index(self)[parent] ?? []
     }
 }

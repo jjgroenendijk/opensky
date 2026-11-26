@@ -30,12 +30,13 @@ nonisolated struct PackageProcedureParameters: Sendable {
     var height: Int?
     var flag: Int?
     var combat: Int?
+    var count: Int?
 
     static let table: [PackageProcedureKind: Self] = [
         .travel: Self(place: 0), .wander: Self(place: 0), .sandbox: Self(place: 0),
         .patrol: Self(target: 0), .sleep: Self(target: 0), .sit: Self(target: 0),
         .eat: Self(selector: 0), .wait: Self(seconds: 0),
-        .acquire: Self(target: 0), .activate: Self(target: 0),
+        .acquire: Self(target: 0), .activate: Self(target: 0, count: 1),
         .dialogueActivate: Self(place: 1, target: 0),
         .escort: Self(place: 2, watched: 0, far: 5),
         .find: Self(place: 0, selector: 1),

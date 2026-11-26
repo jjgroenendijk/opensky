@@ -58,6 +58,10 @@ nonisolated extension PackageProcedureMachine {
             state = .failed
             return []
         }
+        if kind == .activate, activationsLeft <= 0 {
+            state = .complete
+            return []
+        }
         if Self.actsInPlace.contains(kind), let action = arrivalAction() {
             return act(action)
         }
@@ -129,6 +133,8 @@ nonisolated extension PackageProcedureMachine {
                 return sitInSandboxSeat(seat)
             }
             return beginSandboxActivity(.wandering)
+        case .act where kind == .activate:
+            return arriveToActivate()
         case .act:
             guard let action = arrivalAction() else {
                 state = .failed

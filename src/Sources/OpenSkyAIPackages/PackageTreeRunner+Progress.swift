@@ -14,6 +14,8 @@ nonisolated extension PackageTreeRunner {
         case .complete: return true
         case .failed: return false
         case .seated where leaf.leaf.completesPackage || hasLaterSequenceStep(node): return true
+        // An Activate is done once the actor sits in its furniture target.
+        case .seated where leaf.machine.kind == .activate: return true
         default: return nil
         }
     }

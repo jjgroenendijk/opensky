@@ -86,10 +86,21 @@ At Middle-low and Low it runs a cheap version with no animation and no wait:
 
 ## Where OpenSky differs
 
-[WARNING] OpenSky does not read Number to Activate. After one activation its machine ends the
-package as done. A package with no conditions is then picked again on the next update, so the
-actor walks to the target and activates it again every frame. In the opening, Torolf and Torri
-restart their walk to the rail every frame, and each activation searches every loaded reference
-for the rail's activate children. OpenSky also has no reach rule, no 1-second activate wait, and no
-cheap version for low
-process levels.
+OpenSky counts Number to Activate for as long as the actor holds the package. The count is kept
+outside the procedure, so a tree that starts again sees the activations already made. Example:
+`ActivateSpecialFurniture` is a Sequence with the repeat flag round one Activate. After Torolf
+activates the rail, the Sequence starts again, finds the count spent, and ends the package.
+
+- A furniture target seats the actor in one of its markers. The procedure counts one and succeeds
+  once the actor is sent to sit, and the actor stays there.
+- An ordinary target waits 1.0 s at the target, then activates it. OpenSky does not send the
+  activate action to the animation, and does not read the `INT` extra data.
+- A procedure that starts with a count of 0 or less succeeds at once, without a walk. The game
+  page above gives the count test only after an activation; this start rule is OpenSky's.
+- Each loaded cell's activate children are indexed once, so an activation does not walk every
+  loaded reference.
+
+[WARNING] OpenSky has no reach rule: the walk goes to the target's origin, or to the furniture
+marker. It has no cheap version for the low process levels, because an actor there has no package
+tree in OpenSky ([unloaded actors](/engine/unloaded-actors.md)). It takes 1 from the count, not the
+target's item count.

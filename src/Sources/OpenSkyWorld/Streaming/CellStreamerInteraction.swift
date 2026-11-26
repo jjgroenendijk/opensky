@@ -94,9 +94,17 @@ extension CellStreamer.ResidentSteps {
         return streamer.composition.cells.values.flatMap { $0.references.sortedEntries() }
     }
 
+    /// Built once per change of the resident references, so an activation does not walk
+    /// every loaded reference.
     public func activateChildren(of key: ReferenceKey) -> [ActivateChild] {
         guard let parent = referenceEntry(key: key) else { return [] }
-        return residentReferences.activateChildren(of: parent.formID)
+        let revision = SIMD2(streamer.composition.residentRevision, streamer.interiorRevision)
+        if let index = streamer.activateChildIndex, index.revision == revision {
+            return index.children[parent.formID] ?? []
+        }
+        let children = ActivateChild.index(residentReferences)
+        streamer.activateChildIndex = (revision, children)
+        return children[parent.formID] ?? []
     }
 
     public func residentInteraction(reference: FormID) -> PlacedInteraction? {

@@ -31,12 +31,22 @@ extension PackageProcedureInputs {
         setup.flag = (number(at: parameters.flag) ?? 0) != 0
         setup.startsCombat = (number(at: parameters.combat) ?? 0) != 0
         setup.walks = setup.destination != nil
+        if let count = parameters.count {
+            setup.activationCount = Int(number(at: count) ?? 1)
+            setup.countInput = index(at: count)
+        }
         var result = PackageLeafSetup(setup: setup)
         switch leaf.kind {
         case .patrol: result = patrol(result, resolver: resolver)
         case .sit, .sleep:
             let animation = Self.seatAnimation(of: leaf.kind)
             result.seat = targets.first.flatMap { resolver.seat(in: $0, animation: animation) }
+        case .activate where setup.activationCount > 0:
+            // Only furniture has seats, so any other target leaves the seat nil.
+            result.seat = targets.first.flatMap {
+                resolver.seat(in: $0, animation: FurnitureSeat.sitAnimation)
+            }
+            result.setup.sitsInTarget = result.seat != nil
         case .orbit: result.setup = orbit(result.setup)
         case .hover: result.setup.destination = result.setup.destination.map { $0 + height }
         // SuspiciousOf is usually PlayerFaction, which names no one reference.
