@@ -115,6 +115,21 @@ changes its group. `IsMovementControlsEnabled` and the seven other reads answer 
 While the player bleeds out, movement, fighting, sneaking, and activate are locked. A dead player
 has every group locked (see [Player death](/engine/ragdoll.md#player-death)).
 
+A locked group drops its input before anything handles it, with no message. Activate is the one
+exception. When a script locked activate and also set the third argument of `Game.SetInChargen`
+(show the controls message), each Activate input shows the game setting
+`sCharGenControlsDisabled`, "Your hands are bound.", and the activation does not happen. Without
+that argument a locked Activate does nothing and shows nothing. A locked move, attack, sneak,
+menu, look, or camera input never shows the message. The locked state is saved, and a new game
+clears it.
+
+The press, a held repeat, and the release of Activate each try to show the message. A duplicate
+check drops copies: it remembers the last 8 notices it showed, each with its text and the time it
+showed. A notice whose text showed less than 5 s ago is dropped, with no text and no sound. The
+5 s count from when the text last showed, not from the last try. When all 8 remembered notices are
+newer than 5 s and carry other texts, the new notice still shows but is not remembered. So holding
+Activate shows the message once every 5 s.
+
 ## Added forms
 
 `FormList.AddForm` appends a form once. `RemoveAddedForm` removes a form a script added, and
@@ -128,6 +143,7 @@ reads the added entries ([leveled lists](/engine/leveled-lists.md#script-changes
 - The state is recorded, and in most cases nothing else reads it yet. The HUD has no stealth
   meter, so `SetNotShowOnStealthMeter` changes only the flag reads. The input layer reads the
   player controls.
+- Every locked control shows the chargen message, and the HUD shows each copy.
 - The condition function `GetEquippedShout` sees a record shout of an actor that was resident
   when the script state last changed. An actor that loaded after that change answers only the
   shout a script equipped.

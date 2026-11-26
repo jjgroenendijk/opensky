@@ -79,10 +79,39 @@ such as `SkinHeadMaleNordComplexion_Age40` and `SkinHeadMaleKhajiitOld`, and Com
 is that list. Laugh Lines is a tint mask. Source: a clean-room read of `SkyrimSE.exe` on
 2026-11-07; the movie's own test list also sends only one `ChangeFaceDetails` slider.
 
+## Opening the menu
+
+Before the race menu first opens, the player has no tint layers. The skin colour of the body,
+the hands, and the head parts comes from the `Player` record's `QNAM`, each value times 255 and
+truncated. The `Player` record (`00000007`) stores (0.655, 0.526, 0.478), so the skin is
+(167, 134, 121). The record's own five tint layers are not used, and it has no `NAM9` face data.
+
+When the menu opens, before any slider moves, the game:
+
+1. resets the player's tint list from the race and sex: one entry per race tint layer, with the
+   colour of the layer's default (`TIND`) and the strength of the preset whose colour (`TINC`)
+   matches it, or 0 when none matches;
+2. takes the first skin tone layer (`TINP` 6) and sets the skin colour from it;
+3. builds the face tint picture from the list and applies the skin colour at once.
+
+The skin colour per channel is `C × v + 127.5 × (1 − v)`, clamped to 0 ... 255, with `C` the
+tone colour from 0 to 255 and `v` the strength from 0 to 1. Strength 1 gives the tone colour,
+and strength 0 gives grey. A race with no skin tone layer gives grey 128. Example: the Nord male
+skin tone layer is `TINI` 1 with the default colour `000E6E08` at strength 1, so the head has
+that colour as soon as the menu opens.
+
+A change of race, sex, or preset repeats the three steps and reloads the player's model. A head
+preset brings its own tint layers. The face tint uses at most 16 layers, and only layers with a
+strength above 0.
+
+[WARNING] OpenSky does not apply the look when the menu opens. Only a change in the menu does, so
+the head first shows grey.
+
 ## Limited mode
 
 `Game.ShowLimitedRaceMenu` hides the name and sex rows, and the race row disappears once
-the player leaves it. Source: the Creation Kit wiki page "ShowLimitedRaceMenu".
+the player leaves it. Source: the Creation Kit wiki page "ShowLimitedRaceMenu". The limited menu
+does not reset the tint list when it opens; the player keeps the current layers.
 
 ## Chargen morphs
 

@@ -141,8 +141,18 @@ install: `AOExecutioneeChop.hkx` is 20 s long and raises `Decapitate` 8.161 s an
 `KillActor` and `ExitCartEnd` act the same whether the idle runtime or the actor's own behaviour
 graph raises them. A seated executionee plays its chop clip in its graph, so the graph raises it.
 
-[WARNING] `KillActor` kills the actor that plays the clip, at once. No source documents the event;
-this is OpenSky's reading of its name and of where the clips raise it.
+`KillActor` kills the actor that plays the clip. When that actor plays a paired idle, the other
+actor of the pair is the killer; otherwise there is none. A killer who is a player teammate counts
+as the player. The kill is an ordinary one, with damage 0 and the death event on. It does nothing
+to a dead actor, and the protected and essential rules apply. The death clip plays, and the body
+goes to ragdoll after the longer of the game setting `fDyingTimer` and that clip. The crime check
+runs. The kill goes through a queue and lands in the same frame or the next.
+
+`Decapitate` does not kill. It equips the race's decapitation armour for the actor's sex, marks the
+actor as decapitated, and cuts the head ([decapitation](/engine/ragdoll.md#decapitation)). It does
+nothing to an actor already decapitated, or whose race has no such armour.
+
+After an idle stops, the actor holds its idle state for 1 s before another idle starts.
 
 The state the idle's event leads to can also send events: its enter notify events fire when the
 idle starts, and its exit notify events when it ends. The cart exit states send `ExitCartEnd`

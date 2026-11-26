@@ -182,7 +182,8 @@ for two more.
 
 ### Line length
 
-A line lasts as long as its voice file, as in the game. The file is
+A line lasts as long as its voice file, as in the game. The game's rules for when a line ends and
+what cuts it are on the [lip sync](/engine/lip-sync.md#how-long-a-line-lasts) page. The file is
 `sound\voice\<plugin>\<voice type>\<name>.fuz` ([voice files](/formats/fuz.md)). Its length
 is the playing time in the xWMA packet table. The voice type is the speaker's `VTCK`. The
 file is read off the main actor, and the line's clock starts when the length is known. So the

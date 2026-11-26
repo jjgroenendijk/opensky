@@ -96,7 +96,8 @@ the frame draws at full size until it lands. A stuck service leaves the game at 
 The scaler forgets its history when the scene swaps, the output size changes, the render
 scale changes, or the camera cuts. A cut is a move of more than 1024 units or a turn of more
 than 60 degrees in one frame. Without a reset, the first frames after a cut would show a ghost
-of the old view.
+of the old view. The game's own TAA resets only at a loading screen
+([temporal anti-aliasing in the game](/rendering/temporal-aa.md)).
 
 ## Limits
 

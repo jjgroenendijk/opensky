@@ -74,6 +74,16 @@ attack, an idle, or a turn in place does, its root motion moves and turns a stan
 turns to a target, sits, plays a paired clip, or flies, because those already place it (clean-room
 read of `SkyrimSE.exe`, 2026-11-07).
 
+Root motion moves an actor through its character controller, the player and an NPC alike. Each
+frame the motion of every active clip with weight above 0 is weighted and summed, divided by the
+total weight, and scaled by the actor's scale. A mirrored clip negates its X travel and its turn.
+The actor's pitch tilts the travel. The motion over the frame time is the controller's wanted
+velocity. On the ground the controller lays it along the ground and adds gravity, so the clip's Z
+does not lift or sink the actor: it stays on the collision it stands on, such as a stone platform
+above the terrain. The Z counts only off the ground, as in flight or swimming. An actor that loses
+its footing falls. The graph turns this on and off with the animation events
+`StartAnimationDriven`, `StartMotionDriven`, and `StartAllowRotation`.
+
 A rider on a horse does not run a graph. It plays the rider clip of its mount's gait instead.
 
 ## Events and variables
