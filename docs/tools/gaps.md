@@ -44,6 +44,7 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `events` | A Papyrus event a script handles | The engine sends it (`PapyrusEngineEvents`) | Scripts that handle it |
 | `conditions` | A condition function index in a `CTDA` | The whole-game condition registry answers it | Conditions in all active plugins |
 | `records` | A record type in the active plugins | It has a decoder that neither throws nor leaves a field unread | Records |
+| `fields` | A stored field of a decoded record type that some record fills | Engine code reads it after decoding | Records that fill it |
 | `settings` | A game setting (`GMST`) a plugin defines | A settings reader asks for it | Plugins that set it |
 | `magic` | A magic effect archetype | The active-effect planner applies it | `MGEF` records |
 | `perks` | A perk entry point, and an entry-point function | Engine code reads the entry point; the evaluator computes the function | Perk effects |
@@ -55,7 +56,7 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `audio` | A sound file variant, and lip sync data | The engine opens and decodes it | Files |
 | `swf` | An interface movie that talks to the engine, and a SWF tag | A menu bridge drives the movie; a decoder reads the tag | GameDelegate names, tags |
 
-The `records`, `conditions`, `settings`, `magic`, `perks`, and `packages` sections read the
+The `records`, `fields`, `conditions`, `settings`, `magic`, `perks`, and `packages` sections read the
 active load order, so mods count too. The other sections read the files inside the archives;
 loose files are not read.
 
@@ -178,6 +179,37 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   machine publishes through `isActive`, `currentStateId`, or its sync variable
   ([actor state graph variables](/engine/actor-state-graph.md)).
 - A voice `.fuz` counts by the audio inside it. Its lip data counts in the lip sync section.
+
+### Record fields
+
+`records` asks whether a decoder reads each field. `fields` asks whether anything reads the
+decoded value afterwards. A field the decoder stores and no game rule reads is data the
+engine throws away: `ARMO` `RNAM`, the race a piece fits, is decoded but changes nothing.
+
+The section has two halves:
+
+- `make rank-gaps` builds the index store (`tools/lint-index/build-index.sh`, the same build
+  `make lint-index` uses). `tools/lint-index/record-field-reads.py` then lists each property
+  of the record module as `read` or `unread` in `field-reads.tsv`, and passes it to
+  `openskycli gaps --field-reads`. The first run in a checkout is a full build.
+- The CLI decodes every record and walks each value through reflection. A field counts when
+  at least one record fills it: a present optional, a non-empty list or text, a non-zero
+  number, a true flag, or any enum case. A row names the field as `Type.Nested.field`, then
+  up to three record types that fill it, because one Swift type can decode several types,
+  such as `DOOR` and `ACTI`.
+
+A field is read when code in another engine module reads it, or when a declaration of the
+record module reads it and that declaration is read, such as a computed property another
+module calls. A write does not count, and neither does a read in the type's own
+initializer, a test, or `openskycli`. A protocol witness is read when its requirement is.
+
+What the rule cannot see:
+
+- A read is not a correct use. A field copied into an engine model counts as read, even when
+  nothing reads the model's copy.
+- A field reached only through reflection, `Codable`, or a synthesised `==` counts as unread.
+- A filled field the list does not name is a note, not a row: the index is older than the
+  code. Run `make rank-gaps` again.
 
 ### Rules
 

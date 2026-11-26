@@ -60,10 +60,8 @@ extension GapsGatherer {
     }
 
     func records() throws -> GapSection {
-        var sweep = RecordCoverageSweep()
-        for plugin in try requirePlugins().plugins {
-            sweep.sweep(plugin.file)
-        }
+        _ = try requirePlugins()
+        let sweep = recordSweep
         var left: [(name: String, count: Int)] = []
         for (type, count) in sweep.counts {
             if sweep.missing[type] != nil {
@@ -84,6 +82,32 @@ extension GapsGatherer {
             usesUnit: "records",
             notes: ["\(sweep.recordTotal) records in \(plugins.plugins.count) plugins"]
                 + sweep.failures.prefix(10).map { "first failures: \($0)" }
+        )
+    }
+
+    func fields() throws -> GapSection {
+        _ = try requirePlugins()
+        guard let reads = fieldReads, let census = recordSweep.fields else {
+            throw CLIError.usage("the fields section needs --field-reads")
+        }
+        let gaps = RecordFieldGaps(census: census, reads: reads)
+        var notes = [
+            "done means engine code reads the field after decoding (index store); "
+                + "fields no record fills are not counted"
+        ]
+        if !gaps.unknown.isEmpty {
+            notes.append(
+                "\(gaps.unknown.count) filled fields are not in the list, so the index is "
+                    + "older than the code: \(gaps.unknown.prefix(5).joined(separator: ", "))"
+            )
+        }
+        return GapSection(
+            title: "Record fields",
+            unit: "fields",
+            done: gaps.done,
+            left: gaps.left.map { ($0.name, $0.records) },
+            usesUnit: "records that fill it",
+            notes: notes
         )
     }
 

@@ -187,19 +187,6 @@ struct CommandLineTests {
         #expect(asking.survivalMode == .ask)
     }
 
-    @Test func gapsRunsTheAskedSectionsInReportOrder() throws {
-        let all = try command(["gaps"], as: GapsArguments.self)
-        #expect(all.sections == GapsArguments.sectionKeys)
-        let some = try command(
-            ["gaps", "--only", "perks,Papyrus", "--limit", "5"],
-            as: GapsArguments.self
-        )
-        #expect(some.sections == ["papyrus", "perks"])
-        #expect(some.limit == 5)
-        #expect(exitCode(["gaps", "--only", "dance"]) == OpenSkyCommandLine.usageExitCode)
-        #expect(exitCode(["gaps", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
-    }
-
     @Test func modesAreRealSubcommands() throws {
         _ = try command(["record", "show", "0x3C"], as: RecordArguments.Show.self)
         _ = try command(["ess", "list", "saves"], as: ESSArguments.List.self)

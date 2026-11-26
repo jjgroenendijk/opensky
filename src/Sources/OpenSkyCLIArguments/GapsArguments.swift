@@ -4,8 +4,8 @@ public import ArgumentParser
 
 public struct GapsArguments: CLICommandArguments {
     public static let sectionKeys = [
-        "papyrus", "events", "conditions", "records", "settings", "magic", "perks", "packages",
-        "behavior", "animations", "meshes", "textures", "audio", "swf"
+        "papyrus", "events", "conditions", "records", "fields", "settings", "magic", "perks",
+        "packages", "behavior", "animations", "meshes", "textures", "audio", "swf"
     ]
 
     public static let configuration = CommandConfiguration(
@@ -30,6 +30,15 @@ public struct GapsArguments: CLICommandArguments {
         help: ArgumentHelp("Also write the summary as a Markdown table here.", valueName: "path")
     )
     public var summaryOut: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "The record field reads list that make rank-gaps writes from the index store. "
+                + "The fields section needs it.",
+            valueName: "path"
+        )
+    )
+    public var fieldReads: String?
 
     public init() {}
 
@@ -47,6 +56,11 @@ public struct GapsArguments: CLICommandArguments {
             guard unknown.isEmpty else {
                 throw ValidationError("unknown section: \(unknown.joined(separator: ", "))")
             }
+        }
+        if sections.contains("fields"), fieldReads == nil {
+            throw ValidationError(
+                "the fields section needs --field-reads; make rank-gaps writes the list"
+            )
         }
         try OptionCheck.atLeast(limit, 1, "--limit")
     }

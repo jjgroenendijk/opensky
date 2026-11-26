@@ -1,6 +1,7 @@
 // Decodes records through `RecordDecoders` and counts what did not decode: a type
 // with no decoder, a decode that threw, and the fields each decoder's skip tally
-// left unread. The real-data coverage test and `openskycli gaps` share it.
+// left unread. The real-data coverage test and `openskycli gaps` share it. With a field
+// census it also counts the fields each decoded record fills.
 
 import Foundation
 public import OpenSkyFormatsCore
@@ -18,10 +19,14 @@ nonisolated public struct RecordCoverageSweep: Sendable {
     public private(set) var unread: [FourCC: [String: Int]] = [:]
     /// Decoded types whose value carries no `skipped` tally.
     public private(set) var untallied: Set<FourCC> = []
+    /// The fields the decoded records fill, when the sweep counts them.
+    public private(set) var fields: RecordFieldCensus?
 
     public static let failureLimit = 50
 
-    public init() {}
+    public init(countingFields: Bool = false) {
+        fields = countingFields ? RecordFieldCensus() : nil
+    }
 
     public var recordTotal: Int {
         counts.values.reduce(0, +)
@@ -53,6 +58,7 @@ nonisolated public struct RecordCoverageSweep: Sendable {
         }
         do {
             let value = try decode(record, localized)
+            fields?.record(value, type: record.type)
             guard
                 let tally = Mirror(reflecting: value).descendant("skipped")
                 as? any RankedSkipReport
