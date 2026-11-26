@@ -148,9 +148,26 @@ player on sight.
 A new game and a loaded save replace the stored memberships. An actor is then seeded again the
 first time something asks, as after a restart of the app.
 
-Seeding walks the actor's template chain once per actor per session. The derivation itself is not
-cached. It is two component reads, a pair lookup, and a walk of two short lists. A cache would have
-to be cleared on every world state write, and actor values are written sixty times a second.
+Seeding walks the actor's template chain once per actor per session.
+
+The game caches the reaction per pair. Each High-level actor keeps one record per other actor. A new
+record holds "unknown"; the first question for the pair works out the reaction and stores it, and
+later questions reuse it. The cache is used only when the other actor is at the High
+[process level](/engine/ai-process-levels.md) and the asking actor has process data; otherwise the
+reaction is worked out on every call.
+
+Two resets clear it:
+
+- A full reset for one actor clears its records, every High-level actor's record about it, and the
+  player's record about it, then forces a detection update. Leaving all factions
+  (`RemoveFromAllFactions`) is one of its callers; the others are not known.
+- Setting a relationship rank from a script clears that one pair, and runs that actor's next
+  detection pass at once.
+
+Whether faction relation changes, crime, or the player's factions reach these resets is not known.
+
+[WARNING] OpenSky does not cache the derivation. It is two component reads, a pair lookup, and a
+walk of two short lists, asked again for every pair on every combat update.
 
 ## Friendly fire
 

@@ -108,7 +108,11 @@ actors its aggression and reaction make it hostile to, and it is hostile to a ta
 unless it counts that target an Ally or a Friend.
 
 - Once a second the loop finds each pair of living NPCs within 4096 units where the first is
-  hostile to the second. The player's allies are left out; they keep the rules above.
+  hostile to the second. In the game, foes come from each High-level actor's detection pass. The
+  pass runs on a timer: after each pass the next comes a random 1 to 2 seconds later, or 2.5 to 5
+  seconds when the scene counts as complex. A combat target is picked again at once when it is no
+  longer valid, else 1 second after the last pick, or 3 seconds after a pick that changed it. The
+  player's allies are left out; they keep the rules above.
 - Perception tracks each such pair. When the observer detects its foe, it fights it.
 - An actor that an NPC fights, fights back. It engages without having to see the attacker.
 - A calm actor that helps an ally fighting an NPC fights that NPC too, through Assistance

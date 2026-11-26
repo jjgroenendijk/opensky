@@ -125,7 +125,7 @@ input names of the vanilla templates.
 | LockDoors, UnlockDoors | Lock or unlock the load doors in the place that the actor owns |
 | Find | Look for matching references in the place; look again every 2 seconds |
 | Acquire | Walk to the item, pick it up; try the next item of the list when one fails |
-| Activate | Walk to the target, then activate it |
+| Activate | Walk to the target, then activate it, as often as "Number to Activate" says ([activate procedure](/engine/activate-procedure.md)) |
 | Say | Speak one line of the topic, and finish when the line ends |
 | ForceGreet | Wait for the player in the trigger place, walk up, open the conversation |
 | DialogueActivate | Walk to the place. With the player as target, open the conversation; with an NPC, send `ADIA` and wait up to 20 s for a quest to answer, as in [random conversations](/engine/random-conversations.md#the-dialogueactivate-procedure) |
@@ -170,7 +170,8 @@ A package whose "Ride Horse if possible?" input is true rides the actor's horse,
 has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the package, and its
 arrivals move the rider's package on. The Travel and Patrol templates both have this input. It is
 found by its `BNAM` name in the template, because its index differs: 2 in Travel (`00016FAA`), 6
-in Patrol (`00017723`), read on the install. A package without the input, or with it false, takes
+in Patrol (`00017723`) and in `PatrolStaticPathing` (`0001722F`, the cart horses' template),
+read on the install. A package without the input, or with it false, takes
 the rider off, and the horse stops where it is. In the opening, the riders wait on their horses
 with a travel package (`MQ101TulliusHoldPosition`) before their patrols start.
 
@@ -312,12 +313,8 @@ which is the Creation Kit wiki's note on `OnPackageEnd`. A one-marker patrol has
 "Start At Nearest?" starts the walk at the marker nearest the actor. A repeatable patrol walks the
 markers it skipped on the way round. A plain one drops them.
 
-The `MQ101` cart horse patrols are not repeatable (`0, 0, 0, 1`: static pathing only), so the carts
-stop at the end of each leg.
-
-The cart horses of `MQ101` drive the opening this way. Their patrols run the carts from the
-start of the game into Helgen. A trigger box on the road sets a stage when a horse walks
-through it.
+The `MQ101` cart horse patrols are not repeatable, so the carts stop at the end of each leg. Their
+routes, and the gate triggers that move them on, are in [opening cart ride](/engine/opening-cart-ride.md).
 
 ## Package fragments
 
@@ -342,6 +339,9 @@ listener may start the next move right away, as a patrol does at each marker. If
 during the runtime's update, that update would write back its older copy and drop the new move.
 
 ## A walk whose path fails
+
+The game's Activate procedure has no time-out of its own: it plans a failed path again on later
+updates ([activate procedure](/engine/activate-procedure.md#a-blocked-path)).
 
 The game counts path failures per actor. A path that works sets the count to 0. A failure
 more than 50 units from the last one starts the count again at 1, so only failures at about the
