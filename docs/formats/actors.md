@@ -77,7 +77,7 @@ are read as on a REFR ([placed references](/formats/placed-references.md#other-r
 | `0x10` | uint16 | disposition base |
 | `0x12` | uint16 | template flags |
 | `0x14` | int16 | health offset |
-| `0x16` | uint16 | bleedout override |
+| `0x16` | int16 | bleedout override, in health points |
 
 `DNAM` holds 18 base skill bytes, 18 skill-modifier bytes, and three int16 values at
 `0x24`, `0x26`, and `0x28`: health, magicka, and stamina. UESP calls them "calculated health
@@ -89,19 +89,20 @@ More `ACBS` flags and what the game does with them:
 
 | Bit | Effect |
 | --- | --- |
-| `0x4` | The `TIAS` tint presets are kept at load only when this bit is set. The chargen preset NPCs set it |
-| `0x10000` | No blood on a hit, like the race no-blood flags `0x2000` and `0x4000` |
-| `0x40000` | The bleedout threshold is the `ACBS` bleedout override |
-| `0x80000` | The actor uses the animations of the opposite sex |
+| `0x4` | Chargen face preset. The tint layers are kept at load only with this bit, or when `bUseFaceGenPreprocessedHeads:General` is off. Every `0x4` NPC of a race and sex, except the player's base, is one preset in the race menu |
+| `0x100` | The NPC has its own creature sounds. Reading `CSDT` or `CSDI` sets it, and `CSCR` clears it. Set: the sounds come from `CSDT`, `CSDI`, and `CSDC`; clear: from the `CSCR` NPC, one level deep |
+| `0x10000` | No blood on a hit: no screen blood when the player is hit, and no spatter or impact effect on the actor. `bDisableAllGore`, or the race flags `0x2000` and `0x4000` together, do the same |
+| `0x40000` | The bleedout threshold is the `ACBS` bleedout override ([bleedout](/engine/ragdoll.md#bleedout)) |
+| `0x80000` | The actor uses the behaviour graph of the opposite sex, and the graph gets the opposite sex value (1 female, 0 male) |
+| `0x100000` | No facial animation: no expressions, blinking, or lip movement, and no expression change on a hit, at death, or from mood |
 
-The game reads `0x100` and `0x100000` too, with effects not yet known. No reader of `0x4000`,
-`0x20000`, `0x200000`, `0x4000000`, or `0x10000000` is known.
+No reader of `0x4000`, `0x20000`, `0x200000`, `0x4000000`, or `0x10000000` exists.
 
 Template flags say which field groups come from the `TPLT` record: `0x0001` traits,
 `0x0002` stats, `0x0004` factions, `0x0008` spell list, `0x0010` AI data, `0x0020` AI
 packages, `0x0040` model and animation, `0x0080` base data, `0x0100` inventory, `0x0200`
-script, `0x0400` default package list, `0x0800` attack data, `0x1000` keywords. UESP marks
-`0x0040` "unused?"; xEdit names it and the Creation Kit does not, so do not rely on it.
+script, `0x0400` default package list, `0x0800` attack data, `0x1000` keywords. The game
+never reads `0x0040`.
 [Actor resolution](/engine/actor-resolution.md) lists which fields each flag covers.
 
 `AIDT` uses Creation Kit names. UESP and xEdit agree on every offset.
@@ -201,7 +202,9 @@ actor's scale.
   With a ranged weapon type, `fAIUseWeaponToleranceDegrees` replaces it.
 - Aim angle tolerance, in degrees: the combat aim tolerance is the larger of this and
   `fCombatAngleTolerance`.
-- Flight radius: while the actor flies, its path requests use this radius.
+- Flight radius: while the actor flies, its path requests use this radius times the actor's
+  scale (reference scale times `NAM6` height). When it does not fly, or while it lands, the
+  character controller's radius is used.
 - Shield biped object: the worn armour in that slot is the actor's shield. Head and hair: the race
   menu rebuilds the head from them after a race change.
 - The male and female weights, and the two bytes after the skill pairs, have no known reader.
@@ -210,10 +213,11 @@ More `DATA` flags:
 
 | Bit | Effect | Vanilla races |
 | --- | --- | --- |
-| `0x8` | The movement controller tilts the body front and back | Four-legged animals |
-| `0x10` | The movement controller tilts the body left and right | Mudcrab, spiders, mammoth |
-| `0x20` | Probably no shadow | Ice wraith, magic anomaly |
-| `0x200` | The actor cannot move, and its AI does not move it | `dunMiddenEmptyRace` |
+| `0x8` | The movement controller tilts the body front and back to the ground | Four-legged animals |
+| `0x10` | The movement controller tilts the body left and right to the ground | Mudcrab, spiders, mammoth |
+| `0x20` | No live reader | Ice wraith, magic anomaly |
+| `0x200` | The actor cannot move, and its AI does not move it. Setting its heading adds the X turn into Z | `dunMiddenEmptyRace` |
+| `0x800` | In combat, a swimming race (`0x40`) with this bit swims only when its combat state allows it | |
 | `0x8000` | Head tracking through the behaviour graph | |
 | `0x10000` | Spell aim starts at the magic node | |
 | `0x40000` | Another collision layer for the body | |
@@ -228,7 +232,13 @@ More `DATA` flags:
 | `0x40000000` | The actor may hold an item in the left hand | |
 | `0x80000000` | An actor query returns it; its caller is not known | Mammoth, giant |
 
-No reader of `0x800` is known. Flags 2: `0x1` turns on velocity-obstacle avoidance, but only when
+The ground tilt of `0x8` and `0x10` takes the ground normal under the actor in the actor's
+own frame. The roll target is `-normal.x` and the pitch target is `normal.y`, each used
+directly as an angle in radians and clamped to plus or minus 0.820 (47 degrees). When the
+actor is placed, the target applies at once. While it moves, the tilt moves 30% of the way to
+the target at each update. Each ground sample restarts a 5-second timer; when it runs out,
+the tilt is worked out again. Example: a normal with `x = -0.2` gives a roll of 0.2 radians
+(11.5 degrees). Flags 2: `0x1` turns on velocity-obstacle avoidance, but only when
 the INI setting `bUseVelocityObstacles:Pathfinding` is on. `0x2` changes how the actor reacts to
 a hit from the player, and `0x10` is read by the mount checks; their exact effects are not known.
 
@@ -277,11 +287,31 @@ Fields beyond the ones above, read into the actor's details:
 | `TINI`, `TINC`, `TINV`, `TIAS` | struct | One tint layer: index, RGBA color, interpolation, preset (int16) |
 | `CSDT`, `CSDI`, `CSDC` | struct | Sound type, then sound and chance pairs |
 | `INAM`, `ANAM`, `ATKR`, `ZNAM`, `GNAM`, `HCLF` | FormID | Death item, far-away model, attack race, combat style, gift filter, hair color |
+| `NAM4`, `NAM5`, `HNAM` | bytes | Skipped by the game at load |
+| `FNAM` | uint16 | Read and thrown away |
 | `SPOR`, `OCOR`, `GWOR`, `ECOR` | FormID | Spectator, observe dead, guard warn, and combat package lists |
 | `DPLT`, `SOFT`, `CSCR`, `FTST` | FormID | Default package list, sleeping outfit, sound parent, head texture |
 
 The actor also reads the destruction, attack, and inventory groups; see
 [records](/formats/records.md).
+
+How the game uses some of them:
+
+- `NAM6` height 0 counts as 1. The height multiplies the reference scale.
+- `NAM8` sound level, default 1. A value above 4 counts as 1. It is the noise of the actor's
+  attacks when no weapon gives one: 0 loud (`iSoundLevelLoud`, 100), 1 normal
+  (`iSoundLevelNormal`, 50), 2 silent (`iSoundLevelSilent`, 0; `Skyrim.esm` sets 10), 3 very
+  loud (`iSoundLevelVeryLoud`, 200), 4 none (0). The noise also starts the
+  `fActorAlertSoundTimer` timer.
+- `ATKR` names an attack race. Its attacks merge with the NPC's own, matched by `ATKE` event
+  name. An own attack whose event the attack race lacks is dropped. A race attack the NPC lacks
+  is added. An own attack with a matching event replaces the race's. An NPC left with no
+  attacks uses its own race's.
+- `ANAM` is a far-away model, an `ARMO`. `DNAM` byte 44 is its distance, a float clamped to
+  65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
+  from the camera wears one `ANAM` item; a nearer actor has it taken off.
+- `QNAM` texture lighting: each float times 255 is kept as a byte.
+- `OBND` has no use on an NPC.
 
 ## CLAS
 

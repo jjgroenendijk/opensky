@@ -202,18 +202,25 @@ A body is kept from removal while any quest alias holds it. Removal deletes the 
 
 ## Bleedout
 
-An essential actor does not die. When its health share falls to the "Bleedout Default" ratio of its
-class, or its health reaches zero, it kneels in bleedout instead (Creation Kit wiki
-[Class](https://ck.uesp.net/wiki/Class)). A protected actor does the same, unless the player dealt
-the last blow. A kneeling actor leaves combat, and its scripts get `OnEnterBleedout()`. A script's
+An essential actor does not die. When its health falls below its bleedout threshold, or reaches
+zero, it kneels in bleedout instead (Creation Kit wiki [Class](https://ck.uesp.net/wiki/Class)).
+The threshold is in health points:
+
+- with `ACBS` flag `0x40000`: the signed `ACBS` bleedout override, a plain number of points;
+- otherwise: the class's bleedout default times the actor's permanent maximum Health. An NPC
+  with no class uses `fBleedoutDefault`, 0.20 by default; `Skyrim.esm` sets 0.15.
+
+Example: a class default of 0.1 and 300 maximum Health give a threshold of 30 points.
+
+A protected actor does the same, unless the player dealt the last blow. A kneeling actor
+leaves combat, and its scripts get `OnEnterBleedout()`. A script's
 `SetEssential` or `SetProtected` wins over the base flag. After `fEssentialDeathTime` seconds the
 actor stands up with full health (UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs").
-An actor whose class is unknown uses `fBleedoutDefault` as its ratio. No open source defines the
-two settings; OpenSky reads them from their names. An actor stands earlier once it has knelt
-`fBleedoutMin` seconds and its health share is `fBleedoutRecover` above its ratio. While it kneels,
-it gets back `fBleedoutRate` percent of its health each second. These three rules are OpenSky's
-reading of the setting names; no source describes them. Sources for the events: the Creation Kit
-wiki pages
+While it kneels, health comes back at `threshold / fBleedoutRate` points per second, so
+`fBleedoutRate` (15) is the seconds to refill to the threshold. The time left is
+`max(0, (threshold - health) / threshold * fBleedoutRate)`. The other settings are
+`fBleedoutMin` (5), `fBleedoutRecover` (0.05), and `fEssentialDeathTime` (20 seconds).
+Sources for the events: the Creation Kit wiki pages
 [OnEnterBleedout](https://ck.uesp.net/wiki/OnEnterBleedout_-_Actor) and
 [StartDeferredKill](https://ck.uesp.net/wiki/StartDeferredKill_-_Actor).
 

@@ -23,10 +23,13 @@ record supplies each field group. The sources are the UESP NPC_ `ACBS` notes and
 Creation Kit page "Template Data".
 
 - Traits (`0x0001`): race, gender, skin, height and weight, voice type (`VTCK`), death item,
-  and head parts. `WNAM` is on the Creation Kit Traits tab, so it follows this flag. Neither
-  source names `WNAM`; this is an inference.
+  head parts and face data, the far-away model `ANAM` and its distance, `DEST`, the sound
+  level `NAM8`, the creature sounds with `CSCR` and `ACBS` `0x100`, and `ACBS` `0x80000`. `WNAM` is
+  on the Creation Kit Traits tab, so it follows this flag. Neither source names `WNAM`; this is
+  an inference.
 - Stats (`0x0002`): the whole Stats tab — level, auto-calc, the health, magicka, and stamina
-  offsets, speed, bleedout, and class (`CNAM`).
+  offsets, speed, disposition, skills, `ACBS` `0x40000` and the bleedout override, and class
+  (`CNAM`).
 - Factions (`0x0004`): the `SNAM` run and `CRIF`. No open source says which flag owns
   `CRIF`. We group it with the memberships because both answer one question: is the actor a
   guard, and for whom? On the vanilla install, every NPC_ in `IsGuardFaction` has a `CRIF`
@@ -36,11 +39,19 @@ Creation Kit page "Template Data".
   ([combat](/engine/combat.md)).
 - AI packages (`0x0020`): the whole ordered `PKID` list. An empty local list is the answer
   when the flag is clear. See [package schedules](/engine/package-schedules.md).
-- Base data (`0x0080`): the name and the essential, protected, and respawn flags.
-- Inventory (`0x0100`): the default outfit (`DOFT`) and carried items, but not the death
-  item.
+- Base data (`0x0080`): the name, the short name `SHRT`, and the `ACBS` flags `0x2`
+  (essential), `0x8` (respawn), `0x40`, `0x800` (protected), `0x2000`, `0x8000`, and
+  `0x100000`.
+- Inventory (`0x0100`): the default outfit (`DOFT`), the sleeping outfit (`SOFT`), the
+  geared-up weapon count, and carried items, but not the death item.
 - Script (`0x0200`): the `VMAD` scripts. A placed actor runs them as well as the scripts in its
   own `ACHR` ([Papyrus world](/engine/papyrus-world.md)).
+- Default package list (`0x0400`): `DPLT` and the four override lists `SPOR`, `OCOR`,
+  `GWOR`, and `ECOR`.
+- Attack data (`0x0800`): the template's attacks, but only when they differ from the
+  template race's attacks. An NPC left with no attacks uses its own race's.
+- Keywords (`0x1000`): the template's `KWDA` replaces the whole list.
+- `0x0040` has no reader.
 
 The walk rules:
 
@@ -48,7 +59,9 @@ The walk rules:
 - A record passes a field up only while it has a `TPLT` and that field's flag is set. A set
   flag without a `TPLT` does nothing. The last record in the chain always supplies the field.
 - At an LVLN, roll for the base at its encounter level and difficulty
-  ([leveled lists](/engine/leveled-lists.md)).
+  ([leveled lists](/engine/leveled-lists.md)). When the chain ends in an LVLN, the flags
+  that count are the bitwise AND of the flags of every NPC on the chain, and the unique flag
+  (`0x20`) is cleared.
 - Every resolved field records which NPC_ supplied it.
 - A loop, a dangling FormID, or an empty list throws an error.
 
