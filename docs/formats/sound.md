@@ -48,7 +48,7 @@ any other value as unknown. It does not guess what it means.
 `FNAM` is the older flags word, and shares its value with `LNAM`: the later field wins. Three
 bits move to their `LNAM` place: `0x10` is loop, `0x02000000` fast envelope, and `0x04000000`
 slow envelope. 63 `Skyrim.esm` descriptors use `FNAM`, with values 0, 1, 2, and `0x11` (a loop).
-None has both fields.
+None has both fields. OpenSky reads the looping from `FNAM` in the same way.
 
 `LNAM` byte 3 is the rumble send: the low four bits drive one motor and the high four bits the
 other, each at the four-bit value times 1 percent of full strength
