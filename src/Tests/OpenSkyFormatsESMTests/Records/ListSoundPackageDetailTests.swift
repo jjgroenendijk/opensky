@@ -106,7 +106,7 @@ struct ListSoundPackageDetailTests {
         let sndr = ESMFixture.field("LNAM", Data([0, 8, 0, 0x32]))
         let descriptor = try SoundDescriptor(record: Fixture.record("SNDR", sndr))
         #expect(descriptor.looping == .loop)
-        #expect(descriptor.rumbleSend == SoundDescriptor.RumbleSend(small: 0.14, big: 0.21))
+        #expect(descriptor.rumbleSend == SoundDescriptor.RumbleSend(small: 0.02, big: 0.03))
         let silent = try SoundDescriptor(record: Fixture.record(
             "SNDR",
             ESMFixture.field("LNAM", Data(count: 4))

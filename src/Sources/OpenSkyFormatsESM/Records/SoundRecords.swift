@@ -127,11 +127,12 @@ nonisolated public struct SoundDescriptor: Sendable {
             self.big = big
         }
 
-        /// Each nibble counts sevens of a percent: small in the low four bits, big in the high.
+        /// Each nibble counts percent: small in the low four bits, big in the high
+        /// (docs/formats/sound.md).
         public init?(byte: UInt8) {
             guard byte != 0 else { return nil }
-            small = min(Float(byte & 0x0F) * 7 / 100, 1)
-            big = min(Float(byte >> 4) * 7 / 100, 1)
+            small = Float(byte & 0x0F) / 100
+            big = Float(byte >> 4) / 100
         }
     }
 
