@@ -35,6 +35,10 @@ extension InventoryWorldAdapter {
         readouts.isPlayerSneaking
     }
 
+    public func playItemSound(_ sound: FormID, at position: SIMD3<Float>) {
+        game.audio.soundDirector?.forcePlaySound(formID: sound, position: position)
+    }
+
     public func dropPlacement() -> DropPlacement? {
         readouts.dropPlacement()
     }

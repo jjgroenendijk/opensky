@@ -47,6 +47,7 @@ extension InventoryCoordinator.ItemActions {
         guard let runtime = coordinator.runtime else { return .unavailable }
         do {
             let outcome = try runtime.take(interaction)
+            playSound(of: outcome.item, .pickUp, at: interaction.position)
             coordinator.storyEvents?.reportStoryEvent(.addItem(
                 outcome.item, from: nil, owner: nil, how: outcome.stolen ? .steal : .pickUp
             ))
@@ -95,6 +96,7 @@ extension InventoryCoordinator.ItemActions {
         guard let placement = coordinator.world.dropPlacement() else { return .noDropCell }
         do {
             try runtime.drop(target, count: count, at: placement)
+            playSound(of: target, .putDown, at: placement.position)
             coordinator.storyEvents?.reportStoryEvent(.removeItem(
                 target, reference: nil, owner: nil, how: .dropped
             ))
@@ -102,6 +104,14 @@ extension InventoryCoordinator.ItemActions {
         } catch {
             return coordinator.note(.failed(action: "Drop", reason: String(describing: error)))
         }
+    }
+
+    /// The item's pickup or putdown sound (docs/formats/item-records.md#item-sounds).
+    private func playSound(of item: FormID, _ event: ItemSoundEvent, at position: SIMD3<Float>) {
+        guard
+            let sound = coordinator.runtime?.inventory.baselines.items.sound(of: item, event)
+        else { return }
+        coordinator.world.playItemSound(sound, at: position)
     }
 
     /// A dead actor's drawn weapon falls to `placement`, out of its inventory.

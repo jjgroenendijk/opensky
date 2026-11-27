@@ -199,6 +199,27 @@ The appearance fields are on [armor records](/formats/armor.md). Inventory field
 are used), and `EITM` (enchantment). ARMO has no `EAMT`: xEdit builds both records' link
 from `wbEnchantment` and adds the charge only on WEAP. So enchanted armor has no charge.
 
+## Item sounds
+
+An item plays its `YNAM` pickup sound when it is picked up and its `ZNAM` putdown sound
+when it is dropped. A potion or food plays its `ALCH` `ENAM` use sound when it is consumed.
+The Creation Kit wiki names these fields "Pickup Sound", "Putdown Sound", and "Use Sound"
+(<https://ck.uesp.net/wiki/Potion>, <https://ck.uesp.net/wiki/Armor>).
+
+An item with no pickup or putdown sound of its own plays the Default Object of its kind
+(<https://ck.uesp.net/wiki/DefaultObjectManager_Script>):
+
+| Kind | Pickup | Putdown |
+| --- | --- | --- |
+| Weapon | `PUSW` | `PDSW` |
+| Armour | `PUSA` | `PDSA` |
+| Book | `PUSB` | `PDSB` |
+| Ingredient | `PUSI` | `PDSI` |
+| Any other item | `PUSG` | `PDSG` |
+
+The sound plays where the item is: at the picked-up reference, or where the dropped item
+lands. A use sound plays at the actor.
+
 ## Vanilla items
 
 In `Skyrim.esm`:

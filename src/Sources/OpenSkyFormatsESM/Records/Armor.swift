@@ -121,8 +121,8 @@ nonisolated public struct ArmorDetails: Equatable, Sendable {
     /// TNAM — the ARMO this one copies its look and stats from.
     let template: FormID?
     /// YNAM/ZNAM — pickup and drop sounds.
-    let pickupSound: FormID?
-    let dropSound: FormID?
+    public let pickupSound: FormID?
+    public let dropSound: FormID?
     /// BMCT — ragdoll constraint template path.
     let ragdollConstraintTemplate: String?
     public let equipType: FormID?
