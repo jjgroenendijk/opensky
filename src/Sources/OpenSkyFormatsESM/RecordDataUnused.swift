@@ -78,6 +78,7 @@ nonisolated public enum RecordDataUnused: Sendable {
         ],
         .layout: [
             "CameraShot.dataSize",
+            "WorldspaceDetails.offsets",
             "PlacedReferenceDetails.Patrol.hasScriptMarker",
             "ScriptData.objectFormat",
             "ScriptData.version"
@@ -119,10 +120,17 @@ nonisolated public enum RecordDataUnused: Sendable {
             "Impact.editorID",
             "LeveledList.bounds",
             "LightingTemplate.editorID",
+            "CellExtras.maxHeightData",
             "Location.editorColor",
             "MaterialObject.editorID",
             "Outfit.editorID",
+            "PlacedReferenceDetails.LightData.unknown",
+            "PlacedReferenceDetails.boundHalfExtents",
             "PlacedReferenceDetails.editorID",
+            "PlacedReferenceDetails.headTrackingWeight",
+            "PlacedReferenceDetails.isIgnoredBySandbox",
+            "PlacedReferenceDetails.isMultiBoundPrimitive",
+            "PlacedReferenceDetails.occlusionPlane",
             "Region.mapColor",
             "Scene.lastActionIndex",
             "SoundOutputModel.editorID",
@@ -130,8 +138,10 @@ nonisolated public enum RecordDataUnused: Sendable {
             "TextureSet.editorID",
             "TopicInfo.editorID",
             "VolumetricLighting.editorID",
-            "WaterType.editorID"
+            "WaterType.editorID",
+            "WorldspaceDetails.hdLODDiffuseTexture",
+            "WorldspaceDetails.hdLODNormalTexture"
         ],
-        .noEffect: ["TopicInfo.favorLevel"]
+        .noEffect: ["PlacedReferenceDetails.LightData.endDistanceCap", "TopicInfo.favorLevel"]
     ]
 }
