@@ -140,7 +140,7 @@ nonisolated extension CellSceneBuilder.CellTerrainBuilder {
                     try child.record.decode(Land.init(record:))
                 })
             {
-                return land
+                return land.applyingDataFlags
             }
         }
         return landRecord(in: found.children)
@@ -181,7 +181,7 @@ nonisolated extension CellSceneBuilder.CellTerrainBuilder {
             for case let .record(record) in records where record.type == "LAND" {
                 guard !record.isDeleted else { continue }
                 if let land = owner.records.decodeOrSkip(record, using: Land.init(record:)) {
-                    return land
+                    return land.applyingDataFlags
                 }
             }
         }

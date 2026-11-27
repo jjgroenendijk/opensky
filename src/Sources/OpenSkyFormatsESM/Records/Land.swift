@@ -54,9 +54,20 @@ nonisolated public struct Land: Sendable {
         public let alphas: [AlphaSample]
     }
 
+    /// DATA: which field groups the game reads (docs/formats/land.md).
+    public struct DataFlags: OptionSet, Hashable, Sendable {
+        public let rawValue: UInt32
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let heightsAndNormals = DataFlags(rawValue: 0x1)
+        public static let vertexColours = DataFlags(rawValue: 0x2)
+        public static let textureLayers = DataFlags(rawValue: 0x4)
+    }
+
     public let formID: FormID
-    /// DATA — land flags (quadrant include bits etc.); kept raw for now.
-    public let flags: UInt32
+    public let flags: DataFlags
     /// VHGT height field. Nil only for a degenerate LAND without heights.
     public let heightField: HeightField?
     /// VNML — 33x33 signed per-vertex normals (x, y, z). Nil when absent.
@@ -124,12 +135,43 @@ nonisolated public struct Land: Sendable {
         self.skipped = skipped
         flushPendingLayer(alphas: [])
 
+        self.flags = DataFlags(rawValue: flags)
+        self.heightField = heightField
+        self.normals = normals
+        self.colors = colors
+        self.baseTextures = baseTextures
+        self.layers = layers
+    }
+
+    /// A copy without the field groups named, as the game sees a land whose
+    /// DATA bit for them is clear.
+    public func dropping(
+        heightsAndNormals: Bool, vertexColours: Bool, textureLayers: Bool
+    ) -> Land {
+        Land(
+            formID: formID, flags: flags,
+            heightField: heightsAndNormals ? nil : heightField,
+            normals: heightsAndNormals ? nil : normals,
+            colors: vertexColours ? nil : colors,
+            baseTextures: textureLayers ? [] : baseTextures,
+            layers: textureLayers ? [] : layers,
+            skipped: skipped
+        )
+    }
+
+    private init(
+        formID: FormID, flags: DataFlags, heightField: HeightField?, normals: [SIMD3<Int8>]?,
+        colors: [SIMD3<UInt8>]?, baseTextures: [QuadrantTexture], layers: [TextureLayer],
+        skipped: FieldTally
+    ) {
+        self.formID = formID
         self.flags = flags
         self.heightField = heightField
         self.normals = normals
         self.colors = colors
         self.baseTextures = baseTextures
         self.layers = layers
+        self.skipped = skipped
     }
 
     /// VHGT: 4-byte anchor float, 33x33 int8 deltas, 3 unused bytes (1096 B).
