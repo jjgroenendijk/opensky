@@ -105,10 +105,22 @@ The quest fragment script `QF_MQ101_0003372B` does this at each stage:
 
 | Stage | What it does |
 | --- | --- |
-| 20 | Opens `EastGate`, changes the music, and makes `CartHorse1`, `CartHorse2`, and Hadvar pick their packages again |
+| 20 | Opens `EastGate`, changes the music, and asks `CartHorse1`, `CartHorse2`, and Hadvar to pick their packages again on their next AI update |
 | 22 | Enables a crowd sound marker |
 | 25 | Closes `NorthGate`, sets its lock level to 5, and starts `IntoTorriScene` |
 | 26 | Closes `EastGate` and sets its lock level to 5 |
 
 Stage 25 changes no cart package. The carts drive on toward `000BB97B` from stage 22, before and
 after stage 25 alike, until stage 30 picks Patrol4.
+
+## Tullius at the gate
+
+Before stage 20, General Tullius waits on his horse beside the road with
+`MQ101TulliusHoldPosition`. Its conditions are `MQQuickstart` equal to 0 and `MQ101` below stage
+20. From stage 20 his patrol `MQ101TulliusPatrol3` holds instead. The stage 20 fragment does not
+ask Tullius to pick, and a stage change alone makes no actor pick
+([package schedules](/engine/package-schedules.md#when-to-pick-again)). So Tullius changes to his
+patrol at his next regular pick, 0 to 15 real seconds after stage 20, while the cart horses
+change on their next AI update. His patrol rides on the carts' line, from `000F7B4F` at
+(21302, -79358), so he must pass that marker before the carts close the road. A rider's pick moves
+its horse at once; the horse picks no package of its own.

@@ -76,13 +76,22 @@ picking. A missing template or a loop in the chain is an error.
 
 ## When to pick again
 
-Picking happens on events, not every frame. The next pick is at the earliest of:
+The game does not pick every frame. A loaded actor near the player picks again:
 
-- the exact start or end of a daily schedule,
-- 15 game minutes after the last pick, to catch calendar and condition changes,
-- the clock moving backwards.
+- 15 real seconds after its last pick, which is 5 game minutes at the default timescale of 20;
+- when the whole game hour changes, either way, or when a wait jumps the game time;
+- on its next AI update after a script `EvaluatePackage`, or after its alias is cleared or filled.
+  This pick restarts the 15 s count;
+- when its package's tree ends, or when it has no package.
 
-A callback fires only when the picked package changes.
+A quest stage change asks no actor to pick, so an actor whose package reads the stage waits for its
+next pick. An actor with less AI processing does not count the 15 s; one at the lowest level picks
+only on an hour change, with no package, or when asked. A dead or dying actor does not pick.
+Inside a package, the procedure tree checks its branch conditions again every 3 real seconds.
+
+OpenSky picks at the exact start or end of a daily schedule, 15 game minutes after the last pick,
+and when the clock moves back. [WARNING] So a loaded actor picks about three times later than in
+the game, and not at each hour change. A callback fires only when the picked package changes.
 
 Two package flags change the pick. Source: <https://ck.uesp.net/wiki/Package_Flags>.
 
@@ -92,12 +101,7 @@ Two package flags change the pick. Source: <https://ck.uesp.net/wiki/Package_Fla
 - Once Per Day: the package is not picked again within 24 game hours of the time it was first
   picked. When its tree ends, the actor picks again at once and skips it. The wiki notes that
   testing suggests the flag works only for a package with no start time and no duration.
-  OpenSky applies it to every package, which changes nothing for a package with a schedule
-  window, because the window has passed when the day is over.
-
-`GetDisabled` reads a fixed snapshot of enable states: a runtime enable or disable wins,
-otherwise the reference's "initially disabled" flag. This lets condition evaluation see enable
-state without reaching into the live world state.
+  OpenSky applies it to every package; a schedule window has passed by the next day anyway.
 
 ## Procedure machines
 
