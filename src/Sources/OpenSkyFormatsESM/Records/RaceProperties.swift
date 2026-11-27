@@ -48,7 +48,8 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     let aimAngleTolerance: Float
     let flightRadius: Float
     let angularAccelerationRate: Float
-    let angularTolerance: Float
+    /// Degrees: how close a turn must come to its bearing before the actor faces it.
+    public let angularTolerance: Float
     /// 0x01 advanced avoidance, 0x02 non-hostile, 0x10 allow mounted combat.
     /// Optional in xEdit.
     let flags2: UInt32?

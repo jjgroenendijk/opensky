@@ -3,6 +3,7 @@
 
 public import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyNavigation
@@ -30,6 +31,10 @@ public struct CellStreamerNPCMovementState {
     public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
     /// The actor's height times its race's height; nil counts as 1.
     public var heightScale: ((ReferenceKey) -> Float)?
+    /// The actor's race cannot move; nil counts as false.
+    public var isImmobile: ((ReferenceKey) -> Bool)?
+    /// The race's angular tolerance in degrees; nil keeps the default.
+    public var angularTolerance: ((ReferenceKey) -> Float?)?
     var movementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
@@ -116,6 +121,16 @@ extension CellStreamer.ActorSteps {
         nonmutating set { streamer.npcMovementState.heightScale = newValue }
     }
 
+    public var npcAngularTolerance: ((ReferenceKey) -> Float?)? {
+        get { streamer.npcMovementState.angularTolerance }
+        nonmutating set { streamer.npcMovementState.angularTolerance = newValue }
+    }
+
+    public var npcIsImmobile: ((ReferenceKey) -> Bool)? {
+        get { streamer.npcMovementState.isImmobile }
+        nonmutating set { streamer.npcMovementState.isImmobile = newValue }
+    }
+
     /// The race facts that decide how a current pushes a walking NPC.
     public var npcWaterPushRace: ((ReferenceKey) -> WaterPushRace)? {
         get { streamer.npcMovementState.waterPushRace }
@@ -167,13 +182,17 @@ extension CellStreamer.ActorSteps {
         bindNPCMovementCallbacks()
         let standing = NPCStandingTransform(movement: npcMovement)
             .standingTransform(of: entry, in: streamer.stateSource())
-        npcMovement.face(NPCFaceStart(
+        var start = NPCFaceStart(
             actor: actor,
             formID: entry.formID,
             placement: standing.placement,
             scale: standing.scale,
             target: point
-        ))
+        )
+        if let degrees = streamer.npcMovementState.angularTolerance?(actor), degrees > 0 {
+            start.angularTolerance = MatrixMath.radians(fromDegrees: degrees)
+        }
+        npcMovement.face(start)
         onNPCPosesChanged?(npcMovement.instanceDeltas())
         return true
     }

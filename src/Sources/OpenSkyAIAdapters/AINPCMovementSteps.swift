@@ -25,6 +25,8 @@ protocol NPCMovementHooks {
     var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)? { get nonmutating set }
     var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? { get nonmutating set }
     var npcHeightScale: ((ReferenceKey) -> Float)? { get nonmutating set }
+    var npcIsImmobile: ((ReferenceKey) -> Bool)? { get nonmutating set }
+    var npcAngularTolerance: ((ReferenceKey) -> Float?)? { get nonmutating set }
     associatedtype Rebuilds: NPCCellRebuilds
     /// Held weakly by the cell handoff, so the hooks do not keep the streamer alive.
     var cellStreamer: Rebuilds { get }
@@ -96,6 +98,12 @@ struct AINPCMovementSteps {
         }
         registerBodyShapes(on: streamer)
         registerHeights(on: streamer)
+        streamer.npcIsImmobile = { [weak hosts] actor in
+            hosts?.effectsWorld.race(of: actor)?.flags.contains(.immobile) ?? false
+        }
+        streamer.npcAngularTolerance = { [weak hosts] actor in
+            hosts?.effectsWorld.race(of: actor)?.details.properties?.angularTolerance
+        }
         registerMovementTypes(on: streamer)
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
