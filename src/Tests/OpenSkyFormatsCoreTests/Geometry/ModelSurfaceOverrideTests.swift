@@ -38,6 +38,31 @@ struct ModelSurfaceOverrideTests {
         #expect(result.meshes.first?.colors == [SIMD4(0.5, 1, 0, 1), SIMD4(0.25, 0.5, 0, 0.2)])
     }
 
+    @Test func aPlacedAlphaCutoffReplacesOnlyAFlaggedThreshold() {
+        let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
+        let surface = plain.withAlphaCutoff(51)
+        #expect(surface.cacheKey != plain.cacheKey)
+        #expect(!surface.isEmpty)
+        #expect(plain.withAlphaCutoff(nil) == plain)
+        #expect(surface.applied(to: Self.model(colors: [])).materials.first?
+            .alphaTestThreshold == 0.5)
+        var model = Self.model(colors: [])
+        let base = model.materials[0]
+        var state = MaterialDrawState()
+        state.takesPlacedAlphaCutoff = true
+        model = Model(
+            meshes: model.meshes,
+            materials: [Material(
+                diffuseTexture: base.diffuseTexture, normalTexture: base.normalTexture,
+                uvOffset: .zero, uvScale: SIMD2(1, 1), alpha: 1, glossiness: 80,
+                specularColor: SIMD3(1, 1, 1), specularStrength: 1, doubleSided: false,
+                alphaBlend: false, alphaTestThreshold: 0.5, drawState: state
+            )],
+            skippedShapeCount: 0
+        )
+        #expect(surface.applied(to: model).materials.first?.alphaTestThreshold == 0.2)
+    }
+
     @Test func aFaceTintKeepsTheDiffuseAndSetsTheTintTexture() {
         let surface = ModelSurfaceOverride(
             diffuseTexture: nil, normalTexture: nil, tint: nil,

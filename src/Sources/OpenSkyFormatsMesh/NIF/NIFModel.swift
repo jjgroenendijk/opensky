@@ -361,6 +361,14 @@ extension NIFFile.Flattener {
             return NIFNode(object: multi.object, children: multi.children)
         }
 
+        static func drawState(
+            _ state: MaterialDrawState, alpha: NIFAlphaProperty?
+        ) -> MaterialDrawState {
+            var state = state
+            state.takesPlacedAlphaCutoff = alpha?.takesPlacedCutoff ?? false
+            return state
+        }
+
         func resolveMaterial(key: NIFFile.FlattenerSlotKey) throws -> Material {
             let file = owner.file
             var shader: NIFLightingShaderProperty?
@@ -413,7 +421,7 @@ extension NIFFile.Flattener {
                 tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
                 tintsSkin: shader?.isSkinTint ?? false,
                 shading: shader?.surfaceShading(textures: textures) ?? .plain,
-                drawState: shader?.drawState ?? .standard,
+                drawState: Self.drawState(shader?.drawState ?? .standard, alpha: alpha),
                 animation: owner.shaderAnimation(key)
             )
         }

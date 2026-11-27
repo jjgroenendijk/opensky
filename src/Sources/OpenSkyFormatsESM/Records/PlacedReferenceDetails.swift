@@ -104,7 +104,7 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     var litWater: [FormID] = []
     public var lightData: LightData?
     /// XALP: cutoff and base alpha.
-    var alpha: SIMD2<UInt8>?
+    public var alpha: SIMD2<UInt8>?
     /// XWCN or XWCS, the declared XWCU count.
     var waterVelocityCount: UInt32?
     public var waterVelocities: [CellExtras.WaterVelocity] = []

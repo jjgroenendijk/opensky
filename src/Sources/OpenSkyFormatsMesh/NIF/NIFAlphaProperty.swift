@@ -47,6 +47,12 @@ nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
         (flags >> 10) & 0x7
     }
 
+    /// A placed reference's alpha cutoff may replace `threshold`
+    /// (docs/formats/placed-references.md#how-the-game-uses-the-reference-extras).
+    var takesPlacedCutoff: Bool {
+        flags & 0x8000 != 0
+    }
+
     var noSorter: Bool {
         flags & 0x2000 != 0
     }
