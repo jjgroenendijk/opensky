@@ -110,6 +110,10 @@ public final class CombatLoopRuntime: CombatControlling {
     /// The NPCs whose killing swing started out of reach, with the target each closes on.
     /// A kill move can still start until the swing's wind-up ends.
     public internal(set) var killMoveSeekers: [ReferenceKey: ReferenceKey] = [:]
+    /// The attack each NPC's pick chose for its swing in progress.
+    public internal(set) var pickedAttacks: [ReferenceKey: NPCAttack] = [:]
+    /// When each NPC last started each attack event, lowercased, on the step clock.
+    var attackUses: [ReferenceKey: [String: Double]] = [:]
     /// The NPCs that keep facing their target through a melee attack.
     public internal(set) var attackTracks: [ReferenceKey: CombatAttackTrack] = [:]
     /// Allies walking back to their commander, with the point each walks to.

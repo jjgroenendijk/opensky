@@ -51,6 +51,10 @@ extension CombatImpactEffectsAdapter {
         game.menuWorld.attacks(of: actor).compactMap { $0.properties?.spell }
     }
 
+    public func attacks(of actor: ReferenceKey) -> [RaceAttack] {
+        game.menuWorld.attacks(of: actor)
+    }
+
     /// The `ATKD` values of the attack `event` starts on `actor`.
     public func attackData(of actor: ReferenceKey, event: String) -> RaceAttack.Properties? {
         ActorAttackList.attack(game.menuWorld.attacks(of: actor), event: event)

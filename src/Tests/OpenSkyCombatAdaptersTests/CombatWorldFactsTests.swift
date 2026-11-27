@@ -85,6 +85,12 @@ struct CombatWorldFactsTests {
         #expect(host.fakeMessages.postWorldNoticeCalls.isEmpty)
     }
 
+    @Test func raceAttacksComeFromTheMenuWorld() {
+        host.fakeMenuWorld.attacksResult = [RaceAttack(properties: nil, event: "attackStart")]
+        #expect(adapter.attacks(of: Self.foe).map(\.event) == ["attackStart"])
+        #expect(host.fakeMenuWorld.attacksCalls == [Self.foe])
+    }
+
     @Test func perkValuesComeFromThePerkPort() {
         host.fakePerks.multiplierResult = 1.5
         #expect(adapter.perks.perkMultiplier(at: .modAttackDamage, on: .player) == 1.5)

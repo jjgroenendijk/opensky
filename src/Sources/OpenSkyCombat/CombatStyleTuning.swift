@@ -27,6 +27,8 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     public var flight = FlightStyle()
     /// `CSGD` Avoid Threat Chance, 0 to 1: the chance to sidestep a danger.
     public var avoidThreatChance: Float = 0.2
+    /// The `CSME` multipliers the attack pick weighs by.
+    public var attackWeights = NPCAttackWeights()
     /// The style's editor ID, for the readout.
     public var name: String?
 
@@ -74,6 +76,7 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
             name: style.editorID
         )
         avoidThreatChance = style.value(.avoidThreatChance) ?? avoidThreatChance
+        attackWeights = NPCAttackWeights(style: style)
         flight.hoverTime = style.value(.hoverTime) ?? flight.hoverTime
         flight.groundAttackTime = style.value(.groundAttackTime) ?? flight.groundAttackTime
         flight.perchAttackChance = style.value(.perchAttackChance) ?? flight.perchAttackChance

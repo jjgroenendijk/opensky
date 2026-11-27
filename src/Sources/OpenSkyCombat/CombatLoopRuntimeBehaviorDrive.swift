@@ -228,6 +228,7 @@ extension CombatLoopRuntime.BehaviorDrive {
         _ swing: NPCSwing, by actor: CombatActorObservation, at target: MeleeTarget,
         world: any CombatLoopWorld
     ) -> Bool {
+        let attack = pickAttack(for: swing, by: actor, at: target, world: world)
         if !swing.shoots {
             switch startsKillMove(actor: actor, swing: swing, target: target, world: world) {
             case .started: return true
@@ -238,7 +239,8 @@ extension CombatLoopRuntime.BehaviorDrive {
         world.playCombatClip(swing.hand == .left ? .leftAttack : .attack, on: actor.key)
         if !swing.shoots, let weapon = swing.weapons.first {
             world.applyCombatSwingSpell(
-                CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon), at: target.key
+                CombatNPCBlowLanding.blow(by: actor.key, weapon: weapon, attack: attack),
+                at: target.key
             )
         }
         return false
@@ -273,8 +275,11 @@ extension CombatLoopRuntime.BehaviorDrive {
     ) -> KillMoveStart {
         guard let first = swing.weapons.first else { return .declined }
         guard reaches(actor: actor, weapon: first, target: target) else { return .outOfReach }
+        let attack = owner.pickedAttacks[actor.key]
         let damage = swing.weapons.reduce(0) {
-            $0 + landing(world).appliedDamage(by: actor.key, weapon: $1, on: target.key)
+            $0 + landing(world).appliedDamage(
+                by: actor.key, weapon: $1, on: target.key, attack: attack
+            )
         }
         let started = world.startCombatKillMove(
             by: actor.key, on: target.key, damage: damage,
@@ -310,7 +315,8 @@ extension CombatLoopRuntime.BehaviorDrive {
     ) {
         guard
             let reaction = landing(world).land(
-                from: actor.key, weapon: weapon, to: target, random: &owner.staggerRandom
+                from: (actor.key, actor.feet), weapon: (weapon, owner.pickedAttacks[actor.key]),
+                to: target, random: &owner.staggerRandom
             )
         else { return }
         if reaction.recoils {

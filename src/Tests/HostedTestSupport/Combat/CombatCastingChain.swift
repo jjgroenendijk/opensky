@@ -131,6 +131,14 @@ public final class CombatCastingChain {
 // MARK: - The fight
 
 extension CombatCastingChain: CombatLoopWorld {
+    public func combatStamina(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func knockDownCombatTarget(
+        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float
+    ) {}
+
     public func combatIsTeammate(_: ReferenceKey) -> Bool {
         false
     }

@@ -79,26 +79,17 @@ public final class FakeCombatWorld: CombatLoopWorld {
     /// Each disease given, as (disease, target), in order.
     public private(set) var contractedDiseases: [(disease: ReferenceKey, target: ReferenceKey)] = []
 
+    /// Each actor's race attacks, and its Stamina when set.
+    public var raceAttacks: [ReferenceKey: [RaceAttack]] = [:]
+    public var staminas: [ReferenceKey: Float] = [:]
+    /// Each knockdown pushed, as (target, magnitude), in order.
+    public private(set) var knockdowns: [(target: ReferenceKey, magnitude: Float)] = []
+
     public init() {}
-
-    public func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {
-        attackDiseases[attacker]
-    }
-
-    public func combatDiseaseResist(of target: ReferenceKey) -> Float? {
-        diseaseResists[target]
-    }
 
     /// Destructible objects in the world, and the damage each took from a swing.
     public var destructibles: [MeleeTarget] = []
     public private(set) var objectDamage: [ReferenceKey: Float] = [:]
-
-    @discardableResult
-    public func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool {
-        guard !contractedDiseases.contains(where: { $0 == (disease, target) }) else { return false }
-        contractedDiseases.append((disease, target))
-        return true
-    }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
@@ -455,5 +446,37 @@ public struct AggroLook: Equatable, Sendable {
     public init(target: ReferenceKey?, seconds: Float?) {
         self.target = target
         self.seconds = seconds
+    }
+}
+
+/// The race attack, knockdown, and disease reads a blow lands through.
+extension FakeCombatWorld {
+    public func combatAttacks(of attacker: ReferenceKey) -> [RaceAttack] {
+        raceAttacks[attacker] ?? []
+    }
+
+    public func combatStamina(of key: ReferenceKey) -> Float? {
+        staminas[key]
+    }
+
+    public func knockDownCombatTarget(
+        _ target: ReferenceKey, from _: SIMD3<Float>, magnitude: Float
+    ) {
+        knockdowns.append((target, magnitude))
+    }
+
+    public func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {
+        attackDiseases[attacker]
+    }
+
+    public func combatDiseaseResist(of target: ReferenceKey) -> Float? {
+        diseaseResists[target]
+    }
+
+    @discardableResult
+    public func contractCombatDisease(_ disease: ReferenceKey, on target: ReferenceKey) -> Bool {
+        guard !contractedDiseases.contains(where: { $0 == (disease, target) }) else { return false }
+        contractedDiseases.append((disease, target))
+        return true
     }
 }

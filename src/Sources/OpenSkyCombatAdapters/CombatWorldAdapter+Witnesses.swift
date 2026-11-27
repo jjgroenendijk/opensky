@@ -71,6 +71,10 @@ extension CombatWorldAdapter {
         impactEffects.actorIsChild(actor)
     }
 
+    public func attacks(of key: ReferenceKey) -> [RaceAttack] {
+        impactEffects.attacks(of: key)
+    }
+
     public func attackData(of key: ReferenceKey, event: String) -> RaceAttack.Properties? {
         impactEffects.attackData(of: key, event: event)
     }

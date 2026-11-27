@@ -46,7 +46,10 @@ extension CombatShared {
                 strike.attackDamageMultiplier = mult
             }
             if
-                let data = shared.world.attackData(of: blow.attacker, event: blow.kind.attackEvent)
+                let data = shared.world.attackData(
+                    of: blow.attacker,
+                    event: blow.attackEvent ?? blow.kind.attackEvent
+                )
             {
                 strike.attackDataMultiplier = data.damageMultiplier
             }

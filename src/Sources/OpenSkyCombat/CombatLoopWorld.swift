@@ -93,10 +93,16 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func applyCombatSwingSpell(_ blow: CombatBlow, at target: ReferenceKey)
     /// What the stagger magnitude reads of `attacker`'s attack on `target`.
     func combatHitFacts(
-        from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+        from attacker: ReferenceKey, on target: ReferenceKey, event: String, weaponStagger: Float
     ) -> HitReactionFacts
     /// Keeps one hit and its reaction for the readout.
     func noteCombatHitReaction(_ report: HitReactionReport)
+    /// `attacker`'s race attacks, which its attack pick draws from.
+    func combatAttacks(of attacker: ReferenceKey) -> [RaceAttack]
+    /// `key`'s current Stamina, or nil when it has no actor values.
+    func combatStamina(of key: ReferenceKey) -> Float?
+    /// An attack's knockdown: pushes `target` down away from `source`.
+    func knockDownCombatTarget(_ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float)
     /// The Disease spell `attacker`'s race attacks carry, or nil.
     func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey?
     /// `target`'s disease resistance, or nil when it has no actor values.
@@ -334,8 +340,12 @@ nonisolated extension CombatLoopWorld {
         1
     }
 
+    public func combatAttacks(of _: ReferenceKey) -> [RaceAttack] {
+        []
+    }
+
     public func combatHitFacts(
-        from _: ReferenceKey, on _: ReferenceKey, weaponStagger: Float
+        from _: ReferenceKey, on _: ReferenceKey, event _: String, weaponStagger: Float
     ) -> HitReactionFacts {
         var facts = HitReactionFacts()
         facts.attackStagger = weaponStagger

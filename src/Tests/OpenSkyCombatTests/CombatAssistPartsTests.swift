@@ -25,7 +25,9 @@ struct CombatAssistPartsTests {
         world.actors = [CombatActorObservation(key: Self.foe, feet: SIMD3(5, 0, 0))]
         let coordinator = Self.coordinator(world)
         let loop = coordinator.loopWorld
-        let fromFoe = loop.combatHitFacts(from: Self.foe, on: .player, weaponStagger: 0.5)
+        let fromFoe = loop.combatHitFacts(
+            from: Self.foe, on: .player, event: CombatGraphNames.attackStart, weaponStagger: 0.5
+        )
         #expect(fromFoe.attackStagger == 0.5)
         #expect(!fromFoe.targetRuns)
         let onFoe = coordinator.meleeWorld.meleeHitFacts(
@@ -41,6 +43,18 @@ struct CombatAssistPartsTests {
         coordinator.meleeWorld.noteHitReaction(report)
         #expect(coordinator.assistReadout.reactions == [report, report])
         #expect(coordinator.assistReadout.autoAim == nil)
+    }
+
+    /// The attack pick's reads: the race attacks, the Stamina, and the knockdown push.
+    @Test func theAttackPickReadsThroughTheLoopWorld() throws {
+        let world = FakeCoordinatorWorld()
+        let stamina = try #require(ActorValueIdentity.index(named: "Stamina"))
+        world.values[Self.foe] = [stamina: 40]
+        let loop = Self.coordinator(world).loopWorld
+        #expect(loop.combatAttacks(of: Self.foe).isEmpty)
+        #expect(loop.combatStamina(of: Self.foe) == 40)
+        #expect(loop.combatStamina(of: .player) == nil)
+        loop.knockDownCombatTarget(Self.foe, from: .zero, magnitude: 10)
     }
 
     @Test func autoAimLeavesOutTheMountThePlayerRides() throws {

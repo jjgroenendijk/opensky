@@ -31,23 +31,35 @@ struct CombatNPCBlowLanding {
 
     /// The damage the blow would apply, without landing it.
     func appliedDamage(
-        by actor: ReferenceKey, weapon: MeleeWeaponProfile, on target: ReferenceKey
+        by actor: ReferenceKey, weapon: MeleeWeaponProfile, on target: ReferenceKey,
+        attack: NPCAttack? = nil
     ) -> Float {
-        damage(of: Self.blow(by: actor, weapon: weapon), weapon: weapon, on: target).applied
+        damage(
+            of: Self.blow(by: actor, weapon: weapon, attack: attack), weapon: weapon, on: target
+        ).applied
     }
 
     /// Nil unless the target is the player. `random` is drawn from only for the
     /// recoil and stagger rolls.
     func land(
-        from actor: ReferenceKey, weapon: MeleeWeaponProfile, to target: ReferenceKey,
-        random: inout ConditionRandom
+        from actor: (key: ReferenceKey, feet: SIMD3<Float>),
+        weapon strike: (profile: MeleeWeaponProfile, attack: NPCAttack?),
+        to target: ReferenceKey, random: inout ConditionRandom
     ) -> PlayerReaction? {
-        let blow = Self.blow(by: actor, weapon: weapon)
+        let (actor, feet) = actor
+        let (weapon, attack) = strike
+        let blow = Self.blow(by: actor, weapon: weapon, attack: attack)
         let damage = damage(of: blow, weapon: weapon, on: target)
         let landed = world.applyCombatBlow(damage.applied, to: target, blow: blow)
         if landed {
             world.applyCombatHitSpell(blow, on: target)
             passDisease(from: actor, to: target, random: &random)
+            if
+                let knockdown = attack?.data.knockdown, knockdown > 0,
+                world.combatHealth(of: target) > 0
+            {
+                world.knockDownCombatTarget(target, from: feet, magnitude: knockdown)
+            }
         }
         if damage.wasBlocked {
             world.applyCombatBlockStamina(damage, to: target)
@@ -58,13 +70,17 @@ struct CombatNPCBlowLanding {
             target: target,
             aggressor: actor,
             source: weapon.weapon,
+            isPowerAttack: attack?.isPowerAttack ?? false,
             isBlocked: damage.wasBlocked,
             damage: landed ? damage.applied : 0
         ))
         guard target == world.combatPlayer.key else { return nil }
         noteSkillUse(from: actor, weapon: weapon, result: (damage, landed))
         var hit = HitReactionHit()
-        hit.facts = world.combatHitFacts(from: actor, on: target, weaponStagger: weapon.stagger)
+        hit.facts = world.combatHitFacts(
+            from: actor, on: target, event: blow.attackEvent ?? CombatGraphNames.attackStart,
+            weaponStagger: weapon.stagger
+        )
         hit.handType = weapon.handType
         hit.wasBlocked = damage.wasBlocked
         hit.isPlayerTarget = true
@@ -86,13 +102,18 @@ struct CombatNPCBlowLanding {
         )
     }
 
-    static func blow(by actor: ReferenceKey, weapon: MeleeWeaponProfile) -> CombatBlow {
-        CombatBlow(
+    static func blow(
+        by actor: ReferenceKey, weapon: MeleeWeaponProfile, attack: NPCAttack? = nil
+    ) -> CombatBlow {
+        var blow = CombatBlow(
             attacker: actor,
             weapon: weapon.weapon,
             handType: weapon.handType,
+            kind: attack?.isPowerAttack == true ? .power : .normal,
             baseDamage: weapon.damage
         )
+        blow.attackEvent = attack?.event
+        return blow
     }
 
     // MARK: - Private

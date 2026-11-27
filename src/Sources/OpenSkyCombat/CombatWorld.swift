@@ -233,6 +233,8 @@ public protocol CombatWorld: AnyObject {
     func startKillMove(_ attempt: KillMoveAttempt) -> Bool
     /// True while `key` plays either half of a kill move.
     func isInKillMove(_ key: ReferenceKey) -> Bool
+    /// `key`'s race attacks, in list order.
+    func attacks(of key: ReferenceKey) -> [RaceAttack]
     /// The `ATKD` values of the attack `event` starts on `key`, or nil when none does.
     func attackData(of key: ReferenceKey, event: String) -> RaceAttack.Properties?
     /// The Disease spell among `key`'s race attack spells, or nil.
@@ -250,6 +252,10 @@ extension CombatWorld {
 
     public var playerRuns: Bool {
         false
+    }
+
+    public func attacks(of _: ReferenceKey) -> [RaceAttack] {
+        []
     }
 
     public func attackData(of _: ReferenceKey, event _: String) -> RaceAttack.Properties? {

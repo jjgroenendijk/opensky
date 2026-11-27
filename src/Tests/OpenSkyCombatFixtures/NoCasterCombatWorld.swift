@@ -13,6 +13,14 @@ public import OpenSkyGameData
 public protocol NoCasterCombatWorld: CombatLoopWorld {}
 
 extension NoCasterCombatWorld {
+    public func combatStamina(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func knockDownCombatTarget(
+        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float
+    ) {}
+
     public func lookCombatActor(_: ReferenceKey, at _: ReferenceKey?, seconds _: Float?) {}
 
     public func combatAimPoint(
