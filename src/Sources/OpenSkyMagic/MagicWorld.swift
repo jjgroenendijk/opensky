@@ -98,8 +98,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
         subjects: PerkEvaluationSubjects,
         seams: ConditionContext
     ) -> [PerkEntryPointChoice]
-    /// Places a new actor of `base` at `point`, or beside `caster` when nil.
-    func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
+    /// Places a new actor of `base` where `aim` says, facing `caster`.
+    func summonActor(_ base: FormID, at aim: SummonAim, for caster: ReferenceKey)
         -> ReferenceKey?
     /// Raises the dead `corpse`. False when it is not dead.
     func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool
@@ -223,7 +223,7 @@ extension MagicWorld {
     }
 
     /// A session with no world places no actor.
-    public func summonActor(_: FormID, at _: SIMD3<Float>?, for _: ReferenceKey)
+    public func summonActor(_: FormID, at _: SummonAim, for _: ReferenceKey)
         -> ReferenceKey?
     {
         nil

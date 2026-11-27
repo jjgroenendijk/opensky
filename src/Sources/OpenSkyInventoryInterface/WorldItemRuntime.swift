@@ -11,6 +11,8 @@ nonisolated public struct DropPlacement: Equatable, Sendable {
     public let location: CellSceneLocation
     public let position: SIMD3<Float>
     public let rotation: SIMD3<Float>
+    /// How far the next drop of the same dropper turns, in radians, once this one lands.
+    public var fanStep: Float = 0
 
     public init(
         location: CellSceneLocation,

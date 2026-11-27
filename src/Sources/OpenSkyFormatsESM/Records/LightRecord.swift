@@ -161,7 +161,7 @@ nonisolated public struct LightRecord: Sendable {
 /// LIGH fields beyond the light itself; a carriable torch uses most of them.
 /// xEdit dev-4.1.6 `LIGH`.
 nonisolated public struct LightDetails: Equatable, Sendable {
-    let bounds: ObjectBounds?
+    public let bounds: ObjectBounds?
     public let model: ModelData?
     /// FULL — the name of a carriable light.
     public let name: LString?

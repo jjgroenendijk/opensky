@@ -163,10 +163,10 @@ extension MagicWorldAdapter {
         summonedActors.perkChoices(at: entryPoint, on: key, subjects: subjects, seams: seams)
     }
 
-    public func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
+    public func summonActor(_ base: FormID, at aim: SummonAim, for caster: ReferenceKey)
         -> ReferenceKey?
     {
-        summonedActors.summonActor(base, at: point, for: caster)
+        summonedActors.summonActor(base, at: aim, for: caster)
     }
 
     public func reanimate(_ corpse: ReferenceKey, for caster: ReferenceKey) -> Bool {

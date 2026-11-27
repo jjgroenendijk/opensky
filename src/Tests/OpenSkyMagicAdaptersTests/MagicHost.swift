@@ -14,6 +14,7 @@ final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeli
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()
     let fakeCombat = FakeCombatPort()
+    let fakeCombatWorld = FakeCombatWorldPort()
     let fakeControllerRumble = FakeControllerRumblePort()
     let fakeEffectsWorld = FakeEffectsWorldPort()
     let fakeFactions = FakeFactionPort()
@@ -50,6 +51,10 @@ final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeli
 
     var combat: any CombatPort {
         fakeCombat
+    }
+
+    var combatWorld: any CombatWorldPort {
+        fakeCombatWorld
     }
 
     var controllerRumble: any ControllerRumblePort {

@@ -110,6 +110,8 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// False on a weapon or ammunition the player cannot see or use, such as a creature's
     /// claws. The inventory lists leave it out.
     public var isPlayable = true
+    /// `OBND`: a dropped item needs its 3D radius of room (docs/engine/dropped-items.md).
+    public var bounds: ObjectBounds?
 
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
@@ -130,6 +132,8 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
         resolved.pickUpSound = pickUpSound
         resolved.putDownSound = putDownSound
         resolved.description = described.description
+        resolved.isPlayable = isPlayable
+        resolved.bounds = bounds
         return resolved
     }
 
@@ -438,6 +442,7 @@ nonisolated enum ItemDefinitionViews {
             modelPath: (armor.details.maleWorldModel ?? armor.details.femaleWorldModel)?.path
         ).with(pickUp: armor.details.pickupSound, putDown: armor.details.dropSound)
         definition.description = armor.details.description
+        definition.bounds = armor.details.bounds
         return definition
     }
 
@@ -485,12 +490,14 @@ nonisolated enum ItemDefinitionViews {
     /// A fixed light that cannot be carried is not an item.
     fileprivate static func view(_ light: LightRecord) -> ItemDefinition? {
         guard light.flags.contains(.canBeCarried) else { return nil }
-        return ItemDefinition(
+        var definition = ItemDefinition(
             formID: light.formID, family: .light, editorID: light.editorID,
             name: light.details.name, value: light.itemValue.value,
             weight: light.itemValue.weight, keywords: [], enchantment: nil,
             modelPath: light.details.model?.path
         )
+        definition.bounds = light.details.bounds
+        return definition
     }
 
     fileprivate static func view(_ key: KeyItem) -> ItemDefinition {
@@ -539,7 +546,7 @@ nonisolated enum ItemDefinitionViews {
         _ itemValue: ItemValue,
         _ enchantment: ItemEnchantment? = nil
     ) -> ItemDefinition {
-        ItemDefinition(
+        var definition = ItemDefinition(
             formID: formID,
             family: family,
             editorID: fields.editorID,
@@ -550,6 +557,8 @@ nonisolated enum ItemDefinitionViews {
             enchantment: enchantment,
             modelPath: fields.modelPath
         ).with(pickUp: fields.pickupSound, putDown: fields.dropSound)
+        definition.bounds = fields.bounds
+        return definition
     }
 }
 

@@ -493,7 +493,7 @@ extension InventoryCoordinatorTests {
             activateLabel
         }
 
-        func dropPlacement() -> DropPlacement? {
+        func dropPlacement(of _: FormID?) -> DropPlacement? {
             placement
         }
 

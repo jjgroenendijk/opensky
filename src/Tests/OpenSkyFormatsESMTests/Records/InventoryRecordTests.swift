@@ -22,6 +22,13 @@ struct InventorySubrecordTests {
         #expect(!bounds.isEmpty)
     }
 
+    /// The box from (-10, -20, 0) to (10, 20, 30) of docs/formats/records.md.
+    @Test func objectBoundsRadiiAreHalfTheDiagonals() {
+        let bounds = ObjectBounds(minimum: SIMD3(-10, -20, 0), maximum: SIMD3(10, 20, 30))
+        #expect(abs(bounds.radius3D - 26.926) < 0.01)
+        #expect(abs(bounds.radius2D - 22.361) < 0.01)
+    }
+
     @Test func objectBoundsAllZeroIsEmpty() throws {
         let bounds = try ObjectBounds(field: ESMField(type: "OBND", data: Data(count: 12)))
         #expect(bounds.isEmpty)

@@ -75,6 +75,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var unarmedReach: Float?
     /// `NPC_` `NAM8`: the noise of an attack no weapon gives one. A value above 4 is 1.
     public var soundLevel: UInt32 = 1
+    /// The 2D radius of the actor record's own `OBND`: the room it needs when summoned.
+    public var footprintRadius: Float = 0
 
     public init(
         maximums: ActorValues,
@@ -250,9 +252,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         )
         baseline.raceKeywords = race.details.keywords
         baseline.unarmedReach = race.details.properties?.unarmedReach
-        baseline.soundLevel = Self.soundLevel(
-            resolver.templates.actors[Self.playerRecord.rawValue]?.details.soundLevel
-        )
+        let record = resolver.templates.actors[Self.playerRecord.rawValue]
+        baseline.soundLevel = Self.soundLevel(record?.details.soundLevel)
+        baseline.footprintRadius = record?.details.bounds?.radius2D ?? 0
         return baseline
     }
 
@@ -290,6 +292,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         baseline.soundLevel = Self.soundLevel(
             resolver.templates.actors[traits.rawValue]?.details.soundLevel
         )
+        // OBND belongs to the record itself, never to a template.
+        baseline.footprintRadius = resolver.templates.actors[base.rawValue]?.details.bounds?
+            .radius2D ?? 0
         return baseline
     }
 

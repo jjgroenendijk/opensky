@@ -250,21 +250,36 @@ struct WorldItemRuntimeTests {
         #expect(harness.store.isDirty(key) == false)
     }
 
-    /// A dropped object lands in front of the player and below the eye, and a
-    /// camera pointing straight up has nothing to lean on, so it lands
-    /// directly below instead of over the player's head.
+    /// A dropped item lands the drop distance ahead and below the eye, short of a
+    /// wall, and straight below for a camera that looks straight up.
     @Test func dropPlacementLeadsTheCameraAndFallsToTheGround() {
+        let direction = DropFan.direction(forward: SIMD3(1, 0, 0), turn: 0)
         let ahead = WorldItemRuntime.dropPlacement(
-            in: Self.cell, eye: SIMD3(100, 200, 300), forward: SIMD3(1, 0, 0)
+            in: Self.cell, eye: SIMD3(100, 200, 300), direction: direction,
+            reach: DropReach(distance: 100, radius: 40)
         )
-        #expect(ahead.position == SIMD3(
-            100 + WorldItemRuntime.dropForwardOffset,
-            200,
-            300 - WorldItemRuntime.dropHeight
-        ))
-        let overhead = WorldItemRuntime.dropPlacement(
-            in: Self.cell, eye: SIMD3(100, 200, 300), forward: SIMD3(0, 0, 1)
+        #expect(ahead.position == SIMD3(200, 200, 300 - WorldItemRuntime.dropHeight))
+        #expect(abs(ahead.fanStep - 2 * asin(Float(0.4))) < 1e-5)
+        let walled = WorldItemRuntime.dropPlacement(
+            in: Self.cell, eye: SIMD3(100, 200, 300), direction: direction,
+            reach: DropReach(distance: 100, radius: 40, free: 30)
         )
-        #expect(overhead.position == SIMD3(100, 200, 300 - WorldItemRuntime.dropHeight))
+        #expect(walled.position.x == 130)
+        #expect(DropFan.direction(forward: SIMD3(0, 0, 1), turn: 0) == nil)
+    }
+
+    /// Each drop turns the next one by `2 * asin(r / d)`, so drops fan out.
+    @Test func dropsFanOutAroundThePlayer() throws {
+        let harness = try Self.standardHarness()
+        try harness.runtime.take(
+            Self.interaction(reference: Self.looseItem, base: Fixture.lockpick, action: .take)
+        )
+        var placement = DropPlacement(location: Self.cell, position: .zero)
+        placement.fanStep = 0.5
+        try harness.runtime.drop(Fixture.lockpick, at: placement)
+        #expect(harness.runtime.dropTurn == 0.5)
+        let turned = try #require(DropFan.direction(forward: SIMD3(1, 0, 0), turn: .pi / 2))
+        #expect(abs(turned.x) < 1e-5 && abs(turned.y - 1) < 1e-5)
+        #expect(abs(DropFan.advance(6, by: 0.5) - (6.5 - 2 * .pi)) < 1e-5)
     }
 }

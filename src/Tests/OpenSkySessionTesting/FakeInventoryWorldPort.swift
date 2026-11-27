@@ -6,7 +6,7 @@ public import OpenSkySessionInterface
 
 /// Stores each property and records each call to `InventoryWorldPort`.
 nonisolated public final class FakeInventoryWorldPort: InventoryWorldPort {
-    public var dropPlacementCallCount = 0
+    public var dropPlacementCalls: [FormID?] = []
     public var dropPlacementResult: DropPlacement?
     public var forgetPickpocketCatchCalls: [ReferenceKey] = []
     public var itemKeywordsCalls: [FormID] = []
@@ -121,8 +121,8 @@ extension FakeInventoryWorldPort {
 }
 
 nonisolated extension FakeInventoryWorldPort {
-    public func dropPlacement() -> DropPlacement? {
-        dropPlacementCallCount += 1
+    public func dropPlacement(of item: FormID?) -> DropPlacement? {
+        dropPlacementCalls.append(item)
         return dropPlacementResult
     }
 

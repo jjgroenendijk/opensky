@@ -130,4 +130,18 @@ struct SummonTests {
         #expect(coordinator.commanded.map(\.kind) == [.reanimated])
         #expect(coordinator.commanded.first?.caster == .player)
     }
+
+    /// A self-cast summon of radius 30 by a caster of radius 20 facing +Y lands
+    /// 20 + 30 + 256 units ahead.
+    @Test func aSelfCastSummonLandsPastBothRadiiAndHalfTheSearch() {
+        let reach = SummonAim.reach(casterRadius: 20, summonRadius: 30, searchRadius: 512)
+        let point = SummonAim.aheadPoint(feet: SIMD3(100, 0, 10), yaw: .pi / 2, reach: reach)
+        let walled = SummonAim.standingPoint(
+            from: .zero, toward: SIMD3(100, 0, 0), summonRadius: 30
+        ) { _, _, _, _ in 40 }
+        #expect(walled == SIMD3(40, 0, 0))
+        #expect(abs(point.x - 100) < 1e-3)
+        #expect(abs(point.y - 306) < 1e-3)
+        #expect(point.z == 10)
+    }
 }

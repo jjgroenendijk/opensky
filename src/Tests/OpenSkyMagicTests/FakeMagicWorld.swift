@@ -119,7 +119,7 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var summoned: [(base: FormID, caster: ReferenceKey)] = []
     private(set) var releasedActors: [CommandedActor] = []
 
-    func summonActor(_ base: FormID, at _: SIMD3<Float>?, for caster: ReferenceKey)
+    func summonActor(_ base: FormID, at _: SummonAim, for caster: ReferenceKey)
         -> ReferenceKey?
     {
         summoned.append((base: base, caster: caster))

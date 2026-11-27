@@ -16,6 +16,7 @@ final class InventoryHost: InventoryWorldHost, InventoryReadoutsHost, InventoryP
     let fakeActorWorld = FakeActorWorldPort()
     let fakeAudio = FakeAudioPort()
     let fakeCombat = FakeCombatPort()
+    let fakeCombatWorld = FakeCombatWorldPort()
     let fakeCrime = FakeCrimePort()
     let fakeFactions = FakeFactionPort()
     let fakeFurniture = FakeFurniturePort()
@@ -55,6 +56,10 @@ final class InventoryHost: InventoryWorldHost, InventoryReadoutsHost, InventoryP
 
     var combat: any CombatPort {
         fakeCombat
+    }
+
+    var combatWorld: any CombatWorldPort {
+        fakeCombatWorld
     }
 
     var crime: any CrimePort {

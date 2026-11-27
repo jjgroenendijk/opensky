@@ -51,7 +51,7 @@ struct InventoryItemActions {
         facts.playerIsAttacking = game.combat.playerActionFacts?.attackState.isAttacking == true
         let status = game.gameSession?.locomotion.status
         facts.playerIsAirborne = status.map { !$0.isGrounded } ?? false
-        facts.hasDropRoom = game.inventoryWorld.dropPlacement() != nil
+        facts.hasDropRoom = game.inventoryWorld.dropPlacement(of: nil) != nil
         return facts
     }
 

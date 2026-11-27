@@ -39,8 +39,8 @@ extension InventoryWorldAdapter {
         game.audio.soundDirector?.forcePlaySound(formID: sound, position: position)
     }
 
-    public func dropPlacement() -> DropPlacement? {
-        readouts.dropPlacement()
+    public func dropPlacement(of item: FormID?) -> DropPlacement? {
+        readouts.dropPlacement(of: item)
     }
 
     public func nearestActorEntry() -> RuntimeReferenceEntry? {

@@ -11,6 +11,8 @@ public final class FakeWorldItemRuntimePort: WorldItemRuntimePort {
     public var isTheftCalls: [PlacedInteraction] = []
     public var isTheftResult = false
     public var playerValue: InventoryHolder?
+    public var dropDistance: Float = 0
+    public var dropTurn: Float = 0
 
     public init() {}
 }

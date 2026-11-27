@@ -4,7 +4,7 @@ public import OpenSkyScriptingInterface
 
 /// What the world adapters use of `InventoryWorldAdapter`.
 public protocol InventoryWorldPort: AnyObject, PapyrusAlchemyBridge, PapyrusInventoryBridge {
-    func dropPlacement() -> DropPlacement?
+    func dropPlacement(of item: FormID?) -> DropPlacement?
     func forgetPickpocketCatch(of key: ReferenceKey)
     func itemKeywords(of item: FormID) -> [FormID]?
     @discardableResult func run<Value>(_ result: InventoryResult<Value>) -> Value

@@ -18,8 +18,10 @@ import simd
 /// What `MagicSummonedActorsAdapter` reads from the session.
 @MainActor
 public protocol MagicSummonedActorsHost: AnyObject, SendableMetatype {
+    var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
+    var combatWorld: any CombatWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
     var perception: any PerceptionPort { get }
@@ -45,7 +47,7 @@ extension MagicSummonedActorsAdapter {
     }
 
     /// The summon faces its caster. It is placed in the caster's cell.
-    public func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
+    public func summonActor(_ base: FormID, at aim: SummonAim, for caster: ReferenceKey)
         -> ReferenceKey?
     {
         let streamer = game.streamer
@@ -54,7 +56,11 @@ extension MagicSummonedActorsAdapter {
             let location = caster == .player
             ? streamer.currentCellLocation : streamer.cellLocation(of: caster)
         else { return nil }
-        let position = point ?? origin
+        let position = switch aim {
+        case let .point(point): point
+        case let .ahead(searchRadius):
+            ahead(of: caster, at: origin, base: base, searchRadius: searchRadius)
+        }
         let toward = origin - position
         let heading = simd_length(toward) > 1 ? atan2(toward.x, toward.y) : 0
         let placement = PlacedReference.Placement(
@@ -109,6 +115,36 @@ extension MagicSummonedActorsAdapter {
 
     public func isActorDead(_ key: ReferenceKey) -> Bool {
         game.combat.combatActor(key: key)?.isDead ?? false
+    }
+
+    /// Room in front of a self-cast summon's caster, stopped short of the first wall
+    /// a cylinder of the summon's radius meets on the way.
+    private func ahead(
+        of caster: ReferenceKey, at feet: SIMD3<Float>, base: FormID, searchRadius: Float
+    ) -> SIMD3<Float> {
+        let summonRadius = game.actorValues.runtime?.baselines
+            .baseline(for: .actor(base: base)).footprintRadius ?? 0
+        let reach = SummonAim.reach(
+            casterRadius: footprintRadius(of: caster), summonRadius: summonRadius,
+            searchRadius: searchRadius
+        )
+        let aim = SummonAim.aheadPoint(feet: feet, yaw: yaw(of: caster), reach: reach)
+        return SummonAim.standingPoint(from: feet, toward: aim, summonRadius: summonRadius) {
+            game.combatWorld.freeDistance(of: $0, radius: $1, along: $2, upTo: $3)
+        }
+    }
+
+    private func yaw(of key: ReferenceKey) -> Float {
+        guard key != .player else { return game.combat.meleeAttacker.facing }
+        return game.actorWorld.combatActor(key: key)?.yaw ?? 0
+    }
+
+    private func footprintRadius(of key: ReferenceKey) -> Float {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return 0 }
+        return runtime.baseline(of: holder).footprintRadius
     }
 
     private func feet(of key: ReferenceKey) -> SIMD3<Float>? {
