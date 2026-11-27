@@ -63,6 +63,11 @@ public final class FurnitureCoordinator {
         in furniture: ReferenceKey, for actor: ReferenceKey, animation: UInt16?
     ) -> PackageSeat? {
         guard let world, let seats = world.furnitureSeats(of: furniture) else { return nil }
+        // An actor already seated in this furniture keeps its seat, as the ledger would
+        // give it a seat of another type when none of `animation` is free.
+        if let current = occupancies[actor]?.seat, current.furniture == furniture {
+            return current
+        }
         return ledger.reserve(
             in: furniture, seats: seats, actor: actor, animation: animation,
             near: world.furnitureActorPosition(actor), traits: world.furnitureActorTraits(actor)

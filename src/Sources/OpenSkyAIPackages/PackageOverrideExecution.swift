@@ -115,3 +115,12 @@ nonisolated extension PackageOverrideExecution {
         )
     }
 }
+
+extension PackageOverrideExecution {
+    /// Whether the tree sits in `seat`, or a procedure reserved it. A Sit procedure that
+    /// starts in its seat ends at once, so its finished seat counts too.
+    func uses(_ seat: PackageSeat) -> Bool {
+        self.seat == seat || runner.running.values.contains { $0.setup.seat == seat }
+            || runner.finishedSeats.values.contains(seat)
+    }
+}

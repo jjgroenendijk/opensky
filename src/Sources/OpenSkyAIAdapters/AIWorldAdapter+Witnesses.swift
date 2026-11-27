@@ -78,6 +78,10 @@ extension AIWorldAdapter {
             seating.unseatPackageActor(actor, from: seat)
         }
 
+        public func packageActorSeat(_ actor: ReferenceKey) -> PackageSeat? {
+            seating.game.furniture.occupancies[actor]?.seat
+        }
+
         public func furnitureSeats(of furniture: ReferenceKey) -> [FurnitureSeat]? {
             seating.furnitureSeats(of: furniture)
         }

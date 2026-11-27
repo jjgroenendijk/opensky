@@ -198,6 +198,7 @@ struct AIActsSensesTests {
         host.fakeFurniture.isInUseResult = true
         #expect(adapter.worlds.packageSeat(in: Self.other, actor: Self.actor, animation: 1) == nil)
         adapter.worlds.unseatPackageActor(Self.actor, from: nil)
+        #expect(adapter.worlds.packageActorSeat(Self.actor) == nil)
         #expect(adapter.worlds.isFurnitureInUse(Self.other, marker: nil, ignoringReserved: true))
         adapter.worlds.setSittingRotation(degrees: 90)
         adapter.furnitureWorlds.playerAskedToStand()

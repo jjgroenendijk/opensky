@@ -135,10 +135,7 @@ extension PackageCoordinator {
                         host.requestMove(actor, to: point)
                     }
                 case .sit:
-                    guard let seat = host.executions[actor]?.seat(of: tagged.leaf) else { continue }
-                    host.executions[actor]?.seat = seat
-                    host.seatTurns[actor] = FurnitureSeatTurn(seat: seat)
-                    host.turnToSeat(actor, by: 0)
+                    beginSeat(actor, leaf: tagged.leaf)
                 case let .act(action):
                     let result = world?.packageAction(action, actor: actor) ?? .failed
                     host.step(actor, with: .acted(result), leaf: tagged.leaf)
@@ -162,6 +159,15 @@ extension PackageCoordinator {
                     host.step(actor, with: .seatOffered(seat), leaf: tagged.leaf)
                 }
             }
+        }
+
+        private func beginSeat(_ actor: ReferenceKey, leaf: Int) {
+            guard let seat = host.executions[actor]?.seat(of: leaf) else { return }
+            host.executions[actor]?.seat = seat
+            // A kept seat: a turn to the seat's heading would stand the graph up.
+            guard host.world?.packageActorSeat(actor) != seat else { return }
+            host.seatTurns[actor] = FurnitureSeatTurn(seat: seat)
+            host.turnToSeat(actor, by: 0)
         }
 
         func turnToSeat(_ actor: ReferenceKey, by delta: Float) {

@@ -98,4 +98,8 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     func seat(in furniture: ReferenceKey, animation: UInt16) -> PackageSeat? {
         world.packageSeat(in: furniture, actor: actor, animation: animation)
     }
+
+    func sitsIn(_ seat: PackageSeat) -> Bool {
+        world.packageActorSeat(actor) == seat
+    }
 }

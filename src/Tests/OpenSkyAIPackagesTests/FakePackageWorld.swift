@@ -115,6 +115,36 @@ final class FakePackageWorld: PackageWorld {
         stops.append(actor)
     }
 
+    /// The seat `packageSeat` offers, the seat the actor sits in, and each unseat asked for.
+    var offeredSeat: PackageSeat?
+    var occupiedSeat: PackageSeat?
+    private(set) var unseats: [PackageSeat?] = []
+    /// What every target input resolves to.
+    var targetReference: ReferenceKey?
+
+    func packageReference(
+        _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
+    ) -> ReferenceKey? {
+        targetReference
+    }
+
+    func packageSeat(
+        in furniture: ReferenceKey, actor _: ReferenceKey, animation _: UInt16
+    ) -> PackageSeat? {
+        offeredSeat?.furniture == furniture ? offeredSeat : nil
+    }
+
+    func packageActorSeat(_: ReferenceKey) -> PackageSeat? {
+        occupiedSeat
+    }
+
+    func unseatPackageActor(_: ReferenceKey, from seat: PackageSeat?) {
+        unseats.append(seat)
+        if seat != nil {
+            occupiedSeat = nil
+        }
+    }
+
     func packageResidents() -> [RuntimeReferenceEntry]? {
         residents
     }

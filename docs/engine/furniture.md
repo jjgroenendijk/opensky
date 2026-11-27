@@ -105,6 +105,9 @@ OpenSky builds the furniture part of this:
 - At the seat, the actor turns to the seat's heading at the normal turn speed. The entry clip
   starts when the turn left is inside the furniture angle.
 - The player and a flying dragon do not turn first.
+- An NPC's behaviour graph hears that the walk stopped before the entry idle reaches it. An
+  entry raised while the graph still walks waits for the update after `moveStop`, because the
+  walk states do not take it.
 
 `openskycli gmst` prints the two settings. The height limit, and how long OpenSky waits for
 a blocked turn, are OpenSky's choices ([unverified values](/engine/unverified-values.md)). Other
@@ -176,9 +179,13 @@ an idle a script played ends, the behaviour graph goes back to the seat loop.
 
 The execution at Helgen needs this. `MQ101Scene4` gives the prisoner
 `MQ101PrisonerToChoppingBlock` from two actions in a row (phases 37 to 38, then 39 to 41), and
-phase 42 waits for the prisoner to die while the chop plays on the block. [WARNING] OpenSky
-stands the actor up at every package change and seats it again. That replays the entry idle and
-cuts the chop before its `KillActor`.
+phase 42 waits for the prisoner to die while the chop plays on the block.
+
+OpenSky keeps the seat of a package that ends while its actor sits. When the next package starts,
+a sit or activate step that reserves that same seat skips its walk, and the actor stays seated.
+Any other next package gets the actor up through its exit idle first. With no next package, the
+actor gets up on the next package pass. [WARNING] Only a procedure that runs when the package
+starts can keep the seat; a seat step later in the tree gets the actor up first.
 
 A teleport or a cell change that takes the seated or rising player more than 256 units from
 the seat, or unloads the furniture, also ends the seat, without an exit idle.

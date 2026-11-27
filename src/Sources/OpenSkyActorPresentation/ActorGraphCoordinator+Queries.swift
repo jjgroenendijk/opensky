@@ -13,9 +13,18 @@ extension ActorGraphCoordinator {
     }
 
     /// Raises `event` on the actor's graph. False when it runs none or lacks the event.
+    /// An arriving actor stops before its furniture entry plays
+    /// (docs/engine/furniture.md#arriving-at-the-seat), so while the graph still walks after
+    /// the drive stopped, the event waits for the update after `moveStop`.
     @discardableResult
     public func raise(_ event: String, on actor: ReferenceKey) -> Bool {
-        running[actor]?.instance.raiseEvent(named: event) ?? false
+        guard let entry = running[actor] else { return false }
+        guard entry.shown.isMoving, !entry.gait.shown(entry.motion).isMoving else {
+            return entry.instance.raiseEvent(named: event)
+        }
+        guard entry.instance.declaresEvent(named: event) else { return false }
+        entry.afterStop.append(event)
+        return true
     }
 
     public func variable(named name: String, on actor: ReferenceKey) -> BehaviorVariableValue? {
