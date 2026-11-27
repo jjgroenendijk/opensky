@@ -57,13 +57,13 @@ struct ItemRecordDetailTests {
         #expect([details.scopeEffect, details.firstPersonModel, details.alternateBlockMaterial]
             == Fixture.expectedIDs(3, from: 0x10))
         #expect([
-            details.attackSound,
-            details.attackSound2D,
+            details.fireSound,
+            details.firstPersonFireSound,
             details.attackLoopSound,
-            details.attackFailSound,
-            details.idleSound,
-            details.equipSound,
-            details.unequipSound
+            details.swingSound,
+            details.equippedLoopSound,
+            details.drawSound,
+            details.sheatheSound
         ] == Fixture.expectedIDs(soundTypes.count, from: 0x20))
         #expect(details.detectionSoundLevel == 2)
         #expect(details.destructible?.health == 50)

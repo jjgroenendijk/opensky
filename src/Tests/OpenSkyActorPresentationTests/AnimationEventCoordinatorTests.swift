@@ -26,6 +26,7 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
     var effectGraphEvents: [(String, ReferenceKey)] = []
     var soundTypes: [(UInt32, ReferenceKey)] = []
     var endedSources: [ReferenceKey] = []
+    var weaponSounds: [(WeaponSoundEvent, ReferenceKey)] = []
 
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>? {
         positions[source]
@@ -73,6 +74,13 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
 
     func endAnimationSounds(source: ReferenceKey) {
         endedSources.append(source)
+    }
+
+    func playWeaponSound(
+        _ event: WeaponSoundEvent, source: ReferenceKey, at _: SIMD3<Float>
+    ) -> Bool {
+        weaponSounds.append((event, source))
+        return true
     }
 }
 
@@ -184,5 +192,25 @@ struct AnimationEventCoordinatorTests {
         let (coordinator, world) = make()
         coordinator.handle("SoundAnimationEnd", from: actor)
         #expect(world.endedSources == [actor])
+    }
+
+    /// The draw, sheathe, and swing events sound the held weapon, without case.
+    @Test func weaponEventsSoundTheHeldWeapon() {
+        let (coordinator, world) = make()
+        for name in [
+            "BeginWeaponDraw",
+            "weaponSwing",
+            "weaponLeftSwing",
+            "attackStop",
+            "beginweaponsheathe",
+            "SoundPlay.TestClap"
+        ] {
+            coordinator.handle(name, from: actor)
+        }
+        #expect(world.weaponSounds.map(\.0) == [
+            .draw, .swing(leftHand: false), .swing(leftHand: true), .attackEnd, .sheathe
+        ])
+        #expect(WeaponSoundEvent("weaponLeftSwing")?.isLeftHand == true)
+        #expect(WeaponSoundEvent("HitFrame") == nil)
     }
 }

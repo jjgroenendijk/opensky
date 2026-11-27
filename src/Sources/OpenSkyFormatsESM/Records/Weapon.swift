@@ -249,13 +249,20 @@ nonisolated public struct WeaponDetails: Equatable, Sendable {
     let firstPersonModel: FormID?
     /// BAMT — the MATT a block hits instead of the weapon's own.
     let alternateBlockMaterial: FormID?
-    let attackSound: FormID?
-    let attackSound2D: FormID?
-    let attackLoopSound: FormID?
-    let attackFailSound: FormID?
-    let idleSound: FormID?
-    let equipSound: FormID?
-    let unequipSound: FormID?
+    /// SNAM — plays when the weapon launches its projectile.
+    public let fireSound: FormID?
+    /// XNAM — the fire sound for the player in first person.
+    public let firstPersonFireSound: FormID?
+    /// NAM7 — loops while the actor attacks without a pause.
+    public let attackLoopSound: FormID?
+    /// TNAM — plays on each weapon-swing animation event.
+    public let swingSound: FormID?
+    /// UNAM — loops while the weapon is equipped and its holder is alive.
+    public let equippedLoopSound: FormID?
+    /// NAM9 — plays on the begin-draw animation event.
+    public let drawSound: FormID?
+    /// NAM8 — plays on the begin-sheathe animation event.
+    public let sheatheSound: FormID?
     /// VNAM — detection sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
     public let detectionSoundLevel: UInt32?
     let destructible: Destructible?
@@ -266,13 +273,13 @@ nonisolated public struct WeaponDetails: Equatable, Sendable {
         embeddedWeaponNode = fields.zstring("NNAM")
         firstPersonModel = fields.formID("WNAM")
         alternateBlockMaterial = fields.formID("BAMT")
-        attackSound = fields.formID("SNAM")
-        attackSound2D = fields.formID("XNAM")
+        fireSound = fields.formID("SNAM")
+        firstPersonFireSound = fields.formID("XNAM")
         attackLoopSound = fields.formID("NAM7")
-        attackFailSound = fields.formID("TNAM")
-        idleSound = fields.formID("UNAM")
-        equipSound = fields.formID("NAM9")
-        unequipSound = fields.formID("NAM8")
+        swingSound = fields.formID("TNAM")
+        equippedLoopSound = fields.formID("UNAM")
+        drawSound = fields.formID("NAM9")
+        sheatheSound = fields.formID("NAM8")
         detectionSoundLevel = fields.uint32("VNAM")
         destructible = fields.destructible()
     }
