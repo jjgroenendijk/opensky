@@ -77,6 +77,8 @@ nonisolated public struct CombatBlow: Equatable, Sendable {
     public var kind: MeleeStrikeKind
     /// The base damage `Calculate Weapon Damage` starts from.
     public var baseDamage: Float
+    /// The `ATKE` event an NPC's attack pick chose, in place of the kind's own.
+    public var attackEvent: String?
 
     public init(
         attacker: ReferenceKey,

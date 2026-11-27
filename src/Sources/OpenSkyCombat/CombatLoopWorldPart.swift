@@ -119,13 +119,26 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     func combatHitFacts(
-        from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+        from attacker: ReferenceKey, on target: ReferenceKey, event: String, weaponStagger: Float
     ) -> HitReactionFacts {
         ActorReads(owner: self).combatHitFacts(
-            from: attacker,
-            on: target,
-            weaponStagger: weaponStagger
+            from: attacker, on: target, event: event, weaponStagger: weaponStagger
         )
+    }
+
+    func combatAttacks(of attacker: ReferenceKey) -> [RaceAttack] {
+        shared.world.attacks(of: attacker)
+    }
+
+    func combatStamina(of key: ReferenceKey) -> Float? {
+        guard let index = ActorValueIdentity.index(named: "Stamina") else { return nil }
+        return shared.world.actorValues(of: key)?(index)
+    }
+
+    func knockDownCombatTarget(
+        _ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float
+    ) {
+        shared.explosions.impulses?.world?.knockDown(target, from: source, magnitude: magnitude)
     }
 
     func noteCombatHitReaction(_ report: HitReactionReport) {
@@ -401,10 +414,11 @@ extension CombatLoopWorldPart {
         }
 
         func combatHitFacts(
-            from attacker: ReferenceKey, on target: ReferenceKey, weaponStagger: Float
+            from attacker: ReferenceKey, on target: ReferenceKey, event: String,
+            weaponStagger: Float
         ) -> HitReactionFacts {
             owner.shared.strikes.hitFacts(
-                attacker: attacker, target: target, event: CombatGraphNames.attackStart,
+                attacker: attacker, target: target, event: event,
                 weaponStagger: weaponStagger
             )
         }

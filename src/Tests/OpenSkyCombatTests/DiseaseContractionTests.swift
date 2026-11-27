@@ -36,7 +36,12 @@ struct DiseaseContractionTests {
             world: world, settings: .synthetic, skillUses: .vanilla, staggers: .vanilla
         )
         var random = ConditionRandom(seed: 7)
-        _ = landing.land(from: Self.skeever, weapon: .unarmed, to: Self.target, random: &random)
+        _ = landing.land(
+            from: (Self.skeever, .zero),
+            weapon: (.unarmed, nil),
+            to: Self.target,
+            random: &random
+        )
         #expect(world.contractedDiseases.map(\.disease) == [Self.ataxia])
         #expect(world.contractedDiseases.map(\.target) == [Self.target])
     }
@@ -51,7 +56,12 @@ struct DiseaseContractionTests {
         )
         var random = ConditionRandom(seed: 7)
         for _ in 0 ..< 20 {
-            _ = landing.land(from: Self.skeever, weapon: .unarmed, to: Self.target, random: &random)
+            _ = landing.land(
+                from: (Self.skeever, .zero),
+                weapon: (.unarmed, nil),
+                to: Self.target,
+                random: &random
+            )
         }
         #expect(world.contractedDiseases.isEmpty)
     }
