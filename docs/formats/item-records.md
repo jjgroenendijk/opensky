@@ -75,6 +75,10 @@ APPA (line 8251):
 | `DESC` | lstring | description |
 
 xEdit lists no keyword fields on APPA. An unknown soul or quality value keeps its number.
+The player brews only at an alchemy lab, not with carried apparatus (UESP "Skyrim:Alchemy",
+<https://en.uesp.net/wiki/Skyrim:Alchemy>), so no brewing rule reads the quality. Papyrus
+reads it with `Apparatus.GetQuality` (<https://ck.uesp.net/wiki/Apparatus_Script>), which
+returns the `QUAL` number. `SetQuality` is not bound.
 
 Observed in the five masters (`Skyrim.esm`, `Update.esm`, `Dawnguard.esm`,
 `HearthFires.esm`, `Dragonborn.esm`): 377 KEYM, 17 SLGM, and 45 APPA, all decoded. The

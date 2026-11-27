@@ -134,6 +134,21 @@ extension InventoryCoordinator.ScriptItems {
         coordinator.runtime?.inventory.baselines.items.definition(item)?.value
     }
 
+    /// `Apparatus.GetQuality`: the `QUAL` value, 0 novice to 4 master. Nil for a form
+    /// that is no apparatus, or one without `QUAL`.
+    public func scriptApparatusQuality(of item: FormID) -> Int32? {
+        let apparatus = coordinator.runtime?.inventory.baselines.items.apparatus[item.rawValue]
+        return switch apparatus?.quality {
+        case .novice?: 0
+        case .apprentice?: 1
+        case .journeyman?: 2
+        case .expert?: 3
+        case .master?: 4
+        case let .unknown(value)?: value
+        case nil: nil
+        }
+    }
+
     /// `Actor.IsEquipped`. Nil without a holder.
     public func scriptIsEquipped(_ item: FormID, on key: ReferenceKey) -> Bool? {
         guard
