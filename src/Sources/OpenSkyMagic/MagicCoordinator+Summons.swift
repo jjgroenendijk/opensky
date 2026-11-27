@@ -64,7 +64,10 @@ extension MagicCoordinator.SummonCommands {
     private func summon(_ action: MagicWorldAction) {
         let caster = action.caster ?? action.target.key
         let aim = coordinator.summonPoints.removeValue(forKey: caster).map(SummonAim.point)
-            ?? .ahead(searchRadius: coordinator.rules.summons.searchRadius)
+            ?? .ahead(
+                searchRadius: coordinator.rules.summons.searchRadius,
+                largeActorRadius: coordinator.rules.summons.largeActorRadius
+            )
         guard
             let item = coordinator.associatedItem(of: action.effect),
             let base = coordinator.effects?.effects.loadOrderFormID(item),

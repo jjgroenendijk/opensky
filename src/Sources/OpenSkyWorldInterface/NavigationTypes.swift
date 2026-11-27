@@ -111,17 +111,21 @@ nonisolated public struct NavigationPathQuery: Equatable, Sendable {
     public let target: SIMD3<Float>
     public let capsuleRadius: Float
     public let projectionRadius: Float
+    /// Large-actor pathing: the path keeps off triangles marked "no large creatures".
+    public let largeActor: Bool
 
     public init(
         start: SIMD3<Float>,
         target: SIMD3<Float>,
         capsuleRadius: Float = PlayerCapsule.standard.radius,
-        projectionRadius: Float = Self.defaultProjectionRadius
+        projectionRadius: Float = Self.defaultProjectionRadius,
+        largeActor: Bool = false
     ) {
         self.start = start
         self.target = target
         self.capsuleRadius = max(0, capsuleRadius)
         self.projectionRadius = max(0, projectionRadius)
+        self.largeActor = largeActor
     }
 }
 

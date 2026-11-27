@@ -15,6 +15,12 @@ nonisolated public struct RuntimeNavigationTriangle: Sendable {
     public let neighbors: SIMD3<Int16>
     public let flags: NavmeshGeometry.TriangleFlags
     public let isDegenerate: Bool
+
+    /// Whether an actor may stand on it. A large actor keeps off "no large creatures".
+    func isWalkable(largeActor: Bool) -> Bool {
+        !isDegenerate && !flags.contains(.deleted)
+            && !(largeActor && flags.contains(.noLargeCreatures))
+    }
 }
 
 nonisolated public struct NavigationTriangleVertices: Sendable {
@@ -165,14 +171,15 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
 
     public func projection(
         of point: SIMD3<Float>,
-        searchRadius: Float = NavigationPathQuery.defaultProjectionRadius
+        searchRadius: Float = NavigationPathQuery.defaultProjectionRadius,
+        largeActor: Bool = false
     ) -> NavigationProjectionResult {
         var nearest: NavigationProjection?
         let radius = max(0, searchRadius)
         for mesh in navmeshes.values {
             for index in mesh.triangles.indices {
                 let triangle = mesh.triangles[index]
-                guard !triangle.isDegenerate, !triangle.flags.contains(.deleted) else { continue }
+                guard triangle.isWalkable(largeActor: largeActor) else { continue }
                 let position = NavigationGeometry.closestPoint(on: triangle, to: point)
                 let distance = simd_distance(position, point)
                 guard distance <= radius else { continue }
@@ -187,6 +194,28 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
             }
         }
         return nearest.map(NavigationProjectionResult.hit) ?? .miss
+    }
+
+    /// The nearest point of each walkable triangle within `radius` of `point`, nearest
+    /// first, ties by triangle order.
+    public func spots(
+        near point: SIMD3<Float>, within radius: Float, largeActor: Bool
+    ) -> [SIMD3<Float>] {
+        var found: [NavigationProjection] = []
+        for mesh in navmeshes.values {
+            for index in mesh.triangles.indices {
+                let triangle = mesh.triangles[index]
+                guard triangle.isWalkable(largeActor: largeActor) else { continue }
+                let position = NavigationGeometry.closestPoint(on: triangle, to: point)
+                let distance = simd_distance(position, point)
+                guard distance <= radius else { continue }
+                found.append(NavigationProjection(
+                    triangle: NavigationTriangleID(navmesh: mesh.formID, triangle: index),
+                    position: position, distance: distance
+                ))
+            }
+        }
+        return found.sorted { Self.projection($0, precedes: $1) }.map(\.position)
     }
 
     public func pathIsCurrent(

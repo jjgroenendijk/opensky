@@ -34,9 +34,11 @@ nonisolated public struct RuneSettings: Equatable, Sendable {
 
 /// `fSummonedCreatureFadeOutSeconds`: how long a dismissed summon stays before it goes.
 /// `fSummonedCreatureSearchRadius`: how far a self-cast summon looks for room.
+/// `fPathingLargeActorRadius`: above it, a summon searches with large-actor pathing.
 nonisolated public struct SummonSettings: Equatable, Sendable {
     public var fadeOutSeconds: Float = 1.5
     public var searchRadius: Float = 512
+    public var largeActorRadius: Float = 80
 
     public static let vanilla = Self()
 
@@ -46,6 +48,7 @@ nonisolated public struct SummonSettings: Equatable, Sendable {
         var settings = vanilla
         store.read("fSummonedCreatureFadeOutSeconds", into: &settings, \.fadeOutSeconds)
         store.read("fSummonedCreatureSearchRadius", into: &settings, \.searchRadius)
+        store.read("fPathingLargeActorRadius", into: &settings, \.largeActorRadius)
         return settings
     }
 }

@@ -8,6 +8,7 @@ public import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRenderCore
@@ -138,6 +139,12 @@ extension CellStreamer {
 
     public func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         navigation.findPath(query)
+    }
+
+    public func navmeshSpots(
+        near point: SIMD3<Float>, within radius: Float, largeActor: Bool
+    ) -> [SIMD3<Float>] {
+        navigationState.graph.spots(near: point, within: radius, largeActor: largeActor)
     }
 
     public var onDoorTransitionStarted: ((DoorFade) -> Void)? {
