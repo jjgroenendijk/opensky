@@ -60,6 +60,12 @@ extension QuestRuntime {
         AliasFill(owner: self).questObjectReferences()
     }
 
+    /// The alias tables of the quests that run now.
+    func runningAliasTables() -> [ReferenceKey: QuestAliasState] {
+        aliasTables()
+            .filter { store.component(QuestRuntimeState.self, for: $0.key)?.isRunning == true }
+    }
+
     func aliasTables() -> [ReferenceKey: QuestAliasState] {
         var tables: [ReferenceKey: QuestAliasState] = [:]
         for key in quests.sortedKeys {
@@ -226,7 +232,8 @@ extension QuestRuntime {
                 locations: locations,
                 event: event,
                 scope: scope,
-                translation: quests.translation(of: quest.formID)
+                translation: quests.translation(of: quest.formID),
+                running: owner.runningAliasTables()
             )
             guard result.canStartQuest else {
                 throw QuestError.aliasFillFailed(
