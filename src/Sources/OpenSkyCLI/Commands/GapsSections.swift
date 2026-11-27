@@ -93,7 +93,8 @@ extension GapsGatherer {
         let gaps = RecordFieldGaps(census: census, reads: reads)
         var notes = [
             "done means engine code reads the field after decoding (index store); "
-                + "fields no record fills are not counted"
+                + "fields no record fills are not counted",
+            "\(gaps.unused) more are done: the game does not use them (RecordDataUnused)"
         ]
         if !gaps.unknown.isEmpty {
             notes.append(

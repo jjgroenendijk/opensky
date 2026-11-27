@@ -109,4 +109,12 @@ struct RecordFieldCensusTests {
         #expect(gaps.left.map(\.records) == [3, 3, 3])
         #expect(gaps.unknown == ["FieldCensusFixture.Door.open"])
     }
+
+    @Test func unusedDataNamesTheRecordIdentityAndListedFieldsOnly() {
+        #expect(RecordDataUnused.reason(forField: "Keyword.formID") == .recordIdentity)
+        #expect(RecordDataUnused.reason(forField: "KeywordList.declaredCount") == .listCount)
+        #expect(RecordDataUnused.reason(forField: "TopicInfo.Response.edits") == .editorOnly)
+        #expect(RecordDataUnused.reason(forField: "Quest.Alias.formID") == nil)
+        #expect(RecordDataUnused.reason(forField: "Weapon.description") == nil)
+    }
 }
