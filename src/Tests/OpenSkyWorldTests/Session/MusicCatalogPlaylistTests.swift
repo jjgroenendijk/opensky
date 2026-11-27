@@ -135,14 +135,21 @@ struct MusicCatalogPlaylistTests {
         #expect(selection.tracks.map(\.editorID) == ["Leaf"])
     }
 
-    @Test func silentAndUnplayableTracksAreDropped() {
+    /// A silent track with an `FLTV` becomes that many seconds of silence; one without a
+    /// duration has nothing to play and is dropped.
+    @Test func silentTrackBecomesTimedSilence() {
         let store = MusicFixture.makeStore(
-            types: [MusicFixture.TypeSpec(formID: 0x40, flags: 0x000C, tracks: [0x100, 0x101])],
+            types: [
+                MusicFixture.TypeSpec(formID: 0x40, flags: 0x000C, tracks: [0x100, 0x101, 0x102])
+            ],
             tracks: [
                 MusicFixture.TrackSpec(
-                    formID: 0x100, editorID: "Silence", type: MusicFixture.silentTag
+                    formID: 0x100, editorID: "Silence", type: MusicFixture.silentTag, duration: 30
                 ),
-                MusicFixture.TrackSpec(formID: 0x101, editorID: "Audible", file: "Music\\a.xwm")
+                MusicFixture.TrackSpec(formID: 0x101, editorID: "Audible", file: "Music\\a.xwm"),
+                MusicFixture.TrackSpec(
+                    formID: 0x102, editorID: "Empty", type: MusicFixture.silentTag
+                )
             ]
         )
         let selection = MusicSelection.resolve(
@@ -150,8 +157,31 @@ struct MusicCatalogPlaylistTests {
             musicStore: store,
             weatherStore: nil
         )
-        #expect(selection.tracks.map(\.editorID) == ["Audible"])
-        #expect(selection.tracks.map(\.path) == ["music\\a.xwm"])
+        #expect(selection.tracks.map(\.editorID) == ["Silence", "Audible"])
+        #expect(selection.tracks.map(\.path) == [nil, "music\\a.xwm"])
+        #expect(selection.tracks.first?.silenceSeconds == 30)
+    }
+
+    /// A palette's children play for its `FLTV` seconds and fade out over its `DNAM`.
+    @Test func paletteChildrenCarryThePaletteLimit() {
+        let store = MusicFixture.makeStore(
+            types: [MusicFixture.TypeSpec(formID: 0x40, flags: 0x000C, tracks: [0x100])],
+            tracks: [
+                MusicFixture.TrackSpec(
+                    formID: 0x100, editorID: "Palette", type: MusicFixture.paletteTag,
+                    children: [0x101], duration: 90, fadeOut: 4
+                ),
+                MusicFixture.TrackSpec(formID: 0x101, editorID: "Leaf", file: "Music\\a.xwm")
+            ]
+        )
+        let selection = MusicSelection.resolve(
+            context: MusicFixture.context(cellMusicType: 0x40),
+            musicStore: store,
+            weatherStore: nil
+        )
+        let limit = selection.tracks.first?.paletteLimit
+        #expect(limit?.seconds == 90)
+        #expect(limit?.fadeOutSeconds == 4)
     }
 
     /// A playlist whose every track is unplayable resolves to silence rather

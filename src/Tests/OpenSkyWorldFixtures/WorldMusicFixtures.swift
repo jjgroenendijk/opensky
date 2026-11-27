@@ -54,24 +54,56 @@ public enum MusicFixture {
         public var file: String?
         /// SNAM palette children.
         public var children: [UInt32] = []
+        /// FLTV, a silent or palette track's seconds.
+        public var duration: Float?
+        /// DNAM, a palette's fade-out seconds.
+        public var fadeOut: Float?
 
         public init(
             formID: UInt32,
             editorID: String = "Track",
             type: UInt32 = 0x6ED7_E048,
             file: String? = nil,
-            children: [UInt32] = []
+            children: [UInt32] = [],
+            duration: Float? = nil,
+            fadeOut: Float? = nil
         ) {
             self.formID = formID
             self.editorID = editorID
             self.type = type
             self.file = file
             self.children = children
+            self.duration = duration
+            self.fadeOut = fadeOut
         }
     }
 
     public static let paletteTag: UInt32 = 0x23F6_78C3
     public static let silentTag: UInt32 = 0xA1A9_C4D5
+
+    private static func trackRecord(_ track: TrackSpec) -> Data {
+        var fields = ESMFixture.field("EDID", ESMFixture.zstring(track.editorID))
+            + ESMFixture.field("CNAM", uint32(track.type))
+        if let duration = track.duration {
+            var fltv = Data()
+            fltv.appendFloat32(duration)
+            fields += ESMFixture.field("FLTV", fltv)
+        }
+        if let fadeOut = track.fadeOut {
+            var dnam = Data()
+            dnam.appendFloat32(fadeOut)
+            fields += ESMFixture.field("DNAM", dnam)
+        }
+        if let file = track.file {
+            fields += ESMFixture.field("ANAM", ESMFixture.zstring(file))
+        }
+        if !track.children.isEmpty {
+            fields += ESMFixture.field(
+                "SNAM", track.children.reduce(Data()) { $0 + uint32($1) }
+            )
+        }
+        return ESMFixture.record("MUST", formID: track.formID, data: fields)
+    }
 
     /// `defaultObjects` adds one `DOBJ` with these (tag, FormID) entries, such as `LUMS`.
     public static func makeStore(
@@ -97,20 +129,7 @@ public enum MusicFixture {
             }
             muscBytes += ESMFixture.record("MUSC", formID: type.formID, data: fields)
         }
-        var mustBytes = Data()
-        for track in tracks {
-            var fields = ESMFixture.field("EDID", ESMFixture.zstring(track.editorID))
-                + ESMFixture.field("CNAM", uint32(track.type))
-            if let file = track.file {
-                fields += ESMFixture.field("ANAM", ESMFixture.zstring(file))
-            }
-            if !track.children.isEmpty {
-                fields += ESMFixture.field(
-                    "SNAM", track.children.reduce(Data()) { $0 + uint32($1) }
-                )
-            }
-            mustBytes += ESMFixture.record("MUST", formID: track.formID, data: fields)
-        }
+        let mustBytes = tracks.reduce(Data()) { $0 + trackRecord($1) }
         var plugin = ESMFixture.tes4()
             + ESMFixture.topGroup("MUSC", contents: muscBytes)
             + ESMFixture.topGroup("MUST", contents: mustBytes)

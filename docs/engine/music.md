@@ -171,10 +171,23 @@ A `MUST` whose `CNAM` is the palette type has `SNAM` children instead of an `ANA
 nested playlist. Nesting is expanded at most 4 levels deep, with a set of visited records. So a
 palette that names itself stops instead of looping.
 
-Silent tracks, which have no `ANAM`, and tracks whose file name breaks the `music\` path rules are
-dropped. The rest keep their order. A playlist that loses every track gives silence, but the
-music state still names the `MUSC`. Whether the file exists is not checked here, because selection
-reads no files. A missing file fails later, when it loads.
+The Creation Kit wiki "Music Track" page (<https://ck.uesp.net/wiki/Music_Track>) gives the
+track types:
+
+| `CNAM` type | What plays |
+| --- | --- |
+| Single track | Its `ANAM` file |
+| Silent track | Silence for its `FLTV` seconds, "periods of silence in between traditional Music Tracks" |
+| Palette | Its children. Each plays until the palette's `FLTV` seconds are up, then fades out over the palette's `DNAM` |
+
+A silent track without a positive `FLTV` has nothing to play and is dropped. So is a single track
+whose file name breaks the `music\` path rules. The rest keep their order. A playlist that loses
+every track gives silence, but the music state still names the `MUSC`. Whether the file exists is
+not checked here, because selection reads no files. A missing file fails later, when it loads.
+
+The wiki says a palette's layers play "simultaneously". OpenSky plays a palette's children one
+after another, each limited to the palette's duration. When palettes nest, the outermost palette
+with a duration sets the limit.
 
 Order:
 
