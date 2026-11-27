@@ -117,4 +117,11 @@ struct RecordFieldCensusTests {
         #expect(RecordDataUnused.reason(forField: "Quest.Alias.formID") == nil)
         #expect(RecordDataUnused.reason(forField: "Weapon.description") == nil)
     }
+
+    @Test func unusedDataNamesBitsAndCases() {
+        #expect(RecordDataUnused.reason(forBit: 0x4000, of: "TopicInfo.Flags") == .noEffect)
+        #expect(RecordDataUnused.reason(forBit: 0x1, of: "TopicInfo.Flags") == nil)
+        #expect(RecordDataUnused.reason(forCase: "medium", of: "TopicInfo.FavorLevel") == .noEffect)
+        #expect(RecordDataUnused.reason(forCase: "none", of: "TopicInfo.FavorLevel") == nil)
+    }
 }

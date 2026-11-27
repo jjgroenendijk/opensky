@@ -85,7 +85,8 @@ nonisolated public struct RecordValueGaps: Sendable, Equatable {
                     continue
                 }
                 let found = named[bit]
-                if found?.isRead == true {
+                let unused = RecordDataUnused.reason(forBit: bit, of: value.type) != nil
+                if found?.isRead == true || unused {
                     flags.done += 1
                 } else {
                     let hex = "0x" + String(bit, radix: 16, uppercase: true)
@@ -93,6 +94,10 @@ nonisolated public struct RecordValueGaps: Sendable, Equatable {
                     flags.left.append(RecordFieldGaps.Row(name: name, records: field.records))
                 }
             case let .enumCase(name):
+                if RecordDataUnused.reason(forCase: name, of: value.type) != nil {
+                    enums.done += 1
+                    continue
+                }
                 switch reads.cases["\(value.type).\(name)"] {
                 case true?:
                     enums.done += 1
