@@ -42,7 +42,7 @@ nonisolated public enum RecordDataUnused: Sendable {
     }
 
     static let bits: [String: [UInt64: RecordDataUnusedReason]] = [
-        "TopicInfo.Flags": [0x4000: .noEffect]
+        "TopicInfo.Flags": [0x1000: .droppedAtLoad, 0x4000: .noEffect]
     ]
 
     static let cases: [String: RecordDataUnusedReason] = [
@@ -106,6 +106,8 @@ nonisolated public enum RecordDataUnused: Sendable {
             "WaterDetails.unusedMaterialID"
         ],
         .droppedAtLoad: [
+            "RaceProperties.unknown",
+            "RaceProperties.weight",
             "AcousticSpace.editorID",
             "ArtObject.bounds",
             "Debris.editorID",
