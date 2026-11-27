@@ -25,15 +25,17 @@ extension AIDetectionSenseAdapter {
     struct Sound {
         let game: any AIDetectionSenseHost
 
-        /// A swing sounds at its weapon's `VNAM` level and a cast at its first
-        /// effect's casting sound level, for as long as it lasts.
+        /// A swing sounds at its weapon's `VNAM` level, or unarmed at the player
+        /// record's `NAM8`, and a cast at its first effect's casting sound level, for
+        /// as long as it lasts.
         func playerActionSound() -> Float {
             guard let settings = game.perception.runtime?.settings else { return 0 }
             var loudest = playerCastingSound()
             if let melee = game.combat.melee, melee.state.attackPhase != .idle {
-                let level = melee.weapon.weapon
+                let unarmed = game.actorValues.runtime?.baseline(of: .player).soundLevel
+                let level = (melee.weapon.weapon
                     .flatMap { game.combat.items?.weapon($0)?.details.detectionSoundLevel }
-                    .flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
+                    ?? unarmed).flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
                 loudest = max(loudest, settings.actionSound(for: level))
             }
             return loudest

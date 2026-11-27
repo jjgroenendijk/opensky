@@ -70,8 +70,8 @@ nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     var unknownNAM5: Data?
     public var height: Float?
     public var weight: Float?
-    /// NAM8: 0 loud, 1 normal, 2 silent, 3 very loud, 4 quiet.
-    var soundLevel: UInt32?
+    /// NAM8: 0 loud, 1 normal, 2 silent, 3 very loud, 4 none.
+    public var soundLevel: UInt32?
     /// FTST, a TXST.
     public var headTexture: FormID?
     /// QNAM, RGB 0 to 1.
