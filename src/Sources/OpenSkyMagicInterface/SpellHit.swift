@@ -58,6 +58,8 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     /// False when every entry's `MGEF` carries No Hit Event: the target's scripts hear
     /// no `OnHit`.
     public var sendsHitEvent = true
+    /// A chain explosion carried it: only the struck actor is reached, with no area search.
+    public var skipsAreaSearch = false
 
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
@@ -82,6 +84,7 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
         payload.dualCastScale = dualCastScale
         payload.dualCastArt = dualCastArt
         payload.sendsHitEvent = sendsHitEvent
+        payload.skipsAreaSearch = skipsAreaSearch
         return payload
     }
 
@@ -317,7 +320,12 @@ nonisolated public enum SpellHitTargeting: Sendable {
         excluding shooter: ReferenceKey?,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> [SpellHitTarget] {
-        targets(
+        guard !payload.skipsAreaSearch else {
+            return targets(
+                of: [], landing: landing, candidates: [], excluding: shooter, settings: settings
+            )
+        }
+        return targets(
             of: payload.entries,
             landing: landing,
             candidates: candidates,

@@ -17,6 +17,8 @@ public final class ExplosionRuntime {
     static let ignoreSwapFlag: UInt32 = 0x40
     /// `EXPL` `DATA` flag Ignore LOS.
     static let ignoreLineOfSightFlag: UInt32 = 0x10
+    /// `EXPL` `DATA` flag Chain.
+    static let chainFlag: UInt32 = 0x80
 
     public weak let world: (any ExplosionWorld)?
     /// The load-order effect records. Empty without game data.
@@ -150,6 +152,9 @@ public final class ExplosionRuntime {
             }
             if world.applyExplosionDamage(amount, to: target.key) {
                 damaged[target.key] = amount
+                if let owner = origin.shooter {
+                    world.noteExplosionSound(owner: owner, level: spec.soundLevel, at: target.feet)
+                }
             }
         }
         return (damaged, shielded)
@@ -275,6 +280,7 @@ public final class ExplosionRuntime {
         spec.soundLevel = data?.soundLevel
         spec.ignoresLineOfSight = (data?.flags ?? 0) & Self.ignoreLineOfSightFlag != 0
         spec.verticalOffset = Self.clean(data?.verticalOffsetMultiplier)
+        spec.isChain = (data?.flags ?? 0) & Self.chainFlag != 0
         return spec
     }
 

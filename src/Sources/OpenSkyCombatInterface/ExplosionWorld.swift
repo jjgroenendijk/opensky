@@ -35,6 +35,8 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     /// `DATA` vertical offset multiplier: on an actor, the blast sits this share of its
     /// height above the feet.
     public var verticalOffset: Float = 0
+    /// `DATA` flag `0x80`: a chain explosion, which a spell's area search skips.
+    public var isChain = false
 
     public init(
         name: String,
