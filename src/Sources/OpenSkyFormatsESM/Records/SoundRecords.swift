@@ -148,8 +148,6 @@ nonisolated public struct SoundDescriptor: Sendable {
     public let parameters: Parameters?
     /// CTDA run that gates playback.
     public let conditions: [Condition]
-    /// FNAM — flags written before form version 35; bit 4 is loop.
-    public let legacyFlags: UInt32?
     public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
@@ -192,6 +190,8 @@ nonisolated public struct SoundDescriptor: Sendable {
                 looping = try Self.readLooping(&reader, size: field.data.count)
                 rumbleSend = field.data.count == 4
                     ? RumbleSend(byte: field.data[field.data.startIndex + 3]) : nil
+            case "FNAM":
+                looping = try Self.olderLooping(&reader, size: field.data.count)
             case "BNAM":
                 parameters = try Self.readParameters(&reader, size: field.data.count)
             default:
@@ -200,7 +200,6 @@ nonisolated public struct SoundDescriptor: Sendable {
             return true
         }
         conditions = rest.conditions()
-        legacyFlags = rest.uint32("FNAM")
         skipped = rest.finish()
 
         self.editorID = editorID
@@ -250,6 +249,23 @@ nonisolated public struct SoundDescriptor: Sendable {
         default:
             return .unknown(selector)
         }
+    }
+
+    /// FNAM, the older flags word: the later of FNAM and LNAM sets the looping
+    /// (docs/formats/sound.md).
+    private static func olderLooping(_ reader: inout BinaryReader, size: Int) throws -> Looping? {
+        guard size == 4 else { return nil }
+        let flags = try reader.readUInt32()
+        if flags & 0x10 != 0 {
+            return .loop
+        }
+        if flags & 0x0200_0000 != 0 {
+            return .envelopeFast
+        }
+        if flags & 0x0400_0000 != 0 {
+            return .envelopeSlow
+        }
+        return Looping.none
     }
 
     private static func readParameters(

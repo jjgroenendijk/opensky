@@ -122,7 +122,13 @@ struct ListSoundPackageDetailTests {
         let descriptor = try SoundDescriptor(record: Fixture.record("SNDR", sndr))
         #expect(descriptor.skipped.isEmpty)
         #expect(descriptor.conditions.map(\.functionIndex) == [35])
-        #expect(descriptor.legacyFlags == 0x10)
+        #expect(descriptor.looping == .loop)
+        let envelope = try SoundDescriptor(record: Fixture.record(
+            "SNDR",
+            ESMFixture.field("LNAM", Data([0, 8, 0, 0]))
+                + ESMFixture.field("FNAM", Fixture.uint32(0x0400_0001))
+        ))
+        #expect(envelope.looping == .envelopeSlow)
         var soun = Fixture.boundsField()
         soun += ESMFixture.field("FNAM", Data([1]))
         soun += ESMFixture.field("SNDD", Data([2]))
