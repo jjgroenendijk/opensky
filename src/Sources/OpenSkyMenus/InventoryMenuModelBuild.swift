@@ -10,7 +10,7 @@ public import OpenSkyInventoryInterface
 nonisolated extension InventoryMenuModel {
     /// Builds one owner's list. Rows sort by name, then FormID, so the order is
     /// deterministic. Gold is left out: vanilla shows it as a readout, but
-    /// `InventoryRuntime` stores it as a `MISC` stack.
+    /// `InventoryRuntime` stores it as a `MISC` stack. A non-playable item is left out too.
     public static func build(
         inventory: ReferenceInventoryState,
         items: ItemDefinitionStore,
@@ -28,7 +28,7 @@ nonisolated extension InventoryMenuModel {
             let definition = items.definition(stack.item)
             let total = inventory.count(of: stack.item)
             weight += Double(definition?.weight ?? 0) * Double(total)
-            guard stack.item != goldFormID else { continue }
+            guard stack.item != goldFormID, definition?.isPlayable != false else { continue }
             var row = InventoryMenuEntry(
                 item: stack.item,
                 name: name(of: stack.item, in: items),

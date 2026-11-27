@@ -15,7 +15,8 @@ nonisolated public struct Ammunition: Sendable {
         }
 
         static let ignoresNormalWeaponResistance = Flags(rawValue: 0x0000_0001)
-        static let nonPlayable = Flags(rawValue: 0x0000_0002)
+        /// The player cannot see or use the ammunition.
+        public static let nonPlayable = Flags(rawValue: 0x0000_0002)
         /// Set on arrows, clear on crossbow bolts.
         public static let nonBolt = Flags(rawValue: 0x0000_0004)
     }

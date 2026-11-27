@@ -44,6 +44,7 @@ struct InventoryItemActions {
         var facts = ItemRequestFacts()
         let family = definition(of: item)?.family
         facts.isKey = family == .key
+        facts.isNonPlayable = definition(of: item)?.isPlayable == false
         facts.isQuestItem = game.inventory.scriptItems.isQuestItem(item)
         facts.canBeFavourite = family.map(Self.favouriteFamilies.contains) ?? true
         facts.isEquipped = game.inventory.consumables.use(of: item) == .unequip

@@ -63,7 +63,7 @@ nonisolated public struct ItemRequestFacts: Equatable, Sendable {
     /// The item cannot be worn by the player's race or its slots.
     var cannotBeWorn = false
     /// A non-playable item, such as a creature's skin, which the player cannot take off.
-    var isNonPlayable = false
+    public var isNonPlayable = false
     public var playerIsAirborne = false
     public var playerIsAttacking = false
     public var hasDropRoom = true

@@ -33,6 +33,12 @@ Three rules are choices, not results:
   really carries it, and hiding it would lose it.
 - Rows sort by name, then FormID. So two items with the same name always have the same order.
 
+A weapon or ammunition without the Creation Kit's Playable box gets no row, such as a creature's
+claws. The Creation Kit says such a weapon "is invisible to the player and cannot be used", and
+that playable ammunition is what the player can "see in containers". Unequipping one is refused
+with `sCantUnequipGeneric` ([refused actions](#refused-actions)). Sources:
+<https://ck.uesp.net/wiki/Weapons>, <https://ck.uesp.net/wiki/Ammo>.
+
 Categories group items by record type, in the vanilla tab order: Favorites, All, Weapons (`WEAP`
 and `AMMO`), Apparel, Potions, Scrolls (`SCRL`), Food, Ingredients, Books, Keys (`KEYM`), and Misc.
 Favorites takes the rows the player marked, of any type. Food takes the `ALCH` records with the food
