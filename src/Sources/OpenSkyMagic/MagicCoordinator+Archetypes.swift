@@ -123,8 +123,8 @@ extension MagicCoordinator.ArchetypeActions {
         }
     }
 
-    /// Unequips every weapon `target` holds. The weapon stays in the inventory,
-    /// because nothing can drop an actor's item to the ground yet.
+    /// Unequips every weapon `target` holds, except one flagged `Can't Drop`. The weapon
+    /// stays in the inventory, because nothing can drop an actor's item to the ground yet.
     private func disarm(_ target: ActorValueHolder, by caster: ReferenceKey?) {
         guard
             let inventory = coordinator.world.inventory,
@@ -132,7 +132,7 @@ extension MagicCoordinator.ArchetypeActions {
         let holder = InventoryHolder(actor: target)
         var unequipped = false
         for item in equipment.equipped(on: holder)
-            where inventory.baselines.items.weapon(item) != nil
+            where inventory.baselines.items.weapon(item).map(Self.canBeDisarmed) == true
         {
             equipment.unequip(item, on: holder)
             unequipped = true
@@ -144,6 +144,10 @@ extension MagicCoordinator.ArchetypeActions {
         if unequipped, caster == .player {
             coordinator.incrementStat("Weapons Disarmed")
         }
+    }
+
+    private static func canBeDisarmed(_ weapon: Weapon) -> Bool {
+        !weapon.flags.contains(.cannotDrop)
     }
 
     // MARK: - Cloaks

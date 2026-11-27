@@ -106,6 +106,9 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     public var putDownSound: FormID?
     /// A book's `CNAM`, the line its item card shows. Nil on every other item.
     public var description: LString?
+    /// False on a weapon or ammunition the player cannot see or use, such as a creature's
+    /// claws. The inventory lists leave it out.
+    public var isPlayable = true
 
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
@@ -451,7 +454,11 @@ nonisolated enum ItemDefinitionViews {
     }
 
     fileprivate static func view(_ ammunition: Ammunition) -> ItemDefinition {
-        view(ammunition.formID, .ammunition, ammunition.fields, ammunition.itemValue)
+        var definition = view(
+            ammunition.formID, .ammunition, ammunition.fields, ammunition.itemValue
+        )
+        definition.isPlayable = !ammunition.flags.contains(.nonPlayable)
+        return definition
     }
 
     fileprivate static func view(_ book: Book) -> ItemDefinition {
@@ -503,7 +510,7 @@ nonisolated enum ItemDefinitionViews {
         _ weapon: Weapon,
         _ enchantments: ItemEnchantmentResolver?
     ) -> ItemDefinition {
-        view(
+        var definition = view(
             weapon.formID,
             .weapon,
             weapon.fields,
@@ -514,6 +521,8 @@ nonisolated enum ItemDefinitionViews {
                 enchantments
             )
         )
+        definition.isPlayable = !weapon.flags.contains(.nonPlayable)
+        return definition
     }
 
     /// Shared projection for the families that compose

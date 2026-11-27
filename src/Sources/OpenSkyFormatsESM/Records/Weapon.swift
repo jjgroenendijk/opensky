@@ -29,9 +29,11 @@ nonisolated public struct Weapon: Sendable {
             self.rawValue = rawValue
         }
 
-        static let cannotDrop = Flags(rawValue: 0x0008)
+        /// The weapon cannot be disarmed and stays with its owner at death.
+        public static let cannotDrop = Flags(rawValue: 0x0008)
         static let embeddedWeapon = Flags(rawValue: 0x0020)
-        static let nonPlayable = Flags(rawValue: 0x0080)
+        /// The player cannot see or use the weapon.
+        public static let nonPlayable = Flags(rawValue: 0x0080)
     }
 
     /// CRDT — critical-hit numbers plus the SPEL applied on a critical.
