@@ -48,43 +48,43 @@ nonisolated public struct Weapon: Sendable {
     }
 
     public let formID: FormID
-    public let fields: InventoryItemFields
+    public internal(set) var fields: InventoryItemFields
     /// DESC — flavour text, set on artifacts and enchanted uniques.
-    public let description: LString?
+    public internal(set) var description: LString?
     /// DATA gold value and weight.
-    public let itemValue: ItemValue
+    public internal(set) var itemValue: ItemValue
     /// DATA base damage before skill, perk and enchantment scaling.
-    public let damage: UInt16
+    public internal(set) var damage: UInt16
     /// DNAM animation type; nil when the byte is outside the documented set.
-    public let animationType: AnimationType?
+    public internal(set) var animationType: AnimationType?
     /// DNAM attack speed multiplier.
-    public let speed: Float
+    public internal(set) var speed: Float
     /// DNAM reach multiplier.
-    public let reach: Float
-    public let flags: Flags
+    public internal(set) var reach: Float
+    public internal(set) var flags: Flags
     /// DNAM governing skill as an actor-value index; nil when -1 (no skill).
-    public let skill: Int32?
+    public internal(set) var skill: Int32?
     /// DNAM stagger magnitude.
-    public let stagger: Float
+    public internal(set) var stagger: Float
     /// DNAM 0x34-0x3C: the Rumble tab's left and right motor strength and seconds.
-    public let rumble: Rumble
-    public let criticalData: CriticalData?
+    public internal(set) var rumble: Rumble
+    public internal(set) var criticalData: CriticalData?
     /// EITM — ENCH applied by the weapon; nil on unenchanted weapons.
-    public let enchantment: FormID?
+    public internal(set) var enchantment: FormID?
     /// EAMT — enchantment charge; feeds the gold-value formula.
-    public let enchantmentCharge: UInt16?
+    public internal(set) var enchantmentCharge: UInt16?
     /// ETYP — EQUP slot ("BothHands", "EitherHand").
-    public let equipType: FormID?
+    public internal(set) var equipType: FormID?
     /// CNAM — the WEAP this record templates from, nil when standalone.
     public let template: FormID?
     /// INAM — the IPDS an ordinary swing's impact resolves through; nil when
     /// the weapon names none.
-    public let impactDataSet: FormID?
+    public internal(set) var impactDataSet: FormID?
     /// BIDS — the IPDS a shield bash resolves through; nil when unset. Not the
     /// swing's set: UESP names the two separately and only bashing reads this.
-    public let blockBashImpactDataSet: FormID?
+    public internal(set) var blockBashImpactDataSet: FormID?
     /// The fields no game system reads yet: sounds, scope, first-person model.
-    public let details: WeaponDetails
+    public internal(set) var details: WeaponDetails
     public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
@@ -240,32 +240,32 @@ nonisolated public struct Weapon: Sendable {
 /// docs/formats/item-records.md.
 nonisolated public struct WeaponDetails: Equatable, Sendable {
     /// MOD3 group — the model shown while aiming through a scope.
-    let scopeModel: ModelData?
+    var scopeModel: ModelData?
     /// EFSD — the EFSH shown while scoped.
     let scopeEffect: FormID?
     /// NNAM — the node an embedded weapon attaches to.
     let embeddedWeaponNode: String?
     /// WNAM — the STAT drawn in first person.
-    let firstPersonModel: FormID?
+    var firstPersonModel: FormID?
     /// BAMT — the MATT a block hits instead of the weapon's own.
-    let alternateBlockMaterial: FormID?
+    var alternateBlockMaterial: FormID?
     /// SNAM — plays when the weapon launches its projectile.
-    public let fireSound: FormID?
+    public internal(set) var fireSound: FormID?
     /// XNAM — the fire sound for the player in first person.
-    public let firstPersonFireSound: FormID?
+    public internal(set) var firstPersonFireSound: FormID?
     /// NAM7 — loops while the actor attacks without a pause.
-    public let attackLoopSound: FormID?
+    public internal(set) var attackLoopSound: FormID?
     /// TNAM — plays on each weapon-swing animation event.
-    public let swingSound: FormID?
+    public internal(set) var swingSound: FormID?
     /// UNAM — loops while the weapon is equipped and its holder is alive.
-    public let equippedLoopSound: FormID?
+    public internal(set) var equippedLoopSound: FormID?
     /// NAM9 — plays on the begin-draw animation event.
-    public let drawSound: FormID?
+    public internal(set) var drawSound: FormID?
     /// NAM8 — plays on the begin-sheathe animation event.
-    public let sheatheSound: FormID?
+    public internal(set) var sheatheSound: FormID?
     /// VNAM — detection sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
     public let detectionSoundLevel: UInt32?
-    let destructible: Destructible?
+    var destructible: Destructible?
 
     init(_ fields: inout RecordFields) {
         scopeModel = fields.model(path: "MOD3", hashes: "MO3T", alternates: "MO3S")
@@ -296,5 +296,54 @@ nonisolated extension Weapon {
             self.right = right
             self.seconds = seconds
         }
+    }
+}
+
+nonisolated extension Weapon {
+    /// This weapon after its `CNAM` template overwrites it, as the game does at load. The
+    /// name, enchantment and its charge, value, and `NNAM` node stay this weapon's own
+    /// (docs/formats/item-records.md#weap).
+    public func inheriting(from template: Weapon) -> Weapon {
+        var weapon = self
+        weapon.fields.modelPath = template.fields.modelPath
+        weapon.fields.modelTextureHashes = template.fields.modelTextureHashes
+        weapon.fields.modelAlternateTextures = template.fields.modelAlternateTextures
+        weapon.fields.iconPath = template.fields.iconPath
+        weapon.fields.messageIconPath = template.fields.messageIconPath
+        weapon.fields.pickupSound = template.fields.pickupSound
+        weapon.fields.dropSound = template.fields.dropSound
+        weapon.fields.keywords = template.fields.keywords
+        weapon.itemValue = ItemValue(value: itemValue.value, weight: template.itemValue.weight)
+        weapon.damage = template.damage
+        weapon.equipType = template.equipType
+        weapon.description = template.description
+        weapon.impactDataSet = template.impactDataSet
+        weapon.blockBashImpactDataSet = template.blockBashImpactDataSet
+        weapon.animationType = template.animationType
+        weapon.speed = template.speed
+        weapon.reach = template.reach
+        weapon.flags = template.flags
+        weapon.skill = template.skill
+        weapon.stagger = template.stagger
+        weapon.rumble = template.rumble
+        weapon.criticalData = template.criticalData
+        weapon.details.inherit(from: template.details)
+        return weapon
+    }
+}
+
+nonisolated extension WeaponDetails {
+    mutating func inherit(from template: WeaponDetails) {
+        scopeModel = template.scopeModel
+        firstPersonModel = template.firstPersonModel
+        alternateBlockMaterial = template.alternateBlockMaterial
+        destructible = template.destructible
+        fireSound = template.fireSound
+        firstPersonFireSound = template.firstPersonFireSound
+        attackLoopSound = template.attackLoopSound
+        swingSound = template.swingSound
+        equippedLoopSound = template.equippedLoopSound
+        drawSound = template.drawSound
+        sheatheSound = template.sheatheSound
     }
 }

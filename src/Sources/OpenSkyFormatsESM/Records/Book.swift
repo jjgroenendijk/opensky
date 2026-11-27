@@ -15,7 +15,7 @@ nonisolated public struct Book: Sendable {
         }
 
         static let teachesSkill = Flags(rawValue: 0x01)
-        static let cannotBeTaken = Flags(rawValue: 0x02)
+        public static let cannotBeTaken = Flags(rawValue: 0x02)
         static let teachesSpell = Flags(rawValue: 0x04)
     }
 

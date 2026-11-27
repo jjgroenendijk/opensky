@@ -12,11 +12,14 @@ nonisolated public struct BookContent: Equatable, Sendable {
     /// The record's text, with the game's HTML tags.
     public var text: String
     public var isNote: Bool
+    /// `BOOK` `DATA` flag `0x02` clear: a book read where it lies can be taken.
+    public var canBeTaken: Bool
 
-    public init(title: String, text: String, isNote: Bool) {
+    public init(title: String, text: String, isNote: Bool, canBeTaken: Bool = true) {
         self.title = title
         self.text = text
         self.isNote = isNote
+        self.canBeTaken = canBeTaken
     }
 }
 
@@ -114,7 +117,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
     }
 
     public var takeButton: BookTakeButton {
-        guard let takeOffer else { return .hidden }
+        guard let takeOffer, content?.canBeTaken != false else { return .hidden }
         return takeOffer.isTheft ? .steal : .take
     }
 
@@ -125,7 +128,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
 
     /// Takes a book read where it lies, then closes; a carried book only closes.
     private func take() {
-        if let takeOffer, let title = content?.title {
+        if let takeOffer, takeButton != .hidden, let title = content?.title {
             takeOffer.take()
             lastResult = "\(takeOffer.isTheft ? "Stole" : "Took"): \(title)"
         }

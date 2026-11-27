@@ -147,7 +147,8 @@ struct MenuBookReads {
         return BookContent(
             title: game.inventory.name(of: item),
             text: game.mapWorld.text(book.text, kind: .dlstrings) ?? "",
-            isNote: book.kind == .note
+            isNote: book.kind == .note,
+            canBeTaken: !book.flags.contains(.cannotBeTaken)
         )
     }
 

@@ -44,7 +44,7 @@ nonisolated public struct ActorTintLayer: Equatable, Sendable {
 nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     public var bounds: ObjectBounds?
     var shortName: LString?
-    var keywords: [FormID] = []
+    public var keywords: [FormID] = []
     public var inventory: [ContainerEntry] = []
     public var attacks: [RaceAttack] = []
     var destructible: Destructible?

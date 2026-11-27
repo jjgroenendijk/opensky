@@ -76,6 +76,20 @@ struct MenuScreenCoordinatorTests {
         #expect(menu.takeButton == .hidden)
     }
 
+    @Test func aBookThatCannotBeTakenShowsNoTakeButton() {
+        let world = FakeMenuScreenWorld()
+        world.books[FormID(0x10)] = BookContent(
+            title: "Ledger", text: "Hello", isNote: false, canBeTaken: false
+        )
+        let menu = BookMenuCoordinator(menuMode: MenuModeController(), world: world)
+        var taken = 0
+        let offer = BookTakeOffer(isTheft: false) { taken += 1 }
+        #expect(menu.open(item: FormID(0x10), takeOffer: offer))
+        #expect(menu.takeButton == .hidden)
+        menu.route(.button(.accept))
+        #expect(taken == 0)
+    }
+
     @Test func helpOpensTheFirstTopic() {
         let world = FakeMenuScreenWorld()
         world.topics["HelpAlchemyLong"] = HelpTopic(

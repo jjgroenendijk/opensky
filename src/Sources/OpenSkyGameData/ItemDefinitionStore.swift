@@ -254,9 +254,10 @@ nonisolated public final class ItemDefinitionStore {
         armor = Self.decodeAll("ARMO", in: loadOrder, skipped: &repeated) {
             try Armor(record: $0, localized: $1)
         }
-        weapons = Self.decodeAll("WEAP", in: loadOrder, skipped: &repeated) {
+        let ownWeapons = Self.decodeAll("WEAP", in: loadOrder, skipped: &repeated) {
             try Weapon(record: $0, localized: $1)
         }
+        weapons = Self.inheritingTemplates(ownWeapons)
         ammunition = Self.decodeAll("AMMO", in: loadOrder, skipped: &repeated) {
             try Ammunition(record: $0, localized: $1)
         }
@@ -466,6 +467,7 @@ nonisolated enum ItemDefinitionViews {
             ammunition.formID, .ammunition, ammunition.fields, ammunition.itemValue
         )
         definition.isPlayable = !ammunition.flags.contains(.nonPlayable)
+        definition.description = ammunition.description
         return definition
     }
 
@@ -509,7 +511,9 @@ nonisolated enum ItemDefinitionViews {
     }
 
     fileprivate static func view(_ apparatus: Apparatus) -> ItemDefinition {
-        view(apparatus.formID, .apparatus, apparatus.fields, apparatus.itemValue)
+        var definition = view(apparatus.formID, .apparatus, apparatus.fields, apparatus.itemValue)
+        definition.description = apparatus.description
+        return definition
     }
 
     fileprivate static func view(_ scroll: Scroll) -> ItemDefinition {
