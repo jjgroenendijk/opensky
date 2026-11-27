@@ -15,6 +15,8 @@ nonisolated public struct DialogueSpokenLine: Equatable, Sendable {
     public let emotion: UInt32
     public let emotionValue: UInt32
     public let isGreeting: Bool
+    /// A greeting whose `INFO` lets the speaker keep moving (`ENAM` `0x400`).
+    public var keepsSpeakerMoving = false
 
     public init(speaker: ReferenceKey, emotion: UInt32, emotionValue: UInt32, isGreeting: Bool) {
         self.speaker = speaker

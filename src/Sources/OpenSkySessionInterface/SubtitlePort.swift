@@ -9,6 +9,10 @@ public protocol SubtitlePort: AnyObject {
         seconds: Double,
         now: Double
     ) -> Bool
+    /// A `.general` line, shown only when its speaker stands near enough.
+    @discardableResult func sayAround(
+        _ text: String, placement: SubtitlePlacement, seconds: Double, now: Double
+    ) -> Bool
     var settings: SubtitleSettings { get }
     func advance(to now: Double)
 }

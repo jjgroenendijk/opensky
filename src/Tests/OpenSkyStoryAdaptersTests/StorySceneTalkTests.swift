@@ -85,7 +85,7 @@ struct StorySceneTalkTests {
         ])
         #expect(host.fakeAudio.speakCalls.map(\.paths) == [[]])
         #expect(host.fakeHeadTracking.setLookTargetCalls.count == 1)
-        #expect(host.fakeSubtitles.sayCalls.count == 1)
+        #expect(host.fakeSubtitles.sayAroundCalls.count == 1)
     }
 
     @Test func aSpeakerWithoutAHeadSaysNothing() {

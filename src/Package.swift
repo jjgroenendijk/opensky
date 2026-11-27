@@ -1475,9 +1475,10 @@ targets += composition(
 targets += composition(
     "OpenSkyStoryAdapters",
     dependencies: [
-        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface", "OpenSkyCells",
-        "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime", "OpenSkyCrimeInterface",
-        "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyFactionsInterface",
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface", "OpenSkyAudio",
+        "OpenSkyCells", "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime",
+        "OpenSkyCrimeInterface", "OpenSkyDialogue", "OpenSkyDialogueInterface",
+        "OpenSkyFactionsInterface",
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
         "OpenSkyMenusInterface", "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer",
         "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
