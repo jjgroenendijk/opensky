@@ -75,7 +75,7 @@ nonisolated public struct PackageDetails: Equatable, Sendable {
 
     public internal(set) var idleAnimations: IdleAnimations?
     /// CNAM in the header — combat style.
-    var combatStyle: FormID?
+    public internal(set) var combatStyle: FormID?
     /// QNAM in the header — the quest that owns the package.
     public internal(set) var ownerQuest: FormID?
     public internal(set) var branches: [Branch] = []

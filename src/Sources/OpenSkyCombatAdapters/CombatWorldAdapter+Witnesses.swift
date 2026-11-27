@@ -177,7 +177,7 @@ extension CombatWorldAdapter {
     }
 
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
-        actorFacts.combatStyle(of: key)
+        actorFacts.combatStyle(of: key, packageStyle: motion.packageCombatStyle(of: key))
     }
 
     public func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {

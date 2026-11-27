@@ -211,3 +211,10 @@ extension CombatMotionAdapter {
         }
     }
 }
+
+extension CombatMotionAdapter {
+    /// The running package's `CNAM`, which overrides the actor's own combat style.
+    public func packageCombatStyle(of key: ReferenceKey) -> FormID? {
+        game.packages.runtime?.currentPackage(for: key)?.package.details.combatStyle
+    }
+}
