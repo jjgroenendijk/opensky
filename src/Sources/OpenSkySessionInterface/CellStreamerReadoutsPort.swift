@@ -17,5 +17,9 @@ public protocol CellStreamerReadoutsPort: AnyObject {
     var residentReferenceCount: Int { get }
     var cachedAssetCounts: CachedAssetCounts? { get }
     func findPath(_ query: NavigationPathQuery) -> NavigationPathResult
+    /// Points on the resident navmesh within `radius` of `point`, nearest first.
+    func navmeshSpots(
+        near point: SIMD3<Float>, within radius: Float, largeActor: Bool
+    ) -> [SIMD3<Float>]
     var largeReferenceCount: Int { get }
 }

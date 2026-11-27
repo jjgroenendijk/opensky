@@ -71,6 +71,8 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var cachedAssetCounts: CachedAssetCounts?
     public var findPathCalls: [NavigationPathQuery] = []
     public var findPathResult: NavigationPathResult?
+    public var navmeshSpotsCalls: [NavmeshSpotsCall] = []
+    public var navmeshSpotsResult: [SIMD3<Float>] = []
     public var largeReferenceCount = 0
     public var referenceEntryFormIDCalls: [FormID] = []
     public var referenceEntryFormIDResult: RuntimeReferenceEntry?
@@ -82,6 +84,22 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
     public var activateChildrenResult: [ActivateChild] = []
 
     public init() {}
+}
+
+extension FakeCellStreamerPort {
+    nonisolated public struct NavmeshSpotsCall: CustomStringConvertible {
+        public let point: SIMD3<Float>
+        public let radius: Float
+        public let largeActor: Bool
+
+        public var description: String {
+            [
+                "point: " + String(describing: point),
+                "radius: " + String(describing: radius),
+                "largeActor: " + String(describing: largeActor)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeCellStreamerPort {
@@ -155,6 +173,17 @@ nonisolated extension FakeCellStreamerPort {
             preconditionFailure("FakeCellStreamerPort.findPath has no result")
         }
         return findPathResult
+    }
+
+    public func navmeshSpots(
+        near point: SIMD3<Float>, within radius: Float, largeActor: Bool
+    ) -> [SIMD3<Float>] {
+        navmeshSpotsCalls.append(NavmeshSpotsCall(
+            point: point,
+            radius: radius,
+            largeActor: largeActor
+        ))
+        return navmeshSpotsResult
     }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {

@@ -95,6 +95,13 @@ struct DistantLODStreamerTests {
         )
     }
 
+    @Test func aStreamerWithNoNavmeshFindsNoSpots() {
+        let streamer = CellStreamer(
+            center: Self.center, radius: 1, runner: LODManualRunner()
+        ) { _, _ in }
+        #expect(streamer.navmeshSpots(near: .zero, within: 64, largeActor: false).isEmpty)
+    }
+
     @Test func thePrebuiltFirstRingStartsWithTheGridAndIsNotBuiltTwice() {
         let runner = LODManualRunner()
         runner.prebuilds = true

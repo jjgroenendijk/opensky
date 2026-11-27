@@ -62,6 +62,28 @@ struct MagicSummonedActorsTests {
         #expect(spawn.placement.position.x == 256)
     }
 
+    /// With a navmesh ahead, a self-cast summon stands on its nearest free spot that the
+    /// caster can path to.
+    @Test func aSelfCastSummonStandsOnTheNearestFreeNavmeshSpot() throws {
+        host.fakeGameSession = FakeGameSessionPort()
+        host.fakeStreamer.currentCellLocation = Self.cell
+        host.fakeWorldState.allocateGeneratedKeyResult = .generated(9)
+        host.fakeCombat.meleeAttacker = MeleeAttacker(key: .player, feet: .zero, facing: 0)
+        host.fakeStreamer.navmeshSpotsResult = [SIMD3(180, 20, 0)]
+        host.fakeStreamer.findPathResult = .path(NavigationPath(
+            waypoints: [SIMD3(180, 20, 0)], doorCrossings: [],
+            stats: NavigationPathStats(nodesExpanded: 0, corridorTriangleCount: 0),
+            corridor: [], cellSequences: [:], target: SIMD3(180, 20, 0)
+        ))
+        #expect(adapter.summonActor(FormID(0x30), at: .ahead(searchRadius: 512), for: .player)
+            == .generated(9))
+        let spawn = try #require(host.fakeWorldState.setCalls.compactMap {
+            $0.component as? ReferenceSpawnState
+        }.first)
+        #expect(spawn.placement.position == SIMD3(180, 20, 0))
+        #expect(host.fakeStreamer.findPathCalls.first?.largeActor == false)
+    }
+
     @Test func thePlayersAllyIsCalmAndCommanded() {
         adapter.commandActor(Self.actor, for: .player)
         #expect(loop.setHostilityCalls.map(\.hostility) == [.neutral])

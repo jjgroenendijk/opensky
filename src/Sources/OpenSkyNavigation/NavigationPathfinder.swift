@@ -86,11 +86,13 @@ nonisolated extension RuntimeNavigationGraph {
         ) -> NavigationPathResult {
             guard
                 case let .hit(start) = graph.projection(
-                    of: query.start, searchRadius: query.projectionRadius
+                    of: query.start, searchRadius: query.projectionRadius,
+                    largeActor: query.largeActor
                 ) else { return .miss(.startProjection) }
             guard
                 case let .hit(target) = graph.projection(
-                    of: query.target, searchRadius: query.projectionRadius
+                    of: query.target, searchRadius: query.projectionRadius,
+                    largeActor: query.largeActor
                 ) else { return .miss(.targetProjection) }
 
             scratch.reset()
@@ -113,19 +115,23 @@ nonisolated extension RuntimeNavigationGraph {
                         scratch: &scratch
                     )
                 }
-                expand(entry.node, target: target.triangle, graph: graph, scratch: &scratch)
+                expand(
+                    entry.node, toward: (target.triangle, query.largeActor),
+                    graph: graph, scratch: &scratch
+                )
             }
             return .miss(.disconnected)
         }
 
         private static func expand(
             _ node: NavigationTriangleID,
-            target: NavigationTriangleID,
+            toward goal: (target: NavigationTriangleID, largeActor: Bool),
             graph: RuntimeNavigationGraph,
             scratch: inout NavigationQueryScratch
         ) {
+            let (target, largeActor) = goal
             guard let baseCost = scratch.costs[node] else { return }
-            graph.transitions(from: node, into: &scratch.transitions)
+            graph.transitions(from: node, largeActor: largeActor, into: &scratch.transitions)
             for transition in scratch.transitions
                 where !scratch.closed.contains(transition.target)
             {
@@ -264,6 +270,7 @@ nonisolated extension RuntimeNavigationGraph {
 
     func transitions(
         from node: NavigationTriangleID,
+        largeActor: Bool = false,
         into result: inout [NavigationTransition]
     ) {
         result.removeAll(keepingCapacity: true)
@@ -291,8 +298,7 @@ nonisolated extension RuntimeNavigationGraph {
             }
             guard
                 let targetTriangle = self.triangle(target),
-                !targetTriangle.isDegenerate,
-                !targetTriangle.flags.contains(.deleted)
+                targetTriangle.isWalkable(largeActor: largeActor)
             else { continue }
             let edgeVertices = Self.edge(edge, of: triangle)
             if isLedge {
@@ -329,8 +335,7 @@ nonisolated extension RuntimeNavigationGraph {
             for target in triangles(atDoor: destination) {
                 guard
                     target != node, let targetTriangle = triangle(target),
-                    !targetTriangle.isDegenerate,
-                    !targetTriangle.flags.contains(.deleted)
+                    targetTriangle.isWalkable(largeActor: false)
                 else { continue }
                 result.append(NavigationTransition(
                     target: target,

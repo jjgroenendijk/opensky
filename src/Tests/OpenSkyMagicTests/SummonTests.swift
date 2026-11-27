@@ -144,4 +144,21 @@ struct SummonTests {
         #expect(abs(point.y - 306) < 1e-3)
         #expect(point.z == 10)
     }
+
+    /// The search takes the spot nearest the aim that is in reach, clear, and reachable.
+    @Test func aSelfCastSummonTakesTheNearestFreeReachableSpot() {
+        let spots: [SIMD3<Float>] = [SIMD3(300, 0, 0), SIMD3(200, 0, 0), SIMD3(100, 0, 0)]
+        let spot = SummonAim.freeSpot(
+            among: spots, from: .zero, reach: 250,
+            accepts: { $0.x != 200 }
+        )
+        #expect(spot == SIMD3(100, 0, 0))
+        #expect(SummonAim.freeSpot(
+            among: spots, from: .zero, reach: 250, accepts: { _ in false }
+        ) == nil)
+        #expect(SummonAim.searchReach(casterRadius: 20, summonRadius: 30, searchRadius: 512)
+            == 562)
+        #expect(SummonAim.usesLargeActorPathing(summonRadius: 90, largeActorRadius: 80))
+        #expect(!SummonAim.usesLargeActorPathing(summonRadius: 80, largeActorRadius: 80))
+    }
 }

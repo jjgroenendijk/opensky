@@ -58,8 +58,11 @@ extension MagicSummonedActorsAdapter {
         else { return nil }
         let position = switch aim {
         case let .point(point): point
-        case let .ahead(searchRadius):
-            ahead(of: caster, at: origin, base: base, searchRadius: searchRadius)
+        case let .ahead(searchRadius, largeActorRadius):
+            ahead(
+                of: caster, at: origin, base: base,
+                radii: (search: searchRadius, largeActor: largeActorRadius)
+            )
         }
         let toward = origin - position
         let heading = simd_length(toward) > 1 ? atan2(toward.x, toward.y) : 0
@@ -117,21 +120,55 @@ extension MagicSummonedActorsAdapter {
         game.combat.combatActor(key: key)?.isDead ?? false
     }
 
-    /// Room in front of a self-cast summon's caster, stopped short of the first wall
-    /// a cylinder of the summon's radius meets on the way.
+    /// The nearest free navmesh spot to the aim point in front of a self-cast summon's
+    /// caster. Without a navmesh there, the summon stops short of the first wall a
+    /// sphere of its radius meets on the way.
     private func ahead(
-        of caster: ReferenceKey, at feet: SIMD3<Float>, base: FormID, searchRadius: Float
+        of caster: ReferenceKey, at feet: SIMD3<Float>, base: FormID,
+        radii: (search: Float, largeActor: Float)
     ) -> SIMD3<Float> {
         let summonRadius = game.actorValues.runtime?.baselines
             .baseline(for: .actor(base: base)).footprintRadius ?? 0
+        let casterRadius = footprintRadius(of: caster)
         let reach = SummonAim.reach(
-            casterRadius: footprintRadius(of: caster), summonRadius: summonRadius,
-            searchRadius: searchRadius
+            casterRadius: casterRadius, summonRadius: summonRadius, searchRadius: radii.search
         )
         let aim = SummonAim.aheadPoint(feet: feet, yaw: yaw(of: caster), reach: reach)
+        let large = SummonAim.usesLargeActorPathing(
+            summonRadius: summonRadius, largeActorRadius: radii.largeActor
+        )
+        let searchReach = SummonAim.searchReach(
+            casterRadius: casterRadius, summonRadius: summonRadius, searchRadius: radii.search
+        )
+        let spots = game.streamer.navmeshSpots(near: aim, within: searchReach, largeActor: large)
+        if let spot = SummonAim.freeSpot(
+            among: spots, from: feet, reach: searchReach,
+            accepts: { spot in
+                guard hasClearance(spot, radius: summonRadius) else { return false }
+                let query = NavigationPathQuery(
+                    start: feet, target: spot, capsuleRadius: summonRadius, largeActor: large
+                )
+                if case .path = game.streamer.findPath(query) {
+                    return true
+                }
+                return false
+            }
+        ) {
+            return spot
+        }
         return SummonAim.standingPoint(from: feet, toward: aim, summonRadius: summonRadius) {
             game.combatWorld.freeDistance(of: $0, radius: $1, along: $2, upTo: $3)
         }
+    }
+
+    /// No wall within `radius` of the spot, tested by a short upward sweep of a sphere
+    /// of that radius resting on the spot.
+    private func hasClearance(_ spot: SIMD3<Float>, radius: Float) -> Bool {
+        let radius = max(radius, 1)
+        let center = spot + SIMD3(0, 0, radius + 1)
+        return game.combatWorld.freeDistance(
+            of: center, radius: radius, along: SIMD3(0, 0, 1), upTo: 1
+        ) == nil
     }
 
     private func yaw(of key: ReferenceKey) -> Float {

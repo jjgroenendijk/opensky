@@ -61,7 +61,7 @@ nonisolated public struct NavmeshGeometry: Sendable {
         public static let edge12Link = TriangleFlags(rawValue: 1 << 1)
         public static let edge20Link = TriangleFlags(rawValue: 1 << 2)
         public static let deleted = TriangleFlags(rawValue: 1 << 3)
-        static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
+        public static let noLargeCreatures = TriangleFlags(rawValue: 1 << 4)
         static let overlapping = TriangleFlags(rawValue: 1 << 5)
         static let preferred = TriangleFlags(rawValue: 1 << 6)
         public static let water = TriangleFlags(rawValue: 1 << 9)
