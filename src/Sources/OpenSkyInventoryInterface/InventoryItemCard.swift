@@ -27,6 +27,8 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     public let hotkey: Int?
     public let isFavourite: Bool
     public var isQuestItem = false
+    /// A book's description line, or nil.
+    public var description: String?
 
     public init(
         layout: Layout = .misc,
