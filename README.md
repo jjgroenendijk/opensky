@@ -30,7 +30,7 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-11-26 by `make rank-gaps`.
+Measured on 2026-11-27 by `make rank-gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
@@ -38,10 +38,10 @@ Measured on 2026-11-26 by `make rank-gaps`.
 | Papyrus events | 68 | 0 | 68 | 100% |
 | Condition functions | 258 | 0 | 258 | 100% |
 | Record types | 120 | 0 | 120 | 100% |
-| Record fields | 1575 | 451 | 2026 | 77% |
-| Record flag bits | 203 | 141 | 344 | 59% |
-| Record enum values | 112 | 38 | 150 | 74% |
-| Game settings | 1628 | 20 | 1648 | 98% |
+| Record fields | 1758 | 254 | 2012 | 87% |
+| Record flag bits | 238 | 117 | 355 | 67% |
+| Record enum values | 120 | 23 | 143 | 83% |
+| Game settings | 1642 | 6 | 1648 | 99% |
 | Shallow Papyrus natives | 263 | 11 | 274 | 95% |
 | Shallow condition functions | 183 | 0 | 183 | 100% |
 | Shallow perk functions | 5 | 0 | 5 | 100% |
