@@ -114,6 +114,17 @@ nonisolated public struct StaticCollisionSet: Sendable {
         stats: StaticCollisionStats()
     )
 
+    /// The same set with more shapes, such as solid primitives placed after the models.
+    public func adding(_ extra: [StaticCollisionShape]) -> Self {
+        guard !extra.isEmpty else { return self }
+        var stats = stats
+        stats.shapeCount += extra.count
+        return Self(
+            location: location, shapes: shapes + extra, stats: stats,
+            buildDurationMS: buildDurationMS
+        )
+    }
+
     var indexNodeCount: Int {
         index.nodeCount
     }

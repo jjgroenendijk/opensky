@@ -27,8 +27,8 @@ nonisolated public struct TriggerVolumeStats: Equatable, Sendable {
     public var meshVolumeCount = 0
     /// Volumes contributed by an `XPRM` box or sphere primitive.
     public var primitiveVolumeCount = 0
-    /// `XPRM` primitives deliberately not made volumes: `none`, `portalBox`
-    /// and `line` (see docs/engine/trigger-volumes.md).
+    /// `XPRM` primitives deliberately not made volumes: `none`, `portalBox`, `line`,
+    /// and those on a non-trigger `XTRI` layer (docs/engine/trigger-volumes.md).
     public var excludedPrimitiveCount = 0
     /// Trigger sources whose geometry produced no finite world bounds.
     public var degenerateVolumeCount = 0

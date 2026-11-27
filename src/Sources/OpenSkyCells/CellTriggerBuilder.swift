@@ -60,7 +60,7 @@ nonisolated extension CellSceneBuilder.CellTriggerBuilder {
                 refs: resolved.references
             )
             return CellCollisionBuild(
-                staticCollision: doors.fixed,
+                staticCollision: doors.fixed.adding(solidPrimitives(refs: resolved.references)),
                 triggerVolumes: buildTriggerVolumes(
                     refs: resolved.references, entries: resolved.entries, location: location
                 ),
@@ -103,11 +103,15 @@ nonisolated extension CellSceneBuilder.CellTriggerBuilder {
         keys: [FormID: ReferenceKey],
         stats: inout TriggerVolumeStats
     ) -> [TriggerVolume] {
+        let roles = owner.modelIndex.collisionLayerRolesBuildingIfNeeded()
         var volumes: [TriggerVolume] = []
         for ref in refs {
             guard let primitive = ref.primitive else { continue }
             // A room marker's box is occlusion data, like a portal box.
-            guard ref.details.room == nil, let geometry = Self.triggerGeometry(of: primitive) else {
+            guard
+                ref.details.room == nil, let geometry = Self.triggerGeometry(of: primitive),
+                roles.role(ofLayer: ref.details.collisionLayer) == .trigger
+            else {
                 stats.excludedPrimitiveCount += 1
                 continue
             }
@@ -133,6 +137,26 @@ nonisolated extension CellSceneBuilder.CellTriggerBuilder {
             stats.primitiveVolumeCount += 1
         }
         return volumes
+    }
+
+    /// Boxes and spheres whose `XTRI` layer blocks actors, placed as static collision.
+    nonisolated func solidPrimitives(refs: [PlacedReference]) -> [StaticCollisionShape] {
+        let roles = owner.modelIndex.collisionLayerRolesBuildingIfNeeded()
+        return refs.flatMap { ref -> [StaticCollisionShape] in
+            guard
+                let primitive = ref.primitive, ref.details.room == nil,
+                roles.role(ofLayer: ref.details.collisionLayer) == .solid,
+                let geometry = Self.triggerGeometry(of: primitive)
+            else { return [] }
+            return StaticCollisionShape.placed(
+                reference: ref.formID,
+                transform: MatrixMath.placement(
+                    position: ref.placement.position, rotation: ref.placement.rotation,
+                    scale: ref.scale
+                ),
+                geometry: geometry
+            )
+        }
     }
 
     /// The geometry an `XPRM` primitive stands for. Only `box` and `sphere` are

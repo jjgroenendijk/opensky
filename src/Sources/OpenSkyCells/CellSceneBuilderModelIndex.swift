@@ -111,6 +111,17 @@ nonisolated extension CellSceneBuilder.CellModelIndex {
         return index
     }
 
+    nonisolated func collisionLayerRolesBuildingIfNeeded() -> CollisionLayerRoles {
+        if let roles = owner.collisionLayerRoles {
+            return roles
+        }
+        let loadOrder = owner.recordIndex.loadOrderIndexBuildingIfNeeded().loadOrder
+        let roles = owner.loadPhases
+            .measure(.recordIndex) { CollisionLayerRoles(loadOrder: loadOrder) }
+        owner.collisionLayerRoles = roles
+        return roles
+    }
+
     nonisolated public func resolveBase(
         formID: UInt32,
         statIndex: [UInt32: StaticObject],

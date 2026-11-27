@@ -82,6 +82,38 @@ struct CollisionLayerTests {
         #expect(store.collisionLayer(for: projectile, fromPlugin: "Patch.esp")?.id == staticID)
     }
 
+    /// `XTRI` layers: flag 0x01 is a trigger, a layer the character layer (index 30)
+    /// collides with is solid, and the rest are neither.
+    @Test func layerRolesFollowTheTriggerFlagAndTheCharacterLayer() throws {
+        func layer(_ formID: UInt32, index: UInt32, flags: UInt32, links: [UInt32] = []) throws
+            -> CollisionLayer
+        {
+            var bnam = Data()
+            bnam.appendUInt32(index)
+            var gnam = Data()
+            gnam.appendUInt32(flags)
+            var cnam = Data()
+            links.forEach { cnam.appendUInt32($0) }
+            let data = ESMFixture.field("BNAM", bnam) + ESMFixture.field("GNAM", gnam)
+                + (links.isEmpty ? Data() : ESMFixture.field("CNAM", cnam))
+            let record = try ESMFixture.parseRecord(
+                ESMFixture.record("COLL", formID: formID, data: data)
+            )
+            return try CollisionLayer(record: record, localized: false)
+        }
+        let roles = try CollisionLayerRoles(layers: [
+            layer(0x30, index: 30, flags: 0, links: [0x01, 0x16]),
+            layer(0x01, index: 1, flags: 0),
+            layer(0x16, index: 22, flags: 0x01),
+            layer(0x31, index: 49, flags: 0)
+        ])
+        #expect(roles.role(ofLayer: nil) == .trigger)
+        #expect(roles.role(ofLayer: 22) == .trigger)
+        #expect(roles.role(ofLayer: 1) == .solid)
+        #expect(roles.role(ofLayer: 49) == .neither)
+        #expect(CollisionLayerRoles.empty.role(ofLayer: 49) == .trigger)
+    }
+
     private func fields(editorID: String, links: [UInt32] = [1, 2]) -> Data {
         var scalar = Data()
         scalar.appendUInt32(7)
