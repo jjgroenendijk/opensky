@@ -45,6 +45,11 @@ extension CombatShared {
             {
                 strike.attackDamageMultiplier = mult
             }
+            if
+                let data = shared.world.attackData(of: blow.attacker, event: blow.kind.attackEvent)
+            {
+                strike.attackDataMultiplier = data.damageMultiplier
+            }
             shared.perks.applyPerkTerms(to: &strike, blow: blow, on: target)
             return strike
         }
@@ -129,7 +134,8 @@ extension CombatShared {
         ) -> HitReactionFacts {
             let world = shared.world
             var facts = HitReactionFacts()
-            facts.attackStagger = world.attackStagger(of: attacker, event: event) ?? weaponStagger
+            facts.attackStagger = world.attackData(of: attacker, event: event)?.stagger
+                ?? weaponStagger
             facts.attackerBlock = combatBlockSkill(of: attacker)
             facts.targetMass = ActorValueIdentity.index(named: "Mass")
                 .flatMap { world.actorValues(of: target)?($0) } ?? 1

@@ -40,7 +40,7 @@ extension MeleeCombatRuntime {
         case let .tapped(kind):
             start(kind, direction: direction, world: world)
         case let .held(kind):
-            if pay(for: kind, world: world) {
+            if pay(for: kind, direction: direction, world: world) {
                 start(kind, direction: direction, world: world)
             } else {
                 start(kind.isBash ? .bash : .normal, direction: direction, world: world)
@@ -94,7 +94,12 @@ extension MeleeCombatRuntime {
     private func start(
         _ kind: MeleeStrikeKind, direction: MeleePowerDirection, world: any MeleeCombatWorld
     ) {
-        if kind == .bash, !world.payMeleeStamina(powerAttacks.bashStamina) {
+        if
+            kind == .bash,
+            !world.payMeleeStamina(
+                powerAttacks.bashStamina * staminaMultiplier(kind, direction, world)
+            )
+        {
             return
         }
         strikeKind = kind
@@ -112,19 +117,32 @@ extension MeleeCombatRuntime {
 
     /// UESP "Skyrim:Combat": with less than one point of stamina a held press
     /// plays the plain attack instead. A power bash also needs the Power Bash perk.
-    private func pay(for kind: MeleeStrikeKind, world: any MeleeCombatWorld) -> Bool {
-        switch kind {
+    private func pay(
+        for kind: MeleeStrikeKind, direction: MeleePowerDirection, world: any MeleeCombatWorld
+    ) -> Bool {
+        let multiplier = staminaMultiplier(kind, direction, world)
+        return switch kind {
         case .power:
             world.payMeleeStamina(strikeWeapons(for: pendingHand).reduce(0) { cost, swung in
                 cost + world.meleePowerAttackStamina(
                     powerAttacks.powerAttackStamina(weight: swung.weight), weapon: swung.weapon
                 )
-            })
+            } * multiplier)
         case .powerBash:
-            world.canPowerBash() && world.payMeleeStamina(powerAttacks.powerBashStamina)
+            world.canPowerBash()
+                && world.payMeleeStamina(powerAttacks.powerBashStamina * multiplier)
         case .normal, .bash:
             true
         }
+    }
+
+    /// The `ATKD` stamina multiplier of the attack `kind` starts, 1 without attack data.
+    private func staminaMultiplier(
+        _ kind: MeleeStrikeKind, _ direction: MeleePowerDirection, _ world: any MeleeCombatWorld
+    ) -> Float {
+        let multiplier = world.meleeAttackData(event: startEvent(kind, direction: direction))?
+            .staminaMultiplier ?? 1
+        return multiplier.isFinite ? max(0, multiplier) : 1
     }
 }
 

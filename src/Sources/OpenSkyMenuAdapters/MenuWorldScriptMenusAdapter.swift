@@ -137,6 +137,18 @@ extension MenuWorldScriptMenusAdapter {
         return base.flatMap { recordFlags(ofBase: leveledBase(of: actor, base: $0) ?? $0) }
     }
 
+    /// The `ATKD` attacks the actor uses while its race is `race`.
+    public func attacks(of actor: ReferenceKey, race: FormID?) -> [RaceAttack] {
+        let base = actor == .player
+            ? MenuRecordData.playerBase : game.scripts.bridge?.baseObject(of: actor)
+        guard let base, let resolver = game.menuRecords?.actorValueBaselines?.resolver
+        else { return [] }
+        let roll = game.worldState.leveledRoll(
+            of: actor, base: base, with: resolver.templates.leveling
+        )
+        return resolver.rolling(roll).attacks(base: base, race: race)
+    }
+
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
         guard let templates = game.menuRecords?.actorValueBaselines?.resolver?.templates
         else { return base }

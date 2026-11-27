@@ -46,12 +46,12 @@ nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     var shortName: LString?
     var keywords: [FormID] = []
     public var inventory: [ContainerEntry] = []
-    var attacks: [RaceAttack] = []
+    public var attacks: [RaceAttack] = []
     var destructible: Destructible?
     /// INAM LVLI, ANAM ARMO, ATKR RACE, ZNAM CSTY, GNAM FLST, HCLF CLFM.
     public var deathItem: FormID?
     var farAwayModel: FormID?
-    var attackRace: FormID?
+    public var attackRace: FormID?
     public var combatStyle: FormID?
     public var giftFilter: FormID?
     public var hairColor: FormID?

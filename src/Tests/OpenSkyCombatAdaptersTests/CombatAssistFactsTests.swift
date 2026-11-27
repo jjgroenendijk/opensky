@@ -31,6 +31,6 @@ struct CombatAssistFactsTests {
         #expect(adapter.playerMount == nil)
         host.fakeMountWorld.riddenMount = Self.foe
         #expect(adapter.playerMount == Self.foe)
-        #expect(adapter.attackStagger(of: Self.foe, event: "attackStart") == nil)
+        #expect(adapter.attackData(of: Self.foe, event: "attackStart") == nil)
     }
 }

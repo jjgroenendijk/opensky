@@ -86,6 +86,10 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
         shared.perks.powerAttackStamina(cost, weapon: weapon)
     }
 
+    func meleeAttackData(event: String) -> RaceAttack.Properties? {
+        shared.world.attackData(of: .player, event: event)
+    }
+
     func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
         shared.strikes.applyBlockStamina(damage, to: blocker)
     }

@@ -20,6 +20,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     var perkMultiplier: Float = 1
     /// The attacker's `Attack Damage Mult` actor value, which scales weapons, fists, and bashes.
     public var attackDamageMultiplier: Float = 1
+    /// The attack's `ATKD` damage multiplier (docs/engine/attack-data.md).
+    public var attackDataMultiplier: Float = 1
     /// What `Calculate Weapon Damage` adds to the base damage.
     public var weaponDamageBonus: Float = 0
     /// The critical damage, added after every factor. Tempering does not raise it.
@@ -52,7 +54,7 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public var factor: Float {
         let terms = [
             skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier, perkMultiplier,
-            attackDamageMultiplier
+            attackDamageMultiplier, attackDataMultiplier
         ]
         return terms.reduce(1) { $0 * ($1.isFinite ? max(0, $1) : 1) }
     }

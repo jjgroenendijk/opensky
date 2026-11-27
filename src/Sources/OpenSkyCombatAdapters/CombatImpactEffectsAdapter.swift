@@ -46,32 +46,14 @@ extension CombatImpactEffectsAdapter {
     }
 
     /// The race's `NAM4`, so a blade on flesh finds the blood impact.
-    /// `actor`'s race attack spells, or those of its `ATKR` race when it has none.
+    /// The spells of `actor`'s attacks, in list order, such as a creature's disease.
     public func attackSpells(of actor: ReferenceKey) -> [FormID] {
-        guard
-            let race = game.menuWorld.race(of: actor),
-            let races = game.combatRecords?.actorValueBaselines?.resolver?.races,
-            let details = races[race.rawValue]?.details
-        else { return [] }
-        guard details.attackSpells.isEmpty, let other = details.attackRace else {
-            return details.attackSpells
-        }
-        return races[other.rawValue]?.details.attackSpells ?? []
+        game.menuWorld.attacks(of: actor).compactMap { $0.properties?.spell }
     }
 
-    /// The stagger of the race attack that `event` starts, from the `ATKR` race when
-    /// the actor's own race has no attacks.
-    public func attackStagger(of actor: ReferenceKey, event: String) -> Float? {
-        guard
-            let race = game.menuWorld.race(of: actor),
-            let races = game.combatRecords?.actorValueBaselines?.resolver?.races,
-            let details = races[race.rawValue]?.details
-        else { return nil }
-        if let stagger = details.attackStagger(event: event) {
-            return stagger
-        }
-        return details.attackRace
-            .flatMap { races[$0.rawValue]?.details.attackStagger(event: event) }
+    /// The `ATKD` values of the attack `event` starts on `actor`.
+    public func attackData(of actor: ReferenceKey, event: String) -> RaceAttack.Properties? {
+        ActorAttackList.attack(game.menuWorld.attacks(of: actor), event: event)
     }
 
     public func impactMaterial(of actor: ReferenceKey) -> FormID? {

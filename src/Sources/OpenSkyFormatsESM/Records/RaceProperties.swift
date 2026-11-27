@@ -86,30 +86,49 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     }
 }
 
-/// ATKD plus its ATKE event.
-nonisolated struct RaceAttack: Equatable, Sendable {
-    nonisolated struct Properties: Equatable, Sendable {
-        let damageMultiplier: Float
-        let attackChance: Float
+/// ATKD plus its ATKE event. What each value does: docs/engine/attack-data.md.
+nonisolated public struct RaceAttack: Equatable, Sendable {
+    nonisolated public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let ignoreWeapon = Flags(rawValue: 0x1)
+        public static let bash = Flags(rawValue: 0x2)
+        public static let powerAttack = Flags(rawValue: 0x4)
+        public static let leftHand = Flags(rawValue: 0x8)
+        /// The hit test does not turn the cone by the attack angle.
+        public static let rotating = Flags(rawValue: 0x10)
+        public static let overrideData = Flags(rawValue: 0x8000_0000)
+    }
+
+    nonisolated public struct Properties: Equatable, Sendable {
+        public var damageMultiplier: Float = 1
+        public var attackChance: Float = 1
         /// A SPEL or SHOU.
-        let spell: FormID?
-        /// 0x01 ignore weapon, 0x02 bash, 0x04 power, 0x08 left, 0x10 rotating,
-        /// 0x80000000 override.
-        let flags: UInt32
-        let attackAngle: Float
-        let strikeAngle: Float
-        let stagger: Float
+        public var spell: FormID?
+        public var flags: Flags = []
+        /// Degrees added to the heading before the hit cone test.
+        public var attackAngle: Float = 0
+        /// The hit cone's half-angle in degrees.
+        public var strikeAngle: Float = 35
+        public var stagger: Float = 0
         /// A KYWD.
-        let attackType: FormID?
-        let knockdown: Float
-        let recoveryTime: Float
-        let staminaMultiplier: Float
+        public var attackType: FormID?
+        public var knockdown: Float = 0
+        /// Seconds before the AI picks this attack again.
+        public var recoveryTime: Float = 0
+        public var staminaMultiplier: Float = 1
+
+        public init() {}
 
         init(_ reader: inout BinaryReader) throws {
             damageMultiplier = try reader.readFloat32()
             attackChance = try reader.readFloat32()
             spell = try reader.readFormID().nonNull
-            flags = try reader.readUInt32()
+            flags = try Flags(rawValue: reader.readUInt32())
             attackAngle = try reader.readFloat32()
             strikeAngle = try reader.readFloat32()
             stagger = try reader.readFloat32()
@@ -120,9 +139,19 @@ nonisolated struct RaceAttack: Equatable, Sendable {
         }
     }
 
-    var properties: Properties?
+    public var properties: Properties?
     /// ATKE, the animation event that starts the attack.
-    var event: String?
+    public var event: String?
+
+    public init(properties: Properties? = nil, event: String? = nil) {
+        self.properties = properties
+        self.event = event
+    }
+
+    /// Whether this attack starts with `name`, compared without case as the graph does.
+    public func starts(with name: String) -> Bool {
+        event?.caseInsensitiveCompare(name) == .orderedSame
+    }
 }
 
 /// MTYP plus its optional SPED speed overrides.
