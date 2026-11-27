@@ -29,8 +29,24 @@ struct VisualRecordTests {
         #expect(space.tint?.color == SIMD3(1, 0, 0))
         #expect(space.depthOfField?.range == 200)
         #expect(space.depthOfField?.skyBlurRadius == (size == 16 ? 300 : nil))
-        #expect(space.legacyData?.count == 14)
         #expect(space.skipped.isEmpty)
+    }
+
+    @Test func olderImageSpaceBlockOverridesEarlierFields() throws {
+        let older: [Float] = [1, 2, 3, 4, 5, 6, 7, 0.8, 0.9, 1.1, 0.2, 0, 1, 0]
+        let space = try ImageSpace(record: Fixture.record("IMGS", fields: [
+            ("HNAM", Fixture.f32(9, 9, 9, 9, 9, 9, 9, 9, 0.7)),
+            ("ENAM", Fixture.f32(older)),
+            ("CNAM", Fixture.f32(1, 1.2, 0.9))
+        ]))
+        #expect(space.hdr?.bloomScale == 4)
+        #expect(space.hdr?.receiveBloomThreshold == 5)
+        #expect(space.hdr?.white == 5)
+        #expect(space.hdr?.skyScale == 7)
+        #expect(space.hdr?.eyeAdaptStrength == 0.7)
+        #expect(space.cinematic?.brightness == 1.2)
+        #expect(space.tint?.amount == 0.2)
+        #expect(space.tint?.color == SIMD3(0, 1, 0))
     }
 
     @Test func decodesImageSpaceAdapterEnvelopesAndTalliesCountMismatch() throws {
