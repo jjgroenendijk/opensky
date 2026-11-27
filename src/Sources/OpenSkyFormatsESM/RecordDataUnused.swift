@@ -78,6 +78,7 @@ nonisolated public enum RecordDataUnused: Sendable {
         ],
         .layout: [
             "CameraShot.dataSize",
+            "PlacedReferenceDetails.Room.flags",
             "WorldspaceDetails.offsets",
             "PlacedReferenceDetails.Patrol.hasScriptMarker",
             "ScriptData.objectFormat",
