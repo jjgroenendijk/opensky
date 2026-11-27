@@ -128,7 +128,7 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     var charge: Float?
     var patrols: [Patrol] = []
     /// XACT: 0x01 use default, 0x02 activate, 0x04 open, 0x08 open by default.
-    var actionFlags: UInt32?
+    public var actionFlags: UInt32?
     /// XHTW.
     var headTrackingWeight: Float?
     /// XFVC.
