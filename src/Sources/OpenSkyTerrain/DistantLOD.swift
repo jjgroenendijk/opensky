@@ -60,11 +60,14 @@ nonisolated public enum DistantLODSelection: Sendable {
         settings: LODSettings,
         configuration: TerrainLODConfiguration = .fallback,
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        distanceMultiplier: Float = 1
     ) -> [DistantLODBlock] {
         let name = worldspace.lowercased()
         var blocks: [DistantLODBlock] = []
-        for radii in bands(settings: settings, configuration: configuration) {
+        for radii in bands(
+            settings: settings, configuration: configuration, distanceMultiplier: distanceMultiplier
+        ) {
             let band = Band(
                 level: radii.level,
                 innerRadius: radii.innerRadius,
@@ -86,12 +89,17 @@ nonisolated public enum DistantLODSelection: Sendable {
     /// Maps world-unit INI thresholds onto every available LOD level. Skyrim
     /// exposes explicit L4, L8, and maximum thresholds. OpenSky splits the
     /// remaining L16/L32 interval at 2x L8; `fSplitDistanceMult` scales each split.
+    /// A worldspace's `NAMA` multiplies the squared L4 and L8 thresholds, so the
+    /// distances grow by its square root.
     public static func bands(
         settings: LODSettings,
-        configuration: TerrainLODConfiguration
+        configuration: TerrainLODConfiguration,
+        distanceMultiplier: Float = 1
     ) -> [DistantLODBand] {
         guard configuration.isValid else { return [] }
-        let split = configuration.splitDistanceMultiplier
+        let worldScale = distanceMultiplier.isFinite && distanceMultiplier > 0
+            ? distanceMultiplier.squareRoot() : 1
+        let split = configuration.splitDistanceMultiplier * worldScale
         let worldDistances = [
             configuration.level0Distance * split,
             configuration.level1Distance * split,
@@ -406,7 +414,8 @@ nonisolated public final class DistantLODBuilder {
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>,
         largeReferences: Bool = true,
-        terrain: any TerrainLODGenerating? = nil
+        terrain: any TerrainLODGenerating? = nil,
+        distanceMultiplier: Float = 1
     ) throws -> DistantLODScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
@@ -417,7 +426,8 @@ nonisolated public final class DistantLODBuilder {
             settings: settings,
             configuration: configuration,
             center: center,
-            hiddenCells: hiddenCells
+            hiddenCells: hiddenCells,
+            distanceMultiplier: distanceMultiplier
         )
         // The NIF decode fans out; the clip to the visible cells stays in the serial load.
         meshes.predecode(paths: selected.lazy.filter {
