@@ -2,7 +2,7 @@
 // sky statics, and the linked image spaces, precipitation and lighting.
 // Layout and sources: docs/formats/weather.md.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 
 /// Four values, one per time of day.
@@ -52,10 +52,6 @@ nonisolated public struct WeatherSky: Equatable, Sendable {
     let sunGlare: TimeOfDayValues<SIMD4<UInt8>>?
     let moonGlare: TimeOfDayValues<SIMD4<UInt8>>?
     public let auroraModel: ModelData?
-    /// DNAM, CNAM, ANAM, BNAM: textures of the older 4-layer cloud set.
-    let legacyCloudTextures: [String]
-    /// ONAM, the older 4-layer speeds. xEdit marks it unused.
-    let legacyCloudSpeeds: Data?
 
     init(_ fields: inout RecordFields) {
         maxCloudLayers = fields.uint32("LNAM")
@@ -70,8 +66,6 @@ nonisolated public struct WeatherSky: Equatable, Sendable {
         sunGlare = fields.read("NAM2") { try Self.byteColors(&$0) }
         moonGlare = fields.read("NAM3") { try Self.byteColors(&$0) }
         auroraModel = fields.model()
-        legacyCloudTextures = ["DNAM", "CNAM", "ANAM", "BNAM"].compactMap { fields.zstring($0) }
-        legacyCloudSpeeds = fields.bytes("ONAM")
         cloudLayers = Self.cloudLayers(&fields)
     }
 
@@ -87,13 +81,19 @@ nonisolated public struct WeatherSky: Equatable, Sendable {
         }
     }
 
+    /// Older names for the textures of layers 0 to 4; the later field wins.
+    private static let olderCloudTextures: [FourCC: Int] = [
+        "DNAM": 0, "CNAM": 1, "ANAM": 2, "BNAM": 3, "ENAM": 4
+    ]
+
     private static func cloudLayers(_ fields: inout RecordFields) -> [WeatherCloudLayer] {
         var layers = (0 ..< 32).map { WeatherCloudLayer(index: $0) }
         for index in fields.fields.indices where !fields.isUsed(at: index) {
-            guard let layer = cloudLayerIndex(fields.fields[index].type) else { continue }
+            let type = fields.fields[index].type
+            guard let layer = cloudLayerIndex(type) ?? olderCloudTextures[type] else { continue }
             layers[layer].texture = fields.read(at: index) { try $0.readZString() }
         }
-        let speedY = fields.read("RNAM") { try $0.read(count: $0.bytesRemaining) } ?? Data()
+        let speedY = cloudSpeeds(&fields)
         let speedX = fields.read("QNAM") { try $0.read(count: $0.bytesRemaining) } ?? Data()
         let colors = fields.read("PNAM") { try repeated(&$0, stride: 16, byteColors) } ?? []
         let alphas = fields.read("JNAM") { try repeated(&$0, stride: 16, floats) } ?? []
@@ -106,6 +106,28 @@ nonisolated public struct WeatherSky: Equatable, Sendable {
             layers[index].isDisabled = disabled & (1 << UInt32(index)) != 0
         }
         return layers
+    }
+
+    /// RNAM, or the older ONAM for layers 0 to 3 when it comes later: each
+    /// ONAM byte b is the RNAM speed b / 2 + 127 (docs/formats/weather.md).
+    private static func cloudSpeeds(_ fields: inout RecordFields) -> Data {
+        let order = fields.fields.map(\.type)
+        let older = fields.bytes("ONAM")
+        let speeds = fields.read("RNAM") { try $0.read(count: $0.bytesRemaining) }
+        guard let older else { return speeds ?? Data() }
+        if let speeds, order.lastIndex(of: "RNAM") ?? 0 > order.lastIndex(of: "ONAM") ?? 0 {
+            return speeds
+        }
+        var merged = speeds ?? Data()
+        for (layer, byte) in older.prefix(4).enumerated() {
+            let speed = UInt8(byte / 2 + 127)
+            if layer < merged.count {
+                merged[merged.startIndex + layer] = speed
+            } else {
+                merged.append(speed)
+            }
+        }
+        return merged
     }
 
     private static func repeated<Value>(
