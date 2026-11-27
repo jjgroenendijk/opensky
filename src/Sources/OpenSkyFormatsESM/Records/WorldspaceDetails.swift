@@ -84,7 +84,7 @@ nonisolated public struct WorldspaceDetails: Equatable, Sendable {
     public var map: WorldspaceMapData?
     var mapOffset: WorldspaceMapOffset?
     /// NAMA.
-    var distantLODMultiplier: Float?
+    public var distantLODMultiplier: Float?
     /// NAM0 and NAM9, in game units.
     var boundsMin: SIMD2<Float>?
     var boundsMax: SIMD2<Float>?

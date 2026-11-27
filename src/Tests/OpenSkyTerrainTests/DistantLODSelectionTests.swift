@@ -92,6 +92,23 @@ struct DistantLODSelectionTests {
         #expect(bands.map(\.outerRadius) == [5, 12, 24, 32])
     }
 
+    @Test func aWorldspaceMultiplierScalesTheSquaredSplits() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 12288,
+            level1Distance: 32768,
+            maximumDistance: 131_072,
+            treeLoadDistance: 65536
+        )
+        let near = try DistantLODSelection.bands(
+            settings: settings(), configuration: configuration, distanceMultiplier: 0.25
+        )
+        #expect(near.map(\.outerRadius) == [3, 4, 8, 32])
+        let plain = try DistantLODSelection.bands(
+            settings: settings(), configuration: configuration, distanceMultiplier: 0
+        )
+        #expect(plain.map(\.outerRadius) == [3, 8, 16, 32])
+    }
+
     @Test func aWiderLoadedGridPushesTheFirstBandOut() throws {
         let configuration = TerrainLODConfiguration(
             level0Distance: 12288,

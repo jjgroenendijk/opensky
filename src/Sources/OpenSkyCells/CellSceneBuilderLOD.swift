@@ -19,7 +19,8 @@ nonisolated extension CellSceneBuilder.CellDistantLODBuilder {
         guard let builder = owner.distantLODBuilder else { return nil }
         let built = try builder.build(
             worldspace: lodWorld, center: center, hiddenCells: hiddenCells,
-            terrain: owner.terrainBuilder.terrainLOD.loadOrderTerrainLOD(lodWorldspace: lodWorld)
+            terrain: owner.terrainBuilder.terrainLOD.loadOrderTerrainLOD(lodWorldspace: lodWorld),
+            distanceMultiplier: distantLODMultiplier(of: worldspaceEditorID)
         )
         // Generated blocks keep the land textures' own brightness, so they need no curve.
         let lod = built.with(terrainLODBrightness: built.generatedTerrainBlockCount > 0
@@ -46,6 +47,12 @@ nonisolated extension CellSceneBuilder.CellDistantLODBuilder {
             .watching(largeReferences.watchedObjectIDs
                 .union(fullLOD.watchedObjectIDs)
                 .union(temporaryFullLOD.watchedObjectIDs))
+    }
+
+    /// The worldspace's `NAMA`, 1 when it has none.
+    nonisolated func distantLODMultiplier(of editorID: String) -> Float {
+        owner.waterBuilder.worldspaceIndexBuildingIfNeeded().values
+            .first(where: { $0.editorID == editorID })?.details.distantLODMultiplier ?? 1
     }
 
     /// A child worldspace with the `PNAM` LOD flag draws its parent's LOD files,
