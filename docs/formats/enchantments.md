@@ -46,6 +46,15 @@ UESP records a 32-byte variant (form version 37) without the last link. xEdit ma
 Flag bits: 0 manual cost (xEdit "No Auto-Calc", UESP "ManualCalc") and 2 extend duration on
 recast. Enchantment types: `0x06` enchantment and `0x0C` staff enchantment.
 
+Extend duration on recast: when the enchantment's effect lands again on a target that still has
+it, the game updates the active effect instead of making a new one, as a concentration spell
+does. Without the flag, and when the archetype allows it, the old effect from the same item is
+dispelled and replaced. 16 `Skyrim.esm` enchantments set it, such as `EnchWeaponSoulTrapBase` and
+`TrapDweFlamePillarEnch01`.
+
+Only a staff enchantment has a charge time. It is the largest MGEF casting time of its effects,
+or the `ENIT` charge time when the manual-cost flag is set. Every other kind has a charge time of 0.
+
 The base link forms a chain. On vanilla the longest chain has three entries. A mod can make
 the chain loop, so OpenSky stops at a repeated entry and at a fixed cap.
 

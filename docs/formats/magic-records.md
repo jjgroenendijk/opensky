@@ -96,6 +96,22 @@ event, dispel with keywords, no duration, no magnitude, no area, effects persist
 visuals, hide in UI, no recast, power affects magnitude, power affects duration, painless,
 no hit effect, and no death dispel. The bit numbers are in xEdit.
 
+What the game does with some of them:
+
+| Bit | Name | Effect |
+| --- | --- | --- |
+| 3 | Snap to navmesh | A target-location cast moves its aim point to the nearest navmesh point within 32 units, or 256 for an extra-large actor |
+| 4 | No hit event | Applying the effect sends no hit event to the target's scripts |
+| 8 | Dispel with keywords | When the effect starts, it dispels the target's other active effects that carry one of its own keywords |
+| 12 | Effects persist | Objects the effect places are persistent references, and they are cleaned up when the effect ends |
+| 24 | (unnamed) | The effect is left out of the spell's cost, its charge time, and the choice of its main effect |
+| 26 | Painless | The target plays no pain or hit reaction |
+| 27 | No hit effect | The hit shader and hit-effect art do not start on the target |
+| 28 | No death dispel | The effect does not end when the target dies; some archetypes decide this for themselves |
+
+A target reacts with pain only to a hostile or detrimental effect that is not painless and not
+from an ability (spell type 4).
+
 Casting types are constant effect, fire and forget, concentration, and scroll (value 3,
 which only scrolls use). Deliveries are self, touch, aimed, target actor, and target
 location. The vanilla install uses no archetype, casting type, or delivery outside these
@@ -135,7 +151,15 @@ shared `EFID`/`EFIT`/`CTDA` effect list. A scroll adds the fields every carried 
 
 Flag bits: 0 manual cost, 16 unknown, 17 PC start spell, 18 unknown, 19 area effect ignores
 line of sight, 20 has two names, 21 disallow absorb and reflect, 22 unknown, 23 no dual-cast
-modifications. xEdit names bit 20 "ignore resistance" on SPEL and "script effect always
+modifications.
+
+In the game, bit 19 makes the area target search ignore line of sight. The search reaches the
+effect's area times 22 units, and a chain explosion skips it. Bit 20 keeps the target's
+resistance from lowering the magnitude, and skips the absorb and reflect check, so on a `SPEL` it
+means "ignore resistance". Bit 21 skips the absorb and reflect check; a self-delivered effect never
+makes that check anyway. An ability is never lowered by resistance. On `Skyrim.esm`, bits 16, 18,
+and 23 are set together on the ritual and body-effect abilities, such as `AbShieldMassCastBodyFX`.
+xEdit names bit 20 "ignore resistance" on SPEL and "script effect always
 applies" on SCRL, so OpenSky keeps both names.
 
 Spell types: 0 spell, 1 disease, 2 power, 3 lesser power, 4 ability, 5 poison, 10 addiction,

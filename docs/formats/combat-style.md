@@ -75,6 +75,25 @@ The circle angle is then drawn at random between `fCombatCircleAngleMin` and the
 Against the player it is multiplied by `fCombatCircleAnglePlayerMult` (0.75). It is never less
 than the angle, in degrees, of `radius * fCombatCircleMinDistanceRadiusMult (3) / distance`.
 
+### Close-range movement
+
+The AI chooses its movement near a target by where the target is:
+
+| Where | Choices, by weight |
+| --- | --- |
+| In range | Back off (fixed weight 0.25); circle or fall back, weighted by the circle and fallback chances above; stay |
+| Out of position | Reposition, surround, or distant circle, weighted by the distant circle chance |
+| Out of range | Advance; fall back to a ranged weapon, only when the actor's range is beyond `fCombatRangedDistance` (1024) |
+
+Out of range means the distance predicted half a second ahead is above the actor's reach. The
+fallback distance is at least the actor's radius times a fixed factor. A strafe goes a random
+distance between 96 units and the strafe maximum, and at least three times the actor's radius.
+
+Example: circle 0.2 and fallback 0.2. In range, circle weighs 0.15 and fallback 0.1 against the
+backoff's 0.25.
+
+### Attack and bash chances
+
 The attack chance starts at `lerp(offensive, fCombatAttackChanceMin 0.05,
 fCombatAttackChanceMax 1)`. Then:
 
@@ -97,6 +116,10 @@ blocks toward the attacker within the 35 degree hit cone.
 
 The attack staggered, power attack staggered, and power attack blocking values also weight the
 choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
+
+With flanking, the flank distance is added to a radius of the target to give the distance the
+actor flanks at. The stalk time starts a stalk timer. A stalk reaches 256 units, and the actor
+counts as near the flank point within 384.
 
 `DATA` 0x04 allows dual wielding for a race with `DATA` flag 0x40000000, which allows a
 left-hand item. `DATA` 0x02 lets the actor use flanking movement; without it the actor never

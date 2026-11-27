@@ -90,7 +90,12 @@ anywhere yet.
 
 ## The cast
 
-The charge is timed against the `SPIT` charge time. The release follows the behaviour graph, as a
+The charge time comes from the effects, not from `SPIT`. Without the manual-cost flag it is the
+largest MGEF casting time (`DATA` `0x30`) of the spell's effects. An effect whose MGEF has flag
+bit 24 does not count, and a spell with no effect that counts charges in 0 s. Only a spell with
+the manual-cost flag uses its `SPIT` charge time. Example: a spell with two effects of casting
+time 0.5 and 1.2 charges for 1.2 s, whatever its `SPIT` says. The release follows the behaviour
+graph, as a
 shout does ([casting cues](#casting-cues)). UESP states both shapes:
 
 > Some spells will trigger immediately upon being cast and can be maintained as long as held.
@@ -103,7 +108,7 @@ Fire and forget:
 
 1. Begin resolves the readied spell, checks every refusal, and starts charging. A spell with no
    charge time is ready at once.
-2. The charge builds up to the `SPIT` charge time.
+2. The charge builds up to the charge time.
 3. Release checks the cost against magicka, takes it, and applies the effects.
 
 Releasing before the charge is full casts nothing and costs nothing. Magicka is checked at begin and
@@ -134,13 +139,24 @@ seems to be: 2.2x spell effectiveness for 2.8x spell cost".
   such a perk, the two hands stay two casts.
 - The first hand leads. The second only holds the spell, so the cast pays and applies once. Letting
   go of either hand releases it.
-- The cost is `fMagicDualCastingCostMult` (2.8 in `Skyrim.esm`) times one cast. The charge time is
-  `fMagicDualCastingTimeMult` (1) times one charge.
+- The cost is `fMagicDualCastingCostMult` (2.8 in `Skyrim.esm`) times one cast, plus a base of 0.
+  The charge time is `fMagicDualCastingTimeMult` (1) times one charge, plus a base of 0.
 - Each entry's magnitude is multiplied by `fMagicDualCastingEffectivenessBase` (2.2) when its MGEF
   has Power Affects Magnitude, and its duration when it has Power Affects Duration. A spell with
   the `SPIT` flag No Dual Cast Modifications keeps its entries as authored.
 - The skill use is that of one cast: "Dual-casting a spell gives the same experience per cast as
   one-handed cast."
+- The effectiveness is 0 times the spell's cost plus `fMagicDualCastingEffectivenessBase`, so it is
+  always 2.2 with the vanilla values.
+- The MGEF dual-cast scale (`DATA` `0x70`) is the size of the projectile and of the explosion of a
+  dual cast; a single cast uses 1. The explosion radius grows with it.
+- The MGEF dual-cast data (`DATA` `0x6C`, a `DUAL`) counts only for a dual cast. Each link it sets
+  replaces the effect's own projectile, explosion, hit shader, hit-effect art, and impact data set.
+  A `DUAL` projectile keeps scale 1 unless its inherit-projectile-scale flag (`0x02`) is set, and a
+  `DUAL` explosion unless its inherit-explosion-scale flag (`0x04`) is set.
+
+Example: an effect with a dual-cast scale of 1.5 and an explosion of radius 200. A dual cast flies
+a projectile half again as large, and its blast reaches 300 units.
 
 The values are read from the install with `openskycli gmst list fMagicDualCasting`.
 
@@ -151,7 +167,10 @@ A staff casts its enchantment like a spell. UESP [Staves](https://en.uesp.net/wi
 charge". So a staff cast:
 
 - casts the staff's `ENCH` as a spell, with the enchantment's casting type, delivery, charge time,
-  and cost. For example `StaffEnchParalyze` is fire-and-forget, aimed, 0.5 s to charge, cost 300.
+  and cost. As for a spell, the charge time is the largest MGEF casting time of its effects, and
+  only a manual-cost enchantment uses its `ENIT` charge time. Any other kind of enchantment has a
+  charge time of 0. For example `StaffEnchParalyze` is fire-and-forget, aimed, 0.5 s to charge, cost
+  300.
 - pays from the staff's charge, not magicka. A staff with too little charge fails with
   `sMagicCastInsufficientItemCharge`, as an enchanted weapon does. An unmetered staff never runs dry.
 - costs less with a higher skill in the enchantment's school. UESP says a higher skill lowers the

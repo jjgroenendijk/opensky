@@ -125,6 +125,11 @@ The header also holds the idle animations (`IDLF`, `IDLC`, `IDLT`, `IDLA`), the 
 style (`CNAM`), and the owner quest (`QNAM`). AI does not use the idle animations yet; the
 decoder only reads them.
 
+An actor's combat style comes from the first of these that has one: a combat style set on the
+reference itself, the `CNAM` of the package it runs now, then the `NPC_` `ZNAM` through its
+template. So a package's style counts only while that package is current; nothing stores it
+on the actor. Some packages the engine builds from another package copy its combat style.
+
 ## Whiterun example
 
 The packages of Ysolda, Belethor, Hulda, and Heimskr, with every template they reach, are 21
