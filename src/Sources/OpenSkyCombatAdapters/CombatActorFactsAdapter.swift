@@ -150,8 +150,11 @@ extension CombatActorFactsAdapter {
     }
 
     /// ZNAM after template inheritance, read through the load-order CSTY store.
-    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
-        styleReader.combatStyle(of: key)
+    /// `packageStyle`, the running package's `CNAM`, comes before `ZNAM`.
+    public func combatStyle(
+        of key: ReferenceKey, packageStyle: FormID? = nil
+    ) -> CombatStyleTuning? {
+        styleReader.combatStyle(of: key, packageStyle: packageStyle)
     }
 
     public func actorName(of key: ReferenceKey) -> String? {
@@ -238,13 +241,14 @@ extension CombatActorFactsAdapter {
 struct CombatStyleReader {
     let game: any CombatActorFactsHost
 
-    /// ZNAM after template inheritance, read through the load-order CSTY store.
-    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+    /// The running package's `CNAM`, else `ZNAM` after template inheritance, read
+    /// through the load-order CSTY store.
+    func combatStyle(of key: ReferenceKey, packageStyle: FormID?) -> CombatStyleTuning? {
         guard
             case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
             let resolver = game.combatRecords?.actorValueBaselines?
                 .resolver,
-            let link = attempt({ try resolver.templates
+            let link = packageStyle ?? attempt({ try resolver.templates
                     .rolling(game.worldState.leveledRoll(
                         of: key, base: base, with: resolver.templates.leveling
                     ))
