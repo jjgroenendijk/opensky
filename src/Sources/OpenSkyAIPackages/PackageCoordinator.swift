@@ -547,7 +547,7 @@ extension PackageCoordinator {
                 ) { host.conditionContext(clock: clock) }
             }
             host.applySituations(to: &runtime, clock: clock, delta: delta, context: live)
-            runtime.advance(clock: clock) { _ in live() }
+            runtime.advance(clock: clock, frameSeconds: delta) { _ in live() }
             host.runtime = runtime
             host.placeArrivals(change.arrived.map(\.actor), clock: clock)
             if let offscreenWorld = world as? any OffscreenScheduleWorld {
