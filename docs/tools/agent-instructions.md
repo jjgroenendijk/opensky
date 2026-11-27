@@ -34,6 +34,7 @@ the legal boundary, is then read less.
 | No `GameViewController+X.swift` file; no late setter or connection step | `tools/lint/syntax-rules.sh` `game_view_controller_extension`, `late_setter_method`, `late_attached_world`, `connection_step_type` |
 | Ports and adapters | `tools/lint/app-architecture.sh`, `tools/lint/adapter-rules.sh`, `tools/lint/syntax-rules.sh` |
 | Architecture styles and the `openskycli gaps` registries: one rule per structure, on the syntax tree | `tools/lint/syntax-rules.sh` |
+| A native or condition function that only answers a constant names itself: a deviation, a failure, or `Matches the game:` | `tools/lint/syntax-rules.sh` `unnamed_native_stub`, `unnamed_condition_stub` |
 | Records read through the whole load order | `tools/lint/load-order-only.sh` |
 | A file stays under 800 lines | `tools/lint/file-length.sh` and the pre-commit hook |
 | A comment block stays under 7 lines; no suppression; no duplicated code | `tools/lint/comment-length.sh`, `no-suppressions.sh`, `duplicates.sh` |

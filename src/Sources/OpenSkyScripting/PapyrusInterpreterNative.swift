@@ -109,8 +109,12 @@ extension PapyrusNativeCalls {
         case let .failed(failure):
             runtime.tally.noteNativeFailure(failure, call: call)
         case let .deviated(_, deviation):
-            runtime.tally.noteDeviation(deviation)
-        case .returned, .suspended:
+            runtime.tally.noteDeviation(deviation, call: call)
+        case let .returned(value):
+            if case .none = value, call.returnType != .none {
+                runtime.tally.noteNoneAnswer(call)
+            }
+        case .suspended:
             break
         }
         return result

@@ -185,6 +185,7 @@ Measured 2026-11-09: 21 regex rules before (20 in `tools/lint/.swiftlint.yml`, 1
 | `perk_entry_point_literal`, `papyrus_event_literal`, `shader_flag_mask`, `game_setting_reader` | Syntax tree: literals and calls |
 | `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore`, `new_dispatch_queue` | Syntax tree: attributes and calls |
 | `adapter_unowned_reference` | Syntax tree: the `unowned` keyword |
+| `unnamed_native_stub`, `unnamed_condition_stub` | Syntax tree: handler registrations and their bodies, read by `tools/shallow-handlers/Handlers.swift` |
 
 No rule became a compiler flag: the compiler has no switch for any of them. The tree found
 cases the regular expressions missed: an `async throws` action that returned `String`, and a

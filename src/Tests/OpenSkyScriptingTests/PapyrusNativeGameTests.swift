@@ -1,4 +1,5 @@
-// `Game.GetPlayer` hands out the player's stable handle; `UsingGamepad` answers false.
+// `Game.GetPlayer` hands out the player's stable handle; `UsingGamepad` is a stub that answers
+// false.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -69,12 +70,12 @@ struct PapyrusNativeGameTests {
         ))
     }
 
-    @Test func usingGamepadAnswersFalse() {
+    @Test func usingGamepadIsAStubThatAnswersFalse() {
         var registry = PapyrusNativeRegistry()
         PapyrusNativeFunctions.GameNatives.installGame(into: &registry)
         #expect(registry.invoke(PapyrusNativeCall(
             kind: .staticFunction, scriptName: "Game", functionName: "UsingGamepad",
             receiver: nil, arguments: [], returnType: .boolean
-        )) == .returned(.boolean(false)))
+        )) == .deviated(.boolean(false), .stubbed))
     }
 }

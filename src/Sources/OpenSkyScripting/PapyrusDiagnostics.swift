@@ -15,6 +15,13 @@ nonisolated public struct PapyrusLimits: Equatable, Sendable {
     public var nativeCallRecords = 1024
 
     public static let standard = PapyrusLimits()
+
+    /// A headless sweep keeps every name it meets, so its report counts them all.
+    public static let headless: PapyrusLimits = {
+        var limits = PapyrusLimits()
+        limits.tallyNames = 1_000_000
+        return limits
+    }()
 }
 
 nonisolated public enum PapyrusFault: Error, Equatable, Sendable {
@@ -81,6 +88,12 @@ nonisolated public final class PapyrusTally {
     private(set) var nativeFailureTotal = 0
     private(set) var deferredAnimationTotal = 0
     private(set) var stubbedNativeTotal = 0
+    /// Failed natives by name and reason, digits folded to `#`, so one reason is one name.
+    private(set) var nativeFailureReasons: [String: Int] = [:]
+    /// The natives that answered a stub or deferred an animation, by name.
+    private(set) var deviationCounts: [String: Int] = [:]
+    /// Natives that answered None where their signature promises a value, by name.
+    private(set) var noneAnswerCounts: [String: Int] = [:]
     /// Activations refused because the chain reached
     /// `PapyrusWorldRuntime.maximumActivationDepth`.
     private(set) var activationRecursionCappedTotal = 0
@@ -165,23 +178,60 @@ nonisolated public final class PapyrusTally {
             } else {
                 unnamedUnimplementedNatives += 1
             }
-        case .invalidArguments:
+        case let .invalidArguments(_, detail):
             nativeFailureTotal += 1
             Self.bump(
                 &nativeFailureCounts,
                 call.qualifiedName,
                 limit: limits.tallyNames
             )
+            let reason = String(detail.prefix(120).map { $0.isNumber ? "#" : $0 })
+            Self.bump(
+                &nativeFailureReasons, "\(call.qualifiedName): \(reason)", limit: limits.tallyNames
+            )
         }
     }
 
-    func noteDeviation(_ deviation: PapyrusNativeDeviation) {
+    func noteDeviation(_ deviation: PapyrusNativeDeviation, call: PapyrusNativeCall) {
         switch deviation {
         case .deferredAnimation:
             deferredAnimationTotal += 1
+            Self.bump(
+                &deviationCounts,
+                "deferred animation \(call.qualifiedName)",
+                limit: limits.tallyNames
+            )
         case .stubbed:
             stubbedNativeTotal += 1
+            Self.bump(
+                &deviationCounts,
+                "stubbed native \(call.qualifiedName)",
+                limit: limits.tallyNames
+            )
         }
+    }
+
+    func noteNoneAnswer(_ call: PapyrusNativeCall) {
+        Self.bump(&noneAnswerCounts, call.qualifiedName, limit: limits.tallyNames)
+    }
+
+    /// Every place the VM met something it does not handle and answered a default, each
+    /// under a stable name (docs/tools/headless-sweeps.md, "Fallback counts").
+    public var fallbacks: [(name: String, count: Int)] {
+        var entries: [(name: String, count: Int)] = []
+        entries += unimplementedNativeCounts.map { ("unimplemented native \($0.key)", $0.value) }
+        entries += nativeFailureReasons.map { ("failed native \($0.key)", $0.value) }
+        entries += deviationCounts.map { ($0.key, $0.value) }
+        entries += noneAnswerCounts.map { ("None from native \($0.key)", $0.value) }
+        entries += faultKindCounts.map { ("fault \($0.key)", $0.value) }
+        for (name, count) in [
+            ("unimplemented native, name not kept", unnamedUnimplementedNatives),
+            ("call on a None receiver", noneReceiverTotal),
+            ("activation past the depth cap", activationRecursionCappedTotal)
+        ] where count > 0 {
+            entries.append((name, count))
+        }
+        return entries
     }
 
     /// One `Activate` refused because the activation chain hit its depth cap.

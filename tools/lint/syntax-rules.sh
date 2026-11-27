@@ -42,10 +42,12 @@ public final class ProbeCoordinator {
 SWIFT
     cat >"$sources/OpenSkyX/ProbeCore.swift" <<'SWIFT'
 let now = Date()
+let stubbed = ConditionFunction(index: 1, name: "GetProbe") { _ in .success(1) }
 SWIFT
     cat >"$sources/OpenSkyScripting/PapyrusWorldProbeBridge.swift" <<'SWIFT'
 let event = "OnProbe"
 struct Bridge { let read: (Int) -> Int }
+let stub = PapyrusNativeFunction(scriptName: "Game", functionName: "Probe") { _, _ in .returned(.none) }
 SWIFT
     printf 'final class Probe { unowned let owner: Probe }\n' \
         >"$sources/OpenSkyXAdapters/Probe.swift"
@@ -56,18 +58,21 @@ SWIFT
         "(perk_entry_point_literal)" "(shader_flag_mask)" "(game_setting_reader)" \
         "(renderer_downcast)" "(detached_task)" "(main_queue_or_semaphore)" \
         "(new_dispatch_queue)" "(late_setter_property)" "(pure_core_side_effect)" \
-        "(papyrus_event_literal)" "(papyrus_loose_closure)" "(adapter_unowned_reference)"
+        "(papyrus_event_literal)" "(papyrus_loose_closure)" "(adapter_unowned_reference)" \
+        "(unnamed_native_stub)" "(unnamed_condition_stub)"
 fi
 
 source_dir="$OPENSKY_TOOLS/syntax-lint"
 shared="$(dirname "$(git -C "$OPENSKY_TOOLS" rev-parse --path-format=absolute --git-common-dir)")"
 toolchain="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host"
-hash="$( { swiftc --version 2>&1; cat "$source_dir"/*.swift; } | shasum | cut -c1-16)"
+# The shallow handler rules share their reading of a body with the gap report's tool.
+handlers="$OPENSKY_TOOLS/shallow-handlers/Handlers.swift"
+hash="$( { swiftc --version 2>&1; cat "$source_dir"/*.swift "$handlers"; } | shasum | cut -c1-16)"
 checker="$shared/.cache/syntax-lint/$hash/syntax-lint"
 if [ ! -x "$checker" ]; then
     mkdir -p "$(dirname "$checker")"
     # The lint and its self-check run in parallel; each builds its own file, then renames it.
-    swiftc -O -module-name SyntaxLint "$source_dir"/*.swift -o "$checker.$$" \
+    swiftc -O -module-name SyntaxLint "$source_dir"/*.swift "$handlers" -o "$checker.$$" \
         -I "$toolchain" -L "$toolchain" -lSwiftSyntax -lSwiftParser \
         -Xlinker -rpath -Xlinker "$toolchain"
     mv "$checker.$$" "$checker"

@@ -62,10 +62,10 @@ extension PapyrusNativeFunctions.ActorStateNatives {
         scriptState("Actor", "IsCommandedActor", into: &registry) { _, bridge, key in
             .returned(.boolean(bridge.natives.magic.isCommandedActor?(key) ?? false))
         }
-        // `AddAchievement(int)`: OpenSky reports to no platform, so nothing happens.
+        // `AddAchievement(int)`: OpenSky reports to no platform, so it is a stub.
         registry.register(PapyrusNativeFunction(
             scriptName: "Game", functionName: "AddAchievement"
-        ) { _, _ in .returned(.none) })
+        ) { _, _ in .deviated(.none, .stubbed) })
     }
 }
 

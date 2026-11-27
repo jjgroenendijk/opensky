@@ -40,10 +40,10 @@ extension PapyrusNativeFunctions.GameNatives {
             else { return .returned(.none) }
             return .returned(.object(handle))
         })
-        // OpenSky reads only the keyboard and mouse.
+        // A stub: the answer does not follow the device the player uses.
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
             functionName: "UsingGamepad"
-        ) { _, _ in .returned(.boolean(false)) })
+        ) { _, _ in .deviated(.boolean(false), .stubbed) })
     }
 }
