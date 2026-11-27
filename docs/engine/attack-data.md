@@ -152,4 +152,33 @@ crossbow, and `fStagger1WeapMult` (0.2) otherwise. The result is at least `fStag
 ## Knockdown
 
 A knockdown above 0 pushes the target away from the attacker with that force, the same push an
-explosion's knockdown uses ([explosions](/engine/explosions.md)).
+explosion's knockdown uses ([explosions](/engine/explosions.md)). The push comes from the
+attacker's position, not from the impact point. It needs an attacking actor, and a killing blow
+skips it. The player is pushed like any other target.
+
+The push reaches only a target that:
+
+- is not dying, dead, or knocked down already;
+- has a race without the Immobile flag (`0x200`) and without No Knockdowns (`0x400000`);
+- is not restrained.
+
+A living target whose race has No Knockdowns is staggered instead. The stagger magnitude is the
+force after the incoming stagger perk entries, at most 1. A target that can ragdoll falls down,
+and its ragdoll takes an impulse equal to the force from the attacker's position. A target that
+cannot ragdoll at that moment slides away along the ground instead, at `force / 100 * 600` units
+a second for `force / 100 * 1.25` seconds.
+
+Example: a knockdown of 40 on an actor that cannot ragdoll. It slides at 240 units a second for
+0.5 seconds.
+
+## Bash
+
+A matched attack with flag `0x2` puts the attacker in its bash state. Every hit it lands in that
+state is a bash: its damage comes from `fShieldBashMin` and `fShieldBashMax` with a shield, or
+`fWeaponBashMin` and `fWeaponBashMax` without one, by skill. The player uses the `PC` variants.
+The Mod Bashing Damage perk entry point applies, and the hit counts as a bash for skill use.
+
+The combat AI decides to bash from its combat style's bash chances
+([combat style](/formats/combat-style.md#attack-and-bash-chances)) and then sends a bash event.
+The `0x2` flag of the attack that event matches marks it as a bash; it does not choose it. A power
+attack (`0x4`) speaks the power attack combat topic instead of the attack topic.

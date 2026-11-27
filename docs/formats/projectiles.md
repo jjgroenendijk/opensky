@@ -51,7 +51,10 @@ UESP calls 0x3C "uint32 always 0"; xEdit calls it `Sound - Disable`. The offset 
 sound level. A value above 4 loads as 1 (normal). The levels map to detection amounts: 0 loud
 (100), 1 normal (50), 2 silent (`iSoundLevelSilent`, 10 in `Skyrim.esm`), 3 very loud (200), and
 any other value 0. A projectile's noise is heard within 1024 units when the player shot it, and
-512 when an NPC did. When a projectile makes its sound, and where, is not known yet.
+512 when an NPC did. A projectile impact makes a noise at the impact point at the level of its
+impact (`IPCT`) sound, with the shooter as the noise maker, when the shooter is an actor with AI.
+No reader of `VNAM` itself was found. A cast spell makes a noise at the caster at the casting
+sound level of its costliest effect.
 
 No source gives a unit for gravity. On the 20 arrow projectiles in `Skyrim.esm` it is at
 most 1 while speed reaches the thousands, so it is a scale factor
