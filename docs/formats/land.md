@@ -39,7 +39,8 @@ left, 3 top right. Each quadrant is a 17 x 17 grid.
 
 `DATA` says which fields the game reads: bit `0x1` heights and normals (`VHGT`, `VNML`), bit
 `0x2` vertex colours (`VCLR`), and bit `0x4` the texture layers (`BTXT`, `ATXT`, `VTXT`). A land
-without bit `0x1` has no heights. The game replaces bits `0x8` and `0x400` with its own state, and
+without bit `0x1` has no heights. OpenSky drops a field group whose bit is clear when it loads
+the cell, as the game does. The game replaces bits `0x8` and `0x400` with its own state, and
 tests no other bit. In the five masters the bits match the fields present, except 408 records
 that set `0x4` without texture fields. Common values are `0x19`, `0x1D`, and `0x1F`.
 

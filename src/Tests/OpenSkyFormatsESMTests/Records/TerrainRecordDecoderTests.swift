@@ -176,7 +176,7 @@ struct TerrainRecordDecoderTests {
             ))
         )
         #expect(land.formID == FormID(0x77))
-        #expect(land.flags == 0x2A)
+        #expect(land.flags.rawValue == 0x2A)
         #expect(land.heightField?.heights[0] == 8) // (0 + 1) * 8
         #expect(land.baseTextures.first?.texture == FormID(0xABCD))
     }

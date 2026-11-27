@@ -241,7 +241,9 @@ extension CellSceneTerrainTests {
         vhgt.appendFloat32(0) // anchor
         vhgt.append(contentsOf: [UInt8](repeating: 0, count: 33 * 33))
         vhgt.append(contentsOf: [0, 0, 0])
-        var fields = ESMFixture.field("VHGT", vhgt)
+        var data = Data()
+        data.appendUInt32(0x7) // heights, colours, and texture layers
+        var fields = ESMFixture.field("DATA", data) + ESMFixture.field("VHGT", vhgt)
         for quadrant in baseQuadrants {
             var btxt = Data()
             btxt.appendUInt32(ltexFormID)
