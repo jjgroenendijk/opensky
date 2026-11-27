@@ -47,6 +47,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
             else { return failure(call, "GetGoldValue needs the inventory bridge and a form") }
             return .returned(.integer(bridge.goldValue(of: item) ?? -1))
         })
+        installApparatusQuality(into: &registry)
         // `abSleepOutfit` stores the outfit without wearing it, as the game does.
         withItem("Actor", "SetOutfit", into: &registry) { call, _, bridge, actor, outfit in
             if boolean(call, at: 1, default: false) {
@@ -56,6 +57,26 @@ extension PapyrusNativeFunctions.InventoryNatives {
             return bridge.setOutfit(outfit, on: actor)
                 ? .returned(.none) : failure(call, "SetOutfit needs an outfit and an actor")
         }
+    }
+
+    /// `int GetQuality()` on an `Apparatus`: 0 novice to 4 master
+    /// (<https://ck.uesp.net/wiki/Apparatus_Script>).
+    private static func installApparatusQuality(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Apparatus", functionName: "GetQuality"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge,
+                let bridge = world.ports.inventory,
+                case let .plugin(plugin, objectID)? = call.receiver
+                    .flatMap(world.referenceKey(for:)),
+                let item = world.formIDResolver?.localFormID(
+                    of: ResolvedFormID(plugin: plugin, objectID: objectID)
+                ),
+                let quality = bridge.apparatusQuality(of: item)
+            else { return failure(call, "GetQuality needs the inventory bridge and an apparatus") }
+            return .returned(.integer(quality))
+        })
     }
 
     /// `AddItem` and `RemoveItem`; `abSilent` (argument 2) hides the notice.

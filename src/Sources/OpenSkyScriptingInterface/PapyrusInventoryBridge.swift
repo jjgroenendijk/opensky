@@ -31,6 +31,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool
     /// Nil for a form that is no item.
     func goldValue(of item: FormID) -> Int32?
+    /// An apparatus's quality, 0 novice to 4 master. Nil for a form that is no apparatus.
+    func apparatusQuality(of item: FormID) -> Int32?
     /// The plugin inventory of `holder`, before any runtime change; nil when not resident.
     func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState?
 }
