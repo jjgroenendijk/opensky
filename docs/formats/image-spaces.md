@@ -32,7 +32,8 @@ install with a field census.
 radius, bloom threshold, and bloom scale; float 4 sets both the receive-bloom threshold and white;
 float 5 is sunlight scale, float 6 sky scale, floats 7 to 9 the `CNAM` values, and floats 10 to 13
 the `TNAM` values. Eye-adapt strength and depth of field keep their values. A later `HNAM`,
-`CNAM`, or `TNAM` overrides it. Two vanilla records carry `ENAM`.
+`CNAM`, or `TNAM` overrides it. Two vanilla records carry `ENAM`. OpenSky
+reads `ENAM` in the same way.
 
 505 records: `DNAM` is 12 or 16 bytes.
 

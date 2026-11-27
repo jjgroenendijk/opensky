@@ -62,8 +62,6 @@ nonisolated public struct ImageSpace: Equatable, Sendable {
 
     public let formID: FormID
     public let editorID: String?
-    /// ENAM, the legacy 56-byte block, kept as its 14 floats.
-    public let legacyData: [Float]?
     public let hdr: HDR?
     public let cinematic: Cinematic?
     public let tint: Tint?
@@ -74,18 +72,41 @@ nonisolated public struct ImageSpace: Equatable, Sendable {
         var fields = try RecordFields(record: record, type: "IMGS")
         formID = fields.formID
         editorID = fields.editorID()
-        legacyData = fields.read("ENAM") { reader in
-            try (0 ..< 14).map { _ in try reader.readFloat32() }
+        var hdr: HDR?
+        var cinematic: Cinematic?
+        var tint: Tint?
+        // Field order matters: the older ENAM block and the newer fields set the
+        // same values, and the later one wins (docs/formats/image-spaces.md).
+        for index in fields.fields.indices where !fields.isUsed(at: index) {
+            switch fields.fields[index].type {
+            case "ENAM":
+                if let older = fields.read(at: index, { try Self.olderBlock(&$0) }) {
+                    let values = Self.values(of: older, keeping: hdr)
+                    hdr = values.hdr
+                    cinematic = values.cinematic
+                    tint = values.tint
+                }
+            case "HNAM":
+                hdr = fields.read(at: index) { try HDR(&$0) }
+            case "CNAM":
+                cinematic = fields.read(at: index) {
+                    try Cinematic(
+                        saturation: $0.readFloat32(),
+                        brightness: $0.readFloat32(),
+                        contrast: $0.readFloat32()
+                    )
+                }
+            case "TNAM":
+                tint = fields.read(at: index) {
+                    try Tint(amount: $0.readFloat32(), color: $0.readFloat3())
+                }
+            default:
+                continue
+            }
         }
-        hdr = fields.read("HNAM") { try HDR(&$0) }
-        cinematic = fields.read("CNAM") {
-            try Cinematic(
-                saturation: $0.readFloat32(),
-                brightness: $0.readFloat32(),
-                contrast: $0.readFloat32()
-            )
-        }
-        tint = fields.read("TNAM") { try Tint(amount: $0.readFloat32(), color: $0.readFloat3()) }
+        self.hdr = hdr
+        self.cinematic = cinematic
+        self.tint = tint
         depthOfField = fields.read("DNAM") { reader in
             let strength = try reader.readFloat32()
             let distance = try reader.readFloat32()
@@ -103,6 +124,34 @@ nonisolated public struct ImageSpace: Equatable, Sendable {
             )
         }
         skipped = fields.finish()
+    }
+}
+
+nonisolated extension ImageSpace {
+    private static func olderBlock(_ reader: inout BinaryReader) throws -> [Float] {
+        try (0 ..< 14).map { _ in try reader.readFloat32() }
+    }
+
+    /// ENAM: floats 0-3 HDR, 4 both receive-bloom threshold and white, 5-6 the
+    /// light scales, 7-9 cinematic, 10-13 tint. Eye-adapt strength is kept.
+    private struct OlderValues {
+        let hdr: HDR
+        let cinematic: Cinematic
+        let tint: Tint
+    }
+
+    private static func values(of older: [Float], keeping hdr: HDR?) -> OlderValues {
+        let newHDR = HDR(
+            eyeAdaptSpeed: older[0], bloomBlurRadius: older[1], bloomThreshold: older[2],
+            bloomScale: older[3], receiveBloomThreshold: older[4], white: older[4],
+            sunlightScale: older[5], skyScale: older[6],
+            eyeAdaptStrength: hdr?.eyeAdaptStrength ?? 0
+        )
+        return OlderValues(
+            hdr: newHDR,
+            cinematic: Cinematic(saturation: older[7], brightness: older[8], contrast: older[9]),
+            tint: Tint(amount: older[10], color: SIMD3(older[11], older[12], older[13]))
+        )
     }
 }
 
