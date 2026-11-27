@@ -226,3 +226,5 @@ Example: in first person a target sits 0.6 degrees off the crosshair. The shot t
 - An arrow sticks in an actor at the actor's position when it hit, not on a bone. No arrow
   impales.
 - Any hit on an actor with a shield can be deflected, not only a hit on the shield's own body.
+- The projectile kind (missile, arrow, beam, lobber) and the flags Supersonic, Pass Through Small
+  Transparent, and No Combat Aim Correction change nothing yet.
