@@ -154,6 +154,7 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
         case .normal: max(0, normalActionSound.value)
         case .loud: max(0, loudActionSound.value)
         case .veryLoud: max(0, veryLoudActionSound.value)
+        case .none: 0
         }
     }
 
@@ -240,4 +241,6 @@ nonisolated public enum DetectionSoundLevel: UInt32, CaseIterable, Sendable {
     case normal = 1
     case silent = 2
     case veryLoud = 3
+    /// `NPC_` `NAM8` 4: no sound at all.
+    case none = 4
 }

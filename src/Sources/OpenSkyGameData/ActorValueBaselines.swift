@@ -73,6 +73,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var regeneratesHealthInCombat = false
     /// The race's unarmed reach in world units, before scale. Nil without a race.
     public var unarmedReach: Float?
+    /// `NPC_` `NAM8`: the noise of an attack no weapon gives one. A value above 4 is 1.
+    public var soundLevel: UInt32 = 1
 
     public init(
         maximums: ActorValues,
@@ -248,6 +250,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         )
         baseline.raceKeywords = race.details.keywords
         baseline.unarmedReach = race.details.properties?.unarmedReach
+        baseline.soundLevel = Self.soundLevel(
+            resolver.templates.actors[Self.playerRecord.rawValue]?.details.soundLevel
+        )
         return baseline
     }
 
@@ -280,6 +285,16 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         baseline.regeneratesHealthInCombat = race?.flags
             .contains(.regeneratesHealthInCombat) ?? false
         baseline.unarmedReach = race?.details.properties?.unarmedReach
+        // The sound level is a Traits field: it comes from the record the race came from.
+        let traits = actor.map(\.race.source) ?? base
+        baseline.soundLevel = Self.soundLevel(
+            resolver.templates.actors[traits.rawValue]?.details.soundLevel
+        )
         return baseline
+    }
+
+    static func soundLevel(_ raw: UInt32?) -> UInt32 {
+        guard let raw, raw <= 4 else { return 1 }
+        return raw
     }
 }

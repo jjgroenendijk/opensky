@@ -316,6 +316,13 @@ struct ActorTemplateResolverTests {
         #expect(try !npcs.resolve(base: FormID(0x101)).usesOppositeSexAnimations)
     }
 
+    /// `NAM8` above 4, or missing, counts as 1 (normal).
+    @Test func aSoundLevelOutOfRangeIsNormal() {
+        #expect(ActorValueBaselineResolver.soundLevel(nil) == 1)
+        #expect(ActorValueBaselineResolver.soundLevel(4) == 4)
+        #expect(ActorValueBaselineResolver.soundLevel(9) == 1)
+    }
+
     @Test func templateFlagWithoutTemplateIsInert() throws {
         let base = try npc(formID: 0x100, templateFlags: 0x0101, race: 0xA1, defaultOutfit: 0xD1)
         let resolved = try resolver(npcs: [base]).resolve(base: FormID(0x100))
