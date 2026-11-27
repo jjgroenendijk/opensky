@@ -281,7 +281,10 @@ External Alias Reference (`ALEQ` plus `ALEA`) takes whatever alias `ALEA` of que
 when this quest starts ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). It fails
 when that quest is not running, its alias is empty, or the reference is inside a container. The
 location form fills from a location alias the same way. `MQ101DragonAttack` takes `Alduin`,
-`Ralof`, `Hadvar`, and the prisoners from `MQ101` this way. [WARNING] OpenSky leaves these empty.
+`Ralof`, `Hadvar`, and the prisoners from `MQ101` this way. OpenSky reads the other quest's alias
+table when it runs. A required alias that stays empty stops the start, as other required aliases
+do. The "Allow Dead" and "Allow Disabled" rules do not apply to this fill. [WARNING] OpenSky has
+no check for a reference inside a container.
 
 ### Find Matching Reference
 

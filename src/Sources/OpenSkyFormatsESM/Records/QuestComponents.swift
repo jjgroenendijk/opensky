@@ -137,8 +137,8 @@ nonisolated extension Quest {
         public var aliasReference: Int32? // ALFA
         public var referenceType: FormID? // ALRT
         var keyword: FormID? // KNAM
-        var externalQuest: FormID? // ALEQ
-        var externalAlias: Int32? // ALEA
+        public var externalQuest: FormID? // ALEQ
+        public var externalAlias: Int32? // ALEA
         public var createdObject: FormID? // ALCO
         /// ALCA: low 16 bits are the alias to create at, high bit 0x8000
         /// switches "create at" to "create in".

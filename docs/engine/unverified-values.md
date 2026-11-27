@@ -326,6 +326,7 @@ and its sources, so it can be checked later against the [reference game](/tools/
 | Inventory menu callbacks | Two not confirmed | [inventory menu](/engine/inventory-menu.md) |
 | Topic row prompt of a shared `INFO` | Own `RNAM`, else the shared target's | [dialogue](/engine/dialogue.md) |
 | Follower place after a load door | 64 units apart beside the player | [follower commands](/engine/follower-commands.md#load-doors) |
+| External alias and the dead and disabled flags | "Allow Dead" and "Allow Disabled" do not apply | [quest state](/engine/quest-state.md#what-does-not-fill-yet) |
 | Projectile model facing and lights | `PROJ` model +Y along the velocity; flight light at full colour; muzzle flash light fades linearly over the flash duration | [spell delivery](/engine/spell-delivery.md#what-a-projectile-shows) |
 | Explosion light and impact | `EXPL` light for 2 s, fading linearly; impact data set played on no material | [explosions](/formats/explosions.md#runtime) |
 | Casting light position | In front of the caster's eye, where a held Light spell floats | [spellcasting](/engine/spellcasting.md) |

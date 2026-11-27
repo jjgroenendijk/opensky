@@ -15,22 +15,22 @@ import OpenSkyWorldState
 /// Fills one quest's reference aliases. The rules are in docs/engine/quest-state.md.
 nonisolated public enum QuestAliasFiller: Sendable {
     /// Runs the pass over `quest.aliases` in file order.
-    /// - Parameter resolver: master-list resolver of the plugin that defines
-    ///   `quest`, which is what turns an ALFR FormID into a session-stable key.
-    /// - Parameter event: the story-manager event that starts the quest, for the
-    ///   "find matching reference from event" fill.
+    /// - Parameter resolver: resolver of the plugin that defines `quest`, for ALFR keys.
+    /// - Parameter event: the story event that starts the quest, for the event fill.
     /// - Parameter scope: the loaded world for the match-condition fills. Nil skips them.
+    /// - Parameter running: the running quests' alias tables, for the external alias fill.
     public static func fill(
         _ quest: Quest,
         resolver: FormIDResolver,
         locations: LocationStore? = nil,
         event: StoryEventData? = nil,
         scope: QuestAliasSearchScope? = nil,
-        translation: FormIDTranslation? = nil
+        translation: FormIDTranslation? = nil,
+        running: [ReferenceKey: QuestAliasState] = [:]
     ) -> QuestAliasFillResult {
         var pass = FillPass(
             resolver: resolver, locations: locations, event: event, scope: scope,
-            quest: quest.formID, translation: translation
+            quest: quest.formID, translation: translation, running: running
         )
         for alias in quest.aliases {
             pass.fill(alias)
@@ -47,6 +47,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
         let scope: QuestAliasSearchScope?
         let quest: FormID
         let translation: FormIDTranslation?
+        let running: [ReferenceKey: QuestAliasState]
         var state = QuestAliasState()
         var creations: [QuestAliasCreation] = []
         var skipped = QuestAliasTally()
@@ -83,6 +84,11 @@ nonisolated public enum QuestAliasFiller: Sendable {
             case .locationAliasReference where locations != nil:
                 guard let found = locationAliasKey(alias) else { return }
                 key = found
+            case .externalAlias:
+                key = externalTable(of: alias).flatMap { table in
+                    alias.externalAlias
+                        .flatMap { table.reference(forAlias: UInt32(bitPattern: $0)) }
+                }
             default:
                 skipped.note(.unsupportedFillType(alias.fillType))
                 // An unimplemented fill type is OpenSky's gap, not the quest's,
@@ -105,33 +111,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 skipped.note(.reusedInQuest)
                 return
             }
-            store(alias.id, key)
-            if let forced = alias.forceIntoAlias, forced >= 0 {
-                // Last writer wins by construction: a later alias forcing the
-                // same target simply overwrites this.
-                store(UInt32(bitPattern: forced), key)
-            }
-        }
-
-        /// The flag rules of a specific reference and a unique actor. A specific
-        /// reference ignores "Allow Dead" and "Allow Disabled", and fails when deleted.
-        private func allows(_ key: ReferenceKey, in alias: Quest.Alias) -> Bool {
-            guard let scope else { return true }
-            let flags = alias.flags
-            if !flags.contains(.allowReserved), scope.reserved.contains(key) {
-                return false
-            }
-            if case .specificReference = alias.fillType {
-                return !scope.search.deletes(key)
-            }
-            let state = scope.search.state(of: key)
-            if state.isDead, !flags.contains(.allowDead) {
-                return false
-            }
-            if state.isDisabled, !flags.contains(.allowDisabled) {
-                return false
-            }
-            return flags.contains(.allowDestroyed) || !scope.search.destroys(key)
+            storeFilled(alias, key)
         }
 
         /// The fill types with their own rule. False when `alias` is none of them.
@@ -246,6 +226,10 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 fillFromEvent(alias)
                 return
             }
+            if case .externalAlias = alias.fillType {
+                fillExternalLocation(alias)
+                return
+            }
             guard case .specificLocation = alias.fillType, let locations else {
                 skipped.note(.locationAlias)
                 return
@@ -321,8 +305,64 @@ nonisolated public enum QuestAliasFiller: Sendable {
 }
 
 nonisolated extension QuestAliasFiller.FillPass {
+    /// The flag rules of a specific reference and a unique actor. A specific
+    /// reference ignores "Allow Dead" and "Allow Disabled", and fails when deleted.
+    fileprivate func allows(_ key: ReferenceKey, in alias: Quest.Alias) -> Bool {
+        // An external alias fails only in the cases the Quest Alias Tab page names.
+        guard let scope, alias.fillType != .externalAlias else { return true }
+        let flags = alias.flags
+        if !flags.contains(.allowReserved), scope.reserved.contains(key) {
+            return false
+        }
+        if case .specificReference = alias.fillType {
+            return !scope.search.deletes(key)
+        }
+        let state = scope.search.state(of: key)
+        if state.isDead, !flags.contains(.allowDead) {
+            return false
+        }
+        if state.isDisabled, !flags.contains(.allowDisabled) {
+            return false
+        }
+        return flags.contains(.allowDestroyed) || !scope.search.destroys(key)
+    }
+
+    /// External Alias: `ALEQ` names the other quest and `ALEA` its alias. The alias takes
+    /// what that alias holds now, and fails when the quest is not running or the alias
+    /// is empty (<https://ck.uesp.net/wiki/Quest_Alias_Tab>).
+    fileprivate func externalTable(of alias: Quest.Alias) -> QuestAliasState? {
+        guard
+            let raw = alias.externalQuest,
+            let other = ReferenceKey.resolve(raw, using: resolver)
+        else { return nil }
+        return running[other]
+    }
+
+    fileprivate mutating func fillExternalLocation(_ alias: Quest.Alias) {
+        guard
+            let id = alias.externalAlias,
+            let location = externalTable(of: alias)?.location(forAlias: UInt32(bitPattern: id))
+        else {
+            skipped.note(.unresolvedLocation)
+            note(unfilled: alias)
+            return
+        }
+        state = state.fillingLocation(alias.id, with: location)
+    }
+}
+
+nonisolated extension QuestAliasFiller.FillPass {
     /// Records the fill, and the forced-into fill, under one rule so both
     /// land in the same normalized table.
+    /// Stores the fill, and again in the alias it forces into. Last writer wins: a later
+    /// alias forcing the same target overwrites this.
+    fileprivate mutating func storeFilled(_ alias: Quest.Alias, _ key: ReferenceKey) {
+        store(alias.id, key)
+        if let forced = alias.forceIntoAlias, forced >= 0 {
+            store(UInt32(bitPattern: forced), key)
+        }
+    }
+
     private mutating func store(_ aliasID: UInt32, _ key: ReferenceKey) {
         state = state.filling(aliasID, with: key)
     }
