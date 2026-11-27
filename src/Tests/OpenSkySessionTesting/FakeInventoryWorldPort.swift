@@ -52,6 +52,8 @@ nonisolated public final class FakeInventoryWorldPort: InventoryWorldPort {
     public var goldValueResult: Int32?
     public var apparatusQualityCalls: [FormID] = []
     public var apparatusQualityResult: Int32?
+    public var setApparatusQualityCalls: [(quality: Int32, item: FormID)] = []
+    public var setApparatusQualityResult = false
     public var baselineInventoryCalls: [ReferenceKey] = []
     public var baselineInventoryResult: ReferenceInventoryState?
 
@@ -252,6 +254,11 @@ nonisolated extension FakeInventoryWorldPort {
     public func apparatusQuality(of item: FormID) -> Int32? {
         apparatusQualityCalls.append(item)
         return apparatusQualityResult
+    }
+
+    public func setApparatusQuality(_ quality: Int32, of item: FormID) -> Bool {
+        setApparatusQualityCalls.append((quality: quality, item: item))
+        return setApparatusQualityResult
     }
 
     public func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {

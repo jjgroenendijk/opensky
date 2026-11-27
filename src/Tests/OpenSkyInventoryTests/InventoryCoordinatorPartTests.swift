@@ -32,6 +32,13 @@ extension InventoryCoordinatorTests {
         #expect(!scripts.scriptAddItem(Fixture.sword, count: 1, to: Self.stranger))
     }
 
+    /// SetQuality changes only an apparatus; a weapon keeps no quality.
+    @Test func setApparatusQualityRefusesAWeapon() throws {
+        let scripts = try Self.harness().coordinator.scriptItems
+        #expect(!scripts.scriptSetApparatusQuality(3, of: Fixture.sword))
+        #expect(scripts.scriptApparatusQuality(of: Fixture.sword) == nil)
+    }
+
     /// The condition reads, the readouts, and the death items over the player.
     @Test func thePartsAnswerForThePlayer() throws {
         let coordinator = try Self.harness().coordinator

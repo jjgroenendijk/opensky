@@ -217,6 +217,7 @@ public protocol InventoryScriptItemsPort {
     func scriptEquippedWeapon(on key: ReferenceKey, leftHand: Bool) -> FormID??
     func scriptGoldValue(of item: FormID) -> Int32?
     func scriptApparatusQuality(of item: FormID) -> Int32?
+    func scriptSetApparatusQuality(_ quality: Int32, of item: FormID) -> Bool
     func scriptIsEquipped(_ item: FormID, on key: ReferenceKey) -> Bool?
     func scriptItemCount(_ item: FormID, in key: ReferenceKey) -> Int32?
     func scriptRemoveAllItems(

@@ -124,6 +124,10 @@ extension InventoryPapyrusAdapter {
         game.inventory.scriptItems.scriptApparatusQuality(of: item)
     }
 
+    public func setApparatusQuality(_ quality: Int32, of item: FormID) -> Bool {
+        game.inventory.scriptItems.scriptSetApparatusQuality(quality, of: item)
+    }
+
     public func learnIngredientEffects(_ ingredient: FormID, indices: [Int]?) -> Bool {
         game.inventory.alchemyLab.learnIngredientEffects(ingredient, indices: indices)
     }
