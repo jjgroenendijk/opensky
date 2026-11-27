@@ -95,6 +95,7 @@ extension CombatImpactEffectsAdapter {
     /// A landed hit that bled: screen blood when the player was struck, and blood on
     /// a melee attacker's weapon unless the target's race keeps weapons clean.
     public func drewBlood(_ hit: CombatHitRecord, target: ReferenceKey) {
+        guard bleeds(target) else { return }
         if target == .player {
             game.effects.splatterScreen(damage: hit.damage)
         }
@@ -107,8 +108,15 @@ extension CombatImpactEffectsAdapter {
 
     /// The race flags keep a bloodless body, such as a skeleton's, clean.
     public func showDefaultBlood(on target: ReferenceKey, at position: SIMD3<Float>, melee: Bool) {
-        guard raceFlags(of: target)?.contains(.noBloodDecal) != true else { return }
+        guard bleeds(target), raceFlags(of: target)?.contains(.noBloodDecal) != true else {
+            return
+        }
         game.effects.showDefaultBlood(on: target, at: position, melee: melee)
+    }
+
+    /// `ACBS` flag `0x10000` keeps every hit on the actor bloodless.
+    func bleeds(_ actor: ReferenceKey) -> Bool {
+        game.menuWorld.recordFlags(of: actor)?.contains(.doesNotBleed) != true
     }
 
     public func actorFlies(_ actor: ReferenceKey) -> Bool {

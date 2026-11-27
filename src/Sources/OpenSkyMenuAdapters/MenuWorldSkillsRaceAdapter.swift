@@ -202,7 +202,10 @@ struct RaceMenuReads {
             return []
         }
         let head = isFemale ? record.details.headData.female : record.details.headData.male
-        return head.presets.compactMap { preset in
+        return Self.presetNPCs(
+            race: race, isFemale: isFemale, listed: head.presets,
+            actors: identityRecords?.templates.actors ?? [:]
+        ).compactMap { preset in
             guard let npc = identityRecords?.templates.actors[preset.rawValue]
             else { return nil }
             let name = npc.editorID ?? "\(preset)"
@@ -210,6 +213,21 @@ struct RaceMenuReads {
                 name: name,
                 face: PlayerIdentityState(record: npc, details: npc.details, name: name).face
             )
+        }
+    }
+
+    /// Every `ACBS` `0x4` NPC of the race and sex but the player's base, in the race's
+    /// `RPRM`/`RPRF` order first, then by form ID.
+    static func presetNPCs(
+        race: FormID, isFemale: Bool, listed: [FormID], actors: [UInt32: ActorBase]
+    ) -> [FormID] {
+        let flagged = actors.values.filter {
+            $0.flags.contains(.chargenFacePreset) && $0.race == race
+                && $0.isFemale == isFemale && $0.formID != MenuRecordData.playerBase
+        }.map(\.formID)
+        let order = Dictionary(listed.enumerated().map { ($1, $0) }) { first, _ in first }
+        return flagged.sorted {
+            (order[$0] ?? Int.max, $0.rawValue) < (order[$1] ?? Int.max, $1.rawValue)
         }
     }
 

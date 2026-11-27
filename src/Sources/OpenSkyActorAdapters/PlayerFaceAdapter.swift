@@ -24,6 +24,7 @@ public protocol PlayerFaceHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var dialogueMenu: any DialogueMenuPort { get }
+    var menuWorld: any MenuWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
     var streamer: any CellStreamerPort { get }
@@ -48,9 +49,15 @@ extension PlayerFaceAdapter {
         return game.renderer?.scene.faceMorphPlayback(for: actor)
     }
 
+    /// `ACBS` flag `0x100000` leaves a face still: no blinks and no expressions.
     var faceMorphPlaybacks: [FaceMorphPlayback] {
         let scene = game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback }
-        return (scene ?? []) + [state.playerFace()].compactMap(\.self)
+        return ((scene ?? []) + [state.playerFace()].compactMap(\.self)).filter { playback in
+            let key = playback.actor == PlayerBody.actorFormID
+                ? ReferenceKey.player : game.streamer.referenceEntry(formID: playback.actor)?.key
+            guard let key else { return true }
+            return game.menuWorld.recordFlags(of: key)?.contains(.noFacialAnimation) != true
+        }
     }
 
     public func faceMood(of actor: FormID) -> FaceMoodInput {

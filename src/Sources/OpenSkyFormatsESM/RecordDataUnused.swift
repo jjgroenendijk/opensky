@@ -42,6 +42,11 @@ nonisolated public enum RecordDataUnused: Sendable {
     }
 
     static let bits: [String: [UInt64: RecordDataUnusedReason]] = [
+        "ActorBase.Flags": [
+            0x4000: .droppedAtLoad, 0x20000: .droppedAtLoad, 0x200000: .droppedAtLoad,
+            0x4000000: .droppedAtLoad, 0x1000_0000: .droppedAtLoad
+        ],
+        "ActorBase.TemplateFlags": [0x40: .droppedAtLoad],
         "TopicInfo.Flags": [0x1000: .droppedAtLoad, 0x4000: .noEffect]
     ]
 

@@ -289,6 +289,33 @@ struct ActorTemplateResolverTests {
         #expect(resolved.race == ActorSourcedField(value: FormID(0xA1), source: FormID(0x100)))
     }
 
+    /// ACBS 0x40000 makes the 0x16 word a bleedout threshold in health points; it rides
+    /// the Stats flag with the word.
+    @Test func theBleedoutOverrideCountsOnlyWithItsFlag() throws {
+        let own = try npc(formID: 0x100, flags: 0x40000, bleedout: 40, race: 0xA1)
+        #expect(own.stats.bleedoutOverride == 40)
+        let unflagged = try npc(formID: 0x101, bleedout: 40, race: 0xA1)
+        let template = try npc(formID: 0x200, flags: 0x40000, bleedout: -5, race: 0xA1)
+        let inherits = try npc(
+            formID: 0x102, flags: 0x40000, templateFlags: 0x0002, bleedout: 40,
+            template: 0x200, race: 0xA1
+        )
+        let npcs = resolver(npcs: [own, unflagged, template, inherits])
+        #expect(try npcs.resolveStats(base: FormID(0x100)).bleedoutOverride?.value == 40)
+        #expect(try npcs.resolveStats(base: FormID(0x101)).bleedoutOverride?.value == nil)
+        #expect(try npcs.resolveStats(base: FormID(0x102)).bleedoutOverride?.value == -5)
+    }
+
+    /// ACBS 0x80000 is a Traits flag.
+    @Test func oppositeSexAnimationsRideTheTraitsFlag() throws {
+        let template = try npc(formID: 0x200, flags: 0x80000, race: 0xA2)
+        let base = try npc(formID: 0x100, templateFlags: 0x0001, template: 0x200, race: 0xA1)
+        let plain = try npc(formID: 0x101, race: 0xA1)
+        let npcs = resolver(npcs: [base, template, plain])
+        #expect(try npcs.resolve(base: FormID(0x100)).usesOppositeSexAnimations)
+        #expect(try !npcs.resolve(base: FormID(0x101)).usesOppositeSexAnimations)
+    }
+
     @Test func templateFlagWithoutTemplateIsInert() throws {
         let base = try npc(formID: 0x100, templateFlags: 0x0101, race: 0xA1, defaultOutfit: 0xD1)
         let resolved = try resolver(npcs: [base]).resolve(base: FormID(0x100))
@@ -410,7 +437,7 @@ private func achrFields(
 
 /// ACBS: uint32 flags, 7 uint16 stat words, uint16 template flags,
 /// uint16 health offset, uint16 bleedout override (24 bytes).
-private func acbs(flags: UInt32 = 0, templateFlags: UInt16 = 0) -> Data {
+private func acbs(flags: UInt32 = 0, templateFlags: UInt16 = 0, bleedout: Int16 = 0) -> Data {
     var data = Data()
     data.appendUInt32(flags)
     for _ in 0 ..< 7 {
@@ -418,7 +445,7 @@ private func acbs(flags: UInt32 = 0, templateFlags: UInt16 = 0) -> Data {
     }
     data.appendUInt16(templateFlags)
     data.appendUInt16(0)
-    data.appendUInt16(0)
+    data.appendUInt16(UInt16(bitPattern: bleedout))
     return data
 }
 
@@ -434,6 +461,7 @@ private func npc(
     name: String? = nil,
     flags: UInt32 = 0,
     templateFlags: UInt16 = 0,
+    bleedout: Int16 = 0,
     template: UInt32? = nil,
     race: UInt32? = nil,
     voiceType: UInt32? = nil,
@@ -449,7 +477,9 @@ private func npc(
     if let name {
         fields += ESMFixture.field("FULL", ESMFixture.zstring(name))
     }
-    fields += ESMFixture.field("ACBS", acbs(flags: flags, templateFlags: templateFlags))
+    fields += ESMFixture.field(
+        "ACBS", acbs(flags: flags, templateFlags: templateFlags, bleedout: bleedout)
+    )
     if let template {
         fields += formIDField("TPLT", template)
     }

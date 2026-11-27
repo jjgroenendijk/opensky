@@ -7,37 +7,6 @@ import Foundation
 public import OpenSkyFormatsCore
 
 nonisolated public struct ActorBase: Sendable {
-    /// ACBS uint32 flags — only the bits this engine consumes are named.
-    public struct Flags: OptionSet, Equatable, Sendable {
-        public let rawValue: UInt32
-
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-
-        static let female = Flags(rawValue: 0x0000_0001)
-        /// UESP NPC_ ACBS: an essential actor bleeds out instead of dying.
-        public static let essential = Flags(rawValue: 0x0000_0002)
-        /// "Auto calc stats": the actor's health/magicka/stamina come from
-        /// race + class + level rather than from race plus the ACBS offsets
-        /// alone (UESP NPC_ ACBS; CK "Stats Tab").
-        static let autoCalcStats = Flags(rawValue: 0x0000_0010)
-        /// UESP NPC_ ACBS: a dead actor comes back when its cell resets.
-        public static let respawns = Flags(rawValue: 0x0000_0008)
-        public static let unique = Flags(rawValue: 0x0000_0020)
-        /// "PC Level Mult": the level word holds a multiplier x1000 against
-        /// the player's level instead of a fixed level. The Creation Kit
-        /// forces auto-calc on whenever this is set (CK "Stats Tab").
-        public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
-        /// UESP NPC_ ACBS: only the player can kill a protected actor.
-        public static let protected = Flags(rawValue: 0x0000_0800)
-        /// UESP NPC_ ACBS: "Doesn't affect stealth meter".
-        public static let notShowOnStealthMeter = Flags(rawValue: 0x0000_0040)
-        /// UESP NPC_ ACBS: "Ghost/non-interactable", as on ghosts and Nocturnal.
-        public static let ghost = Flags(rawValue: 0x2000_0000)
-        public static let invulnerable = Flags(rawValue: 0x8000_0000)
-    }
-
     /// The ACBS words the actor-value derivation reads: one Creation Kit tab and
     /// one template group (`useStats`). The offsets are signed; vanilla records use
     /// negative ones.
@@ -66,6 +35,8 @@ nonisolated public struct ActorBase: Sendable {
         public var bakedHealth: Int16?
         public var bakedMagicka: Int16?
         public var bakedStamina: Int16?
+        /// ACBS 0x16, health points; used only with `Flags.usesBleedoutOverride`.
+        public var bleedoutOverride: Int16 = 0
 
         public init(
             levelWord: UInt16 = 1,
@@ -333,6 +304,9 @@ nonisolated public struct ActorBase: Sendable {
         if field.data.count >= 22 {
             stats.healthOffset = try Int16(bitPattern: reader.readUInt16())
         }
+        if field.data.count >= 24 {
+            stats.bleedoutOverride = try Int16(bitPattern: reader.readUInt16())
+        }
         return (flags, templateFlags)
     }
 
@@ -352,6 +326,49 @@ nonisolated public struct ActorBase: Sendable {
 }
 
 nonisolated extension ActorBase {
+    /// ACBS uint32 flags — only the bits this engine consumes are named.
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        static let female = Flags(rawValue: 0x0000_0001)
+        /// UESP NPC_ ACBS: an essential actor bleeds out instead of dying.
+        public static let essential = Flags(rawValue: 0x0000_0002)
+        /// "Auto calc stats": the actor's health/magicka/stamina come from
+        /// race + class + level rather than from race plus the ACBS offsets
+        /// alone (UESP NPC_ ACBS; CK "Stats Tab").
+        static let autoCalcStats = Flags(rawValue: 0x0000_0010)
+        /// UESP NPC_ ACBS: a dead actor comes back when its cell resets.
+        public static let respawns = Flags(rawValue: 0x0000_0008)
+        public static let unique = Flags(rawValue: 0x0000_0020)
+        /// "PC Level Mult": the level word holds a multiplier x1000 against
+        /// the player's level instead of a fixed level. The Creation Kit
+        /// forces auto-calc on whenever this is set (CK "Stats Tab").
+        public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
+        /// UESP NPC_ ACBS: only the player can kill a protected actor.
+        public static let protected = Flags(rawValue: 0x0000_0800)
+        /// UESP NPC_ ACBS: "Doesn't affect stealth meter".
+        public static let notShowOnStealthMeter = Flags(rawValue: 0x0000_0040)
+        /// UESP NPC_ ACBS: "Ghost/non-interactable", as on ghosts and Nocturnal.
+        public static let ghost = Flags(rawValue: 0x2000_0000)
+        public static let invulnerable = Flags(rawValue: 0x8000_0000)
+        /// The NPC is a preset face in the race menu, and keeps its tint layers.
+        public static let chargenFacePreset = Flags(rawValue: 0x0000_0004)
+        /// The NPC's own `CSDT`/`CSDI` sounds; clear follows `CSCR`.
+        public static let ownsCreatureSounds = Flags(rawValue: 0x0000_0100)
+        /// A hit draws no blood from the actor.
+        public static let doesNotBleed = Flags(rawValue: 0x0001_0000)
+        /// The bleedout threshold is `Stats.bleedoutOverride` health points.
+        public static let usesBleedoutOverride = Flags(rawValue: 0x0004_0000)
+        /// The behaviour graph of the opposite sex.
+        public static let oppositeSexAnimations = Flags(rawValue: 0x0008_0000)
+        /// No expressions, blinking, or lip movement.
+        public static let noFacialAnimation = Flags(rawValue: 0x0010_0000)
+    }
+
     /// ACBS template-data flags: when a bit is set and TPLT is present, the
     /// corresponding field group comes from the template, not this record.
     public struct TemplateFlags: OptionSet, Equatable, Sendable {
@@ -371,7 +388,8 @@ nonisolated extension ActorBase {
         public static let useBaseData = TemplateFlags(rawValue: 0x0080)
         public static let useInventory = TemplateFlags(rawValue: 0x0100)
         public static let useScript = TemplateFlags(rawValue: 0x0200)
-        static let useDefPackList = TemplateFlags(rawValue: 0x0400)
+        /// `DPLT` and the `SPOR`, `OCOR`, `GWOR`, and `ECOR` override lists.
+        public static let useDefPackList = TemplateFlags(rawValue: 0x0400)
         static let useAttackData = TemplateFlags(rawValue: 0x0800)
         static let useKeywords = TemplateFlags(rawValue: 0x1000)
     }

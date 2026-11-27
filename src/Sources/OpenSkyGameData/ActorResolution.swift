@@ -61,6 +61,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     public var faceMorphs: [Float] = []
     public var faceParts: [Int32] = []
     public var tintLayers: [ActorTintLayer] = []
+    /// ACBS 0x80000, a Traits-tab flag: the graph of the opposite sex runs.
+    public var usesOppositeSexAnimations = false
 }
 
 /// Stat-relevant fields of one actor after template resolution. Separate from
@@ -84,12 +86,14 @@ nonisolated public struct ResolvedActorStats: Equatable {
     /// and therefore ride `useStats` with the words beside them.
     public let autoCalculatesStats: ActorSourcedField<Bool>
     public let usesPlayerLevelMultiplier: ActorSourcedField<Bool>
+    /// The ACBS bleedout override in health points, nil when its flag is clear.
+    public var bleedoutOverride: ActorSourcedField<Int16?>?
 }
 
 /// Ordered AI package stack after `useAIPackages` template inheritance.
 nonisolated public struct ResolvedActorPackages: Equatable {
     public let packages: ActorSourcedField<[FormID]>
-    /// The FLST package lists of the same tab, which ride the same flag.
+    /// The FLST package lists: `DPLT` and the four overrides, which ride `useDefPackList`.
     public let lists: ActorSourcedField<ActorPackageListIDs>
 }
 
@@ -259,6 +263,11 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             }.value,
             tintLayers: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.tintLayers, source: $0.formID)
+            }.value,
+            usesOppositeSexAnimations: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(
+                    value: $0.flags.contains(.oppositeSexAnimations), source: $0.formID
+                )
             }.value
         )
     }
@@ -282,6 +291,13 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             },
             usesPlayerLevelMultiplier: resolveField(in: npcs, flag: .useStats) {
                 ActorSourcedField(value: $0.flags.contains(.pcLevelMult), source: $0.formID)
+            },
+            bleedoutOverride: resolveField(in: npcs, flag: .useStats) {
+                ActorSourcedField(
+                    value: $0.flags.contains(.usesBleedoutOverride)
+                        ? $0.stats.bleedoutOverride : nil,
+                    source: $0.formID
+                )
             }
         )
     }
@@ -294,7 +310,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             packages: resolveField(in: npcs, flag: .useAIPackages) {
                 ActorSourcedField(value: $0.packages, source: $0.formID)
             },
-            lists: resolveField(in: npcs, flag: .useAIPackages) {
+            lists: resolveField(in: npcs, flag: .useDefPackList) {
                 ActorSourcedField(
                     value: ActorPackageListIDs(
                         defaults: $0.details.defaultPackageList,
