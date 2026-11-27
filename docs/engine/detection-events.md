@@ -49,6 +49,11 @@ which holds the formula.
   shooter attacked it.
 - A flying projectile makes no event: not at launch, and not while it flies. Observers find it
   only through the projectile check below.
+
+  [WARNING] The game's fire step was also seen to make an event from the weapon's sound level at
+  the shooter, right after the weapon's `SNAM` or `XNAM` fire sound
+  ([items](/formats/item-records.md#weap)). This may be the action sound below rather than an
+  event; which one it is was not settled.
 - These make no event: a weapon swing, a weapon hit, a drawn bow, a footstep, a jump, a door,
   and a trap other than through its explosion or projectile.
 

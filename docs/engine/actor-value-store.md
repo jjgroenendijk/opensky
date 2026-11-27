@@ -153,6 +153,9 @@ Three game settings slow it in combat (values from `Skyrim.esm`):
 | `fCombatMagickaRegenRateMult` | 0.33 | 3% a second becomes 0.99% (UESP "Skyrim:Magicka") |
 | `fCombatStaminaRegenRateMult` | 0.35 | 5% a second becomes 1.75% (UESP "Skyrim:Stamina") |
 
+An actor whose race sets `DATA` flag `0x80000` skips the health multiplier and regenerates health at
+the full rate in combat. Trolls and the werewolf set it ([actors](/formats/actors.md)).
+
 The player's health uses its `Combat Health Regen Multiply` actor value instead, which UESP gives
 as 0.7: "0.70% of your maximum health each second outside of combat and 0.49% during combat"
 ("Skyrim:Health"). No record sets it, so OpenSky starts it at 0.7. The player is in combat while

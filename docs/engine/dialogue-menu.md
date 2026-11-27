@@ -152,6 +152,20 @@ holder is an empty box on screen. The HUD's `SubtitleText` property is the field
 variable, so OpenSky writes both the drawn text and the variable. The vanilla movie ships a
 sample text in this field, so it stays hidden until a line is set.
 
+Which lines get a subtitle:
+
+- The player's own lines never get one.
+- No line gets one when both `bGeneralSubtitles:Interface` and `bDialogueSubtitles:Interface` are
+  off, or when its text is empty.
+- A line shows only while its speaker is within `fMaxSubtitleDistance:Interface` of the player.
+  The default is 1250 units; the INI can change it. A line whose `INFO` sets flag `0x200` (force
+  subtitle) skips this test.
+- Forced lines sort ahead of the others; after that, nearer speakers come first.
+- The HUD subtitle needs `bGeneralSubtitles`. With `bShowSubtitleSpeakerName` on, the speaker's name
+  comes first, in the colour `iSubtitleSpeakerNameColor`.
+- A line from the actor the player talks to also goes to the dialogue menu's subtitle when
+  `bDialogueSubtitles` is on.
+
 The HUD stays under the dialogue menu in `DialogueMode`, which hides the HUD's subtitle. While a
 conversation is open, the menu's own `SubtitleText` shows the line. A line is cleared when the
 player moves on and when the conversation ends.

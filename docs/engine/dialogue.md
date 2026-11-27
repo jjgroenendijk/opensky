@@ -173,6 +173,18 @@ again. When nothing in it passes, the conversation ends. The Creation Kit's dial
 a response without the Goodbye flag needs none when the speaker has "nothing else to say when he's
 done here" (<https://ck.uesp.net/wiki/Bethesda_Tutorial_Dialogue>).
 
+More response flags (`INFO` `ENAM`):
+
+| Bit | Effect |
+| --- | --- |
+| `0x10` | Refusal: the response is not marked as said, and its entry carries a refusal mark |
+| `0x200` | Force subtitle: the line skips the subtitle distance test ([dialogue menu](/engine/dialogue-menu.md#subtitles)) |
+| `0x400` | Can move while greeting: without it, the speaker stops moving when a greeting starts |
+| `0x800` | No lip file: the line plays with no lip-sync data |
+| `0x2000` | Audio output override: the voice plays through the `INFO`'s own output model |
+
+No reader of `0x1000` (requires post-processing) is known.
+
 ## Favour lines
 
 The Favors tab topics (category 4: `SHOW`, `AGRE`, `REFU`, `MREF`, `FEXT`) "play in response to

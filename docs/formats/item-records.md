@@ -169,6 +169,27 @@ still read:
 | 16 | uint16 damage, 2 unused, float32 multiplier, uint8 on-death, 3 unused, FormID SPEL |
 | 24 | the same, but 7 unused after on-death, SPEL at `0x10`, then 4 unused |
 
+Weapon sounds, and when the game plays them:
+
+| Field | Sound |
+| --- | --- |
+| `NAM9` | Draw: plays at the actor when the animation sends the right hand's begin-draw event |
+| `NAM8` | Sheathe: plays at the actor on the begin-sheathe event |
+| `TNAM` | Swing: plays at the actor on every weapon-swing animation event, either hand |
+| `SNAM` | Fire: a 3D sound when the weapon launches its projectile |
+| `XNAM` | Fire for the player in first person, instead of `SNAM` |
+| `NAM7` | A loop while the actor attacks without a pause |
+| `UNAM` | A loop while the weapon is equipped and the actor is alive |
+
+Every vanilla `NAM9` is a draw sound and every `NAM8` a sheathe sound. `TNAM` is the swing sound
+on 2,435 vanilla weapons, not an "attack fail" sound. After `SNAM` or `XNAM`, the weapon's sound
+level makes a detection event at the shooter. The 7 bound weapons use `UNAM` for
+`MAGConjureBoundWeaponLP`.
+
+The item card shows a weapon's `DESC` as its effect text when it is not empty. Only an empty
+`DESC` shows the enchantment's text instead. 33 `Skyrim.esm` weapons have one, such as
+`SilverSword` and the Nightingale bow. The same holds for armour: 28 `ARMO` records.
+
 UESP calls `INAM` "Normal weapon swing impact set" and `BIDS` "Block bash impact data set".
 A null link means the hit makes no impact sound. That is normal in vanilla.
 

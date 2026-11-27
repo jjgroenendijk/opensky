@@ -48,7 +48,9 @@ light, the muzzle flash light, and the muzzle flash duration too
 ([what a projectile shows](/engine/spell-delivery.md#what-a-projectile-shows)).
 UESP calls 0x3C "uint32 always 0"; xEdit calls it `Sound - Disable`. The offset is the same.
 "Always 0" describes vanilla data, not the field, so OpenSky follows xEdit. `VNAM` is the
-sound level.
+sound level. A value above 4 loads as 1 (normal). The levels map to detection amounts: 0
+`iSoundLevelLoud`, 1 `iSoundLevelNormal`, 2 `iSoundLevelSilent`, 3 `iSoundLevelVeryLoud`. When a
+projectile makes its sound, and where, is not known yet.
 
 No source gives a unit for gravity. On the 20 arrow projectiles in `Skyrim.esm` it is at
 most 1 while speed reaches the thousands, so it is a scale factor
