@@ -48,6 +48,24 @@ Making any of these a trigger would fire events for scripts that never asked. Va
 `Skyrim.esm` has 3135 portal boxes and 233 lines, so most non-box primitives are excluded, and
 the count makes that visible.
 
+### The collision layer
+
+A primitive's `XTRI` names its Havok collision layer by the `COLL` record's index (`BNAM`).
+The layer decides what the box or sphere is:
+
+| Layer | Result | Vanilla examples |
+| --- | --- | --- |
+| No `XTRI` | Trigger | Most primitives |
+| `COLL` flag 0x01 (trigger volume) set | Trigger | 12 `L_TRIGGER`, 22 `L_ACTORZONE`, 54 `L_TRAP_TRIGGER` |
+| The `L_CHARCONTROLLER` layer collides with it | Solid collision that blocks actors | 1 `L_STATIC`, 2 `L_ANIMSTATIC`, 31 `L_STAIRHELPER`, 35 `L_COLLISIONBOX` |
+| Anything else | Neither | 15 `L_NONCOLLIDABLE`, 49 `L_NAVCUT` |
+
+Which layers collide is the `CNAM` list of each `COLL`. In `Skyrim.esm`, 1,374 boxes carry
+`XTRI`. The largest groups are 439 on layer 49, 217 on layer 2, 159 on layer 22, 127 on
+layer 31, and 114 on layer 0. Without `XTRI` the game picks layer 22 or 3; OpenSky keeps
+these as triggers, the use of layer 22. Layer 23 (`L_PROJECTILEZONE`) has its own rule in the
+game, which OpenSky does not build.
+
 A sphere's radius is `halfExtents.x`. Neither UESP's `REFR` page nor xEdit's
 `wbStruct(XPRM, ...)` says which axis holds it. The data answers: all 137 sphere primitives in
 `Skyrim.esm` store the same value on all three axes, so any axis works.
