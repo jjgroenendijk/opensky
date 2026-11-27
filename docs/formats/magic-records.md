@@ -212,3 +212,12 @@ Measured on this machine's active load order:
 - MGEF: 1,812 records, 1,731 unique. No malformed fields.
 - SPEL and SCRL: 1,560 spells and 109 scrolls. Every `SPIT` is 36 bytes. 333 set the
   manual-cost flag.
+
+## Where OpenSky differs
+
+These `MGEF` and `ENCH` values are read but change nothing yet:
+
+- Painless: a spell hit plays no hit reaction in OpenSky, so the flag has nothing to stop.
+- Gory Visuals: OpenSky has no gore setting.
+- The enchant shader and the equip ability of an enchanted item.
+- The menu display object, the spellmaking area, and the script AI score and delay.

@@ -182,3 +182,18 @@ The combat AI decides to bash from its combat style's bash chances
 ([combat style](/formats/combat-style.md#attack-and-bash-chances)) and then sends a bash event.
 The `0x2` flag of the attack that event matches marks it as a bash; it does not choose it. A power
 attack (`0x4`) speaks the power attack combat topic instead of the attack topic.
+
+## Where OpenSky differs
+
+OpenSky builds the AI's pick, the attack's stamina and stagger, and the knockdown push. These parts
+are not built yet:
+
+- A blow lands on a target in reach without the hit cone test.
+- The left-hand pool is chosen only for a left-hand swing. The left-hand flag does not limit which
+  hand the AI swings.
+- The bash state and its damage are not built. An attack with the bash flag is left out of the
+  pick.
+- A target whose race has No Knockdowns staggers at magnitude 1, not at the force after the
+  stagger perk entries.
+
+`openskycli game state assist` lists each NPC's picked attack under `attackPicks`.

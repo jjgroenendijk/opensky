@@ -168,3 +168,10 @@ In `Skyrim.esm` every part has flags 0 except the draugr head (`0x32`) and the d
 multiplier 1, actor value -1, health percent 5, and to-hit chance
 100. No part in `Skyrim.esm`, `Dawnguard.esm`, or `Dragonborn.esm` is severable or
 explodable, so vanilla actors never dismember or explode this way.
+
+## Where OpenSky differs
+
+A hit lands on the actor, not on one of its nodes. So the parts of `BPND` that work per hit are
+not used yet: the damage multiplier, the health percent, the to-hit chance, and the
+actor value of a limb. Severing and exploding on a killing blow use the part data and the weapon's
+On Hit setting as this page describes.
