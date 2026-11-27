@@ -112,8 +112,9 @@ struct AssetPayloadCodecTests {
         (state.depthTest, state.depthWrite, state.decal) = (false, false, true)
         (state.castsShadows, state.receivesShadows) = (false, false)
         (state.distantLOD, state.screenDoor, state.windWeighted) = (true, true, true)
+        state.takesPlacedAlphaCutoff = true
         #expect(
-            Mirror(reflecting: state).children.count == 8,
+            Mirror(reflecting: state).children.count == 9,
             "a new MaterialDrawState field needs the cache codec and a mesh version bump"
         )
         var out = CachePayloadWriter()
