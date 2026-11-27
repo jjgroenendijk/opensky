@@ -11,7 +11,27 @@ let settingReaders =
 let queueOwners =
     "src/Sources/(OpenSkyGameData/AssetLoader|OpenSkyAudio/WorldAudioEngine|OpenSkyCells/CellBuildRunner)\\.swift$"
 
+/// Shallow handlers come from tools/shallow-handlers/Handlers.swift, which this checker
+/// compiles too, so the gap report and the gate judge a body the same way.
+func unnamedStubs(_ tree: SourceFileSyntax, _ area: Handler.Area) -> [AbsolutePosition] {
+    handlers(in: tree).filter { $0.area == area && $0.isUnnamedStub }.map(\.position)
+}
+
 let recordRules: [Rule] = [
+    Rule(
+        id: "unnamed_native_stub",
+        message: "A native that only answers a constant answers .deviated(_, .stubbed) or another deviation, or its comment starts with 'Matches the game:', so a run counts it by name (docs/tools/headless-sweeps.md)",
+        included: "src/Sources/OpenSky(Scripting|ScriptAdapters)/.*\\.swift$"
+    ) { tree in
+        unnamedStubs(tree, .native)
+    },
+    Rule(
+        id: "unnamed_condition_stub",
+        message: "A condition function that only answers a constant fails with a reason, or its comment starts with 'Matches the game:' (docs/tools/headless-sweeps.md)",
+        included: sourcesOnly
+    ) { tree in
+        unnamedStubs(tree, .condition)
+    },
     Rule(
         id: "perk_entry_point_literal",
         message: "Name the entry point in PerkEntryPoint+Engine.swift and add it to engineRead, so openskycli gaps sees it",

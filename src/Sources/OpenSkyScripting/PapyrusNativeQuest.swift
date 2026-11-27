@@ -21,11 +21,11 @@ extension PapyrusNativeFunctions.QuestNatives {
         installQuestObjectives(into: &registry)
         installQuestObjectiveReads(into: &registry)
         // `bool UpdateCurrentInstanceGlobal(GlobalVariable)` copies a global into the
-        // quest's text replacement. OpenSky builds no replaced text, so there is nothing
-        // to update; it answers true, the success value.
+        // quest's text replacement. OpenSky builds no replaced text yet, so it is a stub
+        // that answers true, the success value.
         registry.register(PapyrusNativeFunction(
             scriptName: "Quest", functionName: "UpdateCurrentInstanceGlobal"
-        ) { _, _ in .returned(.boolean(true)) })
+        ) { _, _ in .deviated(.boolean(true), .stubbed) })
     }
 
     /// `bool IsRunning()`, `bool IsCompleted()`, `int GetCurrentStageID()` and
