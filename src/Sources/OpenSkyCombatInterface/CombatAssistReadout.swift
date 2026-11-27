@@ -25,7 +25,24 @@ nonisolated public struct CombatAssistReadout: Equatable, Sendable {
         }
     }
 
+    /// The attack an NPC's pick chose for its swing in progress.
+    public struct AttackPick: Equatable, Sendable {
+        public var attacker: ReferenceKey
+        /// The `ATKE` event, such as `attackPowerStart_Forward`.
+        public var event: String
+        public var isPowerAttack: Bool
+        public var knockdown: Float
+
+        public init(attacker: ReferenceKey, event: String, isPowerAttack: Bool, knockdown: Float) {
+            self.attacker = attacker
+            self.event = event
+            self.isPowerAttack = isPowerAttack
+            self.knockdown = knockdown
+        }
+    }
+
     public var tracks: [Track] = []
+    public var attackPicks: [AttackPick] = []
     /// The target the player's last shot turned toward. Nil when it turned to none.
     public var autoAim: ProjectileAimPick?
     public var threats: [DangerThreat] = []

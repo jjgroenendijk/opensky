@@ -22,6 +22,14 @@ struct AgentAssistReadoutTests {
         readout.tracks = [
             .init(attacker: .generated(1), target: .player, aim: [1, 2, 3], refreshes: 4)
         ]
+        readout.attackPicks = [
+            .init(
+                attacker: .generated(1),
+                event: "attackPowerStart",
+                isPowerAttack: true,
+                knockdown: 30
+            )
+        ]
         var watch = CombatDangerWatch()
         watch.score = 0.5
         watch.dodgeCount = 2
@@ -36,6 +44,9 @@ struct AgentAssistReadoutTests {
         host.fakePackages.processReadout = ["high": 3]
         let reply = try world.query(.assist)
         #expect(reply.value(atPath: "attackTracks.0.refreshes") == .init(4))
+        #expect(reply.value(atPath: "attackPicks.0.event") == .string("attackPowerStart"))
+        #expect(reply.value(atPath: "attackPicks.0.power") == .bool(true))
+        #expect(reply.value(atPath: "attackPicks.0.knockdown") == .init(Float(30)))
         #expect(reply.value(atPath: "danger.watches.0.dodges") == .init(2))
         #expect(reply.value(atPath: "danger.threats") == .array([]))
         #expect(reply.value(atPath: "autoAim") == .null)
