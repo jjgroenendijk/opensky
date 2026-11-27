@@ -91,6 +91,16 @@ For example, 24 is `Health` and 44 is `Resist Magic`. The value `-1` means "no a
 | `0x90` | float32 | script-effect AI score |
 | `0x94` | float32 | script-effect AI delay |
 
+When the enchant visuals (`0x7C`, an `RFCT`) are set, their shader and art replace both the
+enchant shader (`0x24`) and the enchant art (`0x74`). A weapon enchantment shows them on the weapon
+in the hand that casts it, when that hand's caster starts or readies. The item must be an
+enchantment that is not a constant effect, and a charged item must hold at least one use. The
+shader goes on the weapon only when its own flags have bit 24 set. The costliest effect decides.
+
+The equip ability (`0x80`) follows the casting slots: left hand, right hand, voice, and instant.
+When a slot gets a spell, scroll, staff, or other casting item, the ability of each of its effects
+is cast on the actor. When the item leaves its last slot, those abilities are dispelled.
+
 The flags with known meaning are: hostile, recover, detrimental, snap to navmesh, no hit
 event, dispel with keywords, no duration, no magnitude, no area, effects persist, gory
 visuals, hide in UI, no recast, power affects magnitude, power affects duration, painless,
@@ -104,10 +114,11 @@ What the game does with some of them:
 | 4 | No hit event | Applying the effect sends no hit event to the target's scripts |
 | 8 | Dispel with keywords | When the effect starts, it dispels the target's other active effects that carry one of its own keywords |
 | 12 | Effects persist | Objects the effect places are persistent references, and they are cleaned up when the effect ends |
+| 14 | Gory visuals | With the `bDisableAllGore` INI switch on, the hit shader and hit art do not start |
 | 24 | (unnamed) | The effect is left out of the spell's cost, its charge time, and the choice of its main effect |
 | 26 | Painless | The target plays no pain or hit reaction |
 | 27 | No hit effect | The hit shader and hit-effect art do not start on the target |
-| 28 | No death dispel | The effect does not end when the target dies; some archetypes decide this for themselves |
+| 28 | No death dispel | Each frame, an effect on a dying or dead actor ends unless this bit is set. This holds for every archetype, abilities too. Reanimate is the one exception: it stays while it holds the body |
 
 A target reacts with pain only to a hostile or detrimental effect that is not painless and not
 from an ability (spell type 4).

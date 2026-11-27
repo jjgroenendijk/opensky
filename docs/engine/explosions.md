@@ -144,7 +144,9 @@ The formula only runs when the actor lives through the hit:
 Example: damage 30 on an actor with base health 200 and current health 50. 15 percent of the base
 is not above 75. 60 percent of the current health is above 50. The chance is `9 / 50 = 0.18`.
 
-A dead or ragdolled actor gets the push instead.
+A dead or ragdolled actor gets the push instead. Which actors can be knocked down, and what a
+race with No Knockdowns gets instead, is the same as for an attack's knockdown
+([attack data](/engine/attack-data.md#knockdown)).
 
 ## Push
 
