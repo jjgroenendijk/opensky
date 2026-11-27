@@ -21,6 +21,8 @@ public protocol AnimationEventWorldHost: AnyObject, SendableMetatype {
     var objectBehaviors: any ObjectBehaviorPort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var cinematicCamera: any CinematicCameraPort { get }
+    var combat: any CombatPort { get }
+    var inventory: any InventoryPort { get }
     var headTracking: any HeadTrackingPort { get }
     var effectGraphs: any EffectGraphPort { get }
     var gameSession: (any GameSessionPort)? { get }

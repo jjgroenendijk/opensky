@@ -67,6 +67,8 @@ nonisolated public struct LiveProjectile: Equatable, Sendable {
     public var nextConeLook: Float = 0
     /// A crossbow bolt, which sticks less deep than an arrow.
     public var isBolt = false
+    /// The player shot it in first person, so its weapon plays the `XNAM` fire sound.
+    public var firedInFirstPerson = false
     /// An arrow that bounced: it does no more harm and lies where it next lands.
     public var hasBounced = false
     /// The actor a bounce left, which the bounced arrow cannot strike again.

@@ -32,6 +32,7 @@ import OpenSkyWorldState
 @MainActor
 public protocol CombatOutcomesHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
+    var combat: any CombatPort { get }
     var effectsWorld: any EffectsWorldPort { get }
     var hud: any HUDPort { get }
     var perception: any PerceptionPort { get }
@@ -73,6 +74,8 @@ extension CombatOutcomesAdapter {
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
             case .drewBlood, .showDefaultBlood, .muzzleFlash: showImpact(command)
             case .incrementStat, .playerUsedWeapon: countStat(command)
+            case let .weaponFired(weapon, shooter, position, firstPerson):
+                weaponFired(weapon, by: shooter, at: position, firstPerson: firstPerson)
             case let .rangedKillCam(projectile, target):
                 impactEffects.playRangedKillCam(projectile: projectile, target: target)
             case let .playerBowShot(weapon, ammunition, power):
@@ -82,6 +85,19 @@ extension CombatOutcomesAdapter {
                 )
             }
         }
+    }
+
+    /// The `XNAM` sound for the player in first person, else `SNAM`; then a detection
+    /// event at the weapon's sound level.
+    private func weaponFired(
+        _ weapon: FormID, by shooter: ReferenceKey, at position: SIMD3<Float>, firstPerson: Bool
+    ) {
+        guard let details = game.combat.items?.weapon(weapon)?.details else { return }
+        let sound = firstPerson
+            ? details.firstPersonFireSound ?? details.fireSound : details.fireSound
+        guard let sound else { return }
+        game.audio.soundDirector?.playSound(formID: sound, source: shooter, at: position)
+        noteSoundEvent(owner: shooter, level: details.detectionSoundLevel, at: position)
     }
 
     private func showImpact(_ command: CombatCommand) {

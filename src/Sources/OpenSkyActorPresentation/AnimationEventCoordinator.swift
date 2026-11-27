@@ -31,6 +31,10 @@ public protocol AnimationEventWorld: AnyObject {
     func playSoundType(_ type: UInt32, source: ReferenceKey, at position: SIMD3<Float>) -> Bool
     /// Ends every loop `source` started through its animation sound events.
     func endAnimationSounds(source: ReferenceKey)
+    /// Plays or stops the sound `event` asks of the weapon `source` holds. False when the
+    /// weapon has no such sound.
+    func playWeaponSound(_ event: WeaponSoundEvent, source: ReferenceKey, at position: SIMD3<Float>)
+        -> Bool
 }
 
 extension AnimationEventWorld {
@@ -66,6 +70,12 @@ public final class AnimationEventCoordinator {
     ) -> AnimationEventAction? {
         if reachesEffectGraphs {
             world.sendEffectGraphEvent(name, from: source)
+        }
+        if isEnabled, let event = WeaponSoundEvent(name),
+           let position = world.animationEventPosition(of: source),
+           world.playWeaponSound(event, source: source, at: position)
+        {
+            counts["weapon sound", default: 0] += 1
         }
         guard isEnabled, let action = AnimationEventAction.parse(name) else {
             return nil

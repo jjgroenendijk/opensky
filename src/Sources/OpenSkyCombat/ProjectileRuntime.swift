@@ -125,6 +125,7 @@ public final class ProjectileRuntime {
             )
         )
         projectile.isBolt = shot.isBolt
+        projectile.firedInFirstPerson = shooter.key == .player && shooter.isFirstPerson
         if shooter.key == .player {
             turnForKillCam(&projectile, shot: shot, aimTarget: pick?.target.key)
         }

@@ -23,6 +23,8 @@ import simd
 public protocol ActorGraphGraphEventsHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var inventory: any InventoryPort { get }
     var dragonFlight: any DragonFlightPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
@@ -93,19 +95,41 @@ struct ActorGraphSoundReads {
 
     func actorSoundSources() -> [ActorSoundSource] {
         let streamer = game.streamer
-        return game.actorWorld.combatActors().compactMap { actor in
+        let actors: [ActorSoundSource] = game.actorWorld.combatActors().compactMap { actor in
             guard
                 let base = streamer.residentActorEntry(key: actor.key)?.placedActor?.base
             else { return nil }
-            let sounds = sounds(of: actor.key, base: base)
-            guard !sounds.types.isEmpty else { return nil }
             let unconscious = game.worldState
                 .component(ScriptedReferenceState.self, for: actor.key)?
                 .flag(ScriptedStateName.unconscious) == true
-            return ActorSoundSource(
-                key: actor.key, position: actor.feet, sounds: sounds,
+            var source = ActorSoundSource(
+                key: actor.key, position: actor.feet, sounds: sounds(of: actor.key, base: base),
                 isConscious: !actor.isDead && !unconscious
             )
+            source.weaponLoops = weaponLoops(of: actor.key)
+            source.isAlive = !actor.isDead
+            return source.loops.isEmpty && source.sounds.types.isEmpty ? nil : source
+        }
+        return actors + [playerSoundSource()].compactMap(\.self)
+    }
+
+    /// The player makes no `CSDT` sounds of its own, only its weapons' loops.
+    private func playerSoundSource() -> ActorSoundSource? {
+        let loops = weaponLoops(of: .player)
+        guard !loops.isEmpty, let feet = game.gameSession?.locomotion.status.feetPosition
+        else { return nil }
+        var source = ActorSoundSource(key: .player, position: feet, sounds: .none, isConscious: true)
+        source.weaponLoops = loops
+        return source
+    }
+
+    /// The `UNAM` loops of the weapons in both hands.
+    private func weaponLoops(of key: ReferenceKey) -> [FormID] {
+        let items = game.combat.items
+        return [false, true].compactMap { leftHand in
+            let held: FormID?? = game.inventory.scriptItems
+                .scriptEquippedWeapon(on: key, leftHand: leftHand)
+            return held.flatMap { $0 }.flatMap { items?.weapon($0)?.details.equippedLoopSound }
         }
     }
 
