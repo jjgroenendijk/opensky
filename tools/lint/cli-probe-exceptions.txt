@@ -21,3 +21,6 @@ reference shot: it needs the reference game window on screen.
 reference listen: it needs the reference game window on screen.
 reference state: it needs a running reference game.
 reference sync: it needs a running app and a running reference game.
+sweep quests: it starts every quest in the load order, which takes minutes.
+sweep fragments: it runs every script fragment in the load order, which takes minutes.
+sweep rules: it walks every placed reference in the load order, which takes minutes.

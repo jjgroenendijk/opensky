@@ -28,6 +28,7 @@ struct PapyrusWorldStateBridgePortTests {
         #expect(bridge.isInFaction(key, faction: key) == nil)
         #expect(bridge.isHostile(key, toward: .player) == nil)
         _ = bridge.relationshipRank(of: key, toward: .player)
+        #expect(Result { try bridge.startQuest(for: key) }.isFailure)
         #expect(Result { try bridge.stopQuest(for: key) }.isFailure)
         #expect(Result { try bridge.setQuestStage(1, for: key) }.isFailure)
     }

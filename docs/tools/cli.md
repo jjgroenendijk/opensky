@@ -115,6 +115,9 @@ the number. A summary line goes to stderr.
 | `ess locks <save.ess>` | Each lock change form in a save: reference, stored level, flags, and key, beside the plugin's `XLOC` level and flags. It ends with a count of leveled locks by authored and stored level ([locks](/engine/locks.md)) |
 | `ess list <folder>` | Each save's header in a folder |
 | `gaps [--only a,b] [--limit n] [--summary-out path] [--field-reads path] [--value-reads path] [--shallow-handlers path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table; the `fields` section needs `--field-reads`, the `flags` and `enums` sections need `--value-reads`, and the `shallow` section needs `--shallow-handlers`: the lists `make rank-gaps` writes from the index store and the source ([gap report](/tools/gaps.md)) |
+| `sweep quests [--out dir] [--limit n] [--examples n]` | Starts every start-game-enabled and story-manager quest headless and ranks what stops them: an alias that does not fill, a start-up stage not reached, a stage fragment error, or a scene that cannot start; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-quests/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
+| `sweep fragments [--out dir] [--limit n] [--examples n]` | Runs every quest stage, topic info, scene, and package fragment headless, one at a time, and ranks the problems by the fragments they hit, with examples; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-fragments/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
+| `sweep rules [--out dir] [--limit n] [--examples n]` | Checks the rules vanilla data implies, such as every load door leading to a navmesh, and lists the violations per rule; writes `report.txt` to `.logs/sweep-rules/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
 
 ### World
 

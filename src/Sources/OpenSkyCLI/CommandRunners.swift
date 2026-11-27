@@ -44,6 +44,24 @@ extension GapsArguments: CLIRunnable {
     }
 }
 
+extension SweepArguments.Quests: CLIRunnable {
+    func execute() throws {
+        try SweepQuestsCommand.run(context: context(), arguments: self)
+    }
+}
+
+extension SweepArguments.Fragments: CLIRunnable {
+    func execute() throws {
+        try SweepFragmentsCommand.run(context: context(), arguments: self)
+    }
+}
+
+extension SweepArguments.Rules: CLIRunnable {
+    func execute() throws {
+        try SweepRulesCommand.run(context: context(), arguments: self)
+    }
+}
+
 extension InstallArguments: CLIRunnable {
     func execute() throws {
         try InstallCommand.run(dataRoot: global.dataRoot)
