@@ -112,7 +112,7 @@ bases. Source: xEdit `dev-4.1.6` `wbRefRecord(REFR, ...)` (`XRMR`, `XLRM`, `XPOD
 
 | reference | base | `XPRM` | own fields |
 | --- | --- | --- | --- |
-| room marker | `RoomMarker` | box | `XRMR` (uint8 linked room count, uint8 flags, 2 unused), optional `LNAM` lighting template and `INAM` image space, one `XLRM` FormID per linked room |
+| room marker | `RoomMarker` | box | `XRMR` (uint16 header, then a byte that is stored), optional `LNAM` lighting template and `INAM` image space, one `XLRM` FormID per linked room |
 | portal | `PortalMarker` | portal box | `XPOD`: origin room, then destination room, two FormIDs |
 
 In `Skyrim.esm` (probed on the vanilla install):
@@ -152,24 +152,24 @@ Placed hazards and projectiles share the reference layout above. See
 ## Other REFR and ACHR fields
 
 Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbRefRecord(ACHR, ...)`, `wbRagdoll`,
-`wbActionFlag`, `wbXLOD`, and `wbSizePosRot`. No runtime reads these yet. OpenSky decodes
-them so the record dump shows them and the coverage sweep can account for every field.
+`wbActionFlag`, `wbXLOD`, and `wbSizePosRot`. The next section says what the game does
+with them.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `XMBO` | 3 floats | Bound half extents |
-| `XOCP` | 9 floats | Occlusion plane: width, height, position, rotation quaternion |
+| `XMBO` | 3 floats | Bound half extents; never read |
+| `XOCP` | 9 floats | Occlusion plane: width, height, position, rotation quaternion; dropped at load |
 | `XPOD` | FormID pairs | Portals: origin and destination `REFR` |
-| `XRMR` | 4 bytes | Room bound header: linked room count, flags, 2 unknown bytes |
+| `XRMR` | 4 bytes | Room bound header: uint16 (low 14 bits linked room count, 0x8000 `LNAM` follows, 0x4000 `INAM` follows), a stored byte, 1 more byte |
 | `LNAM`, `INAM` | FormID | Room lighting template and image space |
 | `XLRM` | FormID | A linked room; repeated |
-| `XMBP` | 0 bytes | Multibound primitive marker |
+| `XMBP` | 0 bytes | Multibound primitive marker; skipped at load |
 | `XRGD` | 28 bytes each | Ragdoll bone: uint8 bone ID, 3 unused bytes, position, rotation |
 | `XRGB` | 3 floats | Ragdoll biped rotation |
 | `XPWR` | FormID, uint32 | Water that reflects (0x01) or refracts (0x02) this reference; repeated |
 | `XLTW` | FormID | A water this light lights; repeated |
-| `XLIG` | 16 or 20 bytes | Light data: FOV offset, fade offset, end distance cap, shadow depth bias, optional unknown uint32 |
-| `XALP` | 2 bytes | Alpha cutoff and base |
+| `XLIG` | 16 or 20 bytes | Light data: FOV offset, fade offset, end distance cap, shadow depth bias, optional uint32 the game drops |
+| `XALP` | 2 bytes | Alpha cutoff, then a base byte the game never reads |
 | `XWCN`, `XWCS`, `XWCU` | as in `CELL` | Water current velocities |
 | `XCVL`, `XCVR` | 3 floats | Water current linear and rotational velocity |
 | `XCZR` or `XCZC`, `XCZA` | FormID, bytes | Water current reference or cell, then unknown data |
@@ -179,9 +179,9 @@ them so the record dump shows them and the coverage sweep can account for every 
 | `XTRI` | uint32 | Collision layer index |
 | `XNDP` | FormID, int16, 2 bytes | Navmesh door link: navmesh and triangle |
 | `XLRT` | FormID array | Location reference types |
-| `XIS2`, `XIBS` | 0 bytes | Ignored by sandbox |
+| `XIS2`, `XIBS` | 0 bytes | Ignored by sandbox; `XIS2` is stored and never read, `XIBS` is skipped |
 | `XCHG` | float | Charge |
-| `XACT` | uint32 | Action flags: 0x01 use default, 0x02 activate, 0x04 open, 0x08 open by default |
+| `XACT` | uint32 | Action flags: 0x01 use default, 0x02 activate, 0x04 open, 0x08 open by default; low byte kept |
 | `XHTW`, `XFVC`, `XHLP` | float | Head-tracking weight, favor cost, health |
 | `ONAM` | 0 bytes | Open by default |
 | `XLOD` | 3 floats | Distant LOD data, unnamed by xEdit |
@@ -196,6 +196,49 @@ older script format; xEdit marks them unused, and OpenSky reads past them.
 
 `ACHR` also carries `XLKR`, `XOWN`, `XRNK`, `XCNT`, `XRDS`, and `XEMI`, which the `REFR`
 decode reads itself. On an `ACHR` they go into the same details.
+
+## How the game uses the reference extras
+
+`XLIG` changes the light the reference places:
+
+- FOV offset: a spotlight's shadow field of view is `(base FOV + offset) * pi / 180`
+  radians. A hemisphere shadow light uses pi, and an omnidirectional one 2 pi.
+- Fade offset: the light's dimmer is the base fade plus the offset, and the flicker
+  amplitude scales with it. A runtime flag can skip it.
+- End distance cap: no effect.
+- Shadow depth bias: passed into the shadow light. The default is 1.0.
+- The fifth uint32 is dropped at load.
+
+`XALP` sets the alpha-test threshold to the cutoff byte on each shape of the model whose
+alpha flags have bit 0x8000 set.
+
+`XACT` keeps its low byte, with a default of 1. Bit 0x08 turns the open and close sense
+round, and bit 0x04 is cleared. Activating some references toggles 0x08.
+
+`XRMR` starts with a uint16. Its low 14 bits are the linked room count. Bit 0x8000 means an
+`LNAM` follows, and bit 0x4000 means an `INAM` follows; both are read by position. The third
+byte is stored. When the player enters the room, its image space blends in over
+`fRoomLightingTransitionDuration` seconds. Linked rooms inherit the lighting template.
+
+`XTRI` is the Havok collision layer of a primitive's shape. Without it, the layer is 22 or 3,
+and layer 23 is handled on its own.
+
+`XRGB` applies only to actors. When a ragdoll pose is applied, it sets the rotation of the
+first child of the skeleton root.
+
+`XNDP` is bookkeeping between a door and its navmesh. It changes nothing else.
+
+`XFVC` is the extra favour cost of a request:
+
+1. cost = base cost + truncate(`XFVC`);
+2. cost = truncate(cost * m), at least 1, where
+   `m = fSpeechcraftFavorMax + (fSpeechcraftFavorMin - fSpeechcraftFavorMax) * Speech / 100`;
+3. points = truncate(cost * `fCrimeFavorMult` + `iCrimeFavorBaseValue`);
+4. the actor refuses when the points are above its relationship rank.
+
+`XHTW` is stored and never read. When it loads, the value also lands in the favour cost
+slot, which a later `XFVC` overwrites. `XMBO` and `XIS2` are stored and never read. `XOCP`,
+`XIBS`, and `XMBP` are dropped at load.
 
 ## Map marker index
 

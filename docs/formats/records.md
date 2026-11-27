@@ -216,7 +216,13 @@ member belongs to the opener just before it, so these groups are read in file or
 
 `MODT` and `MODS` belong to a model only when they follow its path directly. `MODS` is a
 uint32 count, then per entry a uint32-length shape name, a `TXST` FormID, and an int32
-shape index. `MODT` changes layout with the form version, so it stays raw.
+shape index.
+
+`MODT` (and `MO2T` to `MO5T`, `DMDT`) changes layout with the form version. From form
+version 40 it starts with three uint32 values: N, the texture count, and the addon count.
+The data starts at byte `4 * (N + 1)`. It holds one 12-byte hash triple per texture, then
+one uint32 index per addon. A second `MODT` for the same model adds to the list. When the
+model is queued to load, the game starts loading the listed textures early.
 
 A placed `STAT`, or another base with a model, draws each `MODS` entry: the shape with that
 name takes the diffuse and normal map of the `TXST`. OpenSky matches shapes by name, without
