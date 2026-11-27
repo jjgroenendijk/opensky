@@ -87,11 +87,13 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "iIngredientUseEffectThreshold", "iIngredientWortcraftUses"
         ],
         .neverRead: [
-            "fCombatItemRestoreTimer", "fCombatThreatProximityExplosionAvoidTime",
-            "fConcussionTimer", "fGuardPackageAttackRadiusMult", "fImpactShaderMaxDistance",
-            "fInvisibilityMaxRefraction", "iMessIntactLimbDismemberChance",
-            "sGenericCraftKeywordName09", "sGenericCraftKeywordName10"
-        ] + neverReadTextSettings,
+            "fAISocialchanceForConversationInterior", "fCombatItemRestoreTimer",
+            "fCombatThreatProximityExplosionAvoidTime", "fConcussionTimer",
+            "fGuardPackageAttackRadiusMult", "fImpactShaderMaxDistance",
+            "fInvisibilityMaxRefraction", "fPlayerDetectActorValue",
+            "iMessIntactLimbDismemberChance", "sGenericCraftKeywordName09",
+            "sGenericCraftKeywordName10"
+        ] + neverReadStaggerSettings + neverReadTextSettings,
         .wikiUnused: wikiUnusedSettings,
         .creations: creationsSettings,
         .consoles: consolesSettings,
@@ -117,6 +119,20 @@ nonisolated public enum GameSettingsUnused: Sendable {
         .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"]
     ]
 }
+
+/// The stagger rule reads only `iStaggerAttackChance` and `fStaggerMaxDuration`
+/// (docs/engine/hit-reactions.md).
+nonisolated private let neverReadStaggerSettings = [
+    "fStaggerBlockAttackMult",
+    "fStaggerBlockAttackShieldBase",
+    "fStaggerBlockAttackShieldMult",
+    "fStaggerBlockBase",
+    "fStaggerBlockingMult",
+    "fStaggerBlockMult",
+    "fStaggerMassOffsetBase",
+    "fStaggerMin",
+    "fStaggerPlayerMassMult"
+]
 
 nonisolated private let vatsSettings = [
     "fActionPointsVATSMeleeMult",

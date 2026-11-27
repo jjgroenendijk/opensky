@@ -76,6 +76,11 @@ The magnitude is worked out when the hit is made.
 Example: an attacker with 40 `Block` bashes with a shield (W = 1, S = 1) at a running target of
 `Mass` 1. N = 0.9, K = 1.5, so the magnitude is 1.35, cut to 1 when the stagger starts.
 
+The rule reads no other stagger setting. `fStaggerBlockBase`, `fStaggerBlockMult`,
+`fStaggerBlockingMult`, `fStaggerBlockAttackMult`, `fStaggerBlockAttackShieldBase`,
+`fStaggerBlockAttackShieldMult`, `fStaggerMassOffsetBase`, `fStaggerMin`, and
+`fStaggerPlayerMassMult` are in `Skyrim.esm`, but the game never reads them.
+
 ## Starting a stagger
 
 1. The target needs 3D and an AI process, and must not be staggered already.
