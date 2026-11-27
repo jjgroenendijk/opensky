@@ -126,8 +126,40 @@ nonisolated public enum MusicPlaylistAdvance: String, Equatable, Sendable {
 /// One MUST track reduced to what playback needs.
 nonisolated public struct PlayableMusicTrack: Equatable, Sendable {
     let editorID: String?
-    /// Canonical VFS key of the ANAM stream.
-    public let path: String
+    /// Canonical VFS key of the ANAM stream. Nil on a silent track.
+    public let path: String?
+    /// A silent track's `FLTV`: seconds of silence before the next track.
+    public var silenceSeconds: Float?
+    /// The palette a track was played from: it stops after the palette's `FLTV` seconds,
+    /// fading out over its `DNAM`.
+    public var paletteLimit: MusicPaletteLimit?
+
+    public init(
+        editorID: String?,
+        path: String?,
+        silenceSeconds: Float? = nil,
+        paletteLimit: MusicPaletteLimit? = nil
+    ) {
+        self.editorID = editorID
+        self.path = path
+        self.silenceSeconds = silenceSeconds
+        self.paletteLimit = paletteLimit
+    }
+}
+
+/// How long a palette's tracks play, and the fade at the end (CK "Music Track").
+nonisolated public struct MusicPaletteLimit: Equatable, Sendable {
+    public let seconds: Float
+    public let fadeOutSeconds: Float
+
+    /// Nil when the palette authors no positive duration: its tracks play to their end.
+    init?(palette: MusicTrack) {
+        guard let duration = palette.duration, duration.isFinite, duration > 0 else {
+            return nil
+        }
+        seconds = duration
+        fadeOutSeconds = max(palette.fadeOut ?? 0, 0)
+    }
 }
 
 /// A resolved playlist: which MUSC won the precedence chain, the tracks it
@@ -312,44 +344,72 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
 
     /// Flattens palette tracks (a MUST whose CNAM is the palette tag carries
     /// SNAM children instead of an ANAM). Bounded by `maximumPaletteDepth` and
-    /// by a visited set, so a palette that references itself terminates.
+    /// by a visited set, so a palette that references itself terminates. A child
+    /// keeps the limit of the outermost palette that sets one.
     private static func expandPalettes(
         _ tracks: [MusicTrack],
         musicStore: MusicRecordStore
-    ) -> [MusicTrack] {
-        var expansion = (visited: Set<UInt32>(), out: [MusicTrack]())
+    ) -> [ExpandedTrack] {
+        var expansion = Expansion(musicStore: musicStore)
         for track in tracks {
-            appendExpanded(track, musicStore: musicStore, depth: 0, into: &expansion)
+            appendExpanded(track, limit: nil, depth: 0, into: &expansion)
         }
         return expansion.out
     }
 
+    private struct ExpandedTrack {
+        let track: MusicTrack
+        let limit: MusicPaletteLimit?
+    }
+
+    private struct Expansion {
+        let musicStore: MusicRecordStore
+        var visited: Set<UInt32> = []
+        var out: [ExpandedTrack] = []
+    }
+
     private static func appendExpanded(
         _ track: MusicTrack,
-        musicStore: MusicRecordStore,
+        limit: MusicPaletteLimit?,
         depth: Int,
-        into expansion: inout (visited: Set<UInt32>, out: [MusicTrack])
+        into expansion: inout Expansion
     ) {
         guard track.trackType == .palette, depth < maximumPaletteDepth else {
-            expansion.out.append(track)
+            expansion.out.append(ExpandedTrack(track: track, limit: limit))
             return
         }
         guard expansion.visited.insert(track.formID.rawValue).inserted else { return }
+        let childLimit = limit ?? MusicPaletteLimit(palette: track)
         for childID in track.tracks {
-            guard let child = musicStore.musicTrack(childID) else { continue }
-            appendExpanded(child, musicStore: musicStore, depth: depth + 1, into: &expansion)
+            guard let child = expansion.musicStore.musicTrack(childID) else { continue }
+            appendExpanded(child, limit: childLimit, depth: depth + 1, into: &expansion)
         }
     }
 
-    /// Drops what cannot be streamed: silent tracks (no ANAM by definition) and
-    /// tracks whose filename fails the `music\` path rules. Order is preserved.
+    /// A silent track becomes its `FLTV` seconds of silence, and is dropped without a
+    /// positive duration. A single track keeps its file, and is dropped when the file
+    /// name fails the `music\` path rules. Order is preserved.
     private static func playableTracks(
-        _ tracks: [MusicTrack],
+        _ tracks: [ExpandedTrack],
         musicStore: MusicRecordStore
     ) -> [PlayableMusicTrack] {
-        tracks.compactMap { track in
-            guard let path = musicStore.audioPaths(for: track).first else { return nil }
-            return PlayableMusicTrack(editorID: track.editorID, path: path)
+        tracks.compactMap { expanded in
+            let track = expanded.track
+            switch track.trackType {
+            case .silentTrack:
+                guard let seconds = track.duration, seconds.isFinite, seconds > 0 else {
+                    return nil
+                }
+                return PlayableMusicTrack(
+                    editorID: track.editorID, path: nil, silenceSeconds: seconds,
+                    paletteLimit: expanded.limit
+                )
+            case .singleTrack, .palette, .unknown, nil:
+                guard let path = musicStore.audioPaths(for: track).first else { return nil }
+                return PlayableMusicTrack(
+                    editorID: track.editorID, path: path, paletteLimit: expanded.limit
+                )
+            }
         }
     }
 

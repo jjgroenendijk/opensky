@@ -129,9 +129,9 @@ struct WorldAudioAcceptanceRealDataTests {
             )
             #expect(!selection.isSilent, "the exterior cell resolves no playlist")
             #expect(selection.state != .interior)
-            let track = try #require(selection.tracks.first)
+            let trackPath = try #require(selection.tracks.lazy.compactMap(\.path).first)
             let located = try #require(
-                locate(track: track.path), "the playlist's first track is in no archive"
+                locate(track: trackPath), "the playlist's first track is in no archive"
             )
             #expect(
                 located.key.hasSuffix(".xwm"),
@@ -142,9 +142,10 @@ struct WorldAudioAcceptanceRealDataTests {
             // Every other track in the playlist must resolve the same way, so
             // the fallback is proven over the whole selection rather than one
             // lucky record.
-            let resolvedTracks = selection.tracks.filter { locate(track: $0.path) != nil }
+            let files = selection.tracks.compactMap(\.path)
+            let resolvedTracks = files.filter { locate(track: $0) != nil }
             #expect(
-                resolvedTracks.count == selection.tracks.count,
+                resolvedTracks.count == files.count,
                 "not every playlist track resolves to a shipped file"
             )
 
@@ -157,10 +158,10 @@ struct WorldAudioAcceptanceRealDataTests {
             (\(selection.musicType?.description ?? "?")), state \(selection.state.displayName), \
             \(selection.tracks.count) tracks (\(resolvedTracks.count) resolved), crossfade \
             \(selection.crossfadeSeconds) s
-            [INFO] exterior first track: \(track.path) -> \(located.key) — \
+            [INFO] exterior first track: \(trackPath) -> \(located.key) — \
             \(framed.packetCount) packets, \(framed.codec.sampleRate) Hz, \
             \(framed.codec.channelCount) ch
-            \(Self.extensionNote(anam: track.path, key: located.key))
+            \(Self.extensionNote(anam: trackPath, key: located.key))
             """
         }
 

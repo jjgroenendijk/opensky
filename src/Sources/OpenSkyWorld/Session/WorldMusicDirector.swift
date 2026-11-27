@@ -19,7 +19,7 @@ public final class WorldMusicDirector {
     )
 
     private let engine: WorldAudioEngine
-    private let musicStore: MusicRecordStore?
+    let musicStore: MusicRecordStore?
     private let weatherStore: WeatherStore?
     /// Tracks load off the main actor in production; tests load on the caller.
     private let trackSource: TrackSource
@@ -45,13 +45,13 @@ public final class WorldMusicDirector {
     /// The selection combat interrupted, held for as long as the fight lasts.
     /// Non-nil is also what "combat music is playing" means.
     /// The selection a special moment, such as a level up, interrupted.
-    private(set) var preSpecialSelection: MusicSelection?
-    private(set) var preCombatSelection: MusicSelection?
+    var preSpecialSelection: MusicSelection?
+    var preCombatSelection: MusicSelection?
     /// The music types scripts added with `MusicType.Add`, newest last. The newest plays
     /// over the cell's music until a script removes it.
-    public private(set) var scriptedMusic: [FormID] = []
+    public internal(set) var scriptedMusic: [FormID] = []
     /// What the cell's music chain chose, kept for when the scripted music ends.
-    private var contextSelection = MusicSelection.silent(state: .exploration)
+    var contextSelection = MusicSelection.silent(state: .exploration)
     /// Index into `desiredSelection.tracks` of the track that should sound.
     private(set) var trackIndex = 0
     /// The one source this director considers current. Nil while silent.
@@ -60,12 +60,15 @@ public final class WorldMusicDirector {
     /// departing track's disappearance is never mistaken for the current track
     /// finishing.
     private var retiringSourceIDs: [Int] = []
+    /// Seconds of a silent track still to wait before the next track. Nil while a file
+    /// plays or nothing does.
+    private var silenceRemaining: Float?
     /// Seconds the current track has been sounding, advanced from the frame
     /// delta so it freezes with the world sim.
     public private(set) var currentTrackElapsedSeconds: Float = 0
 
     /// Most recent failure; nil when the last start succeeded.
-    public private(set) var lastMusicRefusal: MusicRefusal?
+    public internal(set) var lastMusicRefusal: MusicRefusal?
 
     public var lastMusicError: String? {
         lastMusicRefusal?.text
@@ -149,6 +152,10 @@ public final class WorldMusicDirector {
             waitingTrackIndex = nil
             applyMusicState(at: waiting)
         }
+        if let remaining = silenceRemaining {
+            tickSilence(remaining, deltaTime: deltaTime)
+            return
+        }
         guard let sourceID = currentSourceID else { return }
         guard engine.sources.contains(where: { $0.id == sourceID }) else {
             currentSourceID = nil
@@ -158,6 +165,33 @@ public final class WorldMusicDirector {
         if deltaTime > 0 {
             currentTrackElapsedSeconds += deltaTime
         }
+        endPaletteTrackOnTime()
+    }
+
+    /// A silent track waits out its seconds, then the playlist moves on.
+    private func tickSilence(_ remaining: Float, deltaTime: Float) {
+        let left = remaining - max(deltaTime, 0)
+        currentTrackElapsedSeconds += max(deltaTime, 0)
+        guard left <= 0 else {
+            silenceRemaining = left
+            return
+        }
+        silenceRemaining = nil
+        currentTrackElapsedSeconds = 0
+        advancePlaylist()
+    }
+
+    /// A track from a palette stops when the palette's duration is up, fading out over
+    /// the palette's fade-out (CK "Music Track").
+    private func endPaletteTrackOnTime() {
+        let tracks = desiredSelection.tracks
+        guard
+            tracks.indices.contains(trackIndex),
+            let limit = tracks[trackIndex].paletteLimit,
+            currentTrackElapsedSeconds >= limit.seconds
+        else { return }
+        retireMusicSources(overSeconds: limit.fadeOutSeconds)
+        advancePlaylist()
     }
 
     /// The game's music plays on in menus, so a paused world still fades, ends, and
@@ -221,52 +255,6 @@ public final class WorldMusicDirector {
         handleMusicContext(.empty)
     }
 
-    // MARK: - Combat
-
-    /// Switches the combat playlist on and off. Entering selects a `MUSCombat...`
-    /// record directly and remembers the interrupted selection; leaving restores it.
-    /// With no combat playlist the music stays. See docs/engine/music.md.
-    /// - Returns: nil on success, or a short reason the selection did not change.
-    @discardableResult
-    public func setCombatActive(_ active: Bool) -> MusicRefusal? {
-        guard active else { return leaveCombat() }
-        guard preCombatSelection == nil else { return nil }
-        guard let musicStore else {
-            lastMusicRefusal = .noMusicData
-            return lastMusicRefusal
-        }
-        guard let combat = Self.combatMusicType(in: musicStore) else {
-            lastMusicRefusal = .noCombatMusicType
-            return lastMusicRefusal
-        }
-        let selection = MusicSelection
-            .resolve(musicType: combat, musicStore: musicStore)
-            .labelled(.combat)
-        guard !selection.isSilent else {
-            lastMusicRefusal = .noPlayableCombatTrack
-            return lastMusicRefusal
-        }
-        // Combat cuts a special moment short and returns to what that interrupted.
-        preCombatSelection = preSpecialSelection ?? desiredSelection
-        preSpecialSelection = nil
-        adopt(selection, force: true)
-        lastMusicRefusal = nil
-        return nil
-    }
-
-    /// Whether the combat playlist is the current selection.
-    public var isCombatMusicActive: Bool {
-        preCombatSelection != nil
-    }
-
-    /// Restores the selection combat interrupted.
-    private func leaveCombat() -> MusicRefusal? {
-        guard let previous = preCombatSelection else { return nil }
-        preCombatSelection = nil
-        adopt(previous, force: true)
-        return nil
-    }
-
     /// What the readout shows. Derived from live engine sources: the id
     /// is dropped first if the engine already retired it, so the readout can
     /// never claim music that stopped. "none" when nothing of ours is playing.
@@ -288,7 +276,7 @@ public final class WorldMusicDirector {
 
     // MARK: - State machine
 
-    private func adopt(_ selection: MusicSelection, force: Bool = false) {
+    func adopt(_ selection: MusicSelection, force: Bool = false) {
         guard force || selection != desiredSelection else { return }
         desiredSelection = selection
         trackIndex = 0
@@ -303,6 +291,7 @@ public final class WorldMusicDirector {
 
     private func applyMusicState(at index: Int) {
         waitingTrackIndex = nil
+        silenceRemaining = nil
         guard pauses == 0 else {
             retireMusicSources(overSeconds: Self.pauseFadeSeconds)
             return
@@ -321,6 +310,7 @@ public final class WorldMusicDirector {
     /// missing asset cannot silence a whole playlist; the walk is bounded by
     /// the playlist length.
     private func startTrack(at index: Int) {
+        silenceRemaining = nil
         let tracks = desiredSelection.tracks
         guard !tracks.isEmpty else {
             retireMusicSources(overSeconds: desiredSelection.crossfadeSeconds)
@@ -329,6 +319,13 @@ public final class WorldMusicDirector {
         let duration = desiredSelection.crossfadeSeconds
         for offset in 0 ..< tracks.count {
             let candidate = (index + offset) % tracks.count
+            if let seconds = tracks[candidate].silenceSeconds {
+                retireMusicSources(overSeconds: duration)
+                silenceRemaining = seconds
+                trackIndex = candidate
+                lastMusicRefusal = nil
+                return
+            }
             let sourceID: Int
             switch startSource(for: tracks[candidate]) {
             case let .started(id): sourceID = id
@@ -431,7 +428,7 @@ extension WorldMusicDirector {
 
     /// The default objects' battle music; else the first MUSC whose editor id follows
     /// the combat naming convention, by FormID so the choice is the same on every run.
-    private static func combatMusicType(in store: MusicRecordStore) -> FormID? {
+    static func combatMusicType(in store: MusicRecordStore) -> FormID? {
         if let battle = store.specialMusic[.battle], store.musicType(battle) != nil {
             return battle
         }
@@ -448,7 +445,8 @@ extension WorldMusicDirector {
     /// sibling, and the source is named after the file that loaded.
     private func startSource(for track: PlayableMusicTrack) -> TrackStart {
         do {
-            guard let file = try loadTrack(track.path) else { return .waiting }
+            guard let path = track.path else { return .failed }
+            guard let file = try loadTrack(path) else { return .waiting }
             let id = try engine.playNonPositional(
                 asset: file.asset,
                 request: .nonPositional(
@@ -465,7 +463,7 @@ extension WorldMusicDirector {
             return .started(id)
         } catch {
             let refusal = MusicRefusal.trackFailed(
-                path: track.path, reason: String(describing: error)
+                path: track.path ?? "", reason: String(describing: error)
             )
             lastMusicRefusal = refusal
             let reason = refusal.text
@@ -539,64 +537,4 @@ private enum TrackStart {
     case started(Int)
     case waiting
     case failed
-}
-
-// MARK: - Scripted music
-
-extension WorldMusicDirector {
-    /// `MusicType.Add`: the type joins the stack, and the stack's top plays over the
-    /// cell's music. Adding it again makes it the newest. Returns nil on success or a
-    /// short failure reason.
-    @discardableResult
-    public func addScriptedMusic(_ id: FormID) -> MusicRefusal? {
-        guard let musicStore else {
-            lastMusicRefusal = .noMusicData
-            return lastMusicRefusal
-        }
-        let selection = MusicSelection.resolve(musicType: id, musicStore: musicStore)
-        guard !selection.isSilent else {
-            lastMusicRefusal = .noPlayableTrack(id)
-            return lastMusicRefusal
-        }
-        let before = playingScriptedMusic
-        scriptedMusic.removeAll { $0 == id }
-        scriptedMusic.append(id)
-        if playingScriptedMusic != before {
-            playScriptedTop()
-        }
-        return nil
-    }
-
-    /// `MusicType.Remove`: the stack's next top plays, or the cell's music when none is left.
-    public func removeScriptedMusic(_ id: FormID) {
-        guard let index = scriptedMusic.lastIndex(of: id) else { return }
-        let before = playingScriptedMusic
-        scriptedMusic.remove(at: index)
-        guard playingScriptedMusic != before else { return }
-        playScriptedTop()
-    }
-
-    /// The scripted type that sounds: the highest `MUSC` priority, the newest on a tie.
-    public var playingScriptedMusic: FormID? {
-        ScriptedMusicStack.top(scriptedMusic) { musicStore?.musicType($0)?.priority }
-    }
-
-    private func playScriptedTop() {
-        if let top = playingScriptedMusic, let musicStore {
-            play(MusicSelection.resolve(musicType: top, musicStore: musicStore))
-        } else {
-            play(contextSelection)
-        }
-    }
-
-    /// Combat keeps its own music; the selection waits for the fight to end.
-    private func play(_ selection: MusicSelection) {
-        if preCombatSelection != nil {
-            preCombatSelection = selection
-        } else if preSpecialSelection != nil {
-            preSpecialSelection = selection
-        } else {
-            adopt(selection, force: true)
-        }
-    }
 }
