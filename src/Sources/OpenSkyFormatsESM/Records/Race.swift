@@ -106,6 +106,8 @@ nonisolated public struct Race: Sendable {
         public static let noBloodDecal = Flags(rawValue: 0x0000_4000)
         /// A knockdown staggers the actor instead.
         public static let noKnockdowns = Flags(rawValue: 0x0040_0000)
+        /// Health regenerates at the full rate in combat: trolls and the werewolf.
+        public static let regeneratesHealthInCombat = Flags(rawValue: 0x0008_0000)
         public static let noWeaponBlood = Flags(rawValue: 0x0200_0000)
         /// Clear on the werewolf and vampire lord races: the player cannot take items.
         public static let canPickUpItems = Flags(rawValue: 0x1000_0000)

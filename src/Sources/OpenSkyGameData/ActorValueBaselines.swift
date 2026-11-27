@@ -69,6 +69,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var raceKeywords: [FormID] = []
     /// The race's injured health share, 0 to 1: below it `GetIsInjured` is 1.
     public var injuredHealthPercent: Float = 0
+    /// The race skips `fCombatHealthRegenRateMult` (docs/engine/actor-value-store.md).
+    public var regeneratesHealthInCombat = false
 
     public init(
         maximums: ActorValues,
@@ -272,6 +274,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         let race = resolved.race.flatMap { resolver.races[$0.rawValue] }
         baseline.raceKeywords = race?.details.keywords ?? []
         baseline.injuredHealthPercent = race?.details.properties?.injuredHealthPercent ?? 0
+        baseline.regeneratesHealthInCombat = race?.flags
+            .contains(.regeneratesHealthInCombat) ?? false
         return baseline
     }
 }
