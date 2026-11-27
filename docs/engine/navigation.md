@@ -165,6 +165,9 @@ The game checks a walker that cannot go on in three ways. None of them ends the 
   was small, at most 0.66 times the walker's radius, path following only starts again.
   Otherwise the path fails, and an avoid zone goes just ahead of the walker, so the next path
   goes round that spot. A cart is not an actor, so a horse behind a cart meets this check.
+  A Patrol leg with static pathing is a fixed line, not a navmesh path. When it is stuck, it
+  still gets the avoid zone just ahead, but it plans no new path and raises no "movement
+  blocked" event. Whether the zone makes it go round the obstacle is not known.
 
 None of the three runs within about half the walker's radius of the path's end. A search that
 finds no route also fails the path. A walk has no overall time limit. Repeated failures at one
