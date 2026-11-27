@@ -107,9 +107,17 @@ long frame is clamped to 100 ms, so it cannot jump.
   W + (s − 1) × R. Fast walk is 1.25 and jog is 1.5 (clean-room read of `SkyrimSE.exe`, 2026-11-07).
 - The game changes an actor's speed toward its goal at a bounded rate: each frame by at most dt
   times the acceleration, or dt times the deceleration when it slows. The race's acceleration and
-  deceleration rates (`RACE` `DATA`) divide these; a rate of 0 counts as 1. Combat doubles both.
+  deceleration rates (`RACE` `DATA`) divide these; a rate whose size is at most 0.0001 counts as
+  1. Combat doubles both.
   Nord and horse races have rate 1. [WARNING] The base rate in units per second squared was not
   found, so an OpenSky NPC reaches its new speed at once.
+- Turning to face a point stops within the race's angular tolerance (degrees). With a bow,
+  staff, or crossbow, `fAIUseWeaponToleranceDegrees` (10) is used instead. In combat the
+  turn accelerates at `(1 / angular acceleration rate) * fCombatPathingRotationAccelerationMult`
+  (2.0), and turns at `fCombatPathingNormalizedRotationSpeed` (2.25).
+- A race with `DATA` flag `0x200` is immobile: AI movement never starts for it, and movement
+  and teleport code treat it as unable to move.
+- While an actor flies, path requests use the race's flight radius times its scale.
 - A waypoint counts as reached within 12 units.
 - At a door, the mover reaches the door point, reports the door, and moves its capsule to the
   paired door.
