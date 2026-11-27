@@ -42,11 +42,13 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     }
 
     /// XLIG, 16 or 20 bytes.
-    struct LightData: Equatable, Sendable {
-        let fieldOfViewOffset: Float
-        let fadeOffset: Float
+    public struct LightData: Equatable, Sendable {
+        /// Degrees added to a shadow spotlight's field of view.
+        public let fieldOfViewOffset: Float
+        /// Added to the base light's fade.
+        public let fadeOffset: Float
         let endDistanceCap: Float
-        let shadowDepthBias: Float
+        public let shadowDepthBias: Float
         let unknown: UInt32?
     }
 
@@ -100,7 +102,7 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     var waterReflections: [WaterReflection] = []
     /// XLTW, REFR waters this light lights.
     var litWater: [FormID] = []
-    var lightData: LightData?
+    public var lightData: LightData?
     /// XALP: cutoff and base alpha.
     var alpha: SIMD2<UInt8>?
     /// XWCN or XWCS, the declared XWCU count.

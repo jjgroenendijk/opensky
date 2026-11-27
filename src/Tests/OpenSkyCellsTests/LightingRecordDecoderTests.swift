@@ -110,6 +110,29 @@ struct LightingRecordDecoderTests {
         #expect(light.isSupportedPointLight)
     }
 
+    @Test func aPlacedLightAddsItsFadeOffsetAndKeepsItsDepthBias() throws {
+        var data = Data()
+        data.appendUInt32(UInt32(bitPattern: -1))
+        data.appendUInt32(256)
+        appendColor(255, 255, 255, to: &data)
+        data.appendUInt32(0)
+        data.appendFloat32(1)
+        data.append(Data(count: 28))
+        var fnam = Data()
+        fnam.appendFloat32(1.25)
+        let fields = ESMFixture.field("DATA", data) + ESMFixture.field("FNAM", fnam)
+        let light = try LightRecord(record: ESMFixture.parseRecord(ESMFixture.record(
+            "LIGH", formID: 0x10, data: fields
+        )))
+        typealias Lighting = CellSceneBuilder.CellInteriorLighting
+        #expect(Lighting.fade(of: light, offset: nil) == 1.25)
+        #expect(Lighting.fade(of: light, offset: 0.5) == 1.75)
+        #expect(Lighting.fade(of: light, offset: -2) == 0)
+        #expect(Lighting.shadowDepthBias(nil) == 1)
+        #expect(Lighting.shadowDepthBias(0) == 1)
+        #expect(Lighting.shadowDepthBias(2.5) == 2.5)
+    }
+
     @Test func lightRejectsWrongDATASizeAndUnsupportedShapes() throws {
         let bad = ESMFixture.field("DATA", Data(count: 47))
         #expect(throws: (any Error).self) {
