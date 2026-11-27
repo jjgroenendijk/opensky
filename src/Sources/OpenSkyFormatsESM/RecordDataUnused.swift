@@ -47,6 +47,7 @@ nonisolated public enum RecordDataUnused: Sendable {
             0x4000000: .droppedAtLoad, 0x1000_0000: .droppedAtLoad
         ],
         "ActorBase.TemplateFlags": [0x40: .droppedAtLoad],
+        "LightRecord.Flags": [0x1: .droppedAtLoad, 0x2000: .droppedAtLoad],
         "TopicInfo.Flags": [0x1000: .droppedAtLoad, 0x4000: .noEffect]
     ]
 
@@ -114,6 +115,22 @@ nonisolated public enum RecordDataUnused: Sendable {
         ],
         .droppedAtLoad: [
             "ActorBaseDetails.unknownNAM5",
+            "AcousticSpace.bounds",
+            "AddonNode.bounds",
+            "Armor.race",
+            "ArmorDetails.alternateBlockMaterial",
+            "Book.inventoryArt",
+            "Climate.nightSkyTextureHashes",
+            "Explosion.bounds",
+            "Hazard.bounds",
+            "IdleMarker.bounds",
+            "InventoryItemFields.iconPath",
+            "ModelBaseDetails.markerColor",
+            "ModelBaseDetails.markerEntryPoints",
+            "Projectile.bounds",
+            "SoundDescriptor.alternateFor",
+            "SoundMarker.bounds",
+            "WeaponDetails.alternateBlockMaterial",
             "RaceProperties.unknown",
             "RaceProperties.weight",
             "AcousticSpace.editorID",
