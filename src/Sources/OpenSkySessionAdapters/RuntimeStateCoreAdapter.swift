@@ -74,6 +74,7 @@ struct ActorConditionReads {
         state.isFlying = game.dragonFlightWorld.isFlying(holder.key)
         state.isInPairedAnimation = game.idleWorld.idles.pairedAnimation(of: holder.key) != nil
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
+        state.actorKeywords = baseline.actorKeywords
         state.injuredHealthPercent = baseline.injuredHealthPercent
         let record = holder.key == .player ? nil : baseline.recordFlags
         state.recordFlags = game.scripts.bridge?.actorFlags(of: holder.key, record: record)

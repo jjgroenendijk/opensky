@@ -67,6 +67,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var recordFlags: ActorBase.Flags = []
     /// The race's `KWDA` keywords, which `IsUndead` tests.
     public var raceKeywords: [FormID] = []
+    /// The `NPC_` `KWDA` keywords, from its template when the Keywords flag (0x1000) is set.
+    public var actorKeywords: [FormID] = []
     /// The race's injured health share, 0 to 1: below it `GetIsInjured` is 1.
     public var injuredHealthPercent: Float = 0
     /// The race skips `fCombatHealthRegenRateMult` (docs/engine/actor-value-store.md).
@@ -283,6 +285,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
         let race = resolved.race.flatMap { resolver.races[$0.rawValue] }
         baseline.raceKeywords = race?.details.keywords ?? []
+        baseline.actorKeywords = Self.keywords(base: base, resolver: resolver)
         baseline.injuredHealthPercent = race?.details.properties?.injuredHealthPercent ?? 0
         baseline.regeneratesHealthInCombat = race?.flags
             .contains(.regeneratesHealthInCombat) ?? false
@@ -296,6 +299,21 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         baseline.footprintRadius = resolver.templates.actors[base.rawValue]?.details.bounds?
             .radius2D ?? 0
         return baseline
+    }
+
+    /// The keywords of the first record in the template chain that does not pass the
+    /// Keywords flag on to its template.
+    static func keywords(base: FormID, resolver: ActorValueResolver) -> [FormID] {
+        guard let (npcs, _) = attempt({ try resolver.templates.resolveChain(base: base) })
+        else { return resolver.templates.actors[base.rawValue]?.details.keywords ?? [] }
+        var index = 0
+        while
+            index < npcs.count - 1, npcs[index].template != nil,
+            npcs[index].templateFlags.contains(.useKeywords)
+        {
+            index += 1
+        }
+        return npcs.indices.contains(index) ? npcs[index].details.keywords : []
     }
 
     static func soundLevel(_ raw: UInt32?) -> UInt32 {
