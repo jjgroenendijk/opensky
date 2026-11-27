@@ -1,7 +1,8 @@
 // Hit volumes, reach, and target filtering. A swing through two targets hits
-// each once; reach is `fCombatDistance * scale * WEAP.reach`; the attacker is
+// each once; reach follows the weapon kind (MeleeSwing); the attacker is
 // never hit; and the capsule sweep geometry is checked.
 
+import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
@@ -31,6 +32,26 @@ struct MeleeHitDetectionTests {
                 weapon: .unarmed, settings: settings, actorScale: .nan
             ) == 141
         )
+    }
+
+    @Test func fistsReachTheRaceReachTimesScale() {
+        let settings = CombatSettings.synthetic
+        #expect(MeleeSwing.reach(weapon: .unarmed, settings: settings, unarmedReach: 96) == 96)
+        #expect(
+            MeleeSwing.reach(
+                weapon: .unarmed, settings: settings, actorScale: 1.5, unarmedReach: 96
+            ) == 144
+        )
+        let sword = MeleeWeaponProfile(damage: 7, reach: 1, weapon: FormID(0x12EB7), handType: .sword)
+        #expect(MeleeSwing.reach(weapon: sword, settings: settings, unarmedReach: 96) == 141)
+    }
+
+    @Test func aBowStaffOrCrossbowReaches128TimesScale() {
+        let settings = CombatSettings.synthetic
+        for hand in [CombatHandType.bow, .staff, .crossbow] {
+            let weapon = MeleeWeaponProfile(damage: 7, reach: 1.3, weapon: FormID(1), handType: hand)
+            #expect(MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: 0.5) == 64)
+        }
     }
 
     // MARK: - Hits

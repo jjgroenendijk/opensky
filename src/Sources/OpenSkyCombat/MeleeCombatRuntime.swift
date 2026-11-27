@@ -202,7 +202,8 @@ public final class MeleeCombatRuntime {
         MeleeSwing.reach(
             weapon: weapon,
             settings: settings,
-            actorScale: world?.meleeAttacker.scale ?? 1
+            actorScale: world?.meleeAttacker.scale ?? 1,
+            unarmedReach: world?.meleeAttacker.unarmedReach
         )
     }
 
@@ -308,7 +309,7 @@ public final class MeleeCombatRuntime {
             feet: attacker.feet,
             capsule: attacker.capsule,
             facing: attacker.facing,
-            reach: strikeReach(actorScale: attacker.scale)
+            reach: strikeReach(of: attacker)
         )
         let hits = MeleeHitDetector.hits(
             swing: volume,
@@ -326,7 +327,7 @@ public final class MeleeCombatRuntime {
     private func strikeObjects(
         in volume: ShapeSweepQuery, near attacker: MeleeAttacker, world: any MeleeCombatWorld
     ) {
-        let search = strikeReach(actorScale: attacker.scale) + attacker.capsule.height
+        let search = strikeReach(of: attacker) + attacker.capsule.height
         let objects = MeleeHitDetector.hits(
             swing: volume,
             targets: world.meleeDestructibles(within: search, of: attacker.feet),

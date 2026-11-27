@@ -15,18 +15,24 @@ nonisolated public struct MeleeAttacker: Equatable, Sendable {
     /// The actor's scale, which multiplies reach. 1 for the player, whose XSCL
     /// this engine does not read.
     public let scale: Float
+    /// The race's unarmed reach before scale. Nil falls back to `fCombatDistance`.
+    public let unarmedReach: Float?
+    /// A kill camera plays, which multiplies the player's reach.
+    public var inKillCamera = false
 
     public init(
         key: ReferenceKey,
         feet: SIMD3<Float>,
         capsule: PlayerCapsule = .standard,
         facing: Float,
-        scale: Float = 1
+        scale: Float = 1,
+        unarmedReach: Float? = nil
     ) {
         self.key = key
         self.feet = feet
         self.capsule = capsule
         self.facing = facing
         self.scale = scale
+        self.unarmedReach = unarmedReach
     }
 }

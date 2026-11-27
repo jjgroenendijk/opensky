@@ -181,7 +181,8 @@ extension CombatLoopRuntime.BehaviorDrive {
         let reach = MeleeSwing.reach(
             weapon: weapon,
             settings: settings,
-            actorScale: actor.scale
+            actorScale: actor.scale,
+            unarmedReach: actor.unarmedReach
         )
         let objects = world.combatDestructibles(
             within: reach + actor.capsule.height, of: actor.feet
@@ -290,7 +291,10 @@ extension CombatLoopRuntime.BehaviorDrive {
             feet: actor.feet,
             capsule: actor.capsule,
             facing: owner.facing(from: actor.feet, toward: target.feet, fallback: actor.yaw),
-            reach: MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: actor.scale)
+            reach: MeleeSwing.reach(
+                weapon: weapon, settings: settings, actorScale: actor.scale,
+                unarmedReach: actor.unarmedReach
+            )
         )
         return !MeleeHitDetector.hits(swing: volume, targets: [target], attacker: actor.key)
             .isEmpty

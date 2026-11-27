@@ -1,5 +1,5 @@
 // A swing's shape and reach: reach = fCombatDistance * actorScale * WEAP.reach (UESP WEAP;
-// xEdit). Without a WEAP it falls back to bare `fCombatDistance`. The volume is a swept
+// xEdit). Fists reach the race's unarmed reach; a bow, staff, or crossbow reaches 128. The volume is a swept
 // capsule from the facing at the contact frame, not the animation pose, so it may hit
 // early but never late. See docs/engine/melee-combat.md.
 
@@ -20,14 +20,27 @@ nonisolated enum MeleeSwing: Sendable {
     static func reach(
         weapon: MeleeWeaponProfile,
         settings: CombatSettings,
-        actorScale: Float = 1
+        actorScale: Float = 1,
+        unarmedReach: Float? = nil
     ) -> Float {
         let scale = actorScale.isFinite && actorScale > 0 ? actorScale : 1
+        switch weapon.handType {
+        case .bow, .staff, .crossbow:
+            return rangedWeaponReach * scale
+        default:
+            break
+        }
+        if weapon.weapon == nil, let unarmedReach, unarmedReach.isFinite, unarmedReach > 0 {
+            return unarmedReach * scale
+        }
         let multiplier = weapon.reach.isFinite && weapon.reach > 0 ? weapon.reach : 1
         let base = settings.combatDistance.value
         guard base.isFinite, base > 0 else { return 0 }
         return base * scale * multiplier
     }
+
+    /// The fixed reach of a bow, staff, or crossbow swung in melee, before scale.
+    static let rangedWeaponReach: Float = 128
 
     /// The blade's vertical half-extent as a fraction of capsule height, centred on the
     /// chest. Our choice: it hits a target on the same floor, not one on a table.

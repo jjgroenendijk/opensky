@@ -264,7 +264,8 @@ extension CombatLoopRuntime {
                 targetPosition: target.feet,
                 awareness: world.combatAwareness(of: actor.key, toward: target.key),
                 reach: MeleeSwing.reach(
-                    weapon: reach.weapon, settings: settings, actorScale: actor.scale
+                    weapon: reach.weapon, settings: settings, actorScale: actor.scale,
+                    unarmedReach: actor.unarmedReach
                 ),
                 healthFraction: world.combatHealthFraction(of: actor.key),
                 isTargetAlive: true,

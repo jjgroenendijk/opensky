@@ -42,7 +42,8 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     let hairBipedObject: Int32
     public let injuredHealthPercent: Float
     let shieldBipedObject: Int32
-    let unarmedReach: Float
+    /// How far a bare-handed swing reaches, in world units, before the actor's scale.
+    public let unarmedReach: Float
     let bodyBipedObject: Int32
     let aimAngleTolerance: Float
     let flightRadius: Float
