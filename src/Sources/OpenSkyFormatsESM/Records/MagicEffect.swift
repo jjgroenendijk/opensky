@@ -15,21 +15,23 @@ nonisolated public struct MagicEffectFlags: OptionSet, Equatable, Sendable {
     public static let hostile = Self(rawValue: 1 << 0)
     public static let recover = Self(rawValue: 1 << 1)
     public static let detrimental = Self(rawValue: 1 << 2)
-    static let snapToNavmesh = Self(rawValue: 1 << 3)
-    static let noHitEvent = Self(rawValue: 1 << 4)
-    static let dispelWithKeywords = Self(rawValue: 1 << 8)
+    public static let snapToNavmesh = Self(rawValue: 1 << 3)
+    public static let noHitEvent = Self(rawValue: 1 << 4)
+    public static let dispelWithKeywords = Self(rawValue: 1 << 8)
     public static let noDuration = Self(rawValue: 1 << 9)
     public static let noMagnitude = Self(rawValue: 1 << 10)
     public static let noArea = Self(rawValue: 1 << 11)
-    static let effectsPersist = Self(rawValue: 1 << 12)
+    public static let effectsPersist = Self(rawValue: 1 << 12)
     static let goryVisuals = Self(rawValue: 1 << 14)
     public static let hideInUI = Self(rawValue: 1 << 15)
     public static let noRecast = Self(rawValue: 1 << 17)
     public static let powerAffectsMagnitude = Self(rawValue: 1 << 21)
     public static let powerAffectsDuration = Self(rawValue: 1 << 22)
-    static let painless = Self(rawValue: 1 << 26)
-    static let noHitEffect = Self(rawValue: 1 << 27)
-    static let noDeathDispel = Self(rawValue: 1 << 28)
+    /// Left out of the spell's cost, its charge time, and the choice of its main effect.
+    public static let leftOutOfCost = Self(rawValue: 1 << 24)
+    public static let painless = Self(rawValue: 1 << 26)
+    public static let noHitEffect = Self(rawValue: 1 << 27)
+    public static let noDeathDispel = Self(rawValue: 1 << 28)
 }
 
 nonisolated public struct MagicEffectSound: Equatable, Sendable {
@@ -65,7 +67,8 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     /// The skill level the magic menu shows a spell of this effect at.
     public let minimumSkillLevel: UInt32
     let spellmakingArea: UInt32
-    let castingTime: Float
+    /// The seconds a spell charges, the largest over its effects.
+    public let castingTime: Float
     public let taperCurve: Float
     public let taperDuration: Float
     public let secondActorValueWeight: Float
@@ -81,7 +84,8 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let impactData: FormID?
     public let skillUsageMultiplier: Float
     public let dualCastArt: FormID?
-    let dualCastScale: Float
+    /// The size of a dual cast's projectile and explosion.
+    public let dualCastScale: Float
     public let enchantArt: FormID?
     let hitVisuals: FormID?
     let enchantVisuals: FormID?

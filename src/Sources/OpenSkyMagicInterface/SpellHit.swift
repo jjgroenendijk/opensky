@@ -52,6 +52,12 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     public var areaIgnoresLineOfSight = false
     /// The `MGEF` `IPDS` of the entry that names the projectile: what its impact shows.
     public var impactDataSet: FormID?
+    /// That entry's `MGEF` dual-cast scale and `DUAL` art, which only a dual cast uses.
+    public var dualCastScale: Float = 1
+    public var dualCastArt: DualCastData.Art?
+    /// False when every entry's `MGEF` carries No Hit Event: the target's scripts hear
+    /// no `OnHit`.
+    public var sendsHitEvent = true
 
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
@@ -73,7 +79,41 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
         payload.disallowsAbsorb = disallowsAbsorb
         payload.areaIgnoresLineOfSight = areaIgnoresLineOfSight
         payload.impactDataSet = impactDataSet
+        payload.dualCastScale = dualCastScale
+        payload.dualCastArt = dualCastArt
+        payload.sendsHitEvent = sendsHitEvent
         return payload
+    }
+
+    /// The `PROJ` launched: a dual cast's `DUAL` projectile when it sets one.
+    public var launchedProjectile: FormID? {
+        isDualCast ? dualCastArt?.projectile ?? projectile : projectile
+    }
+
+    /// The `EXPL` a landing sets off, given the `PROJ`'s own.
+    public func explosion(projectileExplosion: FormID?) -> FormID? {
+        isDualCast ? dualCastArt?.explosion ?? projectileExplosion : projectileExplosion
+    }
+
+    /// The size of the projectile: the dual-cast scale for a dual cast, unless a `DUAL`
+    /// projectile replaces it without the inherit-projectile-scale flag.
+    public var projectileScale: Float {
+        dualCastScale(replaced: dualCastArt?.projectile != nil, inherits: .projectile)
+    }
+
+    /// The size of the explosion, by the same rule with the inherit-explosion-scale flag.
+    public var explosionScale: Float {
+        dualCastScale(replaced: dualCastArt?.explosion != nil, inherits: .explosion)
+    }
+
+    private func dualCastScale(
+        replaced: Bool, inherits flag: DualCastData.InheritScale
+    ) -> Float {
+        guard isDualCast, dualCastScale.isFinite, dualCastScale > 0 else { return 1 }
+        if replaced, dualCastArt?.inheritScale.contains(flag) != true {
+            return 1
+        }
+        return dualCastScale
     }
 }
 

@@ -242,11 +242,44 @@ extension ActiveEffectRuntime {
     /// cloak spell active at any given time, casting a second will cancel the
     /// first" (<https://en.uesp.net/wiki/Skyrim:Cloak>).
     mutating func clearRivals(of application: MagicEffectApplication, on target: ActorValueHolder) {
+        dispelSharingKeywords(with: application, on: target)
         guard application.rule == .world(.cloak) else { return }
         let rivals = active(on: target).filter { rule(of: $0) == .world(.cloak) }
         guard !rivals.isEmpty else { return }
         let sequences = Set(rivals.map(\.sequence))
         dispel(on: target) { sequences.contains($0.sequence) }
+    }
+
+    /// `MGEF` flag Dispel with Keywords: the new effect ends the target's running effects
+    /// that carry one of its keywords.
+    private mutating func dispelSharingKeywords(
+        with application: MagicEffectApplication, on target: ActorValueHolder
+    ) {
+        guard
+            let own = effects.effect(key: application.effect),
+            own.effect.data?.flags.contains(.dispelWithKeywords) == true
+        else { return }
+        let keywords = effects.keywordKeys(of: own)
+        guard !keywords.isEmpty else { return }
+        let doomed = active(on: target).filter { effect in
+            guard let other = effects.effect(key: effect.effect) else { return false }
+            return !effects.keywordKeys(of: other).isDisjoint(with: keywords)
+        }
+        guard !doomed.isEmpty else { return }
+        let sequences = Set(doomed.map(\.sequence))
+        dispel(on: target) { sequences.contains($0.sequence) }
+    }
+
+    /// Ends what a death ends: every running effect, abilities too, except Reanimate and
+    /// one whose `MGEF` carries No Death Dispel.
+    @discardableResult
+    public mutating func dispelOnDeath(of target: ActorValueHolder) -> Int {
+        let sequences = Set(active(on: target).filter { effect in
+            guard rule(of: effect) != .world(.reanimate) else { return false }
+            let flags = effects.effect(key: effect.effect)?.effect.data?.flags ?? []
+            return !flags.contains(.noDeathDispel)
+        }.map(\.sequence))
+        return dispel(on: target) { sequences.contains($0.sequence) }
     }
 
     /// The world action a stored effect starts or ends, or nil for one that

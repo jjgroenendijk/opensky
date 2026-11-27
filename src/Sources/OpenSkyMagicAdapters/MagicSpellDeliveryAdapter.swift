@@ -38,8 +38,7 @@ extension MagicSpellDeliveryAdapter {
     public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
         guard
             let runtime = game.combat.archery,
-            let link = payload.projectile,
-            let profile = game.combat.items?.projectileProfile(link),
+            let profile = launchProfile(of: payload),
             let shooter = spellShooter(for: payload.caster)
         else { return false }
         return runtime.projectiles.fire(
@@ -166,6 +165,14 @@ extension MagicSpellDeliveryAdapter {
         MagicRuneReads(game: game).projectileProximity(of: payload)
     }
 
+    func launchProfile(of payload: SpellPayload) -> ProjectileProfile? {
+        MagicRuneReads(game: game).launchProfile(of: payload)
+    }
+
+    public func navmeshPoint(near point: SIMD3<Float>, within radius: Float) -> SIMD3<Float>? {
+        game.streamer.navmeshSpots(near: point, within: radius, largeActor: false).first
+    }
+
     func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
         MagicRuneReads(game: game).detonateRune(payload, at: position)
     }
@@ -253,18 +260,29 @@ struct MagicRuneReads {
     }
 
     func projectileProximity(of payload: SpellPayload) -> Float {
-        guard let link = payload.projectile else { return 0 }
-        return game.combat.items?.projectileProfile(link)?.explosionProximity ?? 0
+        launchProfile(of: payload)?.explosionProximity ?? 0
+    }
+
+    /// The `PROJ` profile a cast launches, with a dual cast's art and sizes.
+    func launchProfile(of payload: SpellPayload) -> ProjectileProfile? {
+        guard
+            let link = payload.launchedProjectile,
+            var profile = game.combat.items?.projectileProfile(link)
+        else { return nil }
+        profile.explosion = payload.explosion(projectileExplosion: profile.explosion)
+        profile.visuals.scale = payload.projectileScale
+        profile.explosionScale = payload.explosionScale
+        return profile
     }
 
     /// The rune's `PROJ` explosion, as a spell projectile's impact sets it off.
     func detonateRune(_ payload: SpellPayload, at position: SIMD3<Float>) {
         let explosions = game.combat.explosions
         guard
-            let link = payload.projectile,
-            let profile = game.combat.items?.projectileProfile(link),
-            let spec = explosions.spec(itemLink: profile.explosion)
+            let profile = launchProfile(of: payload),
+            var spec = explosions.spec(itemLink: profile.explosion)
         else { return }
+        spec.radius *= profile.explosionScale
         explosions.detonate(
             spec, at: position, cause: .spell, origin: ExplosionOrigin(shooter: payload.caster)
         )

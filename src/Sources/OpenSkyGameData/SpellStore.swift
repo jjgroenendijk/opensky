@@ -16,6 +16,11 @@ nonisolated public struct ResolvedSpellEffect: Sendable {
     /// This effect's contribution to the auto-calculated cost.
     public let cost: Float
 
+    /// False for an effect whose MGEF has flag bit 24.
+    public var countsTowardCost: Bool {
+        !(effect?.effect.data?.flags.contains(.leftOutOfCost) ?? false)
+    }
+
     public var displayName: String {
         effect?.displayName ?? "[UNRESOLVED] \(item.effect)"
     }
@@ -63,6 +68,23 @@ nonisolated public struct ResolvedSpell: Sendable {
         } else {
             false
         }
+    }
+
+    /// The seconds one cast charges: the largest MGEF casting time of the effects that
+    /// count, or the `SPIT` charge time with the manual-cost flag
+    /// (docs/engine/spellcasting.md#the-cast).
+    public var chargeSeconds: Float {
+        guard !(data?.flags.contains(.manualCostCalc) ?? false) else {
+            return max(0, data?.chargeTime ?? 0)
+        }
+        let times = effects.filter(\.countsTowardCost)
+            .compactMap { $0.effect?.effect.data?.castingTime }
+        return max(0, times.max() ?? 0)
+    }
+
+    /// An entry's `MGEF` carries Snap to Navmesh: a target-location cast lands on the navmesh.
+    public var snapsToNavmesh: Bool {
+        effects.contains { $0.effect?.effect.data?.flags.contains(.snapToNavmesh) == true }
     }
 
     /// True when the record carries the SPIT "PC Start Spell" flag.
@@ -200,7 +222,9 @@ nonisolated public struct SpellStore: Sendable {
     ) -> SpellCostResult {
         SpellCost.result(
             data: record.data,
-            total: SpellCost.total(ofEffectCosts: effects.map(\.cost)),
+            total: SpellCost.total(
+                ofEffectCosts: effects.filter(\.countsTowardCost).map(\.cost)
+            ),
             unresolvedEffects: effects.count { $0.effect == nil }
         )
     }

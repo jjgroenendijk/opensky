@@ -71,11 +71,13 @@ nonisolated extension MagicEffectStore {
                 let resolved = resolve(entry, fromPlugin: payload.sourcePlugin),
                 let effect = resolved.effect.data
             else { return nil }
+            let dual = payload.isDualCast ? resolved.dualCastArt : nil
+            let shows = !effect.flags.contains(.noHitEffect)
             var links = SpellHitEffectLinks(
                 plugin: resolved.sourcePlugin,
                 imageSpaceModifier: effect.imageSpaceModifier,
-                hitShader: effect.hitShader,
-                hitEffectArt: effect.hitEffectArt,
+                hitShader: shows ? dual?.effectShader ?? effect.hitShader : nil,
+                hitEffectArt: shows ? dual?.hitEffectArt ?? effect.hitEffectArt : nil,
                 explosion: effect.explosion,
                 area: entry.area,
                 duration: entry.duration

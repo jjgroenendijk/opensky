@@ -168,7 +168,11 @@ extension SpellbookFixture {
         [
             spell(
                 formID: Spell.fastHealing, editorID: "FastHealing", equipType: Slot.eitherHand,
-                spit: spit(type: 0, chargeTime: 0.5, casting: 1, delivery: 0),
+                // Manual cost, so the SPIT charge time is the one it charges for.
+                spit: spit(
+                    type: 0, chargeTime: 0.5, casting: 1, delivery: 0,
+                    flags: SpellFlags.manualCostCalc.rawValue, cost: 20
+                ),
                 effects: [EffectSpec(restoreHealth, 20, 0)]
             ),
             spell(
@@ -293,10 +297,11 @@ extension SpellbookFixture {
         delivery: UInt32,
         castDuration: Float = 0,
         range: Float = 0,
-        flags: UInt32 = 0
+        flags: UInt32 = 0,
+        cost: UInt32 = 0
     ) -> Data {
         var data = Data()
-        data.appendUInt32(0)
+        data.appendUInt32(cost)
         data.appendUInt32(flags)
         data.appendUInt32(type)
         data.appendUInt32(chargeTime.bitPattern)

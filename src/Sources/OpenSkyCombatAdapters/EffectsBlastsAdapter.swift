@@ -136,7 +136,11 @@ extension EffectsBlastsAdapter {
                 ? projectile.state.velocity : projectile.launchDirection
             return VisualEffectModel(
                 path: model,
-                transform: VisualEffectRuntime.facing(projectile.position, forward: along),
+                transform: VisualEffectRuntime.facing(projectile.position, forward: along)
+                    * simd_float4x4(diagonal: SIMD4(
+                        SIMD3(repeating: projectile.profile.visuals.scale),
+                        1
+                    )),
                 instanceID: Self.projectileInstanceBase + projectile.id
             )
         }

@@ -126,7 +126,7 @@ struct ProjectilePayloadLanding {
             world.spellLanded(payload, at: impact.position)
             return nil
         }
-        if let struck = impact.target {
+        if let struck = impact.target, payload.sendsHitEvent {
             // `akSource` is left nil rather than filled with the spell: the
             // event carries a `FormID` and a cast spell is addressed by
             // `ReferenceKey`, which is a load-order identity a raw FormID
@@ -177,8 +177,9 @@ struct ProjectilePayloadLanding {
         let position = impact.position
         guard
             let explosions,
-            let spec = explosions.spec(itemLink: projectile.profile.explosion)
+            var spec = explosions.spec(itemLink: projectile.profile.explosion)
         else { return }
+        spec.radius *= projectile.profile.explosionScale
         let skill = projectile.payload.arrow == nil
             ? nil : world?.explosiveShotSkill(of: projectile.shooter)
         _ = explosions.detonate(

@@ -105,6 +105,10 @@ extension MagicWorldAdapter {
         spellDelivery.projectileProximity(of: payload)
     }
 
+    public func navmeshPoint(near point: SIMD3<Float>, within radius: Float) -> SIMD3<Float>? {
+        spellDelivery.navmeshPoint(near: point, within: radius)
+    }
+
     public func commandActor(_ actor: ReferenceKey, for caster: ReferenceKey) {
         heldMagic.commandActor(actor, for: caster)
     }
