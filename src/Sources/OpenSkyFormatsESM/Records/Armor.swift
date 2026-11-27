@@ -107,7 +107,7 @@ nonisolated public struct Armor: Sendable {
 /// ARMO fields beyond what equipping and rendering read. xEdit dev-4.1.6 names
 /// each one; docs/formats/armor.md.
 nonisolated public struct ArmorDetails: Equatable, Sendable {
-    let bounds: ObjectBounds?
+    public let bounds: ObjectBounds?
     /// DESC — inventory description.
     public let description: LString?
     /// MOD2 group with ICON/MICO — the male ground model and its icons.

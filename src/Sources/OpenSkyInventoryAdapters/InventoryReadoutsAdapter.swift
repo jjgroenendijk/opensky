@@ -1,5 +1,6 @@
 import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
@@ -26,7 +27,9 @@ public import OpenSkyWorldState
 public protocol InventoryReadoutsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
+    var combatWorld: any CombatWorldPort { get }
     var crime: any CrimePort { get }
+    var inventory: any InventoryPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var journal: any JournalPort { get }
     var magic: any MagicPort { get }
@@ -61,13 +64,29 @@ extension InventoryReadoutsAdapter {
         game.player.isSneaking
     }
 
-    public func dropPlacement() -> DropPlacement? {
+    /// The item lands `fPlayerDropDistance` times the player's scale ahead, turned by the
+    /// drop fan, and short of any wall a sphere of its 3D radius would meet.
+    public func dropPlacement(of item: FormID?) -> DropPlacement? {
         guard let gameSession = game.gameSession, let location = game.streamer.currentCellLocation
         else { return nil }
+        let runtime = game.inventory.runtime
+        let eye = gameSession.freeFlyCamera.position
+        let scale = game.actorWorld.combatActor(key: .player)?.scale ?? 1
+        let distance = (runtime?.dropDistance ?? 100) * scale
+        let radius = item.flatMap { runtime?.inventory.baselines.items.definition($0)?.bounds }?
+            .radius3D ?? 0
+        let direction = DropFan.direction(
+            forward: gameSession.freeFlyCamera.forward, turn: runtime?.dropTurn ?? 0
+        )
+        let reach = DropReach(distance: distance, radius: radius)
+        let free = direction.flatMap { direction in
+            game.combatWorld.freeDistance(
+                of: eye - SIMD3(0, 0, WorldItemRuntime.dropHeight), radius: reach.sweepRadius,
+                along: direction, upTo: distance
+            )
+        }
         return WorldItemRuntime.dropPlacement(
-            in: location,
-            eye: gameSession.freeFlyCamera.position,
-            forward: gameSession.freeFlyCamera.forward
+            in: location, eye: eye, direction: direction, reach: reach.stopping(at: free)
         )
     }
 

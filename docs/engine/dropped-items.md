@@ -24,6 +24,10 @@ The size test uses the item's [object bounds](/formats/records.md#object-bounds)
 Example: a sword with a 3D radius of 40 dropped by an actor at scale 1 lands 100 units ahead,
 needs 80 units of clear space, and the next drop turns by about `2 * asin(0.4)`, or 47 degrees.
 
+OpenSky finds the clear space with a sphere sweep. A sphere of radius `r` moves from below the
+camera toward the drop point, and the item stops where the sphere first meets a wall. The player
+is the only dropper that fans out.
+
 ```mermaid
 flowchart TD
     A[Drop an item] --> B["r = 3D radius of OBND"]

@@ -7,4 +7,6 @@ public protocol WorldItemRuntimePort: AnyObject, Sendable {
     var inventory: InventoryRuntime { get }
     func isTheft(_ interaction: PlacedInteraction) -> Bool
     var player: InventoryHolder { get }
+    var dropDistance: Float { get }
+    var dropTurn: Float { get }
 }

@@ -29,7 +29,8 @@ struct MagicSummonedActorsTests {
     }
 
     @Test func theCasterWithoutFeetSummonsNothing() {
-        #expect(adapter.summonActor(FormID(0x30), at: nil, for: Self.actor) == nil)
+        #expect(adapter
+            .summonActor(FormID(0x30), at: .ahead(searchRadius: 512), for: Self.actor) == nil)
         #expect(host.fakeWorldState.setCalls.isEmpty)
     }
 
@@ -41,7 +42,7 @@ struct MagicSummonedActorsTests {
         host.fakeStreamer.currentCellLocation = Self.cell
         host.fakeWorldState.allocateGeneratedKeyResult = .generated(9)
         let point = SIMD3<Float>(40, 0, 0)
-        #expect(adapter.summonActor(FormID(0x30), at: point, for: .player) != nil)
+        #expect(adapter.summonActor(FormID(0x30), at: .point(point), for: .player) != nil)
         #expect(perception.noteSummonCalls.map(\.position) == [point])
         #expect(perception.noteSummonCalls.map(\.caster) == [.player])
     }

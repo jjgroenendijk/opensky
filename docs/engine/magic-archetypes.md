@@ -167,7 +167,9 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   caster's position plus its facing times `c + s + 0.5 * fSummonedCreatureSearchRadius`
   (default 512), at the caster's height. The search for a free spot reaches out to
   `c + s + fSummonedCreatureSearchRadius` and needs `s` of clearance. A summon with `s` above
-  `fPathingLargeActorRadius` (80) searches with large-actor pathing.
+  `fPathingLargeActorRadius` (80) searches with large-actor pathing. OpenSky does not search:
+  it sweeps a sphere of radius `s` from the caster toward the aim point and stands the summon
+  where the sphere first meets a wall.
 - Reanimate: "If the target is dead, reanimate them, putting them under the caster's control."
   Its magnitude is the highest level it raises, as for Calm. A living target ends the effect at
   once. The corpse is resurrected, and it falls dead again when the effect ends. Perk entry

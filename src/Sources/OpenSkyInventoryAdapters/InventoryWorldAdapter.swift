@@ -152,6 +152,9 @@ public struct InventorySessionBuilder {
             references: streamer,
             crime: game.crime.reporter
         ))
+        if let distance = settings.number("fPlayerDropDistance") {
+            data.items.dropDistance = distance
+        }
         data.equipment = provider.rules.equipmentCatalog
         data.crafting = provider.rules.craftingCatalog
         data.rules.barterPricing = provider.rules.barterPricing

@@ -20,7 +20,8 @@ public protocol InventoryWorld: AnyObject {
     var crosshairInteraction: PlacedInteraction? { get }
     /// A step in front of the camera, in the player's cell. Nil when no cell
     /// is resident, because an object needs a cell to exist in.
-    func dropPlacement() -> DropPlacement?
+    /// Where the player's drop of `item` lands; nil `item` asks only whether one can.
+    func dropPlacement(of item: FormID?) -> DropPlacement?
     /// The resident ACHR nearest the camera.
     func nearestActorEntry() -> RuntimeReferenceEntry?
     /// What the actor's cell build could not draw, tagged by its ACHR FormID.

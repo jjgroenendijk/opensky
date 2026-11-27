@@ -60,9 +60,10 @@ public final class WorldItemRuntime {
     /// eye-to-ground height. An object with a simulated Havok body falls from here
     /// as a dynamic body; one without comes to rest here.
     public static let dropHeight: Float = 100
-    /// How far in front of the camera a dropped object is placed, so it does
-    /// not land inside the player capsule and immediately re-target itself.
-    public static let dropForwardOffset: Float = 60
+    /// `fPlayerDropDistance`: how far in front of the dropper, at scale 1, an item lands.
+    public var dropDistance: Float = 100
+    /// The turn the player's next drop takes from the camera's direction, in radians.
+    public private(set) var dropTurn: Float = 0
 
     public let inventory: InventoryRuntime
 
@@ -232,6 +233,9 @@ public final class WorldItemRuntime {
             for: key,
             in: placement.location
         )
+        if holder == player {
+            dropTurn = DropFan.advance(dropTurn, by: placement.fanStep)
+        }
         // A dropped Legendary sword is still Legendary when picked up again.
         let distinct = ItemCopyState(copies: [item.rawValue: copies])
         if !distinct.isEmpty {
@@ -240,22 +244,19 @@ public final class WorldItemRuntime {
         return key
     }
 
-    /// Where an object dropped from `eye` looking along `forward` comes to rest: a
-    /// short step in front, a standing height down. `forward` is flattened first; a
-    /// vertical look drops the object straight below the eye.
+    /// Where an item dropped from `eye` comes to rest: `reach` along `direction`, a
+    /// standing height down. Nil `direction` drops it below the eye.
     public static func dropPlacement(
         in location: CellSceneLocation,
         eye: SIMD3<Float>,
-        forward: SIMD3<Float>
+        direction: SIMD3<Float>?,
+        reach: DropReach
     ) -> DropPlacement {
-        let flat = SIMD2(forward.x, forward.y)
-        let length = simd_length(flat)
-        let offset = length > 1e-4
-            ? SIMD3(flat.x / length, flat.y / length, 0) * dropForwardOffset
-            : SIMD3<Float>.zero
-        return DropPlacement(
+        var placement = DropPlacement(
             location: location,
-            position: eye + offset - SIMD3(0, 0, dropHeight)
+            position: eye + (direction ?? .zero) * reach.travel - SIMD3(0, 0, dropHeight)
         )
+        placement.fanStep = DropFan.step(radius: reach.radius, distance: reach.distance)
+        return placement
     }
 }

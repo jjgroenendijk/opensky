@@ -49,7 +49,7 @@ extension InventoryCoordinator.ScriptItems {
     ) -> InventoryResult<ReferenceKey?> {
         guard
             key == .player, let runtime = coordinator.runtime,
-            let placement = coordinator.world.dropPlacement()
+            let placement = coordinator.world.dropPlacement(of: item)
         else {
             return InventoryResult(nil)
         }

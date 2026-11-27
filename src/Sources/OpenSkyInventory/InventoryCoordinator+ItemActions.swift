@@ -93,7 +93,8 @@ extension InventoryCoordinator.ItemActions {
         guard let runtime = coordinator.runtime else { return .unavailable }
         let carried = runtime.inventory.inventory(of: runtime.player).stacks
         guard let target = item ?? carried.first?.item else { return .nothingToDrop }
-        guard let placement = coordinator.world.dropPlacement() else { return .noDropCell }
+        guard let placement = coordinator.world.dropPlacement(of: target)
+        else { return .noDropCell }
         do {
             try runtime.drop(target, count: count, at: placement)
             playSound(of: target, .putDown, at: placement.position)

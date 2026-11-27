@@ -17,3 +17,15 @@ public protocol CombatWorldPort: AnyObject {
     func run(_ commands: [CombatCommand])
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit?
 }
+
+extension CombatWorldPort {
+    /// How far a sphere of `radius` moves from `center` along `direction` before it meets
+    /// a wall, or nil when it travels `distance` freely.
+    public func freeDistance(
+        of center: SIMD3<Float>, radius: Float, along direction: SIMD3<Float>, upTo distance: Float
+    ) -> Float? {
+        sweep(.sphere(
+            center: center, radius: radius, direction: direction, maximumDistance: distance
+        ))?.distance
+    }
+}

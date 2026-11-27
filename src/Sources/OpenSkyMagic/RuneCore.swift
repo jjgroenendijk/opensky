@@ -33,8 +33,10 @@ nonisolated public struct RuneSettings: Equatable, Sendable {
 }
 
 /// `fSummonedCreatureFadeOutSeconds`: how long a dismissed summon stays before it goes.
+/// `fSummonedCreatureSearchRadius`: how far a self-cast summon looks for room.
 nonisolated public struct SummonSettings: Equatable, Sendable {
     public var fadeOutSeconds: Float = 1.5
+    public var searchRadius: Float = 512
 
     public static let vanilla = Self()
 
@@ -43,6 +45,7 @@ nonisolated public struct SummonSettings: Equatable, Sendable {
     public static func resolve(store: GameSettingStore) -> Self {
         var settings = vanilla
         store.read("fSummonedCreatureFadeOutSeconds", into: &settings, \.fadeOutSeconds)
+        store.read("fSummonedCreatureSearchRadius", into: &settings, \.searchRadius)
         return settings
     }
 }

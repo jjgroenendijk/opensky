@@ -295,7 +295,7 @@ final class FakeAlchemyWorld: InventoryWorld {
     var purifies = false
     private(set) var alchemySeams: [AlchemyConditionResolution] = []
 
-    func dropPlacement() -> DropPlacement? {
+    func dropPlacement(of _: FormID?) -> DropPlacement? {
         nil
     }
 
