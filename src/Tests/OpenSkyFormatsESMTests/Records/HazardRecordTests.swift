@@ -101,7 +101,7 @@ struct HazardRecordTests {
     }
 
     @Test func unknownLockLevelIsKept() {
-        #expect(LockLevel(rawValue: 7) == .unknown(7))
+        #expect(LockLevel(rawValue: 7).rawValue == 7)
         #expect(LockLevel(rawValue: 255) == .requiresKey)
     }
 }

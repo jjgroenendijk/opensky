@@ -26,7 +26,8 @@ struct LockRealDataTests {
                 record.type == "REFR",
                 let lock = (try? PlacedReference(record: record))?.lock
             else { return true }
-            if case .unknown = lock.level {
+            let named: [LockLevel] = [.novice, .apprentice, .adept, .expert, .master, .requiresKey]
+            if !named.contains(lock.level) {
                 unknownLevels += 1
             }
             let state = ReferenceLockState(
