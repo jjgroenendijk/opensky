@@ -109,7 +109,7 @@ nonisolated public struct Armor: Sendable {
 nonisolated public struct ArmorDetails: Equatable, Sendable {
     let bounds: ObjectBounds?
     /// DESC — inventory description.
-    let description: LString?
+    public let description: LString?
     /// MOD2 group with ICON/MICO — the male ground model and its icons.
     public let maleWorldModel: ModelData?
     let maleIconPath: String?

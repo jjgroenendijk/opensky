@@ -104,7 +104,8 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     public var pickUpSound: FormID?
     /// `ZNAM`, the item's own putdown sound. Nil uses its kind's default.
     public var putDownSound: FormID?
-    /// A book's `CNAM`, the line its item card shows. Nil on every other item.
+    /// The item card's text: a book's `CNAM`, or a weapon's or armour's `DESC`, which
+    /// the card shows in place of the enchantment text. Nil on every other item.
     public var description: LString?
     /// False on a weapon or ammunition the player cannot see or use, such as a creature's
     /// claws. The inventory lists leave it out.
@@ -425,7 +426,7 @@ nonisolated enum ItemDefinitionViews {
         _ armor: Armor,
         _ enchantments: ItemEnchantmentResolver?
     ) -> ItemDefinition {
-        ItemDefinition(
+        var definition = ItemDefinition(
             formID: armor.formID,
             family: .armor,
             editorID: armor.editorID,
@@ -436,6 +437,8 @@ nonisolated enum ItemDefinitionViews {
             enchantment: enchantment(armor.enchantment, charge: nil, enchantments),
             modelPath: (armor.details.maleWorldModel ?? armor.details.femaleWorldModel)?.path
         ).with(pickUp: armor.details.pickupSound, putDown: armor.details.dropSound)
+        definition.description = armor.details.description
+        return definition
     }
 
     /// The enchantment view for one record. The link is carried whether or not
@@ -522,6 +525,7 @@ nonisolated enum ItemDefinitionViews {
             )
         )
         definition.isPlayable = !weapon.flags.contains(.nonPlayable)
+        definition.description = weapon.description
         return definition
     }
 
