@@ -195,13 +195,16 @@ actor's scale.
   multiplied by `fCombatDistance` and never combines with a weapon's reach. `NordRace` reaches 96
   units unarmed ([melee combat](/engine/melee-combat.md#reach-and-the-hit-volume)).
 - Acceleration, deceleration, and angular acceleration: the movement controller gets 1 divided by
-  each value, or 1 when the value is near zero. So 1 is neutral, and a larger value ramps faster.
-  Turning to face a combat target also uses 1 / angular acceleration times
-  `fCombatPathingRotationAccelerationMult`.
+  each value, or 1 when the value is within 0.0001 of zero. In combat pathing each value is first
+  multiplied by `fCombatPathingAccelerationMult`, `fCombatPathingDecelerationMult`, or
+  `fCombatPathingRotationAccelerationMult` (2 each). The combat turn speed is at least
+  `fCombatPathingNormalizedRotationSpeed` (2.25). How the controller uses the reciprocal is not
+  known, so whether a larger value ramps faster or slower is not known.
 - Angular tolerance, in degrees: how close the actor must turn toward a point before it faces it.
   With a ranged weapon type, `fAIUseWeaponToleranceDegrees` replaces it.
 - Aim angle tolerance, in degrees: the combat aim tolerance is the larger of this and
-  `fCombatAngleTolerance`.
+  `fCombatAngleTolerance` (1), turned into radians. An actor turning to aim at its combat target
+  uses it with the angular acceleration above.
 - Flight radius: while the actor flies, its path requests use this radius times the actor's
   scale (reference scale times `NAM6` height). When it does not fly, or while it lands, the
   character controller's radius is used.
@@ -304,9 +307,7 @@ How the game uses some of them:
   loud (`iSoundLevelVeryLoud`, 200), 4 none (0). The noise also starts the
   `fActorAlertSoundTimer` timer.
 - `ATKR` names an attack race. Its attacks merge with the NPC's own, matched by `ATKE` event
-  name. An own attack whose event the attack race lacks is dropped. A race attack the NPC lacks
-  is added. An own attack with a matching event replaces the race's. An NPC left with no
-  attacks uses its own race's.
+  name ([attack data](/engine/attack-data.md#which-list-an-actor-uses)).
 - `ANAM` is a far-away model, an `ARMO`. `DNAM` byte 44 is its distance, a float clamped to
   65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
   from the camera wears one `ANAM` item; a nearer actor has it taken off.

@@ -20,12 +20,13 @@ install with a field census.
 
 Each block is a run of floats that may stop early; xEdit marks every member optional. The
 install has `CSGD` at 8, 32 and 40 bytes, `CSME` at 28 and 32, `CSCR` at 8 and 16, and
-`CSFL` at 4, 12 and 32. OpenSky keeps the floats present.
+`CSFL` at 4, 12 and 32. A block that stops early keeps the default for each float it lacks. A
+new style starts as a copy of the game's default combat style, when one is set.
 
 | Field | Members, in order |
 | --- | --- |
 | `CSGD` | Offensive, defensive, group offensive multipliers; equipment score multipliers for melee, magic, ranged, shout, unarmed, staff; avoid threat chance |
-| `CSMD` | 8 bytes not named by xEdit, kept raw |
+| `CSMD` | 8 bytes not named by xEdit. The game skips it at load |
 | `CSME` | Attack staggered, power attack staggered, power attack blocking, bash, bash recoil, bash attack, bash power attack, special attack multipliers |
 | `CSCR` | Circle multiplier, fallback multiplier, flank distance, stalk time |
 | `CSLR` | Strafe multiplier |
@@ -33,6 +34,72 @@ install has `CSGD` at 8, 32 and 40 bytes, `CSME` at 28 and 32, `CSCR` at 8 and 1
 | `DATA` | uint32 flags: 0x01 dueling, 0x02 flanking, 0x04 allow dual wielding |
 
 Header flag 0x80000 is an older allow-dual-wielding switch.
+
+## Defaults
+
+| Field | Default |
+| --- | --- |
+| `CSGD` | Offensive 0.5, defensive 0.5, group offensive 1, the six equipment multipliers 1, avoid threat 0.2 |
+| `CSME` | The first seven values 1, special attack 0.1 |
+| `CSCR` | All four values 0.2 |
+| `CSLR` | 0.2 |
+| `CSFL` | 0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.75, in the member order above |
+| `DATA` | 1: dueling only |
+
+## What the values change
+
+Most values pick a point between two game settings. In this section,
+`lerp(v, Min, Max) = Min + (Max - Min) * v`. Example: a circle multiplier of 0.2 gives a circle
+chance of `lerp(0.2, 0, 0.75) = 0.15`.
+
+| Value | Formula |
+| --- | --- |
+| Fallback chance | `lerp(fallback, fCombatFallbackChanceMin 0, fCombatFallbackChanceMax 0.5)` |
+| Fallback distance | `lerp(fallback, fCombatFallbackDistanceMin 96, fCombatFallbackDistanceMax 256)` units |
+| Fallback wait | `lerp(fallback, fCombatFallbackWaitTimeMin 0.75, fCombatFallbackWaitTimeMax 1.5)` s |
+| Circle chance | `lerp(circle, fCombatCircleChanceMin 0, fCombatCircleChanceMax 0.75)` |
+| Distant circle chance | `lerp(circle, fCombatCircleDistantChanceMin 0.25, fCombatCircleDistantChanceMax 0.75)` |
+| Circle angle | `lerp(circle, fCombatCircleAngleMin 30, fCombatCircleAngleMax 90)` degrees |
+| Flank distance | `lerp(flank, fCombatFlankingDistanceMin 0, fCombatFlankingDistanceMax 1024)` units |
+| Stalk time | `lerp(stalk, fCombatFlankingStalkTimeMin 0.01, fCombatFlankingStalkTimeMax 10)` s |
+| Strafe chance | `lerp(strafe, fCombatStrafeChanceMin 0, fCombatStrafeChanceMax 0.75)` |
+| Special attack chance | `lerp(special, fCombatSpecialAttackChanceMin 0, fCombatSpecialAttackChanceMax 1)` |
+| Block chance | `lerp(defensive, fCombatBlockChanceMin 0, fCombatBlockChanceMax 1)`, times `fCombatBlockChanceWeaponMult` 0.25 without a shield |
+| Block attack chance | `lerp(defensive, 0, 1)` |
+| Hover, dive bomb, ground attack, perch, flying attack chances | `lerp(v, 0, 1)` |
+| Hover time | `lerp(hover time, fCombatHoverTimeMin 5.5, fCombatHoverTimeMax 15)` s |
+| Ground attack time | `lerp(ground attack time, 8, 17)` s |
+| Perch time | `lerp(perch time, 4, 15)` s |
+
+The circle angle is then drawn at random between `fCombatCircleAngleMin` and the lerped value.
+Against the player it is multiplied by `fCombatCircleAnglePlayerMult` (0.75). It is never less
+than the angle, in degrees, of `radius * fCombatCircleMinDistanceRadiusMult (3) / distance`.
+
+The attack chance starts at `lerp(offensive, fCombatAttackChanceMin 0.05,
+fCombatAttackChanceMax 1)`. Then:
+
+- a staggered target multiplies it by the larger of the attack staggered and power attack
+  staggered values;
+- a target in mid-swing multiplies it by `fCombatAttackChanceBlockingSwingMult` (0);
+- a target that is not attacking multiplies it by a value that falls from
+  `fCombatAttackChanceBlockingMultMax` (0.67) at defensive 0 to
+  `fCombatAttackChanceBlockingMultMin` (0.2) at defensive 1;
+- the time since the actor's last attack raises it, from 1 times to
+  `fCombatAttackChanceLastAttackBonus` (1.5) times over `fCombatAttackChanceLastAttackBonusTime`
+  (5 s).
+
+The bash chance is `lerp(defensive, fCombatBashChanceMin 0.025, fCombatBashChanceMax 0.2)` and
+the offensive bash chance `lerp(offensive, fCombatOffensiveBashChanceMin 0,
+fCombatOffensiveBashChanceMax 0.05)`. Both are multiplied by the bash value and by one more
+factor: bash recoil for a recoiling target, bash power attack for a power-attacking target,
+bash attack for an attacking target, or `fCombatBashTargetBlockingMult` (0) for a target that
+blocks toward the attacker within the 35 degree hit cone.
+
+The attack staggered, power attack staggered, and power attack blocking values also weight the
+choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
+
+`DATA` 0x04 allows dual wielding for a race with `DATA` flag 0x40000000, which allows a
+left-hand item. No reader of the dueling, flanking, charging, or retarget bits is known.
 
 ## Actors
 
