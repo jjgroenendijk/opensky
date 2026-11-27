@@ -146,6 +146,15 @@ nonisolated public struct RaceMenuLabels: Equatable, Sendable {
     }
 }
 
+/// The player's name until the race menu names them.
+nonisolated public enum PlayerNameText: String, GameSettingTextKey {
+    case prisoner = "sPrisoner"
+
+    public var fallback: String {
+        "Prisoner"
+    }
+}
+
 /// The Sex row's value.
 nonisolated public enum GenderText: String, GameSettingTextKey {
     case male = "sGenderMale"

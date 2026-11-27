@@ -229,7 +229,6 @@ struct RaceMenuReads {
 
     /// `sPrisoner`: the player's name until the race menu names them.
     var prisonerName: String {
-        game.menuRecords?.gameSettings.text("sPrisoner").flatMap { game.mapWorld.text($0) }
-            ?? "Prisoner"
+        game.mapWorld.settingTexts(PlayerNameText.self)[.prisoner]
     }
 }
