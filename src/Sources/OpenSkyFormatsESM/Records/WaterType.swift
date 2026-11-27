@@ -85,8 +85,6 @@ nonisolated public struct WaterType: Sendable {
 /// WATR fields beside DNAM. xEdit dev-4.1.6 `WATR`; docs/formats/water.md.
 nonisolated public struct WaterDetails: Equatable, Sendable {
     let name: LString?
-    /// NNAM x3 — noise textures from older versions.
-    let oldNoiseTextures: [String]
     /// ANAM — opacity, 0-100.
     public let opacity: UInt8?
     /// FNAM — bit 0 causes damage; SSE bit 3 enable flowmap, bit 4 blend normals.
@@ -109,7 +107,6 @@ nonisolated public struct WaterDetails: Equatable, Sendable {
 
     init(_ fields: inout RecordFields) {
         name = fields.lstring("FULL")
-        oldNoiseTextures = fields.readAll("NNAM") { try $0.readZString() }
         opacity = fields.uint8("ANAM")
         flags = fields.uint8("FNAM") ?? 0
         unusedMaterialID = fields.bytes("MNAM")
@@ -121,6 +118,23 @@ nonisolated public struct WaterDetails: Equatable, Sendable {
         relatedWaters = fields.formIDArray("GNAM")
         linearVelocity = fields.read("NAM0") { try $0.readFloat3() }
         angularVelocity = fields.read("NAM1") { try $0.readFloat3() }
-        noiseTextures = ["NAM2", "NAM3", "NAM4", "NAM5"].map { fields.zstring($0) }
+        noiseTextures = Self.noiseTextures(&fields)
+    }
+
+    /// NAM2 to NAM5 in field order. The older NNAM sets all three noise layers,
+    /// so the later of NNAM and a NAMn wins (docs/formats/water.md).
+    private static func noiseTextures(_ fields: inout RecordFields) -> [String?] {
+        var textures = [String?](repeating: nil, count: 4)
+        let slots: [FourCC: [Int]] = [
+            "NNAM": [0, 1, 2], "NAM2": [0], "NAM3": [1], "NAM4": [2], "NAM5": [3]
+        ]
+        for index in fields.fields.indices where !fields.isUsed(at: index) {
+            guard let targets = slots[fields.fields[index].type] else { continue }
+            let path = fields.read(at: index) { try $0.readZString() }
+            for slot in targets {
+                textures[slot] = path
+            }
+        }
+        return textures
     }
 }
