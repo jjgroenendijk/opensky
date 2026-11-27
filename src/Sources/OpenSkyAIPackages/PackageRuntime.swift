@@ -69,20 +69,18 @@ nonisolated public struct ActorPackageRuntime {
         actors.removeValue(forKey: actor)
     }
 
+    /// `frameSeconds` is the real time since the last pass; it runs down each loaded actor's
+    /// pick countdown.
     public mutating func advance(
         clock: GameClock,
+        frameSeconds: Float = 0,
         context: (ReferenceKey) -> ConditionContext
     ) {
         for actor in actors.keys.sorted() {
+            actors[actor]?.secondsUntilPick -= frameSeconds
             guard needsEvaluation(actor, at: clock) else { continue }
             reevaluate(actor: actor, clock: clock, context: context(actor))
         }
-    }
-
-    /// The same for one actor, for a pass that spreads its actors over frames.
-    public mutating func advance(actor: ReferenceKey, clock: GameClock, context: ConditionContext) {
-        guard needsEvaluation(actor, at: clock) else { return }
-        reevaluate(actor: actor, clock: clock, context: context)
     }
 
     private func needsEvaluation(_ actor: ReferenceKey, at clock: GameClock) -> Bool {
@@ -231,6 +229,7 @@ nonisolated public struct ActorPackageRuntime {
         }
         state.lastEvaluationGameSeconds = clock.totalGameSeconds
         state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: state.allPackages)
+        state.secondsUntilPick = Self.loadedPickSeconds
         actors[actor] = state
         if previous != state.current?.package.formID {
             onSelectionChanged?(state.readout(actor: actor))
@@ -278,6 +277,7 @@ nonisolated public struct ActorPackageRuntime {
         var scriptPackage: ScriptPackageSlot?
         var lastEvaluationGameSeconds: Double?
         var nextEvaluationGameSeconds: Double?
+        var secondsUntilPick = ActorPackageRuntime.loadedPickSeconds
         var isSuspended = false
         var override: PackageOverride?
         var aliasStack: PackageAliasStack?
@@ -311,6 +311,7 @@ nonisolated public struct ActorPackageRuntime {
                 let next = nextEvaluationGameSeconds
             else { return true }
             return clock.totalGameSeconds < last || clock.totalGameSeconds >= next
+                || secondsUntilPick <= 0
         }
 
         func readout(actor: ReferenceKey) -> PackageActorReadout {
@@ -326,5 +327,17 @@ nonisolated public struct ActorPackageRuntime {
                 override: override?.owner
             )
         }
+    }
+}
+
+nonisolated extension ActorPackageRuntime {
+    /// A loaded actor checks its package list again this many real seconds after its last
+    /// pick (docs/engine/package-schedules.md#when-to-pick-again).
+    static let loadedPickSeconds: Float = 15
+
+    /// The same for one actor, for a pass that spreads its actors over frames.
+    public mutating func advance(actor: ReferenceKey, clock: GameClock, context: ConditionContext) {
+        guard needsEvaluation(actor, at: clock) else { return }
+        reevaluate(actor: actor, clock: clock, context: context)
     }
 }

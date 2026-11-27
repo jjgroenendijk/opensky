@@ -35,14 +35,7 @@ struct PackageRuntimeTests {
                 reference: 0x700
             )
         )
-        let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")
-        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
-        let store = PackageStore(
-            packages: [scheduled, fallback],
-            actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
-        )
-        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
-        try runtime.register(actor: Self.actorKey, base: actor.formID)
+        var runtime = try Self.runtime(first: scheduled, fallback: "Fallback")
 
         runtime.advance(clock: GameClock(hour: 9)) { _ in
             tryContext(enableState: .disabled)
@@ -89,6 +82,30 @@ struct PackageRuntimeTests {
             context: ConditionContext()
         )
         #expect(changes == 1)
+    }
+
+    /// A condition can change between hours, as a quest stage does. A loaded actor sees it
+    /// 15 real seconds after its last pick, though the game clock moved only 5 minutes.
+    @Test func aLoadedActorPicksAgainAfterFifteenRealSeconds() throws {
+        let held = try PackageRuntimeFixture.package(
+            id: 0x100,
+            editorID: "HoldWhileDisabled",
+            condition: ConditionEvaluatorFixture.field(
+                comparisonValue: Float(1).bitPattern, functionIndex: 35, runOn: 2, reference: 0x700
+            )
+        )
+        var runtime = try Self.runtime(first: held, fallback: "Patrol")
+        runtime.advance(clock: GameClock(hour: 9)) { _ in tryContext(enableState: .disabled) }
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x100))
+
+        runtime.advance(clock: GameClock(hour: 9.05), frameSeconds: 14) { _ in
+            tryContext(enableState: .enabled)
+        }
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x100))
+        runtime.advance(clock: GameClock(hour: 9.08), frameSeconds: 1) { _ in
+            tryContext(enableState: .enabled)
+        }
+        #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x101))
     }
 
     /// A suspended speaker must not walk off mid-sentence, and on release it
@@ -229,6 +246,19 @@ struct PackageRuntimeTests {
         #expect(wait.start().isEmpty)
         #expect(wait.handle(.tick(60)).isEmpty)
         #expect(wait.state == .waiting)
+    }
+
+    /// An actor whose stack is `first`, then a package 0x101 with no condition.
+    private static func runtime(first: Package, fallback: String) throws -> ActorPackageRuntime {
+        let second = try PackageRuntimeFixture.package(id: 0x101, editorID: fallback)
+        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
+        let store = PackageStore(
+            packages: [first, second],
+            actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
+        )
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
+        try runtime.register(actor: actorKey, base: actor.formID)
+        return runtime
     }
 
     private func tryContext(enableState: ReferenceEnableState) -> ConditionContext {

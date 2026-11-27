@@ -89,9 +89,10 @@ next pick. An actor with less AI processing does not count the 15 s; one at the 
 only on an hour change, with no package, or when asked. A dead or dying actor does not pick.
 Inside a package, the procedure tree checks its branch conditions again every 3 real seconds.
 
-OpenSky picks at the exact start or end of a daily schedule, 15 game minutes after the last pick,
-and when the clock moves back. [WARNING] So a loaded actor picks about three times later than in
-the game, and not at each hour change. A callback fires only when the picked package changes.
+OpenSky picks a loaded actor 15 real seconds after its last pick, at the exact start or end of a
+daily schedule, and when the clock moves back. An actor away from the player picks every 15 game
+minutes. [WARNING] OpenSky does not pick at each hour change. A callback fires only when the
+picked package changes.
 
 Two package flags change the pick. Source: <https://ck.uesp.net/wiki/Package_Flags>.
 
