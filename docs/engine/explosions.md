@@ -165,8 +165,15 @@ The push is on the [impulses](/engine/impulses.md#explosions) page. Two more rul
   makes a splash. The splash size is the radius divided by 250.
 - **Life.** The explosion is removed when its age reaches its duration.
 
-What the spawn projectile, the Always Uses World Orientation flag (`0x2`), and the Chain flag
-(`0x80`) do was not found.
+- **World orientation.** With the Always Uses World Orientation flag (`0x2`), the explosion's
+  rotation is set to zero, so it lines up with the world axes and not with the impact.
+- **Chain.** The Chain flag (`0x80`) makes a chain explosion. A chain explosion skips the spell's
+  area target search. 2 `Skyrim.esm` explosions set it.
+- **Noise.** An explosion with damage above 0 that hits an actor makes a noise at that actor at the
+  `EXPL` sound level.
+
+What the spawn projectile does was not found. 7 `Skyrim.esm` explosions name one, such as
+`ChainLightningMassExplosion` and `FireStormExplosion02`. No vanilla `EXPL` has scripts.
 
 ## Where OpenSky differs
 

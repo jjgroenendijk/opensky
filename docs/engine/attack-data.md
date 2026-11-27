@@ -86,17 +86,41 @@ starts that attack only within `35 * 0.67`, about 23 degrees.
 
 ## The AI's pick
 
-The AI picks one attack at random, weighted by attack chance. An attack with a weight of 0 or less
-is never picked. The weight changes with the target, using the attacker's
-[combat style](/formats/combat-style.md) `CSME` values:
+```mermaid
+flowchart TD
+    A["Attack step"] --> B{"Last try under 1.5 s ago and still animating?"}
+    B -- yes --> Z["No attack"]
+    B -- no --> C{"Predicted distance below reach + weapon reach + 512?"}
+    C -- no --> Z
+    C -- yes --> D["Candidates with weights"]
+    D --> E{"Any left?"}
+    E -- no --> Z
+    E -- yes --> F["Weighted random pick"]
+    F --> G{"Second roll 0 to 1 at or below the weight?"}
+    G -- no --> R["Remove it"]
+    G -- yes --> H{"Target in the cone at strike angle * 0.67?"}
+    H -- no --> R
+    H -- yes --> S["Start it, note the time"]
+    R --> E
+```
 
-- a staggered target: times power attack staggered for a power attack, else times attack
-  staggered;
-- a blocking target, with the attacker inside the target's 35 degree block cone: a power attack
-  times power attack blocking.
+An attack is a candidate only when all of these hold:
 
-An attack is skipped while its recovery time has not passed since its last use. An attack that
-costs stamina is skipped while the attacker's Stamina is 0 or less.
+- the actor's current behaviour graph has timing data for its `ATKE` event;
+- its recovery time has passed since it last started;
+- the attacker's Stamina is above 0, or the attack costs no stamina.
+
+Its weight starts at the attack chance. Against a staggered target it is multiplied by the
+attacker's [combat style](/formats/combat-style.md) `CSME` power attack staggered value for a
+power attack, else by attack staggered. Otherwise, a power attack against a blocking target,
+with the attacker inside the target's hit cone (`fCombatHitConeAngle`, 35 degrees), is multiplied
+by power attack blocking. A weight of 0 or less drops out.
+
+The second roll makes a weight below 1 a plain chance as well. Example: two attacks, weights 1
+and 0.5. The second is drawn a third of the time, then passes its own roll half of those times.
+
+The general attack pick leaves out bash (`0x2`) and left-hand (`0x8`) attacks, and can be held to
+power attacks only. With no target, every weight there is 10.
 
 ## Stamina
 
