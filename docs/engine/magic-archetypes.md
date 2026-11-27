@@ -162,6 +162,12 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   caster. A target-location summon spell places the associated `NPC_` at the aim point, facing
   the caster, as a spawned actor in the caster's cell; the next cell build draws it. When the
   effect ends, the spawn is removed.
+  A self-cast summon looks for room in front of the caster. With `s` the summon's 2D
+  [bounds radius](/formats/records.md#object-bounds) and `c` the caster's, the aim point is the
+  caster's position plus its facing times `c + s + 0.5 * fSummonedCreatureSearchRadius`
+  (default 512), at the caster's height. The search for a free spot reaches out to
+  `c + s + fSummonedCreatureSearchRadius` and needs `s` of clearance. A summon with `s` above
+  `fPathingLargeActorRadius` (80) searches with large-actor pathing.
 - Reanimate: "If the target is dead, reanimate them, putting them under the caster's control."
   Its magnitude is the highest level it raises, as for Calm. A living target ends the effect at
   once. The corpse is resurrected, and it falls dead again when the effect ends. Perk entry

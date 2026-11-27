@@ -218,11 +218,37 @@ member belongs to the opener just before it, so these groups are read in file or
 uint32 count, then per entry a uint32-length shape name, a `TXST` FormID, and an int32
 shape index.
 
-`MODT` (and `MO2T` to `MO5T`, `DMDT`) changes layout with the form version. From form
-version 40 it starts with three uint32 values: N, the texture count, and the addon count.
-The data starts at byte `4 * (N + 1)`. It holds one 12-byte hash triple per texture, then
-one uint32 index per addon. A second `MODT` for the same model adds to the list. When the
-model is queued to load, the game starts loading the listed textures early.
+`MODT` (and `MO2T` to `MO5T`, `DMDT`) changes layout with the form version. Below form
+version 38 the game ignores it. In versions 38 and 39 it is a plain run of 12-byte hash
+triples. From form version 40 it starts with three uint32 values: N, the texture count, and
+the addon count. The data starts at byte `4 * (N + 1)`. It holds one 12-byte hash triple per
+texture, then one uint32 index per addon. A second `MODT` for the same model adds to the
+list. The game keeps only the triples that name a file in a loaded archive. When the model is
+queued to load, the game starts loading those textures early. For each addon index it also
+queues the textures of that `ADDN` node's model, unless the node has its flag `0x2` set. The
+`CLMT` loader skips its night-sky `MODT`.
+
+### Object bounds
+
+`OBND` holds six int16 values: the minimum and maximum corner. The game turns it into a radius,
+with `d = max - min` on each axis:
+
+- the 3D radius is `0.5 * sqrt(dx^2 + dy^2 + dz^2)`;
+- the 2D radius is `0.5 * sqrt(dx^2 + dy^2)`;
+- a reference with no base has radius 1.
+
+Example: a box from (-10, -20, 0) to (10, 20, 30) has `d = (20, 40, 30)`, a 3D radius of
+about 26.9, and a 2D radius of about 22.4. The readers:
+
+| Reader | Radius | Rule |
+| --- | --- | --- |
+| A dropped item | 3D | [Dropped items](/engine/dropped-items.md) |
+| A summoned actor | 2D | [Summon Creature](/engine/magic-archetypes.md) |
+| A large reference | 3D times the reference scale | [Large references](/engine/distant-lod.md#large-references) |
+| An activator as a package target | 3D, cut to a whole number | The package's target radius |
+
+No other reader uses `OBND` for `SOUN`, `IDLM`, `ADDN`, `EXPL`, `PROJ`, `HAZD`, or `ASPC`. A
+placed `SOUN` sizes its box from the reference's primitive.
 
 A placed `STAT`, or another base with a model, draws each `MODS` entry: the shape with that
 name takes the diffuse and normal map of the `TXST`. OpenSky matches shapes by name, without

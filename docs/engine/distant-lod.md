@@ -125,12 +125,14 @@ Each ring build, on the build queue:
    whole, and then every cell of its block joins the ring, so no large reference goes
    missing.
 3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
-   their full model, as the cell build places them. A listed static stays only while it is
-   still large: half the diagonal of its base's `OBND` bounds, times the reference's scale,
-   must be above `fLargeRefMinSize` (1,024 by default), as observed in the game. So a plugin
-   that raises the setting drops the smaller ones. A listed reference whose base is not a
-   static, or has no bounds, stays as `RNAM` lists it. Each takes the enable state its own cell
-   would give it: the world state, then its enable parent.
+   their full model, as the cell build places them. A listed reference stays only while it is
+   still large: its size must be strictly above `fLargeRefMinSize` (1,024 by default). The size
+   is the 3D [bounds radius](/formats/records.md#object-bounds) of its base times the
+   reference's scale. A reference with its own `XPRM` primitive uses the length of the
+   primitive's half-extents instead, without the scale. Only a `STAT` base, or an `MSTT` with
+   `DATA` flag `0x4`, can pass; any other base, and a zero box, fails. So a plugin that raises
+   the setting drops the smaller ones. Each takes the enable state its own cell would give it:
+   the world state, then its enable parent.
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large

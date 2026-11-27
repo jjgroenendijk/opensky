@@ -29,6 +29,21 @@ All integers and floats are little-endian.
 | `RNAM` | FormID | race, usually `0x19` DefaultRace |
 | `BOD2`/`BODT` | struct | equip slots |
 | `MODL` | FormID | one `ARMA`; repeated |
+| `TNAM` | FormID | template armour |
+| `BIDS` | FormID | block bash impact data set, an `IPDS` |
+| `BAMT` | FormID | alternate block material, a `MATT` |
+
+How the game uses them:
+
+- `TNAM`: at load, after the template's own load, the template overwrites this armour's race,
+  weight, destruction data, pickup and putdown sounds, ground and inventory models and icons,
+  equip slot, biped slots, `BIDS` and `BAMT`, keywords, description, `ARMA` list, and armour
+  rating. The name, value, and enchantment stay this armour's own.
+- `BIDS`: a bash with this item plays the impact set's effect for the struck surface's
+  material. Without `BIDS` on a weapon or armour, the bash plays no impact. Any other bashing
+  item falls back to the default object's impact set. A `BIDS` that is not an `IPDS` is cleared.
+- `BAMT` and `RNAM` are kept and copied from the template, and nothing reads them while the game
+  runs.
 
 On ARMO, `MODL` is a 4-byte ARMA FormID, not a path. `SkinNaked` has 25 of them. `MOD2` and
 `MOD4` are the ground and inventory models. Weapon and armor enchantment fields are on

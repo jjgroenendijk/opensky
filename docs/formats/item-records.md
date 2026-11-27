@@ -96,12 +96,22 @@ one of the three types, and every one resolves to an item.
 | `DESC` | lstring | book text, from the `.dlstrings` table ([strings](/formats/strings.md)) |
 | `CNAM` | lstring | inventory description |
 | `DATA` | 16 bytes | see below |
+| `INAM` | FormID | inventory art, a `STAT`; kept, and nothing reads it while the game runs |
 
 `DATA` (line 4220): uint8 flags (`0x01` teaches skill, `0x02` cannot be taken, `0x04`
 teaches spell), uint8 kind (0 book, 255 note; always 0 since SSE), 2 unused bytes, uint32
 "teaches" word, uint32 value, float32 weight. The "teaches" word is an actor-value skill
 index with flag `0x01`, a SPEL FormID with flag `0x04`, and unused otherwise. If a mod sets
 both flags, OpenSky reads a spell.
+
+How the game uses the flags:
+
+- `0x01`: reading the book raises the skill (actor values 6 to 23) by 1, through perk entry
+  point 5, while the skill is below 200. Then the game clears `0x01` and `0x04`, so the book
+  teaches once.
+- `0x04`: reading the book teaches the spell.
+- `0x08`: set while the game runs, once the book has been read.
+- `0x02`: activating the book reads it but does not take it, and an NPC that loots skips it.
 
 ## ALCH
 
@@ -145,6 +155,9 @@ with magnitude 0.
 | `CNAM` | FormID | template, another WEAP |
 | `INAM` | FormID | impact data set (`IPDS`) for a normal swing |
 | `BIDS` | FormID | impact data set (`IPDS`) for a shield bash |
+| `BAMT` | FormID | alternate block material, a `MATT`; kept, and nothing reads it while the game runs |
+| `WNAM` | FormID | first-person model, a `STAT` |
+| `NNAM` | zstring | embedded weapon node |
 
 Record at line 10499, `DATA` 10530, `DNAM` 10535, `CRDT` 10604.
 
@@ -153,6 +166,18 @@ Record at line 10499, `DATA` 10530, `DNAM` 10535, `CRDT` 10604.
 embedded, `0x80` not playable), `0x34`, `0x38`, and `0x3C` float32 rumble left motor strength,
 right motor strength, and seconds (the Creation Kit's Rumble tab), `0x4C` int32 skill as an
 actor value (-1 for none), `0x60` float32 stagger. The rest is padding or old Fallout fields.
+
+At load, a speed or reach at or below 0 becomes 1. The INI setting `bForceNPCsUseAmmo` sets
+flags-2 bit `0x2` on every weapon. Flag `0x20` (embedded) with a non-empty `NNAM` makes `NNAM`
+the node a projectile launches from. Otherwise the game uses `ProjectileNode`, then
+`##ProjectileNode`. Flags-2 bit `0x40` gives the weapon a score of 0 when an NPC picks a
+combat weapon, so the AI never picks it for normal combat.
+
+`CNAM` names a template weapon. At load, after the template's own load, the template
+overwrites this weapon's model with its `MODT` and `MODS`, icon, weight, `DATA` damage,
+destruction data, equip slot, message icon, pickup and putdown sounds, `BIDS` and `BAMT`,
+keywords, description, scope model (`MOD3`), `INAM`, `WNAM`, all of `DNAM`, `CRDT`, and the
+weapon sounds. The name, enchantment, value, and `NNAM` stay this weapon's own.
 
 A weapon with "Can't Drop" set "cannot be disarmed and does not fall off when actor dies"
 (<https://ck.uesp.net/wiki/Weapons>). So a disarm effect leaves it in the hand, and a death
@@ -197,7 +222,9 @@ The item card shows a weapon's `DESC` as its effect text when it is not empty. O
 `SilverSword` and the Nightingale bow. The same holds for armour: 28 `ARMO` records.
 
 UESP calls `INAM` "Normal weapon swing impact set" and `BIDS` "Block bash impact data set".
-A null link means the hit makes no impact sound. That is normal in vanilla.
+A null link on a weapon or armour means the hit makes no impact. That is normal in vanilla.
+Another bashing item uses the default object's impact set
+([armour](/formats/armor.md#armo)).
 
 ## AMMO
 
