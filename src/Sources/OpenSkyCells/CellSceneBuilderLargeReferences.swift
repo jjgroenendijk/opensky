@@ -225,7 +225,7 @@ nonisolated extension CellSceneBuilder.CellLargeReferenceBuilder {
                 using: WorldspaceLargeReferenceCell.decodeAll(record:)
             )
         var index: [CellCoordinate: Set<UInt32>] = [:]
-        for entry in (versions[world] ?? []).joined() {
+        for entry in (versions[world] ?? []).flatMap(\.largeReferences) {
             for reference in entry.references {
                 let cell = CellCoordinate(x: Int32(reference.cell.x), y: Int32(reference.cell.y))
                 index[cell, default: []].insert(reference.reference.rawValue)

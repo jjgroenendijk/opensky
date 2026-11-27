@@ -57,14 +57,16 @@ nonisolated public struct WorldspaceLargeReferenceCell: Equatable, Sendable {
     }
 
     /// The `RNAM` lists of one `WRLD` record, without the rest of the record.
-    public static func decodeAll(record: ESMRecord) throws -> [Self] {
+    public static func decodeAll(record: ESMRecord) throws -> WorldspaceDetails {
         var fields = try RecordFields(record: record, type: "WRLD")
-        return fields.readAll("RNAM") { try Self(&$0) }
+        var details = WorldspaceDetails()
+        details.largeReferences = fields.readAll("RNAM") { try Self(&$0) }
+        return details
     }
 }
 
 nonisolated public struct WorldspaceDetails: Equatable, Sendable {
-    var largeReferences: [WorldspaceLargeReferenceCell] = []
+    public var largeReferences: [WorldspaceLargeReferenceCell] = []
     /// MHDT: min and max cell, then four uint8 heights per cell. Kept raw.
     var maxHeightData: Data?
     /// WCTR.
