@@ -194,22 +194,26 @@ actor's scale.
 - Unarmed reach: an actor with no weapon, or with the built-in fists, reaches this far. It is not
   multiplied by `fCombatDistance` and never combines with a weapon's reach. `NordRace` reaches 96
   units unarmed ([melee combat](/engine/melee-combat.md#reach-and-the-hit-volume)).
-- Acceleration, deceleration, and angular acceleration: the movement controller gets 1 divided by
-  each value, or 1 when the value is within 0.0001 of zero. In combat pathing each value is first
-  multiplied by `fCombatPathingAccelerationMult`, `fCombatPathingDecelerationMult`, or
-  `fCombatPathingRotationAccelerationMult` (2 each). The combat turn speed is at least
-  `fCombatPathingNormalizedRotationSpeed` (2.25). How the controller uses the reciprocal is not
-  known, so whether a larger value ramps faster or slower is not known.
+- Acceleration, deceleration, and angular acceleration: each is the time in seconds to reach run
+  speed, to stop from it, or to reach the full turn rate
+  ([movement types](/formats/movement-types.md#acceleration)). A larger value ramps more slowly.
+  In combat pathing the rates are multiplied by `fCombatPathingAccelerationMult`,
+  `fCombatPathingDecelerationMult`, or `fCombatPathingRotationAccelerationMult` (2 each), which
+  halves each time. The combat turn speed is at least 2.25 on the normalized scale, which is
+  1.25 times rotate in place run.
 - Angular tolerance, in degrees: how close the actor must turn toward a point before it faces it.
   With a ranged weapon type, `fAIUseWeaponToleranceDegrees` replaces it.
 - Aim angle tolerance, in degrees: the combat aim tolerance is the larger of this and
   `fCombatAngleTolerance` (1), turned into radians. An actor turning to aim at its combat target
-  uses it with the angular acceleration above.
+  uses it with the angular acceleration above. When the aim asks for it, the behaviour graph
+  float `AimHeadingMax`, in degrees, can raise the tolerance; it never lowers it.
 - Flight radius: while the actor flies, its path requests use this radius times the actor's
   scale (reference scale times `NAM6` height). When it does not fly, or while it lands, the
   character controller's radius is used.
-- Shield biped object: the worn armour in that slot is the actor's shield. Head and hair: the race
-  menu rebuilds the head from them after a race change.
+- Shield biped object: the worn armour in that slot is the actor's shield. Body biped object: the
+  worn armour in that slot is the actor's body armour; -1 is none. Head and hair: the race
+  menu rebuilds the head from them after a race change. The player's race head, hair, body, and
+  shield slots are also kept with the player.
 - The male and female weights, and the two bytes after the skill pairs, have no known reader.
 
 More `DATA` flags:
@@ -243,7 +247,8 @@ the target at each update. Each ground sample restarts a 5-second timer; when it
 the tilt is worked out again. Example: a normal with `x = -0.2` gives a roll of 0.2 radians
 (11.5 degrees). Flags 2: `0x1` turns on velocity-obstacle avoidance, but only when
 the INI setting `bUseVelocityObstacles:Pathfinding` is on. `0x2` changes how the actor reacts to
-a hit from the player, and `0x10` is read by the mount checks; their exact effects are not known.
+a hit from the player, and `0x8` and `0x10` are fallbacks of an actor ability check, which the
+mount checks use; their exact effects are not known.
 
 Skeleton blocks come in this order (seen on `NordRace`): `MNAM`, male `ANAM` + `MODT`,
 `FNAM`, female `ANAM` + `MODT`. Later `MNAM`/`FNAM` markers open other blocks, but those
@@ -266,8 +271,9 @@ the fields in order and tracks the current section and sex:
 | `NAM3` | behavior | `MODL`/`MODT` behavior graph per sex, then `NAME` biped names, `MTYP`/`SPED` movement types, `VTCK`, `DNAM`, `HCLF`, `TINL`, `PNAM`, `UNAM`, `ATKR`, `NAM4`, `NAM5`, `NAM7`, `ONAM`, `LNAM`, `NAME`, `QNAM`, `UNES`, `WKMV`, `RNMV`, `SWMV`, `FLMV`, `SNMV`, `SPMV` |
 | `NAM0` | head | `HEAD` parts, `MPAI`/`MPAV` morph groups, `RPRM`/`RPRF` presets, `AHCM`/`AHCF` hair colors, `FTSM`/`FTSF` face textures, `DFTM`/`DFTF`, `TINI` tint masks with `TINT`, `TINP`, `TIND`, `TINC`/`TINV`/`TIRS` presets |
 
-`MNAM` and `FNAM` switch the sex inside a section. `SPED` holds 11 floats: left, right,
-forward, back walk and run speeds, then rotation speeds.
+`MNAM` and `FNAM` switch the sex inside a section. An `MTYP` counts only with a `SPED` after it,
+and that `SPED` replaces the `MOVT`'s speeds for the race
+([movement types](/formats/movement-types.md)).
 
 `TINL` is named "Total Number of Tints in List", and xEdit marks it "Needs Count Updated".
 On the install it equals the mask count plus the preset count on only 9 of 66 races; on
