@@ -333,7 +333,11 @@ public struct ActorValueRuntime: ActorValueAccess {
         var rates = ActorValues(repeating: 1)
         let isPlayer = holder.subject == .player
         if situation.isInCombat {
-            rates.health = isPlayer ? playerCombatHealthMult() : regeneration.combatHealthMult
+            if isPlayer {
+                rates.health = playerCombatHealthMult()
+            } else if !baseline(of: holder).regeneratesHealthInCombat {
+                rates.health = regeneration.combatHealthMult
+            }
             rates.magicka = regeneration.combatMagickaMult
             rates.stamina = regeneration.combatStaminaMult
         }
