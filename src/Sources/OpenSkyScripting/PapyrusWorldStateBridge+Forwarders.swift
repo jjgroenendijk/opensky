@@ -23,6 +23,13 @@ extension PapyrusWorldStateBridge {
         )
     }
 
+    /// Starts the quest as a script `Start()` does: aliases, scripts, then the start-up stage.
+    /// - Returns: true when the quest runs afterwards.
+    @discardableResult
+    public func startQuest(for key: ReferenceKey) throws -> Bool {
+        try questScripts.startQuest(for: key)
+    }
+
     public func stopQuest(for key: ReferenceKey) throws {
         try questScripts.stopQuest(for: key)
     }

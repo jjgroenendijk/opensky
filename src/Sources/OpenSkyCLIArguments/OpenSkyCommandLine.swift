@@ -36,7 +36,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
             CommandGroup(name: "Game data", subcommands: [
                 PlacesArguments.self,
                 InstallArguments.self, PluginsArguments.self, RecordArguments.self,
-                GMSTArguments.self, ESSArguments.self, GapsArguments.self
+                GMSTArguments.self, ESSArguments.self, GapsArguments.self, SweepArguments.self
             ]),
             CommandGroup(name: "World", subcommands: [
                 CellArguments.self, ActorArguments.self, CollisionArguments.self,
