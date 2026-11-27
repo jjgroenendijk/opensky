@@ -346,6 +346,8 @@ public final class CombatLoopRuntime: CombatControlling {
         targets.removeValue(forKey: key)
         strikes.removeValue(forKey: key)
         attackTracks.removeValue(forKey: key)
+        pickedAttacks.removeValue(forKey: key)
+        attackUses.removeValue(forKey: key)
         dangerWatches.removeValue(forKey: key)
         recoilers.remove(key)
         following.removeValue(forKey: key)

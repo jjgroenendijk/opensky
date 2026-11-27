@@ -99,6 +99,14 @@ extension CombatCoordinator {
                         )
                     }
                 }
+                readout.attackPicks = loop.pickedAttacks.keys.sorted().compactMap { key in
+                    loop.pickedAttacks[key].map {
+                        .init(
+                            attacker: key, event: $0.event, isPowerAttack: $0.isPowerAttack,
+                            knockdown: $0.data.knockdown
+                        )
+                    }
+                }
                 readout.watches = loop.dangerWatches
                 readout.threats = loopWorld.combatDangerThreats()
             }
