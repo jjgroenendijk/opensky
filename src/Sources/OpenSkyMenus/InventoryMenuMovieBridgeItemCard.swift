@@ -51,8 +51,13 @@ nonisolated extension InventoryMenuMovieBridge {
         case .book:
             info["description"] = .string(card.description ?? "")
         default:
-            let lines = card.effects + [card.enchantment].compactMap(\.self)
-            info["effects"] = .string(lines.joined(separator: ", "))
+            // A weapon's or armour's own text replaces the enchantment text.
+            if let description = card.description, !description.isEmpty {
+                info["effects"] = .string(description)
+            } else {
+                let lines = card.effects + [card.enchantment].compactMap(\.self)
+                info["effects"] = .string(lines.joined(separator: ", "))
+            }
         }
         return info
     }

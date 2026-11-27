@@ -77,6 +77,16 @@ struct InventoryMenuItemCardBridgeTests {
         #expect(info["effects"] == .string("Fortify Archery 10"))
     }
 
+    @Test func aWeaponsOwnDescriptionReplacesTheEnchantmentText() {
+        var card = InventoryItemCard(
+            layout: .weapon, name: "Silver Sword", kind: "Weapon", value: 160, weight: 11,
+            enchantment: "Absorb Health 10"
+        )
+        card.description = "Deals extra damage to the undead."
+        let info = InventoryMenuMovieBridge.itemCardInfo(card)
+        #expect(info["effects"] == .string("Deals extra damage to the undead."))
+    }
+
     @Test func theChargeButtonAndTheGemListReachTheEngine() {
         #expect(InventoryMenuMovieBridge
             .action(named: "ShowSoulGemList", arguments: []) == .showSoulGems)
