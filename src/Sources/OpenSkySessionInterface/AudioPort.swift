@@ -15,7 +15,10 @@ public protocol AudioPort: AnyObject {
     var outputMuted: Bool { get set }
     func setAudioVolume(_ volume: Float, for category: AudioCategory)
     var soundDirector: WorldAudioSoundDirector? { get }
-    func speak(_ paths: [String], speaker: ReferenceKey, finished: (() -> Void)?)
+    func speak(
+        _ paths: [String], speaker: ReferenceKey, options: SpokenLineOptions,
+        finished: (() -> Void)?
+    )
     func stopSpeaking(_ speaker: ReferenceKey)
     func updateFootstepSet(feetArmatures: [FormID])
 }
@@ -23,6 +26,10 @@ public protocol AudioPort: AnyObject {
 /// The default arguments a protocol requirement cannot carry.
 extension AudioPort {
     public func speak(_ paths: [String], speaker: ReferenceKey) {
-        speak(paths, speaker: speaker, finished: nil)
+        speak(paths, speaker: speaker, options: .standard, finished: nil)
+    }
+
+    public func speak(_ paths: [String], speaker: ReferenceKey, options: SpokenLineOptions) {
+        speak(paths, speaker: speaker, options: options, finished: nil)
     }
 }

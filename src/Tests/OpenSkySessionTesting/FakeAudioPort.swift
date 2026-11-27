@@ -16,11 +16,27 @@ nonisolated public final class FakeAudioPort: AudioPort {
     public var outputMuted = false
     public var setAudioVolumeCalls: [(volume: Float, category: AudioCategory)] = []
     public var soundDirector: WorldAudioSoundDirector?
-    public var speakCalls: [(paths: [String], speaker: ReferenceKey)] = []
+    public var speakCalls: [SpeakCall] = []
     public var stopSpeakingCalls: [ReferenceKey] = []
     public var updateFootstepSetCalls: [[FormID]] = []
 
     public init() {}
+}
+
+extension FakeAudioPort {
+    nonisolated public struct SpeakCall: CustomStringConvertible {
+        public let paths: [String]
+        public let speaker: ReferenceKey
+        public let options: SpokenLineOptions
+
+        public var description: String {
+            [
+                "paths: " + String(describing: paths),
+                "speaker: " + String(describing: speaker),
+                "options: " + String(describing: options)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeAudioPort {
@@ -28,8 +44,11 @@ nonisolated extension FakeAudioPort {
         setAudioVolumeCalls.append((volume: volume, category: category))
     }
 
-    public func speak(_ paths: [String], speaker: ReferenceKey, finished: (() -> Void)?) {
-        speakCalls.append((paths: paths, speaker: speaker))
+    public func speak(
+        _ paths: [String], speaker: ReferenceKey, options: SpokenLineOptions,
+        finished: (() -> Void)?
+    ) {
+        speakCalls.append(SpeakCall(paths: paths, speaker: speaker, options: options))
     }
 
     public func stopSpeaking(_ speaker: ReferenceKey) {

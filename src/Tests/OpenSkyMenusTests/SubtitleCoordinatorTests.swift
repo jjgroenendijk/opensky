@@ -57,4 +57,22 @@ struct SubtitleSettingsTests {
         settings.store.set(.dialogueSubtitles, to: 1)
         #expect(settings.hud.subtitles.shows(.dialogue))
     }
+
+    /// A far speaker shows no subtitle unless its line is forced; a forced or nearer
+    /// line keeps its place against a later one.
+    @Test
+    func distanceAndForceDecideWhichLineShows() {
+        let subtitles = SubtitleCoordinator(presenter: FakeSubtitlePresenter())
+        subtitles.apply(SubtitleSettings(dialogue: false, general: true))
+        let far = SubtitlePlacement(distance: 1300, forced: false)
+        #expect(!subtitles.say("Far.", kind: .general, seconds: 5, now: 0, placement: far))
+        let forced = SubtitlePlacement(distance: 1300, forced: true)
+        #expect(subtitles.say("Forced.", kind: .general, seconds: 5, now: 0, placement: forced))
+        let near = SubtitlePlacement(distance: 100, forced: false)
+        #expect(!subtitles.say("Near.", kind: .general, seconds: 5, now: 1, placement: near))
+        #expect(subtitles.say("Later.", kind: .general, seconds: 5, now: 6, placement: near))
+        let nearer = SubtitlePlacement(distance: 50, forced: false)
+        #expect(subtitles.say("Nearer.", kind: .general, seconds: 5, now: 7, placement: nearer))
+        #expect(subtitles.current == "Nearer.")
+    }
 }

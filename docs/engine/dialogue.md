@@ -185,6 +185,9 @@ More response flags (`INFO` `ENAM`):
 
 No reader of `0x1000` (requires post-processing) is known.
 
+OpenSky does not keep the refusal mark, because nothing it runs reads one. A refusal is
+only left unsaid, so it stays on offer.
+
 ## Favour lines
 
 The Favors tab topics (category 4: `SHOW`, `AGRE`, `REFU`, `MREF`, `FEXT`) "play in response to

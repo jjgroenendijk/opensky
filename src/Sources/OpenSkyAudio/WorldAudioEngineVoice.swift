@@ -36,20 +36,20 @@ extension WorldAudioEngine {
         name: String,
         worldPosition: SIMD3<Float>,
         gain: Float = 1,
-        soundCategory: FormID? = nil
+        soundCategory: FormID? = nil,
+        outputModel: OutputModelProfile? = nil
     ) throws -> VoicePlayback {
         let container = try FUZFile(data: fuzData)
         let audio = try AudioFileAsset(data: container.audioData)
-        let sourceID = try playPositional(
-            asset: audio,
-            request: AudioPlayRequest(
-                name: name,
-                category: .voice,
-                worldPosition: worldPosition,
-                gain: gain,
-                soundCategory: soundCategory
-            )
+        var request = AudioPlayRequest(
+            name: name,
+            category: .voice,
+            worldPosition: worldPosition,
+            gain: gain,
+            soundCategory: soundCategory
         )
+        request.outputModel = outputModel
+        let sourceID = try playPositional(asset: audio, request: request)
         let clock = VoicePlaybackClock()
         sources.first { $0.id == sourceID }?.voiceClock = clock
         return VoicePlayback(

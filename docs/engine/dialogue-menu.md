@@ -158,7 +158,7 @@ Which lines get a subtitle:
 - No line gets one when both `bGeneralSubtitles:Interface` and `bDialogueSubtitles:Interface` are
   off, or when its text is empty.
 - A line shows only while its speaker is within `fMaxSubtitleDistance:Interface` of the player.
-  The default is 1250 units; the INI can change it. A line whose `INFO` sets flag `0x200` (force
+  The default is 1250 units; the INI can change it. OpenSky reads no `Skyrim.ini` and uses 1250. A line whose `INFO` sets flag `0x200` (force
   subtitle) skips this test.
 - Forced lines sort ahead of the others; after that, nearer speakers come first.
 - The HUD subtitle needs `bGeneralSubtitles`. With `bShowSubtitleSpeakerName` on, the speaker's name

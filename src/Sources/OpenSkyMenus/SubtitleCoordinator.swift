@@ -17,6 +17,7 @@ public final class SubtitleCoordinator {
 
     public private(set) var current: String?
     private var currentKind: SubtitleKind?
+    private var currentPlacement = SubtitlePlacement.near
     private var shownUntil: Double = 0
     private weak let presenter: (any SubtitlePresenting)?
 
@@ -32,12 +33,20 @@ public final class SubtitleCoordinator {
         }
     }
 
-    /// Shows the line for `seconds` when the setting for its kind is on.
+    /// Shows the line for `seconds` when the setting for its kind is on, its speaker is
+    /// near enough, and no line that outranks it still shows.
     @discardableResult
-    public func say(_ text: String, kind: SubtitleKind, seconds: Double, now: Double) -> Bool {
-        guard settings.shows(kind), !text.isEmpty else { return false }
+    public func say(
+        _ text: String, kind: SubtitleKind, seconds: Double, now: Double,
+        placement: SubtitlePlacement = .near
+    ) -> Bool {
+        guard settings.shows(kind), !text.isEmpty, placement.isShown else { return false }
+        if current != nil, now < shownUntil, currentPlacement.outranks(placement) {
+            return false
+        }
         current = text
         currentKind = kind
+        currentPlacement = placement
         shownUntil = now + seconds
         presenter?.presentSubtitle(text)
         return true

@@ -28,9 +28,11 @@ extension DialogueRuntime {
         // Say Once needs the speaker even without a clock; a reset time needs the day.
         let day = info.flags.contains(.sayOnce) ? currentDay ?? 0
             : info.resetHours > 0 ? currentDay : nil
-        let state = saidState(of: id).said(by: speaker, onDay: day)
-        store.set(state, for: key)
-        noteBranch(ofSaid: id, speaker: speaker)
+        // A refusal is not marked as said, so it stays on offer.
+        if !info.flags.contains(.infoRefusal) {
+            store.set(saidState(of: id).said(by: speaker, onDay: day), for: key)
+            noteBranch(ofSaid: id, speaker: speaker)
+        }
 
         let quest = dialogue.topic(ofInfo: id)?.owningQuest
             .flatMap { ReferenceKey.resolve($0, using: dialogue.resolver) }

@@ -20,13 +20,15 @@ extension FakeSubtitlePort {
         public let kind: SubtitleKind
         public let seconds: Double
         public let now: Double
+        public let placement: SubtitlePlacement
 
         public var description: String {
             [
                 "text: " + String(describing: text),
                 "kind: " + String(describing: kind),
                 "seconds: " + String(describing: seconds),
-                "now: " + String(describing: now)
+                "now: " + String(describing: now),
+                "placement: " + String(describing: placement)
             ].joined(separator: ", ")
         }
     }
@@ -42,9 +44,16 @@ nonisolated extension FakeSubtitlePort {
         _ text: String,
         kind: SubtitleKind,
         seconds: Double,
-        now: Double
+        now: Double,
+        placement: SubtitlePlacement
     ) -> Bool {
-        sayCalls.append(SayCall(text: text, kind: kind, seconds: seconds, now: now))
+        sayCalls.append(SayCall(
+            text: text,
+            kind: kind,
+            seconds: seconds,
+            now: now,
+            placement: placement
+        ))
         return sayResult
     }
 

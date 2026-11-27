@@ -1,6 +1,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
+import OpenSkyAudio
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
@@ -165,7 +166,10 @@ extension DialogueMenuController.SpeechAdapter {
             game.audio.stopSpeaking(speaker)
             return
         }
-        game.audio.speak([paths[line.index]], speaker: speaker) { [weak owner] in
+        let options = owner.dialogue.runtime?.dialogue.info(line.info)
+            .map(SpokenLineOptions.init) ?? .standard
+        game.audio.speak([paths[line.index]], speaker: speaker, options: options) {
+            [weak owner] in
             owner?.speech.voiceEnded(line)
         }
     }
