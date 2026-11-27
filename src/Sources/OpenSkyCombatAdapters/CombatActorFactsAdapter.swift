@@ -34,6 +34,7 @@ import simd
 public protocol CombatActorFactsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
+    var cinematicCamera: any CinematicCameraPort { get }
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var mountWorld: any MountWorldPort { get }
@@ -53,12 +54,15 @@ public struct CombatActorFactsAdapter {
 extension CombatActorFactsAdapter {
     var playerAttacker: MeleeAttacker? {
         guard let gameSession = game.gameSession else { return nil }
-        return MeleeAttacker(
+        var attacker = MeleeAttacker(
             key: .player,
             feet: gameSession.walkController.feetPosition,
             capsule: gameSession.walkController.capsule,
-            facing: gameSession.freeFlyCamera.yaw
+            facing: gameSession.freeFlyCamera.yaw,
+            unarmedReach: game.actorValues.runtime?.baseline(of: .player).unarmedReach
         )
+        attacker.inKillCamera = game.cinematicCamera.isPlaying
+        return attacker
     }
 
     var playerShooter: ProjectileShooter? {

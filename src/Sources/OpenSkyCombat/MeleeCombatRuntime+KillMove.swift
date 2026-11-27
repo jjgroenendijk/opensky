@@ -16,7 +16,7 @@ extension MeleeCombatRuntime {
             feet: attacker.feet,
             capsule: attacker.capsule,
             facing: attacker.facing,
-            reach: strikeReach(actorScale: attacker.scale)
+            reach: strikeReach(of: attacker)
         )
         let hits = MeleeHitDetector.hits(
             swing: volume, targets: world.meleeTargets(), attacker: attacker.key
