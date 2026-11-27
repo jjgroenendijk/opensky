@@ -43,7 +43,9 @@ extension Renderer {
             var uniform = PointLightUniform(
                 positionRadius: SIMD4(live.position, light.radius),
                 colorFalloff: SIMD4(live.color, light.falloffExponent),
-                shadow: pointShadows.uniform(sceneIndex: entry.index, radius: light.radius)
+                shadow: pointShadows.uniform(
+                    sceneIndex: entry.index, radius: light.radius, depthBias: light.shadowDepthBias
+                )
             )
             unsafe pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)

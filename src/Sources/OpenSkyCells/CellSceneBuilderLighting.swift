@@ -134,15 +134,30 @@ nonisolated extension CellSceneBuilder.CellInteriorLighting {
             guard let light = emitted ?? base, light.isSupportedPointLight else { return nil }
             let radius = reference.lightRadius ?? Float(light.radius)
             guard radius.isFinite, radius > 0 else { return nil }
+            let placed = reference.details.lightData
             return RenderPointLight(
                 position: reference.placement.position,
                 radius: radius,
-                color: light.color * max(0, light.fade),
+                color: light.color * Self.fade(of: light, offset: placed?.fadeOffset),
                 falloffExponent: max(0.01, light.falloffExponent),
                 animation: RenderLightAnimation(light: light, reference: reference.formID.rawValue),
-                castsShadows: light.castsShadows
+                castsShadows: light.castsShadows,
+                shadowDepthBias: Self.shadowDepthBias(placed?.shadowDepthBias)
             )
         }
+    }
+
+    /// The base fade plus the reference's `XLIG` offset. The flicker swing is a share of the
+    /// colour, so it grows with the fade as the game's does.
+    nonisolated static func fade(of light: LightRecord, offset: Float?) -> Float {
+        let fade = light.fade + (offset.flatMap { $0.isFinite ? $0 : nil } ?? 0)
+        return max(0, fade)
+    }
+
+    /// The `XLIG` shadow depth bias, 1 when absent or not a usable value.
+    nonisolated static func shadowDepthBias(_ bias: Float?) -> Float {
+        guard let bias, bias.isFinite, bias > 0 else { return 1 }
+        return bias
     }
 
     nonisolated public func lightingTemplateIndexBuildingIfNeeded() -> [UInt32: LightingTemplate] {

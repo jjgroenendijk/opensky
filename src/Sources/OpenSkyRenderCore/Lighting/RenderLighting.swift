@@ -61,6 +61,8 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
     public let animation: RenderLightAnimation?
     /// A shadow-casting light lights no effect shape.
     public let castsShadows: Bool
+    /// Scales how far a receiver moves off its surface before the shadow test.
+    public let shadowDepthBias: Float
 
     public init(
         position: SIMD3<Float>,
@@ -68,7 +70,8 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
         color: SIMD3<Float>,
         falloffExponent: Float,
         animation: RenderLightAnimation? = nil,
-        castsShadows: Bool = false
+        castsShadows: Bool = false,
+        shadowDepthBias: Float = 1
     ) {
         self.position = position
         self.radius = radius
@@ -76,6 +79,7 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
         self.falloffExponent = falloffExponent
         self.animation = animation
         self.castsShadows = castsShadows
+        self.shadowDepthBias = shadowDepthBias
     }
 
     /// Position and colour at `time` seconds; a steady light or `animated` false

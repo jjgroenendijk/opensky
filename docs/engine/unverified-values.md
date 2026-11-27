@@ -267,7 +267,7 @@ Each row names the value, OpenSky's choice, and the page with the detail and its
 | Bloom pattern | Three rings of 8 taps; 4 pixels per radius step at 1080; receive threshold unused | [image space](/rendering/image-space.md#bloom-and-light-scales) |
 | Sunlight and sky scale | Applied only with the HDR target; sky scale skips clouds | [image space](/rendering/image-space.md#bloom-and-light-scales) |
 | Shadow lights at once | 4 nearest the camera, skipped past 4,096 units outside the sphere; 512-texel faces | [shadows](/rendering/shadows.md#point-light-shadows) |
-| Point shadow planes and bias | Near plane 8 units; 2-unit normal offset; `XLIG` depth bias unused | [shadows](/rendering/shadows.md#point-light-shadows) |
+| Point shadow planes and bias | Near plane 8 units; 2-unit normal offset, times the `XLIG` depth bias | [shadows](/rendering/shadows.md#point-light-shadows) |
 | Water refraction | Normal x, y times the refraction magnitude in screen units, scaled by depth to the fog far plane | [water](/rendering/water.md#refraction) |
 | Water rings | Closed-form crests; 8 rings of 3 s; wading ring every 48 units at strength 0.4, under 150 units deep; floors 8, 4, 0.2 | [water](/rendering/water.md#displacement-and-rain) |
 | Rain rings | 48-unit grid, 0.8 s drops, 24-unit rings | [water](/rendering/water.md#displacement-and-rain) |

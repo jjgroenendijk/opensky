@@ -33,11 +33,11 @@ struct PointShadowFrame {
     var firstSlices: [Int: Int] = [:]
 
     /// The `PointLightUniform.shadow` of scene light `index`; x is -1 without a cube.
-    func uniform(sceneIndex index: Int?, radius: Float) -> SIMD4<Float> {
+    func uniform(sceneIndex index: Int?, radius: Float, depthBias: Float = 1) -> SIMD4<Float> {
         guard let index, let slice = firstSlices[index] else { return SIMD4(-1, 0, 0, 0) }
         return SIMD4(
             Float(slice), PointShadowMath.nearPlane, PointShadowMath.farPlane(radius: radius),
-            PointShadowMath.receiverOffset
+            PointShadowMath.receiverOffset * depthBias
         )
     }
 }
