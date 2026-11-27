@@ -216,6 +216,7 @@ extension GapsGatherer {
             _ = GameSettingTexts<PronounText>.resolve(store: store)
             _ = GameSettingTexts<TextReplacementText>.resolve(store: store)
             _ = GameSettingTexts<GenderText>.resolve(store: store)
+            _ = GameSettingTexts<PlayerNameText>.resolve(store: store)
             _ = GameSettingTexts<PlayerDeathText>.resolve(store: store)
             _ = GameSettingTexts<GamepadNoticeText>.resolve(store: store)
             _ = GameSettingTexts<ActivationRefusalText>.resolve(store: store)
