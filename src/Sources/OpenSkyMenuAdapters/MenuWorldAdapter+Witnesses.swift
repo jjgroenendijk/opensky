@@ -214,6 +214,10 @@ extension MenuWorldAdapter {
         scriptMenus.recordFlags(of: actor)
     }
 
+    public func attacks(of actor: ReferenceKey) -> [RaceAttack] {
+        scriptMenus.attacks(of: actor, race: race(of: actor))
+    }
+
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
         scriptMenus.leveledBase(of: actor, base: base)
     }

@@ -71,8 +71,8 @@ extension CombatWorldAdapter {
         impactEffects.actorIsChild(actor)
     }
 
-    public func attackStagger(of key: ReferenceKey, event: String) -> Float? {
-        impactEffects.attackStagger(of: key, event: event)
+    public func attackData(of key: ReferenceKey, event: String) -> RaceAttack.Properties? {
+        impactEffects.attackData(of: key, event: event)
     }
 
     public func attackDisease(of key: ReferenceKey) -> ReferenceKey? {

@@ -115,6 +115,10 @@ nonisolated public struct Race: Sendable {
         public static let noWeaponBlood = Flags(rawValue: 0x0200_0000)
         /// Clear on the werewolf and vampire lord races: the player cannot take items.
         public static let canPickUpItems = Flags(rawValue: 0x1000_0000)
+        /// A race change to this race rebuilds the head and adds its default head parts.
+        public static let rebuildsHeadWithDefaults = Flags(rawValue: 0x0400_0000)
+        /// A race change to this race rebuilds the head parts from it: the werewolf.
+        public static let rebuildsHeadFromRace = Flags(rawValue: 0x0800_0000)
     }
 
     /// Level-1 starting attributes and their regen rates. Regen is a percentage

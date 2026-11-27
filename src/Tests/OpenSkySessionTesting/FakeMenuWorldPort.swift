@@ -18,6 +18,8 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var raceOfBaseResult: FormID?
     public var recordFlagsOfCalls: [ReferenceKey] = []
     public var recordFlagsOfResult: ActorBase.Flags?
+    public var attacksCalls: [ReferenceKey] = []
+    public var attacksResult: [RaceAttack] = []
     public var restorePlayerPlaceCalls: [SavePlayerPlace] = []
     public var setRaceCalls: [(actor: ReferenceKey, race: FormID?)] = []
     public var setRaceResult = false
@@ -107,6 +109,11 @@ nonisolated extension FakeMenuWorldPort {
     public func recordFlags(of actor: ReferenceKey) -> ActorBase.Flags? {
         recordFlagsOfCalls.append(actor)
         return recordFlagsOfResult
+    }
+
+    public func attacks(of actor: ReferenceKey) -> [RaceAttack] {
+        attacksCalls.append(actor)
+        return attacksResult
     }
 
     public func restorePlayerPlace(_ place: SavePlayerPlace) {

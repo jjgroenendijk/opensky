@@ -75,6 +75,8 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     func applyMeleeHitSpell(_ blow: CombatBlow, on target: ReferenceKey)
     /// The stamina a power attack with `weapon` costs, after perks.
     func meleePowerAttackStamina(_ cost: Float, weapon: FormID?) -> Float
+    /// The `ATKD` values of the player's attack that `event` starts, or nil.
+    func meleeAttackData(event: String) -> RaceAttack.Properties?
 
     /// Charges `blocker` the stamina a blocked blow costs.
     func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
@@ -183,6 +185,11 @@ nonisolated extension MeleeCombatWorld {
 
     public func meleePowerAttackStamina(_ cost: Float, weapon _: FormID?) -> Float {
         cost
+    }
+
+    /// A session with no races has no attack data.
+    public func meleeAttackData(event _: String) -> RaceAttack.Properties? {
+        nil
     }
 
     /// A session with no stamina pays nothing to block.

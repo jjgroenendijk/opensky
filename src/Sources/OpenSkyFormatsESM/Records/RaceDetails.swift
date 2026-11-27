@@ -102,18 +102,7 @@ nonisolated public struct RaceDetails: Equatable, Sendable {
     var faceGenFaceClamp: Float?
     /// ATKR, a RACE whose attacks this race uses.
     public var attackRace: FormID?
-    var attacks: [RaceAttack] = []
-
-    /// Each ATKD's spell, in record order, such as a creature's disease.
-    public var attackSpells: [FormID] {
-        attacks.compactMap { $0.properties?.spell }
-    }
-
-    /// The stagger value of the attack `event` starts (ATKE), or nil when no attack does.
-    public func attackStagger(event: String) -> Float? {
-        attacks.first { $0.event?.caseInsensitiveCompare(event) == .orderedSame }?
-            .properties?.stagger
-    }
+    public var attacks: [RaceAttack] = []
 
     var bodyParts = GenderPair<[RaceBodyPart]>(male: [], female: [])
     /// HNAM, HDPT records.

@@ -390,7 +390,7 @@ nonisolated extension ActorBase {
         public static let useScript = TemplateFlags(rawValue: 0x0200)
         /// `DPLT` and the `SPOR`, `OCOR`, `GWOR`, and `ECOR` override lists.
         public static let useDefPackList = TemplateFlags(rawValue: 0x0400)
-        static let useAttackData = TemplateFlags(rawValue: 0x0800)
+        public static let useAttackData = TemplateFlags(rawValue: 0x0800)
         static let useKeywords = TemplateFlags(rawValue: 0x1000)
     }
 

@@ -14,6 +14,8 @@ public protocol MenuWorldPort: AnyObject, PapyrusMenuBridge {
     func race(ofBase base: FormID) -> FormID?
     /// The `ACBS` flags of the NPC the actor was rolled from.
     func recordFlags(of actor: ReferenceKey) -> ActorBase.Flags?
+    /// The `ATKD` attacks the actor uses now (docs/engine/attack-data.md).
+    func attacks(of actor: ReferenceKey) -> [RaceAttack]
     func restorePlayerPlace(_ place: SavePlayerPlace)
     @discardableResult func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool
     func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool)
