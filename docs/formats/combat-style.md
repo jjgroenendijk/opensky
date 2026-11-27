@@ -99,7 +99,39 @@ The attack staggered, power attack staggered, and power attack blocking values a
 choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
 
 `DATA` 0x04 allows dual wielding for a race with `DATA` flag 0x40000000, which allows a
-left-hand item. No reader of the dueling, flanking, charging, or retarget bits is known.
+left-hand item. `DATA` 0x02 lets the actor use flanking movement; without it the actor never
+flanks. No reader of the dueling, charging, or retarget bits is known.
+
+## The general block
+
+`CSGD` drives most combat choices through two values:
+
+- The offensive value `O` is the offensive multiplier. When the group offensive multiplier is
+  below 1 and `n` actors, more than one, fight the player, an attacker of the player uses
+  `O = offensive * max(groupOffensive^(n - 1), fCombatGroupOffensiveMultMin (0.1))`.
+- The defensive value `Df` is the defensive multiplier.
+
+| Uses `O` | Uses `Df` |
+| --- | --- |
+| Attack chance, offensive bash chance | Block chance, block attack chance, bash chance |
+| Ranged attack chance: `lerp(O, fCombatRangedAttackChanceMin, Max)` | Block start distance: `lerp(Df, fCombatBlockStartDistanceMin 32, Max 192)`, and the same for the stop distance |
+| Immediate offensive spell chance: `lerp(O, 0.05, 0.75)` from the `fCombatCastImmediateOffensiveMagicChance` pair | Block time: three-point lerp of `fCombatBlockTimeMin`, `Mid`, `Max` at `2 * Df - 1` |
+| Immediate spell hold time and concentration spell chance, cast and wait times, from their settings | Cover search distance: `lerp(Df, fCombatCoverSearchDistanceMin 1536, Max 3072)` |
+| Orbit time: random between `fCombatOrbitTimeMin` (3) and `lerp(O, fCombatOrbitTimeMax 12, Min)` | The health and magicka percents to restore at |
+
+The advance radii use `Df - O`: three-point lerps of `fCombatAdvanceInnerRadiusMin`, `Mid`,
+`Max` and of `fCombatAdvanceOuterRadiusMin` 128, `Mid` 256, `Max` 512. A staggered target first
+multiplies `Df` by `fCombatAdvanceRadiusStaggerMult`. Cover wait time also uses `Df - O`, and
+cover attack time `O - Df`. A three-point lerp at `x` is `mid + (max - mid) * x` above 0, else
+`min + (mid - min) * (x + 1)`. Example: `Df` 0.5 and `O` 0.5 give an outer radius of 256.
+
+The equipment multipliers scale the score of each choice: a weapon by melee, ranged (bow and
+crossbow), or unarmed; a staff item by melee; a spell by magic, a shout by shout, and a staff's
+magic by staff. Every score doubles (`fCombatInventoryRangedScoreMult`, 2) when the target is
+further than `fCombatRangedDistance` (1024).
+
+Avoid threat chance is the dodge chance: `lerp(v, fCombatDodgeChanceMin 0, fCombatDodgeChanceMax
+1)`. The actor rolls it when it sees a threat, only on the navmesh and not in flight.
 
 ## Actors
 

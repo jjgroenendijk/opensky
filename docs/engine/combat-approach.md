@@ -73,8 +73,9 @@ flowchart TD
   `fCombatApproachTargetSlowdownDecelerationMult`, 10, not by `fCombatPathingDecelerationMult`,
   2. Outside it the race's acceleration, deceleration, and angular acceleration are multiplied
   by `fCombatPathingAccelerationMult`, `fCombatPathingDecelerationMult`, and
-  `fCombatPathingRotationAccelerationMult`, 2 each, and the turn speed is at least
-  `fCombatPathingNormalizedRotationSpeed`, 2.25 ([RACE DATA](/formats/actors.md#race-data-in-the-game)).
+  `fCombatPathingRotationAccelerationMult`, 2 each, and the turn speed is at least 2.25 on the
+  [normalized scale](/formats/movement-types.md#normalized-speed)
+  ([RACE DATA](/formats/actors.md#race-data-in-the-game)).
   How fighters circle, fall back, flank, and strafe comes from their
   [combat style](/formats/combat-style.md#what-the-values-change).
 
