@@ -213,7 +213,8 @@ decode reads itself. On an `ACHR` they go into the same details.
 alpha flags have bit 0x8000 set.
 
 `XACT` keeps its low byte, with a default of 1. Bit 0x08 turns the open and close sense
-round, and bit 0x04 is cleared. Activating some references toggles 0x08.
+round, and bit 0x04 is cleared. Activating some references toggles 0x08. In `Skyrim.esm`
+all 354 `XACT` fields hold 0x0D and sit next to an `ONAM`, so the reference rests open.
 
 `XRMR` starts with a uint16. Its low 14 bits are the linked room count. Bit 0x8000 means an
 `LNAM` follows, and bit 0x4000 means an `INAM` follows; both are read by position. The third

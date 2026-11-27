@@ -42,13 +42,19 @@ struct WorldStateStoreTests {
         objectID: UInt32 = 0x200,
         position: SIMD3<Float> = SIMD3(1, 2, 3),
         scale: Float? = 2,
-        opensByDefault: Bool = false
+        opensByDefault: Bool = false,
+        actionFlags: UInt32? = nil
     ) throws -> RuntimeReferenceEntry {
+        var xact = Data()
+        if let actionFlags {
+            xact.appendUInt32(actionFlags)
+        }
         let bytes = ESMFixture.record(
             "REFR",
             formID: objectID,
             data: placementFields(position: position, scale: scale)
                 + (opensByDefault ? ESMFixture.field("ONAM", Data()) : Data())
+                + (actionFlags == nil ? Data() : ESMFixture.field("XACT", xact))
         )
         return try RuntimeReferenceEntry(
             key: key(objectID),
@@ -174,19 +180,6 @@ struct WorldStateStoreTests {
         let open = try referenceEntry(opensByDefault: true)
         #expect(store.resolvedState(for: open).activation.isOpen)
         #expect(try !store.resolvedState(for: referenceEntry()).activation.isOpen)
-    }
-
-    @Test func actorBaselineHonoursTheInitiallyDisabledFlag() throws {
-        let store = WorldStateStore()
-        let hidden = try actorEntry(objectID: 0x300, initiallyDisabled: true)
-        let visible = try actorEntry(objectID: 0x301, initiallyDisabled: false)
-        #expect(store.resolvedState(for: hidden).enableState == .disabled)
-        #expect(store.resolvedState(for: visible).enableState == .enabled)
-        // Enabling the hidden actor overrides the record flag.
-        store.set(ReferenceEnableState.enabled, for: hidden.key, in: inn)
-        let resolved = store.resolvedState(for: hidden)
-        #expect(resolved.enableState == .enabled)
-        #expect(resolved.overriddenKinds == [.enableState])
     }
 
     // MARK: - Dirty tracking
@@ -347,5 +340,33 @@ extension WorldStateStoreTests {
         #expect(unplaced.map(\.0) == [key(0x202)])
         #expect(unplaced.map(\.1) == [2])
         #expect(placed == [whiterun])
+    }
+}
+
+/// Record flags that set a reference's starting state.
+extension WorldStateStoreTests {
+    /// `XACT` bit 0x08 rests the reference open; other bits leave it. Vanilla writes 0x0D
+    /// next to every `ONAM`.
+    @Test func actionFlagEightInvertsTheOpenState() throws {
+        let store = WorldStateStore()
+        let flipped = try referenceEntry(actionFlags: 0x09)
+        #expect(store.resolvedState(for: flipped).activation.isOpen)
+        let both = try referenceEntry(opensByDefault: true, actionFlags: 0x0D)
+        #expect(store.resolvedState(for: both).activation.isOpen)
+        let other = try referenceEntry(actionFlags: 0x01)
+        #expect(!store.resolvedState(for: other).activation.isOpen)
+    }
+
+    @Test func actorBaselineHonoursTheInitiallyDisabledFlag() throws {
+        let store = WorldStateStore()
+        let hidden = try actorEntry(objectID: 0x300, initiallyDisabled: true)
+        let visible = try actorEntry(objectID: 0x301, initiallyDisabled: false)
+        #expect(store.resolvedState(for: hidden).enableState == .disabled)
+        #expect(store.resolvedState(for: visible).enableState == .enabled)
+        // Enabling the hidden actor overrides the record flag.
+        store.set(ReferenceEnableState.enabled, for: hidden.key, in: inn)
+        let resolved = store.resolvedState(for: hidden)
+        #expect(resolved.enableState == .enabled)
+        #expect(resolved.overriddenKinds == [.enableState])
     }
 }

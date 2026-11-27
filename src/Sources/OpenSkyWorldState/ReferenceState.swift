@@ -22,6 +22,9 @@ nonisolated public struct ReferenceState: Equatable, Sendable {
         !overriddenKinds.isEmpty
     }
 
+    /// `XACT` 0x08 (docs/formats/placed-references.md#how-the-game-uses-the-reference-extras).
+    static let invertsOpenFlag: UInt32 = 0x08
+
     /// The plugin baseline for `entry`, re-derived from its decoded record.
     /// Deletion is always "not deleted": the header flag is a load-time concern.
     public init(baseline entry: RuntimeReferenceEntry) {
@@ -32,8 +35,12 @@ nonisolated public struct ReferenceState: Equatable, Sendable {
                 placement: reference.placement,
                 scale: reference.scale
             )
-            // `ONAM`: the editor's "Open by Default" for a door or container.
-            activation = ReferenceActivationState(isOpen: reference.details.opensByDefault)
+            // `ONAM`: the editor's "Open by Default" for a door or container. `XACT` 0x08
+            // makes the game play the open and close sense the other way round, so the
+            // reference rests open.
+            let details = reference.details
+            let inverts = (details.actionFlags ?? 0) & Self.invertsOpenFlag != 0
+            activation = ReferenceActivationState(isOpen: details.opensByDefault || inverts)
         case let .actor(actor):
             enableState = ReferenceEnableState(isEnabled: !actor.isInitiallyDisabled)
             transform = ReferenceTransformOverride(
