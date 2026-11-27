@@ -28,6 +28,8 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
 
     /// The actor's scale, which multiplies its reach.
     public let scale: Float
+    /// The race's unarmed reach before scale. Nil falls back to `fCombatDistance`.
+    public var unarmedReach: Float?
     /// Whether `ActorDeathState` has latched. A dead actor is never a combat
     /// target and never attacks.
     public let isDead: Bool

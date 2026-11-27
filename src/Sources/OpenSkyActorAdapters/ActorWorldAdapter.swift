@@ -95,7 +95,7 @@ public final class ActorWorldAdapter {
         let worldState = game.worldState
         let moved = streamer.npcTransform(for: entry.key)
             ?? worldState.component(ReferenceTransformOverride.self, for: entry.key)
-        return CombatActorObservation(
+        var observation = CombatActorObservation(
             key: entry.key,
             feet: moved?.position ?? actor.placement.position,
             heading: moved?.rotation.z ?? actor.placement.rotation.z,
@@ -105,6 +105,9 @@ public final class ActorWorldAdapter {
             label: displayName(of: entry.key, base: actor.base).map(ActorLabel.init)
                 ?? ActorLabel(key: entry.key, base: actor.base)
         )
+        observation.unarmedReach = actorValueHolder(for: entry.key)
+            .flatMap { game.actorValues.runtime?.baseline(of: $0).unarmedReach }
+        return observation
     }
 
     /// The FULL name of the actor `key` of `base` after template inheritance, its

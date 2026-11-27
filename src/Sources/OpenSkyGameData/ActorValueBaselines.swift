@@ -71,6 +71,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public var injuredHealthPercent: Float = 0
     /// The race skips `fCombatHealthRegenRateMult` (docs/engine/actor-value-store.md).
     public var regeneratesHealthInCombat = false
+    /// The race's unarmed reach in world units, before scale. Nil without a race.
+    public var unarmedReach: Float?
 
     public init(
         maximums: ActorValues,
@@ -245,6 +247,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             race: raceID
         )
         baseline.raceKeywords = race.details.keywords
+        baseline.unarmedReach = race.details.properties?.unarmedReach
         return baseline
     }
 
@@ -276,6 +279,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         baseline.injuredHealthPercent = race?.details.properties?.injuredHealthPercent ?? 0
         baseline.regeneratesHealthInCombat = race?.flags
             .contains(.regeneratesHealthInCombat) ?? false
+        baseline.unarmedReach = race?.details.properties?.unarmedReach
         return baseline
     }
 }

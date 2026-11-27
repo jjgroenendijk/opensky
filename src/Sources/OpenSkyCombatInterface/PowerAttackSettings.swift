@@ -20,6 +20,8 @@ nonisolated public struct PowerAttackSettings: Equatable, Sendable {
     public var powerBashStamina: Float = 55
     /// `fCombatBashReach`: a bash reaches this far whatever the weapon.
     public var bashReach: Float = 141
+    /// `fVATSMeleeReachMult`: the player's reach multiplier while a kill camera plays.
+    public var killCameraReachMultiplier: Float = 2
     /// `fWeaponBash*` and `fShieldBash*`: the bash factor at Block 0 and at 100.
     public var weaponBash = BashRange(playerMin: 0.1, playerMax: 0.5, min: 0.1, max: 0.25)
     public var shieldBash = BashRange(playerMin: 0.1, playerMax: 0.25, min: 0.05, max: 0.25)
@@ -46,6 +48,7 @@ nonisolated public struct PowerAttackSettings: Equatable, Sendable {
         store.read("fStaminaBashBase", into: &settings, \.bashStamina)
         store.read("fStaminaPowerBashBase", into: &settings, \.powerBashStamina)
         store.read("fCombatBashReach", into: &settings, \.bashReach)
+        store.read("fVATSMeleeReachMult", into: &settings, \.killCameraReachMultiplier)
         store.read("fWeaponBashPCMin", into: &settings, \.weaponBash.playerMin)
         store.read("fWeaponBashPCMax", into: &settings, \.weaponBash.playerMax)
         store.read("fWeaponBashMin", into: &settings, \.weaponBash.min)

@@ -69,12 +69,21 @@ extension MeleeCombatRuntime {
     }
 
     /// A bash reaches `fCombatBashReach` whatever the weapon.
-    func strikeReach(actorScale: Float) -> Float {
+    func strikeReach(of attacker: MeleeAttacker) -> Float {
+        guard attacker.inKillCamera else { return baseStrikeReach(of: attacker) }
+        let multiplier = powerAttacks.killCameraReachMultiplier
+        return baseStrikeReach(of: attacker) *
+            (multiplier.isFinite && multiplier > 0 ? multiplier : 1)
+    }
+
+    private func baseStrikeReach(of attacker: MeleeAttacker) -> Float {
+        let actorScale = attacker.scale
         guard strikeKind.isBash else {
             return MeleeSwing.reach(
                 weapon: strikeWeapon,
                 settings: settings,
-                actorScale: actorScale
+                actorScale: actorScale,
+                unarmedReach: attacker.unarmedReach
             )
         }
         let scale = actorScale.isFinite && actorScale > 0 ? actorScale : 1

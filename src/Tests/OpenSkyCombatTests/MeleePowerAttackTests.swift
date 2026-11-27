@@ -126,4 +126,15 @@ struct MeleePowerAttackTests {
         #expect(settings.weaponBash.playerMax == 0.5)
         #expect(settings.powerAttackStamina(weight: 10) == 60)
     }
+
+    /// `fVATSMeleeReachMult` doubles the player's reach while a kill camera plays.
+    @Test func aKillCameraMultipliesTheStrikeReach() {
+        let runtime = MeleeCombatRuntime(settings: .synthetic)
+        var attacker = MeleeAttacker(
+            key: .player, feet: SIMD3<Float>(), facing: 0, unarmedReach: 96
+        )
+        #expect(runtime.strikeReach(of: attacker) == 96)
+        attacker.inKillCamera = true
+        #expect(runtime.strikeReach(of: attacker) == 192)
+    }
 }
