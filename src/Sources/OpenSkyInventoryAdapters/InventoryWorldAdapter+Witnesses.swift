@@ -266,6 +266,10 @@ extension InventoryWorldAdapter {
         papyrus.apparatusQuality(of: item)
     }
 
+    public func setApparatusQuality(_ quality: Int32, of item: FormID) -> Bool {
+        papyrus.setApparatusQuality(quality, of: item)
+    }
+
     public func learnIngredientEffects(_ ingredient: FormID, indices: [Int]?) -> Bool {
         papyrus.learnIngredientEffects(ingredient, indices: indices)
     }

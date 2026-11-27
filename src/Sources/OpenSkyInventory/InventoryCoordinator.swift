@@ -25,6 +25,9 @@ public final class InventoryCoordinator {
     /// while it is still open.
     public internal(set) var sessionName: String?
     var lastAction = ItemActionOutcome.idle
+    /// `Apparatus.SetQuality` values. A base-form change lasts until the game loads again,
+    /// so it is not saved.
+    var apparatusQualities: [FormID: Int32] = [:]
     /// Kept apart from `lastAction`, so a grant does not overwrite the
     /// take and drop readout on the other readout.
     var lastGrant = GrantActionOutcome.idle

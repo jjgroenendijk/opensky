@@ -137,6 +137,9 @@ extension InventoryCoordinator.ScriptItems {
     /// `Apparatus.GetQuality`: the `QUAL` value, 0 novice to 4 master. Nil for a form
     /// that is no apparatus, or one without `QUAL`.
     public func scriptApparatusQuality(of item: FormID) -> Int32? {
+        if let set = coordinator.apparatusQualities[item] {
+            return set
+        }
         let apparatus = coordinator.runtime?.inventory.baselines.items.apparatus[item.rawValue]
         return switch apparatus?.quality {
         case .novice?: 0
@@ -147,6 +150,14 @@ extension InventoryCoordinator.ScriptItems {
         case let .unknown(value)?: value
         case nil: nil
         }
+    }
+
+    /// `Apparatus.SetQuality`. False for a form that is no apparatus.
+    public func scriptSetApparatusQuality(_ quality: Int32, of item: FormID) -> Bool {
+        guard coordinator.runtime?.inventory.baselines.items.apparatus[item.rawValue] != nil
+        else { return false }
+        coordinator.apparatusQualities[item] = quality
+        return true
     }
 
     /// `Actor.IsEquipped`. Nil without a holder.

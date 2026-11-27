@@ -78,7 +78,9 @@ xEdit lists no keyword fields on APPA. An unknown soul or quality value keeps it
 The player brews only at an alchemy lab, not with carried apparatus (UESP "Skyrim:Alchemy",
 <https://en.uesp.net/wiki/Skyrim:Alchemy>), so no brewing rule reads the quality. Papyrus
 reads it with `Apparatus.GetQuality` (<https://ck.uesp.net/wiki/Apparatus_Script>), which
-returns the `QUAL` number. `SetQuality` is not bound.
+returns the `QUAL` number. `Apparatus.SetQuality` changes the base form's quality, so a
+later `GetQuality` returns the new number. OpenSky keeps the change until the next game
+load and does not write it to a save.
 
 Observed in the five masters (`Skyrim.esm`, `Update.esm`, `Dawnguard.esm`,
 `HearthFires.esm`, `Dragonborn.esm`): 377 KEYM, 17 SLGM, and 45 APPA, all decoded. The

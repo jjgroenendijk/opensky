@@ -33,6 +33,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func goldValue(of item: FormID) -> Int32?
     /// An apparatus's quality, 0 novice to 4 master. Nil for a form that is no apparatus.
     func apparatusQuality(of item: FormID) -> Int32?
+    /// `Apparatus.SetQuality`. False for a form that is no apparatus.
+    func setApparatusQuality(_ quality: Int32, of item: FormID) -> Bool
     /// The plugin inventory of `holder`, before any runtime change; nil when not resident.
     func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState?
 }

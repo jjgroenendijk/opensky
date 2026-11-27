@@ -59,7 +59,7 @@ extension PapyrusNativeFunctions.InventoryNatives {
         }
     }
 
-    /// `int GetQuality()` on an `Apparatus`: 0 novice to 4 master
+    /// `int GetQuality()` and `SetQuality(int)` on an `Apparatus`: 0 novice to 4 master
     /// (<https://ck.uesp.net/wiki/Apparatus_Script>).
     private static func installApparatusQuality(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
@@ -76,6 +76,22 @@ extension PapyrusNativeFunctions.InventoryNatives {
                 let quality = bridge.apparatusQuality(of: item)
             else { return failure(call, "GetQuality needs the inventory bridge and an apparatus") }
             return .returned(.integer(quality))
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Apparatus", functionName: "SetQuality"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge,
+                let bridge = world.ports.inventory,
+                case let .plugin(plugin, objectID)? = call.receiver
+                    .flatMap(world.referenceKey(for:)),
+                let item = world.formIDResolver?.localFormID(
+                    of: ResolvedFormID(plugin: plugin, objectID: objectID)
+                ),
+                let quality = integer(call, at: 0),
+                bridge.setApparatusQuality(quality, of: item)
+            else { return failure(call, "SetQuality needs the inventory bridge and an apparatus") }
+            return .returned(.none)
         })
     }
 

@@ -26,6 +26,8 @@ nonisolated public final class FakeInventoryScriptItemsPort: InventoryScriptItem
     public var scriptGoldValueResult: Int32?
     public var scriptApparatusQualityCalls: [FormID] = []
     public var scriptApparatusQualityResult: Int32?
+    public var scriptSetApparatusQualityCalls: [(quality: Int32, item: FormID)] = []
+    public var scriptSetApparatusQualityResult = false
     public var scriptIsEquippedCalls: [(item: FormID, key: ReferenceKey)] = []
     public var scriptIsEquippedResult: Bool?
     public var scriptItemCountCalls: [(item: FormID, key: ReferenceKey)] = []
@@ -162,6 +164,11 @@ nonisolated extension FakeInventoryScriptItemsPort {
     public func scriptApparatusQuality(of item: FormID) -> Int32? {
         scriptApparatusQualityCalls.append(item)
         return scriptApparatusQualityResult
+    }
+
+    public func scriptSetApparatusQuality(_ quality: Int32, of item: FormID) -> Bool {
+        scriptSetApparatusQualityCalls.append((quality: quality, item: item))
+        return scriptSetApparatusQualityResult
     }
 
     public func scriptIsEquipped(_ item: FormID, on key: ReferenceKey) -> Bool? {
