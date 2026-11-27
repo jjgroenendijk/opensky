@@ -104,11 +104,20 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     public var pickUpSound: FormID?
     /// `ZNAM`, the item's own putdown sound. Nil uses its kind's default.
     public var putDownSound: FormID?
+    /// A book's `CNAM`, the line its item card shows. Nil on every other item.
+    public var description: LString?
 
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
     func resolvingName(with strings: LocalizedStrings) -> ItemDefinition {
-        guard name?.tableIDValue != nil, let text = strings.resolve(name) else { return self }
+        var described = self
+        if
+            description?.tableIDValue != nil,
+            let text = strings.resolve(description, kind: .dlstrings)
+        {
+            described.description = .inline(text)
+        }
+        guard name?.tableIDValue != nil, let text = strings.resolve(name) else { return described }
         var resolved = ItemDefinition(
             formID: formID, family: family, editorID: editorID, name: .inline(text),
             value: value, weight: weight, keywords: keywords, enchantment: enchantment,
@@ -116,6 +125,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
         )
         resolved.pickUpSound = pickUpSound
         resolved.putDownSound = putDownSound
+        resolved.description = described.description
         return resolved
     }
 
@@ -445,7 +455,9 @@ nonisolated enum ItemDefinitionViews {
     }
 
     fileprivate static func view(_ book: Book) -> ItemDefinition {
-        view(book.formID, .book, book.fields, book.itemValue)
+        var definition = view(book.formID, .book, book.fields, book.itemValue)
+        definition.description = book.inventoryDescription
+        return definition
     }
 
     fileprivate static func view(_ ingestible: Ingestible) -> ItemDefinition {

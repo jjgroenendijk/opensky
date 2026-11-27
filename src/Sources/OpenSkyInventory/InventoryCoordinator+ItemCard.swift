@@ -31,6 +31,9 @@ extension InventoryCoordinator.ItemCards {
             isFavourite: favourites.contains(item)
         )
         card.isQuestItem = coordinator.scriptItems.isQuestItem(item)
+        if case let .inline(text)? = definition.description, !text.isEmpty {
+            card.description = text
+        }
         return card
     }
 

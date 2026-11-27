@@ -49,7 +49,7 @@ nonisolated extension InventoryMenuMovieBridge {
                 info["itemEffect\(index)"] = .string(effect)
             }
         case .book:
-            info["description"] = .string("")
+            info["description"] = .string(card.description ?? "")
         default:
             let lines = card.effects + [card.enchantment].compactMap(\.self)
             info["effects"] = .string(lines.joined(separator: ", "))

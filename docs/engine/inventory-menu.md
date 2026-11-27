@@ -342,10 +342,11 @@ installed `itemcard.swf` and its `InventoryDefines`:
 | `effects` | the effect text of a potion, food, weapon, or armour piece |
 | `itemEffect0` to `itemEffect3`, `numItemEffects` | an ingredient's known effects; the movie shows `$UNKNOWN` for an index below `numItemEffects` that has no name |
 | `charge` | a weapon's charge left, in percent; the Charge button reads it |
+| `description` | a book's `CNAM` line. When it is not empty, the movie goes to its `Books_Description` frame and shows it in `BookDescriptionLabel` |
 
 OpenSky sends the card after each change it writes to the lists. A scroll uses the potion page,
-which lists effects; the game's page for a scroll is not confirmed. The card's warmth, skill
-text, and book description are not filled.
+which lists effects; the game's page for a scroll is not confirmed. The card's warmth and skill
+text are not filled.
 
 ### Recharging
 
