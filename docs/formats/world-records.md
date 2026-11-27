@@ -221,14 +221,14 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRecord(CELL, ...)`.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `XCIM` | FormID | `IMGS` image space |
-| `XILL` | FormID | Lock list: a `FLST` or `NPC_` that may use the locks |
-| `XCCM` | FormID | `REGN` whose sky and weather an interior shows |
+| `XILL` | FormID | Interior only. Lock list: a `FLST` of actor bases, or one `NPC_`, that may pass the cell's locks |
+| `XCCM` | FormID | Interior only. `REGN` whose weather the interior shows |
 | `XNAM` | zstring | Water noise texture |
-| `XWEM` | zstring | Water environment map |
+| `XWEM` | zstring | Water cube map for reflections |
 | `XWCN`, `XWCS` | uint32 | Water velocity count |
 | `XWCU` | 16 bytes each | Water velocity: a vector and one unnamed float |
-| `MHDT` | 1028 bytes | Max height data: a float offset, then 32 x 32 uint8 heights; kept raw |
-| `TVDT` | bytes | Occlusion data, not named by xEdit; kept raw |
+| `MHDT` | 1028 bytes | Exterior only. Max height data: a float offset, then 32 x 32 uint8 heights; never read at run time |
+| `TVDT` | bytes | Exterior only. Visibility bit set over cells; skipped for an interior |
 | `LNAM` | bytes | Leftover flags that now live in `XCLC` |
 
 ## WRLD extras
@@ -236,23 +236,69 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRecord(CELL, ...)`.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `RNAM` | struct | Large references of one cell: int16 Y, int16 X, uint32 count, then per reference a `REFR` FormID, int16 Y, int16 X; repeated |
-| `MHDT` | bytes | Max height data: min and max cell, then 4 uint8 heights per cell; kept raw |
-| `WCTR` | 2 int16 | Fixed center cell |
-| `LTMP` | FormID | Interior lighting `LGTM` |
+| `MHDT` | bytes | Max height data: int16 min X, min Y, max X, max Y, then 4 uint8 heights per cell |
+| `WCTR` | 2 int16 | Fixed centre cell, used only with `DATA` flag 0x40 |
+| `LTMP` | FormID | `LGTM`: exterior cells use interior-style lighting and image space |
 | `XLCN` | FormID | `LCTN` |
 | `NAM3`, `NAM4` | FormID, float | LOD water and its height |
-| `ICON` | zstring | Map image |
+| `ICON` | zstring | Map image; skipped at load |
 | `MODL` | model group | Cloud model |
 | `MNAM` | 28 bytes | Map: usable size (2 int32), NW cell and SE cell (2 int16 each), camera min height, max height, initial pitch |
 | `ONAM` | 16 bytes | Map offset: scale, then X, Y, Z offset |
-| `NAMA` | float | Distant LOD multiplier |
-| `NAM0`, `NAM9` | 2 floats | Bounds min and max, in game units |
+| `NAMA` | float | Distant LOD multiplier on the block-level split distances |
+| `NAM0`, `NAM9` | 2 floats | Bounds min and max, in game units; the union over all plugins |
 | `NNAM` | zstring | Canopy shadow, unused |
-| `TNAM`, `UNAM` | zstring | HD LOD diffuse and normal textures |
-| `OFST` | bytes | One uint32 offset per cell; kept raw |
+| `TNAM`, `UNAM` | zstring | HD LOD diffuse and normal textures; skipped at load |
+| `OFST` | bytes | One uint32 offset per cell; kept per plugin |
 
 A child worldspace that sets the `PNAM` "use map data" bit (0x04) shows its parent's map
 data, not its own.
+
+## How the game uses the cell extras
+
+- `TVDT` is a visibility bit set. The test runs only under a runtime switch. Bit `i` set
+  means cell `i` is visible. An index past the end of the data means not visible. A cell with
+  no `TVDT` is visible.
+- `XILL` names who may pass the cell's locks. An `NPC_` matches an actor whose base is that
+  `NPC_`. A `FLST` matches an actor whose base is in the list. AI checks use it. When the cell
+  is set up, a locked reference in it is locked again.
+- `XCCM` names the region whose weather an interior shows, for example through a window.
+- `XWEM` is the cube map for water reflections, used when `bUseCubeMapReflections:Water` is
+  on. Without one, the water uses `Data\Textures\Cubemaps\QuickSky_e.dds`. A worldspace
+  `XWEM` works the same way for its exterior water.
+- `CELL` `MHDT` is never read at run time.
+
+## How the game uses the worldspace extras
+
+`MHDT` is read the first time it is needed, from the last plugin that has it. After the
+four int16 bounds, each cell has 4 bytes, one per 2048-unit quarter of the cell:
+
+- cell index = `(x - minX) * (maxY - minY + 1) + (y - minY)`;
+- byte in the cell = quarter X + 2 * quarter Y, counted from the other side for a negative
+  coordinate;
+- height = `byte * 256 - 16384` game units.
+
+A loaded cell uses its real land instead. The world map uses this height. Example: byte
+`0x50` (80) gives `80 * 256 - 16384 = 4096`.
+
+`NAM0` and `NAM9` are joined over all plugins: the minimum of every `NAM0` and the maximum
+of every `NAM9`. Each plugin's own pair is kept too. The midpoint of the union is the centre
+of the map transform.
+
+`ONAM` moves a world position `p` to the map: `p' = (p - c) * scale + c + offset`, where
+`c` is that centre with Z set to 0. The defaults are scale 1 and offsets 0. With scale 1 or
+0, only the offset applies.
+
+`NAMA` multiplies the squared `fBlockLevel0Distance` and `fBlockLevel1Distance` thresholds
+that split the distant LOD levels.
+
+`WCTR` counts only when `DATA` flag 0x40 is set. It then forces the centre of the loaded
+grid. A position is inside the world when it is within `uGridsToLoad / 2` cells of that
+centre. The map centre is then `WCTR * 4096 + 2048` on each axis.
+
+`CNAM` is the climate. `LTMP` makes exterior cells use interior-style image space. `RNAM`
+fills the large-reference table, which is updated as cells attach. `OFST` is kept per
+plugin.
 
 ## Activator, door, furniture, flora, tree, and movable static details
 

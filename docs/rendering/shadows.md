@@ -146,7 +146,10 @@ skipped. The cubes draw only while shadows are on.
   normal against acne. The factor scales only that light's term, on meshes and terrain.
 
 All three shadow types draw as a full cube: a spotlight's cone and a hemisphere's half are
-not cut. The reference's `XLIG` shadow depth bias is read but not used. The launcher's
+not cut. The game cuts them: a spotlight's view uses its field of view plus the reference's
+`XLIG` FOV offset, and a hemisphere uses pi. The game also passes the `XLIG` shadow depth
+bias (default 1.0) into the light; OpenSky does not use it yet
+([placed references](/formats/placed-references.md#how-the-game-uses-the-reference-extras)). The launcher's
 graphics page holds the "Shadows from lights" switch, and `openskycli game debug shadows`
 reads how many lights drew a cube in `shadowLights`.
 

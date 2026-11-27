@@ -28,6 +28,9 @@ Skyrim has two near distances and one maximum, but the files have four levels. T
 limit (`2 * level1`, capped at the maximum) is OpenSky's own choice. It keeps each level coarser
 than the last, with no gaps between them.
 
+A worldspace's `NAMA` multiplies the squared `fBlockLevel0Distance` and
+`fBlockLevel1Distance` thresholds ([world records](/formats/world-records.md)).
+
 `split` is `fSplitDistanceMult`, and each scaled distance stops at the maximum. A small split,
 such as 0.5 in the Low preset, could leave no level 4 ring. A level 8 block would then touch the
 full-detail cells, and the cracks between them would show. So level 4 always keeps one ring.
