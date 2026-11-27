@@ -64,6 +64,7 @@ nonisolated public final class CellSceneBuilder {
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
     public let localizedStrings: LocalizedStrings?
     public var materialTypeIndex: MaterialTypeIndex?
+    var collisionLayerRoles: CollisionLayerRoles?
     /// Records this builder could not decode, each FormID counted once.
     public internal(set) var skippedRecords = SkippedRecords()
     var skippedFormIDs: Set<UInt32> = []

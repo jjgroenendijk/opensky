@@ -118,7 +118,7 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     /// XLCM: 0 easy, 1 medium, 2 hard, 3 very hard.
     public var levelModifier: Int32?
     /// XTRI, a COLL index.
-    var collisionLayer: UInt32?
+    public var collisionLayer: UInt32?
     var navmeshDoor: NavmeshDoorLink?
     /// XLRT, LCRT records.
     public var locationRefTypes: [FormID] = []
