@@ -29,13 +29,19 @@ left, 3 top right. Each quadrant is a 17 x 17 grid.
 
 | Field | Size (bytes) | Meaning |
 | --- | --- | --- |
-| `DATA` | 4 | Flags, uint32 |
+| `DATA` | 4 | Flags, uint32, below |
 | `VHGT` | 1096 | Heights, below |
 | `VNML` | 3267 | Normals: 33 x 33 x int8 (x, y, z) |
 | `VCLR` | 3267 | Vertex colors: 33 x 33 x uint8 (r, g, b). Optional |
 | `BTXT` | 8 | Base texture of one quadrant |
 | `ATXT` | 8 | One extra texture layer |
 | `VTXT` | 8 x N | Alpha map of the `ATXT` before it |
+
+`DATA` says which fields the game reads: bit `0x1` heights and normals (`VHGT`, `VNML`), bit
+`0x2` vertex colours (`VCLR`), and bit `0x4` the texture layers (`BTXT`, `ATXT`, `VTXT`). A land
+without bit `0x1` has no heights. The game replaces bits `0x8` and `0x400` with its own state, and
+tests no other bit. In the five masters the bits match the fields present, except 408 records
+that set `0x4` without texture fields. Common values are `0x19`, `0x1D`, and `0x1F`.
 
 The grid of a cell overlaps its neighbors. Row 32 of cell (x, y) equals row 0 of cell
 (x, y+1). Column 32 of (x, y) equals column 0 of (x+1, y). In vanilla Whiterun cells, the

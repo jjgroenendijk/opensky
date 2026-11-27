@@ -82,7 +82,12 @@ Dragonborn flying-mount codes, such as `FMAT`, have no setting.
 
 `DATA` is the old shape: uint16 dialogue tab, uint16 flags, float32 reset days. `ENAM` is the
 current shape: uint16 flags and a uint16 where 0...65535 maps to 0...24 reset hours.
-OpenSky turns both into reset hours.
+OpenSky turns both into reset hours. The game ignores the dialogue tab. It stores the `DATA` reset
+as days times 65535 in the same 16 bits, so 1.0 day or more wraps round.
+
+`CNAM` is a favour level, 0 to 3, and flag `0x4000` "spends favor points" goes with it. Neither
+changes anything in play: the only rule that reads them is never run. Two `Skyrim.esm` responses
+set level 2; the rest set 0.
 
 Flag bits 0 to 14 (xEdit): goodbye, random, say once, requires player activation, info
 refusal, random end, invisible continue, walk away, walk away invisible in menu, force

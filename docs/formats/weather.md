@@ -108,8 +108,14 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 | `HNAM` | 16 | 4 `VOLI`, one per time of day |
 | `NAM2`, `NAM3` | 16 | Sun and moon glare: 4 RGBA colors |
 | `MODL` | model group | Aurora mesh |
-| `DNAM`, `CNAM`, `ANAM`, `BNAM` | zstring | Older 4-layer cloud textures |
-| `ONAM` | 4 | Older cloud speeds, unused |
+| `DNAM`, `CNAM`, `ANAM`, `BNAM` | zstring | Older names for the layer 0 to 3 cloud textures |
+| `ONAM` | 4 | Older cloud speeds, one byte per layer for layers 0 to 3 |
+
+`DNAM`, `CNAM`, `ANAM`, and `BNAM` set the same texture as `00TX` to `30TX`, and `ENAM` the same
+as `40TX`. When a record has both, the later field wins. After load, every layer without a texture
+is disabled, added to the `NAM1` bits. `ONAM` sets the speeds of layers 0 to 3: each byte `b`
+becomes `b / 2 + 127` in the `RNAM` scale, and a later `RNAM` overrides it. One `Skyrim.esm`
+weather uses the older fields, with no `00TX` and no `RNAM`.
 
 The layers draw on the shapes of `meshes\sky\clouds.nif`. Its 29 `BSTriShape` blocks are in layer
 order: each shape's texture on the install matches the texture of the layer with the same index in
