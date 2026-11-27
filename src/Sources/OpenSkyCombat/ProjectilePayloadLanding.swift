@@ -114,7 +114,9 @@ struct ProjectilePayloadLanding {
         _ projectile: LiveProjectile,
         impact: ProjectileImpact
     ) -> SpellHitReport? {
-        guard let payload = projectile.payload.spell, let world else { return nil }
+        guard var payload = projectile.payload.spell, let world else { return nil }
+        payload.skipsAreaSearch = explosions?.spec(itemLink: projectile.profile.explosion)?
+            .isChain == true
         let targets = SpellHitTargeting.targets(
             of: payload,
             landing: (impact.position, impact.target),

@@ -64,6 +64,22 @@ struct SpellPayloadDualCastTests {
         #expect(payload.explosionScale == 2)
     }
 
+    @Test func aChainExplosionSkipsTheAreaSearch() {
+        var payload = Self.payload()
+        let bystander = MeleeTarget(
+            key: .plugin(name: "Base.esm", objectID: 0x10),
+            feet: SIMD3(5, 0, 0)
+        )
+        let landing: (SIMD3<Float>, ReferenceKey?) = (.zero, nil)
+        #expect(SpellHitTargeting.targets(
+            of: payload, landing: landing, candidates: [bystander], excluding: .player
+        ).count == 1)
+        payload.skipsAreaSearch = true
+        #expect(SpellHitTargeting.targets(
+            of: payload, landing: landing, candidates: [bystander], excluding: .player
+        ).isEmpty)
+    }
+
     private static func effect(_ formID: UInt32, flags: MagicEffectFlags) -> Data {
         ESMFixture.record(
             "MGEF", formID: formID,
