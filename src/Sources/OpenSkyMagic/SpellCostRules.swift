@@ -67,9 +67,9 @@ struct SpellCostRules {
         perk.effects.contains { $0.entryPoint == spellCostEntryPoint }
     }
 
-    /// The `SPIT` charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
+    /// The spell's charge time, scaled by `fMagicDualCastingTimeMult` for a dual cast.
     func chargeTime(of spell: ResolvedSpell, dual: Bool) -> Float {
-        let single = max(0, spell.data?.chargeTime ?? 0)
+        let single = spell.chargeSeconds
         return dual ? single * max(0, settings.dualCastTimeMult) : single
     }
 

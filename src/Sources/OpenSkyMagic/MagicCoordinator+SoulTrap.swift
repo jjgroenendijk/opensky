@@ -31,8 +31,10 @@ extension MagicCoordinator.SoulTrapping {
         let casters = effects.active(on: holder)
             .filter { effects.rule(of: $0) == .world(.soulTrap) }
             .compactMap(\.caster)
-        guard let caster = casters.contains(.player) ? .player : casters.first else { return nil }
-        return trapSoul(of: victim, by: caster)
+        let caster = casters.contains(.player) ? .player : casters.first
+        let outcome = caster.map { trapSoul(of: victim, by: $0) }
+        coordinator.withEffects { $0.dispelOnDeath(of: holder) }
+        return outcome
     }
 
     /// `Actor.TrapSoul`: fills a gem the caster carries with `victim`'s soul.

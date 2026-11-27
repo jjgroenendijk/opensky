@@ -14,6 +14,8 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     public internal(set) var localizedName: String?
     /// DNAM from the plugin's STRINGS table (not DLSTRINGS), with its `<mag>` tags unfilled.
     public internal(set) var localizedDescription: String?
+    /// The `DUAL` the effect names: the art a dual cast uses in place of its own.
+    public internal(set) var dualCastArt: DualCastData.Art?
 
     /// Runtime identity of this record, which is how an active effect names its MGEF.
     public var key: ReferenceKey {
@@ -62,11 +64,15 @@ nonisolated public struct MagicEffectStore: Sendable {
             decode: Self.decode,
             editorID: \.editorID,
             resolve: { id, effect, plugin in
-                ResolvedMagicEffect(
+                var resolved = ResolvedMagicEffect(
                     id: id, effect: effect, sourcePlugin: plugin,
                     localizedName: names.text(effect.name, plugin: plugin),
                     localizedDescription: names.text(effect.description, plugin: plugin)
                 )
+                resolved.dualCastArt = Self.dualCastArt(
+                    effect.data?.dualCastArt, fromPlugin: plugin, index: index
+                )
+                return resolved
             }
         )
         effectsByKey = Dictionary(
@@ -76,7 +82,17 @@ nonisolated public struct MagicEffectStore: Sendable {
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
-        self.init(index: RecordIndex(plugins: plugins, recordTypes: ["MGEF"]))
+        self.init(index: RecordIndex(plugins: plugins, recordTypes: ["MGEF", "DUAL"]))
+    }
+
+    private static func dualCastArt(
+        _ link: FormID?, fromPlugin plugin: String, index: RecordIndex
+    ) -> DualCastData.Art? {
+        guard
+            let id = index.resolvedID(link, fromPlugin: plugin),
+            case let .decoded(dual, _) = index.decode(id, using: DualCastData.init(record:))
+        else { return nil }
+        return dual.art
     }
 
     public func effect(_ id: ResolvedFormID) -> ResolvedMagicEffect? {

@@ -39,6 +39,8 @@ public enum WeaponEnchantmentApplication {
             charge = EnchantmentCharge(capacity: profile.capacity, costPerUse: 0)
         }
         var tally = SpellHitReport()
+        runtime.application.enchantmentRecast = profile.extendsOnRecast
+        defer { runtime.application.enchantmentRecast = nil }
         for target in hit.targets {
             guard let holder = holders[target.key] else { continue }
             var adjustments: [SpellMagnitudeAdjustment] = []

@@ -31,6 +31,8 @@ struct SpellStoreTests {
         #expect(abs((spell.effects.first?.cost ?? 0) - 344.932_4) < 0.05)
         #expect(spell.displayName == "Firebolt")
         #expect(spell.recordType == "SPEL")
+        // Auto-calculated: the charge is the effects' longest MGEF casting time.
+        #expect(spell.chargeSeconds == 0.75)
     }
 
     @Test
@@ -51,6 +53,8 @@ struct SpellStoreTests {
         // The formula total is still reported, for comparison against the
         // authored number.
         #expect(spell.cost.autoCalculated == 344)
+        // Manual cost: the charge is the SPIT charge time.
+        #expect(spell.chargeSeconds == 0.5)
     }
 
     @Test

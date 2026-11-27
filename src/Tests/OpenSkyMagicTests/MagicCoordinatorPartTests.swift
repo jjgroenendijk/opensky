@@ -73,6 +73,8 @@ struct MagicCoordinatorPartTests {
         )
         #expect(applied == 0)
         #expect(world.aimRequests.count == 1)
+        #expect(!spell.snapsToNavmesh)
+        #expect(world.navmeshPoint(near: .zero, within: RuneCore.navmeshSnapRadius) == nil)
     }
 
     /// Cure Disease and Cure Poison read the source's kind.

@@ -74,6 +74,25 @@ struct MagicDeliveryTests {
         #expect(host.fakeEffectsWorld.knockDownActorCalls.isEmpty)
     }
 
+    /// A spell whose projectile record is missing launches nothing.
+    @Test func aSpellWithAnUnknownProjectileLaunchesNothing() {
+        let payload = SpellPayload(
+            spell: Self.payload.spell, sourcePlugin: "base.esm", caster: .player, entries: [],
+            isHostile: true, ignoresResistance: false, projectile: FormID(0x7777), name: "Bolt"
+        )
+        host.fakeCombat.archery = FakeArcheryRuntimePort()
+        #expect(!adapter.fireSpellProjectile(payload))
+        #expect(adapter.projectileProximity(of: payload) == 0)
+    }
+
+    @Test func aNavmeshSnapTakesTheNearestSpot() {
+        host.fakeStreamer.navmeshSpotsResult = [SIMD3(4, 0, 0), SIMD3(9, 0, 0)]
+        #expect(adapter.navmeshPoint(near: .zero, within: 32) == SIMD3(4, 0, 0))
+        #expect(host.fakeStreamer.navmeshSpotsCalls.first?.largeActor == false)
+        host.fakeStreamer.navmeshSpotsResult = []
+        #expect(adapter.navmeshPoint(near: .zero, within: 32) == nil)
+    }
+
     /// The foe stands east of the player. Its ward covers the player when it looks west.
     @Test func anNPCSpellCarriesTheTrackerNoiseOfItsCastingType() {
         let archery = FakeArcheryRuntimePort()

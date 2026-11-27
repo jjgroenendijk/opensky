@@ -271,3 +271,13 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         isDetrimental ? -value.magnitude : value.magnitude
     }
 }
+
+nonisolated extension ActiveEffect {
+    /// This effect from its start again, as a recast that extends it leaves it.
+    public func restarted() -> ActiveEffect {
+        var copy = self
+        copy.elapsed = 0
+        copy.paidSeconds = 0
+        return copy
+    }
+}

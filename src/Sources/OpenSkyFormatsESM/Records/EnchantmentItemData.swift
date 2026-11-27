@@ -19,7 +19,7 @@ nonisolated public struct EnchantmentFlags: OptionSet, Equatable, Sendable {
     /// Bit 0 — the ENIT enchantment cost is authored, not derived.
     public static let manualCostCalc = Self(rawValue: 1 << 0)
     /// Bit 2 — recasting extends the running duration instead of restarting it.
-    static let extendDurationOnRecast = Self(rawValue: 1 << 2)
+    public static let extendDurationOnRecast = Self(rawValue: 1 << 2)
 }
 
 /// ENIT enchantment type. The two documented values are far apart rather than

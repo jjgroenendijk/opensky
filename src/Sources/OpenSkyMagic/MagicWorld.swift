@@ -89,6 +89,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func spellHitCandidates() -> [MeleeTarget]
     /// The `explosionProximity` of the payload's `PROJ`; zero when it has none.
     func projectileProximity(of payload: SpellPayload) -> Float
+    /// The nearest navmesh point within `radius` of `point`; nil with none in reach.
+    func navmeshPoint(near point: SIMD3<Float>, within radius: Float) -> SIMD3<Float>?
     /// The player stands in an exterior cell, where runes reach farther.
     var isOutdoors: Bool { get }
     /// `key`'s passing effects at an entry point that picks a spell, highest priority first.
@@ -204,6 +206,10 @@ extension MagicWorld {
 
     public func projectileProximity(of _: SpellPayload) -> Float {
         0
+    }
+
+    public func navmeshPoint(near _: SIMD3<Float>, within _: Float) -> SIMD3<Float>? {
+        nil
     }
 
     /// A session with no physics pushes nobody.

@@ -146,7 +146,7 @@ extension CombatSpellCastsAdapter {
                     spell: spell.key,
                     cost: Float(spell.cost.cost),
                     range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
-                    chargeSeconds: max(0, spell.data?.chargeTime ?? 0),
+                    chargeSeconds: spell.chargeSeconds,
                     isConcentration: spell.data?.castingType == .concentration
                 ),
                 isSpell: spell.spellType == .spell,

@@ -43,6 +43,8 @@ nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     /// nearest link in the base chain. Carried for inspection only; see the file
     /// header for why it gates nothing here.
     public let wornRestriction: FormID?
+    /// `ENIT` flag Extend Duration on Recast: a second hit restarts the running effect.
+    public var extendsOnRecast = false
 
     /// Every effect of every part. Magnitudes are pre-resistance.
     public var entries: [MagicItemEffect] {
@@ -108,7 +110,7 @@ nonisolated extension ItemEnchantmentProfile {
             let resolvedID = link.resolvedID,
             let resolved = store.enchantment(resolvedID)
         else { return nil }
-        return ItemEnchantmentProfile(
+        var profile = ItemEnchantmentProfile(
             item: definition.formID,
             enchantment: ReferenceKey(resolved: resolved.id),
             parts: [ItemEnchantmentPart(
@@ -125,5 +127,7 @@ nonisolated extension ItemEnchantmentProfile {
                 .compactMap { $0.data?.wornRestrictions }
                 .first
         )
+        profile.extendsOnRecast = resolved.data?.flags.contains(.extendDurationOnRecast) ?? false
+        return profile
     }
 }

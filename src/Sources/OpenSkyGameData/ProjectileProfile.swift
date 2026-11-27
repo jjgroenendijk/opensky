@@ -36,6 +36,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var kind: Projectile.Kind?
     /// What the player sees of it (docs/engine/spell-delivery.md#what-a-projectile-shows).
     public var visuals = ProjectileVisuals()
+    /// What the explosion's radius is multiplied by: above 1 for a dual cast.
+    public var explosionScale: Float = 1
 
     public init(
         projectile: FormID? = nil,
@@ -99,6 +101,8 @@ nonisolated public struct ProjectileVisuals: Equatable, Sendable {
     public var muzzleFlashLight: FormID?
     /// Seconds the muzzle flash shows.
     public var muzzleFlashDuration: Float = 0
+    /// The model's size: above 1 for a dual cast.
+    public var scale: Float = 1
 
     public init() {}
 

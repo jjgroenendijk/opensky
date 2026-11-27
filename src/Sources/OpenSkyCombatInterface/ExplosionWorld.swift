@@ -12,7 +12,8 @@ nonisolated public enum ExplosionCause: String, Equatable, Sendable {
 nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public let name: String
     public let damage: Float
-    public let radius: Float
+    /// World units; a dual cast scales it.
+    public var radius: Float
     public let force: Float
     public let imageSpaceRadius: Float
     public let sounds: [ReferenceKey]

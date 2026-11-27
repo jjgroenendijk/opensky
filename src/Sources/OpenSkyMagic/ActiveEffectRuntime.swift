@@ -258,6 +258,9 @@ public struct ActiveEffectRuntime {
             tally.noteRecastRefused()
             return nil
         }
+        if let restarted = recastEnchantment(application, source: source, on: target) {
+            return restarted
+        }
         clearRivals(of: application, on: target)
         var state = state(of: target)
         if let keyword = application.stackKeyword {

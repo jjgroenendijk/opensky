@@ -14,7 +14,16 @@ extension MagicCoordinator.RunePlacement {
         _ payload: SpellPayload, spell: ResolvedSpell, caster: ActorValueHolder
     ) -> Int {
         let reach = targetLocationReach(of: spell, caster: caster.key)
-        return land(payload, at: coordinator.world.aimedSpellTarget(within: reach, for: caster.key))
+        var aim = coordinator.world.aimedSpellTarget(within: reach, for: caster.key)
+        if
+            spell.snapsToNavmesh,
+            let snapped = coordinator.world.navmeshPoint(
+                near: aim.position, within: RuneCore.navmeshSnapRadius
+            )
+        {
+            aim = SpellAim(target: aim.target, position: snapped, candidates: aim.candidates)
+        }
+        return land(payload, at: aim)
     }
 
     /// `payload` at `aim`: a rune waits there, anything else applies now.

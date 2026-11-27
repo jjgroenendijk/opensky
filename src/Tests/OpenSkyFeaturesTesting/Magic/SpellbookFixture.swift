@@ -21,8 +21,8 @@ public enum SpellbookFixture {
     }
 
     public enum Spell {
-        /// Fire and forget, self, 0.5 s charge, one instant restore-health
-        /// entry. The acceptance picture's spell.
+        /// Fire and forget, self, manual cost 20 with a 0.5 s charge, one instant
+        /// restore-health entry. The acceptance picture's spell.
         public static let fastHealing: UInt32 = 0x0200
         /// Concentration, self, no charge, one one-second restore entry.
         public static let healing: UInt32 = 0x0210

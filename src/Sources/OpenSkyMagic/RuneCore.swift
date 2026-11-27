@@ -69,6 +69,8 @@ nonisolated enum RuneCore {
     static let keyword = "MagicRune"
     /// `explosionProximity` of `RuneFireProjectile`, for a rune whose PROJ gives none.
     static let defaultProximity: Float = 150
+    /// How far a Snap to Navmesh cast moves its aim point to reach the navmesh.
+    static let navmeshSnapRadius: Float = 32
 
     /// A target-location spell's reach in world units. [WARNING] `SPIT` range is read as
     /// feet here: Fire Rune's range is 20, and 20 world units would be at the caster's feet.

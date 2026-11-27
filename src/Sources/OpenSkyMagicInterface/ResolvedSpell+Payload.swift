@@ -24,7 +24,8 @@ nonisolated extension ResolvedSpell {
             // is not itself flagged.
             isHostile: effects
                 .contains { $0.effect?.effect.data?.flags.contains(.hostile) == true },
-            ignoresResistance: data?.flags.contains(.ignoreResistance) ?? false,
+            ignoresResistance: data?.flags.contains(.ignoreResistance) == true
+                || spellType == .ability,
             // The first entry that names one. Vanilla authors the same PROJ on
             // every entry of a spell, so "first" and "the one" agree; a record
             // that disagreed would fire its first entry's projectile, which is
@@ -36,11 +37,17 @@ nonisolated extension ResolvedSpell {
         payload.isConcentration = data?.castingType == .concentration
         payload.castingType = data?.castingType ?? .fireAndForget
         payload.delivery = data?.delivery ?? .aimed
-        payload.disallowsAbsorb = data?.flags.contains(.disallowAbsorbReflect) ?? false
+        payload.disallowsAbsorb = data?.flags.contains(.disallowAbsorbReflect) == true
+            || data?.flags.contains(.ignoreResistance) == true
         payload.areaIgnoresLineOfSight = data?.flags
             .contains(.areaEffectIgnoresLineOfSight) ?? false
-        payload.impactDataSet = effects.lazy.compactMap { $0.effect?.effect.data }
-            .first { $0.projectile != nil }?.impactData
+        let launching = effects.lazy.compactMap(\.effect)
+            .first { $0.effect.data?.projectile != nil }
+        payload.impactDataSet = launching?.effect.data?.impactData
+        payload.dualCastScale = launching?.effect.data?.dualCastScale ?? 1
+        payload.dualCastArt = launching?.dualCastArt
+        let flags = effects.compactMap { $0.effect?.effect.data?.flags }
+        payload.sendsHitEvent = flags.isEmpty || flags.contains { !$0.contains(.noHitEvent) }
         return payload
     }
 }
