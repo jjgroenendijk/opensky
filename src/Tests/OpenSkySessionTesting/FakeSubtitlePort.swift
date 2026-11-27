@@ -8,6 +8,8 @@ nonisolated public final class FakeSubtitlePort: SubtitlePort {
     public var applyCalls: [SubtitleSettings] = []
     public var sayCalls: [SayCall] = []
     public var sayResult = false
+    public var sayAroundCalls: [SayAroundCall] = []
+    public var sayAroundResult = false
     public var settingsValue: SubtitleSettings?
     public var advanceCalls: [Double] = []
 
@@ -30,6 +32,22 @@ extension FakeSubtitlePort {
             ].joined(separator: ", ")
         }
     }
+
+    nonisolated public struct SayAroundCall: CustomStringConvertible {
+        public let text: String
+        public let placement: SubtitlePlacement
+        public let seconds: Double
+        public let now: Double
+
+        public var description: String {
+            [
+                "text: " + String(describing: text),
+                "placement: " + String(describing: placement),
+                "seconds: " + String(describing: seconds),
+                "now: " + String(describing: now)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeSubtitlePort {
@@ -46,6 +64,19 @@ nonisolated extension FakeSubtitlePort {
     ) -> Bool {
         sayCalls.append(SayCall(text: text, kind: kind, seconds: seconds, now: now))
         return sayResult
+    }
+
+    @discardableResult
+    public func sayAround(
+        _ text: String, placement: SubtitlePlacement, seconds: Double, now: Double
+    ) -> Bool {
+        sayAroundCalls.append(SayAroundCall(
+            text: text,
+            placement: placement,
+            seconds: seconds,
+            now: now
+        ))
+        return sayAroundResult
     }
 
     public var settings: SubtitleSettings {

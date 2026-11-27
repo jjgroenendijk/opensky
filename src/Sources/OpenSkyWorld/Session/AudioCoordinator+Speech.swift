@@ -38,6 +38,7 @@ struct SpeechChannel {
     var isWaiting = false
     var playing: VoicePlayback?
     var lip: LipSyncPlayback?
+    var options = SpokenLineOptions.standard
     /// Runs when the last file played to its end, not when the line is stopped.
     var finished: (() -> Void)?
 }
@@ -51,7 +52,8 @@ extension AudioCoordinator {
     /// Says `paths` in order as `speaker`, stopping what it was saying. A file
     /// that does not load is skipped, and the reason goes to `lastSpeechError`.
     public func speak(
-        _ paths: [String], speaker: ReferenceKey, finished: (() -> Void)? = nil
+        _ paths: [String], speaker: ReferenceKey, options: SpokenLineOptions = .standard,
+        finished: (() -> Void)? = nil
     ) {
         stopSpeaking(speaker)
         guard !paths.isEmpty else { return }
@@ -61,7 +63,7 @@ extension AudioCoordinator {
         }
         observeVoiceCompletion(engine: engine)
         speech.channels[speaker] = SpeechChannel(
-            queue: SpeechQueue(paths: paths), finished: finished
+            queue: SpeechQueue(paths: paths), options: options, finished: finished
         )
         advanceSpeech(speaker)
     }
@@ -151,7 +153,9 @@ extension AudioCoordinator {
                     worldPosition: world?.speakerHeadPosition(of: speaker) ?? triggerPosition(),
                     soundCategory: engine.voiceCategory(
                         conversation: world?.isConversationSpeaker(speaker) == true
-                    )
+                    ),
+                    outputModel: channel.options.outputModel
+                        .flatMap { soundDirector?.outputModels?($0) }
                 )
                 speech.channels[speaker]?.playing = playback
                 speech.lastError = nil
@@ -176,7 +180,8 @@ extension AudioCoordinator {
     private func startSpeakerLipSync(
         _ speaker: ReferenceKey, playback: VoicePlayback, path: String
     ) {
-        guard voice.lipSyncEnabled else { return }
+        guard voice.lipSyncEnabled, speech.channels[speaker]?.options.lipSync != false
+        else { return }
         let started = startLipSync(
             playback: playback, path: path, on: world?.lipSyncTarget(for: speaker)
         )

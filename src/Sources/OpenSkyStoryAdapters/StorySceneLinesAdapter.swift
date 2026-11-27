@@ -2,6 +2,7 @@ public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrime
@@ -29,6 +30,7 @@ public protocol StorySceneLinesHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var dialogue: any DialoguePort { get }
     var dialogueWorld: any DialogueWorldPort { get }
+    var gameSession: (any GameSessionPort)? { get }
     var faceMorphs: any FaceMorphPort { get }
     var headTracking: any HeadTrackingPort { get }
     var renderer: (any RendererPort)? { get }
@@ -188,9 +190,12 @@ extension StorySceneLinesAdapter {
         lookAt: ReferenceKey?,
         seconds: Float
     ) {
-        guard game.dialogueWorld.headPosition(of: speaker) != nil else { return }
-        game.audio.speak(voicePaths(of: id, speaker: speaker), speaker: speaker)
+        guard let head = game.dialogueWorld.headPosition(of: speaker) else { return }
         let info = game.dialogue.runtime?.dialogue.info(id)
+        game.audio.speak(
+            voicePaths(of: id, speaker: speaker), speaker: speaker,
+            options: info.map(SpokenLineOptions.init) ?? .standard
+        )
         if let lookAt {
             game.headTracking.setLookTarget(
                 lookAt, for: speaker, seconds: seconds, dialogue: true
@@ -206,11 +211,18 @@ extension StorySceneLinesAdapter {
             )
         }
         playResponseIdles(of: id, speaker: speaker, listener: lookAt)
+        // The player's own lines never get a subtitle.
+        guard speaker != .player else { return }
         let text = info
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
-        game.subtitles.say(
-            text, kind: .general, seconds: Double(seconds),
-            now: now().timeIntervalSinceReferenceDate
+        let player = game.gameSession?.walkController.feetPosition
+        game.subtitles.sayAround(
+            text,
+            placement: SubtitlePlacement(
+                distance: player.map { simd_distance($0, head) },
+                forced: info?.flags.contains(.forceSubtitle) == true
+            ),
+            seconds: Double(seconds), now: now().timeIntervalSinceReferenceDate
         )
     }
 

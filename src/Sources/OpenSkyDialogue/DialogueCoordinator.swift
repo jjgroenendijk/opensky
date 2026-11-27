@@ -246,12 +246,15 @@ public final class DialogueCoordinator {
         _ info: TopicInfo?, speaker: ReferenceKey, greeting: Bool
     ) -> DialogueSpokenLine {
         let response = info?.responses.first
-        return DialogueSpokenLine(
+        var line = DialogueSpokenLine(
             speaker: speaker,
             emotion: response?.emotion.rawValue ?? 0,
             emotionValue: response?.emotionValue ?? 0,
             isGreeting: greeting
         )
+        line.keepsSpeakerMoving = greeting
+            && info?.flags.contains(.canMoveWhileGreeting) == true
+        return line
     }
 
     // MARK: - Speaker focus
@@ -259,7 +262,14 @@ public final class DialogueCoordinator {
     /// Holds `speaker` and turns it towards `playerEye`. Call it every frame
     /// while the camera frames somebody.
     public func focus(on speaker: ReferenceKey, playerEye: SIMD3<Float>) -> [DialogueCommand] {
-        apply(DialogueCore.focus(held: heldSpeaker, speaker: speaker), playerEye: playerEye)
+        // Without `0x400` a greeting stops its speaker; with it, the speaker walks on.
+        if
+            heldSpeaker == nil, let line = spokenLine, line.speaker == speaker,
+            line.keepsSpeakerMoving
+        {
+            return []
+        }
+        return apply(DialogueCore.focus(held: heldSpeaker, speaker: speaker), playerEye: playerEye)
     }
 
     /// Hands the held actor back to its package.
