@@ -15,6 +15,10 @@ nonisolated public enum RecordDataUnusedReason: String, CaseIterable, Sendable {
     case editorOnly
     /// A field from an older version of the format that the game no longer reads.
     case legacy
+    /// The game reads it and throws it away, or keeps it where no rule reads it.
+    case droppedAtLoad
+    /// The game keeps it, but the only rule that reads it never runs.
+    case noEffect
 }
 
 nonisolated public enum RecordDataUnused: Sendable {
@@ -26,6 +30,26 @@ nonisolated public enum RecordDataUnused: Sendable {
         let parts = field.split(separator: ".")
         return parts.count == 2 && parts[1] == "formID" ? .recordIdentity : nil
     }
+
+    /// Why the game does not use `bit` of the option set `type`, such as `TopicInfo.Flags`.
+    public static func reason(forBit bit: UInt64, of type: String) -> RecordDataUnusedReason? {
+        bits[type]?[bit]
+    }
+
+    /// Why the game does not use enum case `name` of `type`, such as `TopicInfo.FavorLevel`.
+    public static func reason(forCase name: String, of type: String) -> RecordDataUnusedReason? {
+        cases["\(type).\(name)"]
+    }
+
+    static let bits: [String: [UInt64: RecordDataUnusedReason]] = [
+        "TopicInfo.Flags": [0x4000: .noEffect]
+    ]
+
+    static let cases: [String: RecordDataUnusedReason] = [
+        "TopicInfo.FavorLevel.small": .noEffect,
+        "TopicInfo.FavorLevel.medium": .noEffect,
+        "TopicInfo.FavorLevel.large": .noEffect
+    ]
 
     static let fields: [String: RecordDataUnusedReason] = names.reduce(into: [:]) {
         for name in $1.value {
@@ -48,6 +72,7 @@ nonisolated public enum RecordDataUnused: Sendable {
             "PackageDetails.IdleAnimations.declaredCount",
             "PlacedReferenceDetails.Room.linkedRoomCount",
             "PlacedReferenceDetails.waterVelocityCount",
+            "PluginHeader.interiorCellCount",
             "Quest.Alias.declaredItemCount",
             "StoryManagerNode.declaredQuestCount"
         ],
@@ -78,8 +103,33 @@ nonisolated public enum RecordDataUnused: Sendable {
             "TopicInfo.LegacyScriptBlock.quest",
             "TopicInfo.legacyDialogueTab",
             "TopicInfo.legacyScriptBlocks",
-            "WaterDetails.unusedMaterialID",
-            "WeatherSky.legacyCloudSpeeds"
-        ]
+            "WaterDetails.unusedMaterialID"
+        ],
+        .droppedAtLoad: [
+            "AcousticSpace.editorID",
+            "ArtObject.bounds",
+            "Debris.editorID",
+            "DualCastData.bounds",
+            "Enchantment.bounds",
+            "Footstep.editorID",
+            "Grass.bounds",
+            "Grass.editorID",
+            "Impact.editorID",
+            "LeveledList.bounds",
+            "LightingTemplate.editorID",
+            "Location.editorColor",
+            "MaterialObject.editorID",
+            "Outfit.editorID",
+            "PlacedReferenceDetails.editorID",
+            "Region.mapColor",
+            "Scene.lastActionIndex",
+            "SoundOutputModel.editorID",
+            "TextureSet.bounds",
+            "TextureSet.editorID",
+            "TopicInfo.editorID",
+            "VolumetricLighting.editorID",
+            "WaterType.editorID"
+        ],
+        .noEffect: ["TopicInfo.favorLevel"]
     ]
 }
