@@ -80,9 +80,7 @@ extension FieldCensus {
         let sky = weather.sky
         count("WTHR", sky, [
             ("maxCloudLayers", { $0.maxCloudLayers }), ("skyStatics", { $0.skyStatics }),
-            ("moonGlare", { $0.moonGlare }), ("auroraModel", { $0.auroraModel }),
-            ("legacyCloudTextures", { $0.legacyCloudTextures }),
-            ("legacyCloudSpeeds", { $0.legacyCloudSpeeds })
+            ("moonGlare", { $0.moonGlare }), ("auroraModel", { $0.auroraModel })
         ])
         count("WTHR cloud", sky.cloudLayers, [
             ("index", { $0.index }), ("colors", { $0.colors })

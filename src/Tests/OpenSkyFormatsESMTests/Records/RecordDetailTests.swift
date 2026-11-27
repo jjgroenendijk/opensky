@@ -45,6 +45,23 @@ struct RecordDetailTests {
         #expect(WeatherSky.cloudLayerIndex("P0TX") == nil)
     }
 
+    @Test func olderCloudFieldsSetTheFirstLayers() throws {
+        let weather = try Weather(record: Fixture.record("WTHR", fields: [
+            ("00TX", Fixture.zstring("new0.dds")), ("DNAM", Fixture.zstring("old0.dds")),
+            ("BNAM", Fixture.zstring("old3.dds")), ("RNAM", Fixture.u8(127, 127)),
+            ("ONAM", Fixture.u8(0, 20, 254, 6))
+        ]))
+        let layers = weather.sky.cloudLayers
+        #expect(layers[0].texture == "old0.dds")
+        #expect(layers[3].texture == "old3.dds")
+        #expect(layers.prefix(4).map(\.speedY) == [127, 137, 254, 130])
+
+        let rnamLast = try Weather(record: Fixture.record("WTHR", fields: [
+            ("ONAM", Fixture.u8(20)), ("RNAM", Fixture.u8(100))
+        ]))
+        #expect(rnamLast.sky.cloudLayers[0].speedY == 100)
+    }
+
     @Test func decodesCellExtrasAndTalliesUnknownField() throws {
         let cell = try Cell(record: Fixture.record("CELL", fields: [
             ("DATA", Fixture.u16(1)), ("XCIM", Fixture.u32(0x10)), ("XILL", Fixture.u32(0x11)),

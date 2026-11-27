@@ -115,7 +115,8 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 as `40TX`. When a record has both, the later field wins. After load, every layer without a texture
 is disabled, added to the `NAM1` bits. `ONAM` sets the speeds of layers 0 to 3: each byte `b`
 becomes `b / 2 + 127` in the `RNAM` scale, and a later `RNAM` overrides it. One `Skyrim.esm`
-weather uses the older fields, with no `00TX` and no `RNAM`.
+weather uses the older fields, with no `00TX` and no `RNAM`. OpenSky folds the older fields
+into the layers in the same way.
 
 The layers draw on the shapes of `meshes\sky\clouds.nif`. Its 29 `BSTriShape` blocks are in layer
 order: each shape's texture on the install matches the texture of the layer with the same index in
