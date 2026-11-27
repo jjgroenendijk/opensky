@@ -28,7 +28,6 @@ struct WorldRecordDetailTests {
         let details = water.details
         #expect(water.skipped.isEmpty)
         #expect(details.name == .inline("Lake"))
-        #expect(details.oldNoiseTextures == ["a.dds", "b.dds"])
         #expect(details.opacity == 40)
         #expect(details.flags == 0x09)
         #expect(details.unusedMaterialID == Data([7]))
@@ -38,7 +37,7 @@ struct WorldRecordDetailTests {
         #expect(details.relatedWaters == [FormID(0x20), FormID(0x21)])
         #expect(details.linearVelocity == SIMD3(1, 2, 3))
         #expect(details.angularVelocity == SIMD3(4, 5, 6))
-        #expect(details.noiseTextures == ["n2.dds", nil, nil, "flow.dds"])
+        #expect(details.noiseTextures == ["n2.dds", "b.dds", "b.dds", "flow.dds"])
     }
 
     @Test func impactReadsEffectDecalAndLinks() throws {

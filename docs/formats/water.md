@@ -121,6 +121,6 @@ name `DLC2TenticleTile_n.dds`. 4 of them also name `RiverFlow.dds` in `NAM5`.
 `NNAM` is the older noise texture field. Each `NNAM` sets all three noise layers to its path, so
 with several `NNAM` fields the last one wins, unless a `NAM2` to `NAM4` comes after it. In
 `Skyrim.esm`, 31 `WATR` records carry three identical `NNAM` fields. `Update.esm` overrides all 31
-with `NAM2` to `NAM4`.
+with `NAM2` to `NAM4`. OpenSky reads `NNAM` in the same way.
 
 Real data check: `WhiterunExterior17` (Tamriel 5,-4) has water and gives one plane.
