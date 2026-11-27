@@ -311,7 +311,8 @@ How the game uses some of them:
   65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
   from the camera wears one `ANAM` item; a nearer actor has it taken off.
 - `QNAM` texture lighting: each float times 255 is kept as a byte.
-- `OBND` has no use on an NPC.
+- `OBND` places a summon: its 2D radius is the room the summon needs
+  ([Summon Creature](/engine/magic-archetypes.md)).
 
 ## CLAS
 

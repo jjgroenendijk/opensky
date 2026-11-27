@@ -113,6 +113,7 @@ nonisolated public enum RecordDataUnused: Sendable {
             "WaterDetails.unusedMaterialID"
         ],
         .droppedAtLoad: [
+            "ActorBaseDetails.unknownNAM5",
             "RaceProperties.unknown",
             "RaceProperties.weight",
             "AcousticSpace.editorID",
