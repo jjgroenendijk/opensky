@@ -130,6 +130,13 @@ extension MenuWorldScriptMenusAdapter {
         skillsRace.identityRecords?.templates.actors[base.rawValue]?.flags
     }
 
+    /// The `ACBS` flags of the NPC the actor was rolled from.
+    public func recordFlags(of actor: ReferenceKey) -> ActorBase.Flags? {
+        let base = actor == .player
+            ? MenuRecordData.playerBase : game.scripts.bridge?.baseObject(of: actor)
+        return base.flatMap { recordFlags(ofBase: leveledBase(of: actor, base: $0) ?? $0) }
+    }
+
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
         guard let templates = game.menuRecords?.actorValueBaselines?.resolver?.templates
         else { return base }

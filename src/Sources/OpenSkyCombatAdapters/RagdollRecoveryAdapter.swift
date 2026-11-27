@@ -184,13 +184,29 @@ extension RagdollRecoveryAdapter {
     struct RecoveryReads {
         let owner: RagdollRecoveryAdapter
 
+        /// A share of health. The `ACBS` override is in health points, so it is divided
+        /// by the permanent maximum (docs/engine/ragdoll.md#bleedout).
         func bleedoutThreshold(of key: ReferenceKey) -> Float? {
             let game = owner.game
             guard
                 let base = game.streamer.referenceEntry(key: key)?.placedActor?.base,
                 let resolver = game.combatRecords?.actorValueBaselines?.resolver
             else { return nil }
+            if
+                let points = resolver.bleedoutOverride(ofBase: base),
+                let values = game.actorValues.runtime,
+                let holder = owner.poseReads.holder(of: key)
+            {
+                return Self.share(points: points, maximum: values.permanentMaximum(
+                    of: .health, for: holder
+                ))
+            }
             return resolver.characterClass(ofBase: base)?.bleedoutDefault
+        }
+
+        static func share(points: Int16, maximum: Float) -> Float {
+            guard maximum > 0 else { return 0 }
+            return Float(points) / maximum
         }
 
         func getsUpSwimming(_ key: ReferenceKey, root: SIMD3<Float>) -> Bool {

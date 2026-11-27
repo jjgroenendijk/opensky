@@ -16,6 +16,8 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var raceOfResult: FormID?
     public var raceOfBaseCalls: [FormID] = []
     public var raceOfBaseResult: FormID?
+    public var recordFlagsOfCalls: [ReferenceKey] = []
+    public var recordFlagsOfResult: ActorBase.Flags?
     public var restorePlayerPlaceCalls: [SavePlayerPlace] = []
     public var setRaceCalls: [(actor: ReferenceKey, race: FormID?)] = []
     public var setRaceResult = false
@@ -38,8 +40,8 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
     public var isMapMarkerVisibleResult = false
     public var sexCalls: [FormID] = []
     public var sexResult: Int?
-    public var recordFlagsCalls: [FormID] = []
-    public var recordFlagsResult: ActorBase.Flags?
+    public var recordFlagsOfBaseCalls: [FormID] = []
+    public var recordFlagsOfBaseResult: ActorBase.Flags?
     public var recordShoutsCalls: [FormID] = []
     public var recordShoutsResult: [ReferenceKey] = []
     public var shoutWordSlotsCallCount = 0
@@ -100,6 +102,11 @@ nonisolated extension FakeMenuWorldPort {
     public func race(ofBase base: FormID) -> FormID? {
         raceOfBaseCalls.append(base)
         return raceOfBaseResult
+    }
+
+    public func recordFlags(of actor: ReferenceKey) -> ActorBase.Flags? {
+        recordFlagsOfCalls.append(actor)
+        return recordFlagsOfResult
     }
 
     public func restorePlayerPlace(_ place: SavePlayerPlace) {
@@ -165,8 +172,8 @@ nonisolated extension FakeMenuWorldPort {
     }
 
     public func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
-        recordFlagsCalls.append(base)
-        return recordFlagsResult
+        recordFlagsOfBaseCalls.append(base)
+        return recordFlagsOfBaseResult
     }
 
     public func recordShouts(ofBase base: FormID) -> [ReferenceKey] {

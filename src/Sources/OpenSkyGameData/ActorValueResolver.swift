@@ -152,6 +152,11 @@ nonisolated public struct ActorValueResolver: Sendable {
         classes.resolve(id, fromPlugin: pluginName)?.characterClass
     }
 
+    /// The `ACBS` bleedout override of `base` in health points, nil when its flag is clear.
+    public func bleedoutOverride(ofBase base: FormID) -> Int16? {
+        attempt { try templates.resolveStats(base: base) }?.bleedoutOverride?.value
+    }
+
     /// The class `base` uses after its templates, or nil when the chain does not resolve.
     public func characterClass(ofBase base: FormID) -> CharacterClass? {
         attempt { try templates.resolveStats(base: base) }.flatMap {

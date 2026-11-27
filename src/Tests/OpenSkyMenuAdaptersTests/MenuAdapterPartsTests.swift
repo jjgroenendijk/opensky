@@ -2,6 +2,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyMagicInterface
 @testable import OpenSkyMenuAdapters
@@ -25,6 +26,20 @@ struct MenuAdapterPartsTests {
         #expect(races.recordIdentity == nil)
         #expect(races.titleSettings == .vanilla)
         #expect(MenuWorldAdapter(game: host, now: { Date() }).titleSettings == .vanilla)
+    }
+
+    /// The race menu offers every `ACBS` `0x4` NPC of the race and sex, listed ones first.
+    @Test func racePresetsAreTheFlaggedNPCsOfTheRaceAndSex() throws {
+        let actors = try [
+            npc(0x30, flags: 0x4, race: 0xA), npc(0x20, flags: 0x4, race: 0xA),
+            npc(0x10, flags: 0x4, race: 0xA), npc(0x40, flags: 0x5, race: 0xA),
+            npc(0x50, flags: 0x4, race: 0xB), npc(0x60, flags: 0, race: 0xA),
+            npc(0x7, flags: 0x4, race: 0xA)
+        ].reduce(into: [UInt32: ActorBase]()) { $0[$1.formID.rawValue] = $1 }
+        let presets = RaceMenuReads.presetNPCs(
+            race: FormID(0xA), isFemale: false, listed: [FormID(0x30)], actors: actors
+        )
+        #expect(presets == [FormID(0x30), FormID(0x10), FormID(0x20)])
     }
 
     @Test func theActivateChoiceQuestionAndTheCompassGoThroughTheirPorts() {
@@ -70,4 +85,17 @@ struct MenuAdapterPartsTests {
         #expect(effect?.isNegative == true)
         #expect(effect?.tag == 1)
     }
+}
+
+private func npc(_ formID: UInt32, flags: UInt32, race: UInt32) throws -> ActorBase {
+    var acbs = Data()
+    acbs.appendUInt32(flags)
+    acbs.append(Data(count: 20))
+    var raceID = Data()
+    raceID.appendUInt32(race)
+    let fields = ESMFixture.field("ACBS", acbs) + ESMFixture.field("RNAM", raceID)
+    return try ActorBase(
+        record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: formID, data: fields)),
+        localized: false
+    )
 }

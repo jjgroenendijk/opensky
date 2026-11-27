@@ -210,6 +210,10 @@ extension MenuWorldAdapter {
         scriptMenus.recordFlags(ofBase: base)
     }
 
+    public func recordFlags(of actor: ReferenceKey) -> ActorBase.Flags? {
+        scriptMenus.recordFlags(of: actor)
+    }
+
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
         scriptMenus.leveledBase(of: actor, base: base)
     }

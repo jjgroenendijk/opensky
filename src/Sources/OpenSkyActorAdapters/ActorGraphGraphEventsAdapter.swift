@@ -73,11 +73,13 @@ extension ActorGraphGraphEventsAdapter {
         let identity = ActorIdentityRecords(resolver: resolver)
         let race = identity.race(ofBase: base, roll: roll).flatMap { identity.races[$0.rawValue] }
         let graphs = race?.details.behaviorGraphs
-        let female = identity.isFemale(ofBase: base, roll: roll) ?? false
-        let model = (female ? graphs?.female : nil) ?? graphs?.male
+        let appearance = attempt { try resolver.templates.rolling(roll).resolve(base: base) }
+        let female = appearance?.isFemale.value ?? false
+        // ACBS 0x80000 runs the other sex's graph.
+        let graphFemale = female != (appearance?.usesOppositeSexAnimations ?? false)
+        let model = (graphFemale ? graphs?.female : nil) ?? graphs?.male
         let path = model.map { ActorGraphCore.projectPath(modelPath: $0.path) }
-        let weight = attempt { try resolver.templates.rolling(roll).resolve(base: base).weight } ??
-            ResolvedActorAppearance.defaultWeight
+        let weight = appearance?.weight ?? ResolvedActorAppearance.defaultWeight
         let graphBase = ActorGraphBase(path: path, weight: weight)
         state.graphBases[key] = graphBase
         return graphBase
@@ -156,8 +158,10 @@ struct ActorGraphSoundReads {
         }.first ?? base
         let sounds = ActorSounds.of(npc) { id in
             templates.actors[id.rawValue].map {
+                // ACBS 0x100 marks sounds of its own; without it, `CSCR` gives them.
                 ActorSoundRecord(
-                    inheritsFrom: $0.details.inheritsSoundsFrom,
+                    inheritsFrom: $0.flags.contains(.ownsCreatureSounds)
+                        ? nil : $0.details.inheritsSoundsFrom,
                     types: $0.details.soundTypes
                 )
             }
