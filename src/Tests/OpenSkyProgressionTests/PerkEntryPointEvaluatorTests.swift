@@ -186,4 +186,17 @@ struct PerkEntryPointEvaluatorTests {
         #expect(!outcome.didChange)
         #expect(outcome.skipped.isEmpty)
     }
+
+    /// Every computed function depends on its value or its payload, so none is shallow; an
+    /// uncomputed one gives no result to compare and is not shallow either.
+    @Test
+    func noComputedFunctionAnswersAConstant() {
+        let computed: [PerkFunction] = [
+            .setValue, .addValue, .multiplyValue, .absoluteValue, .negativeAbsoluteValue,
+            .addActorValueMultiplier, .setToActorValueMultiplier,
+            .multiplyActorValueMultiplier, .multiplyOnePlusActorValueMultiplier
+        ]
+        #expect(computed.allSatisfy { !PerkEntryPointEvaluator.isShallow($0) })
+        #expect(!PerkEntryPointEvaluator.isShallow(.selectSpell))
+    }
 }

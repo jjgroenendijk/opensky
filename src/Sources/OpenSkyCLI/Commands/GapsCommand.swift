@@ -6,10 +6,14 @@ import Foundation
 import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScripting
 
 enum GapsCommand {
     static func run(context: CLIContext, arguments: GapsArguments) throws {
-        let gatherer = try GapsGatherer(context: context, fieldReadsPath: arguments.fieldReads)
+        let gatherer = try GapsGatherer(
+            context: context, fieldReadsPath: arguments.fieldReads,
+            valueReadsPath: arguments.valueReads, shallowHandlersPath: arguments.shallowHandlers
+        )
         var sections: [GapSection] = []
         for key in arguments.sections {
             let started = Date()
@@ -39,31 +43,48 @@ final class GapsGatherer {
     private(set) lazy var plugins = LoadOrderPlugins(ActivePluginFiles.load(root: context.root))
     /// The fields engine code reads, when the fields section runs.
     let fieldReads: RecordFieldReads?
-    /// One sweep serves the records and fields sections.
+    /// The flag bits and enum cases engine code tests, when the flags or enums section runs.
+    let valueReads: RecordValueReads?
+    /// The registered handlers and which do no work, when the shallow section runs.
+    let shallowHandlers: ShallowHandlerList?
+    /// One sweep serves the records, fields, flags, and enums sections.
     private(set) lazy var recordSweep: RecordCoverageSweep = {
-        var sweep = RecordCoverageSweep(countingFields: fieldReads != nil)
+        var sweep = RecordCoverageSweep(countingFields: fieldReads != nil || valueReads != nil)
         for plugin in plugins.plugins {
             sweep.sweep(plugin.file)
         }
         return sweep
     }()
 
-    init(context: CLIContext, fieldReadsPath: String?) throws {
+    init(
+        context: CLIContext, fieldReadsPath: String?, valueReadsPath: String?,
+        shallowHandlersPath: String?
+    ) throws {
         self.context = context
-        fieldReads = try fieldReadsPath.map(Self.loadFieldReads)
+        fieldReads = try fieldReadsPath.map { path in
+            try Self.parse(path, "field reads") { try RecordFieldReads(text: $0) }
+        }
+        valueReads = try valueReadsPath.map { path in
+            try Self.parse(path, "value reads") { try RecordValueReads(text: $0) }
+        }
+        shallowHandlers = try shallowHandlersPath.map { path in
+            try Self.parse(path, "shallow handlers") { try ShallowHandlerList(text: $0) }
+        }
     }
 
-    private static func loadFieldReads(path: String) throws -> RecordFieldReads {
+    private static func parse<List>(
+        _ path: String, _ label: String, _ make: (String) throws -> List
+    ) throws -> List {
         let text: String
         do {
             text = try String(contentsOfFile: path, encoding: .utf8)
         } catch {
-            throw CLIError.failure("cannot read the field reads list \(path): \(error)")
+            throw CLIError.failure("cannot read the \(label) list \(path): \(error)")
         }
         do {
-            return try RecordFieldReads(text: text)
-        } catch let .malformedLine(line) {
-            throw CLIError.failure("the field reads list \(path) is malformed at line \(line)")
+            return try make(text)
+        } catch {
+            throw CLIError.failure("the \(label) list \(path) is malformed: \(error)")
         }
     }
 
@@ -77,7 +98,9 @@ final class GapsGatherer {
         [
             "papyrus": { try [self.papyrus()] }, "events": { [self.events()] },
             "conditions": { try [self.conditions()] }, "records": { try [self.records()] },
-            "fields": { try [self.fields()] }, "settings": { try [self.settings()] },
+            "fields": { try [self.fields()] }, "flags": { try [self.flags()] },
+            "enums": { try [self.enums()] }, "shallow": shallow,
+            "settings": { try [self.settings()] },
             "magic": { try [self.magic()] },
             "perks": perks, "packages": packages, "behavior": behavior,
             "animations": animations, "meshes": assets.meshes, "textures": assets.textures,

@@ -47,6 +47,8 @@ struct PerkGapCensusTests {
         #expect(census.unsupportedFunctions.map(\.count) == [1])
         #expect(census.unsupportedFunctions.first?.name == PerkFunction.addRangeToValue
             .description)
+        #expect(census.computedFunctionCount == 1)
+        #expect(!census.shallowFunctions.contains { $0.name == PerkFunction.setValue.description })
     }
 
     /// EPFT 6 is a plain text payload: the graph variable's name.

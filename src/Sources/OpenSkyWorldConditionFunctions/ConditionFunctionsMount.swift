@@ -54,7 +54,7 @@ nonisolated public enum ConditionFunctionsMount {
         registry.register(ConditionFunction(index: 339, name: "IsPlayersLastRiddenMount") { call in
             mount(call) { _, key, last in ConditionFunctions.isTrue(last == key) }
         })
-        // The CK wiki: "This function is a no-op and always returns 0."
+        // Matches the game: the CK wiki says "This function is a no-op and always returns 0."
         registry.register(ConditionFunction(index: 282, name: "IsHorseStolen") { _ in
             .success(0)
         })

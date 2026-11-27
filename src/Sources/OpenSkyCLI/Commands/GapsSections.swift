@@ -111,6 +111,69 @@ extension GapsGatherer {
         )
     }
 
+    func flags() throws -> GapSection {
+        let (gaps, census) = try valueGaps()
+        var notes = [
+            "done means engine code reads the bit's named constant (index store); "
+                + "a bit with no constant counts as unnamed and left"
+        ]
+        notes += Self.unknownNote(gaps.flags.unknown)
+        if !census.plainFlagFields.isEmpty {
+            let fields = census.plainFlagFields.sorted { $0.value > $1.value }
+            notes.append(
+                "\(fields.count) plain integer flags fields have no named bits to check: "
+                    + fields.prefix(5).map { "\($0.key) \($0.value)" }.joined(separator: ", ")
+            )
+        }
+        return GapSection(
+            title: "Record flag bits",
+            unit: "bits",
+            done: gaps.flags.done,
+            left: gaps.flags.left.map { ($0.name, $0.records) },
+            usesUnit: "records that set it",
+            notes: notes
+        )
+    }
+
+    func enums() throws -> GapSection {
+        let (gaps, census) = try valueGaps()
+        var notes = [
+            "done means engine code names the case, as a switch arm or a comparison does "
+                + "(index store); a value only a default branch reaches is left"
+        ]
+        notes += Self.unknownNote(gaps.enums.unknown)
+        if !census.unnamedEnums.isEmpty {
+            notes.append(
+                "enums that print their own description cannot be named by reflection: "
+                    + census.unnamedEnums.keys.sorted().joined(separator: ", ")
+            )
+        }
+        return GapSection(
+            title: "Record enum values",
+            unit: "values",
+            done: gaps.enums.done,
+            left: gaps.enums.left.map { ($0.name, $0.records) },
+            usesUnit: "records that use it",
+            notes: notes
+        )
+    }
+
+    private func valueGaps() throws -> (RecordValueGaps, RecordFieldCensus) {
+        _ = try requirePlugins()
+        guard let reads = valueReads, let census = recordSweep.fields else {
+            throw CLIError.usage("the flags and enums sections need --value-reads")
+        }
+        return (RecordValueGaps(census: census, reads: reads), census)
+    }
+
+    private static func unknownNote(_ types: Set<String>) -> [String] {
+        guard !types.isEmpty else { return [] }
+        return [
+            "\(types.count) types are not in the list, so the index is older than the code: "
+                + types.sorted().prefix(5).joined(separator: ", ")
+        ]
+    }
+
     func magic() throws -> GapSection {
         var skipped = SkippedRecords()
         let effects = try requirePlugins().decodeRecords(of: "MGEF", skipped: &skipped) {

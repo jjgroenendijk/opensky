@@ -7,9 +7,12 @@
 #   GAPS_OPTION  more gaps options, such as --only papyrus,perks or --limit 20
 #
 # Writes .logs/gaps/<UTC timestamp>/gaps.txt and summary.md, and prints the summary
-# table. The fields section first builds the index store (tools/lint-index/build-index.sh)
-# and lists the record fields engine code reads in field-reads.tsv beside them. A run of every section (no --only) also puts summary.md into README.md,
-# between the gaps markers. The report holds names and counts only, no game content.
+# table. The fields, flags, and enums sections first build the index store
+# (tools/lint-index/build-index.sh) and list the record fields, flag bits, and enum cases
+# engine code reads in field-reads.tsv and value-reads.tsv beside them. A run of every
+# section (no --only) also puts summary.md into README.md, between the gaps markers. The
+# shallow section first runs tools/shallow-handlers over src/Sources into
+# shallow-handlers.tsv. The report holds names and counts only, no game content.
 set -eu
 
 # shellcheck source=tools/release-products.sh
@@ -23,23 +26,31 @@ echo "[INFO] run directory: $run_dir"
 
 every_section=1
 needs_fields=1
+needs_shallow=1
 previous=
 for arg in "$@"; do
     [ "$arg" = "--only" ] && every_section=0
     if [ "$previous" = "--only" ]; then
-        case ",$arg," in *,fields,*) ;; *) needs_fields=0 ;; esac
+        case ",$arg," in *,fields,* | *,flags,* | *,enums,*) ;; *) needs_fields=0 ;; esac
+        case ",$arg," in *,shallow,*) ;; *) needs_shallow=0 ;; esac
     fi
     previous=$arg
 done
+
+if [ "$needs_shallow" -eq 1 ]; then
+    "$root/tools/shallow-handlers/build.sh" "$root" "$run_dir/shallow-handlers.tsv"
+    set -- "$@" --shallow-handlers "$run_dir/shallow-handlers.tsv"
+fi
 
 if [ "$needs_fields" -eq 1 ]; then
     (
         cd "$root"
         # shellcheck source=tools/lint-index/build-index.sh
         . "$root/tools/lint-index/build-index.sh"
-        python3 tools/lint-index/record-field-reads.py "$store" . "$run_dir/field-reads.tsv"
+        python3 tools/lint-index/record-field-reads.py "$store" . "$run_dir/field-reads.tsv" \
+            "$run_dir/value-reads.tsv"
     )
-    set -- "$@" --field-reads "$run_dir/field-reads.tsv"
+    set -- "$@" --field-reads "$run_dir/field-reads.tsv" --value-reads "$run_dir/value-reads.tsv"
 fi
 
 status=0

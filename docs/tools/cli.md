@@ -114,7 +114,7 @@ the number. A summary line goes to stderr.
 | `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](/engine/ess-import.md)) |
 | `ess locks <save.ess>` | Each lock change form in a save: reference, stored level, flags, and key, beside the plugin's `XLOC` level and flags. It ends with a count of leveled locks by authored and stored level ([locks](/engine/locks.md)) |
 | `ess list <folder>` | Each save's header in a folder |
-| `gaps [--only a,b] [--limit n] [--summary-out path] [--field-reads path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table; the `fields` section needs `--field-reads`, the list `make rank-gaps` writes from the index store ([gap report](/tools/gaps.md)) |
+| `gaps [--only a,b] [--limit n] [--summary-out path] [--field-reads path] [--value-reads path] [--shallow-handlers path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table; the `fields` section needs `--field-reads`, the `flags` and `enums` sections need `--value-reads`, and the `shallow` section needs `--shallow-handlers`: the lists `make rank-gaps` writes from the index store and the source ([gap report](/tools/gaps.md)) |
 
 ### World
 

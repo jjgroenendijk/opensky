@@ -51,6 +51,19 @@ nonisolated public struct PerkGapCensus: Equatable, Sendable {
         })
     }
 
+    /// Distinct functions the data uses that the evaluator computes.
+    public var computedFunctionCount: Int {
+        functions.keys.count { PerkEntryPointEvaluator.supports($0) }
+    }
+
+    /// Functions the evaluator computes that answer a constant whatever the value and the
+    /// payload, most effects first.
+    public var shallowFunctions: [(name: String, count: Int)] {
+        Self.ranked(functions.filter {
+            PerkEntryPointEvaluator.supports($0.key) && PerkEntryPointEvaluator.isShallow($0.key)
+        })
+    }
+
     private static func ranked(
         _ counts: [some CustomStringConvertible: Int]
     ) -> [(name: String, count: Int)] {

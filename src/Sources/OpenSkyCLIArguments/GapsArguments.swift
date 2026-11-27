@@ -4,8 +4,9 @@ public import ArgumentParser
 
 public struct GapsArguments: CLICommandArguments {
     public static let sectionKeys = [
-        "papyrus", "events", "conditions", "records", "fields", "settings", "magic", "perks",
-        "packages", "behavior", "animations", "meshes", "textures", "audio", "swf"
+        "papyrus", "events", "conditions", "records", "fields", "flags", "enums", "settings",
+        "shallow", "magic", "perks", "packages", "behavior", "animations", "meshes", "textures",
+        "audio", "swf"
     ]
 
     public static let configuration = CommandConfiguration(
@@ -39,6 +40,24 @@ public struct GapsArguments: CLICommandArguments {
         )
     )
     public var fieldReads: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "The record flag bit and enum case reads list that make rank-gaps writes from the "
+                + "index store. The flags and enums sections need it.",
+            valueName: "path"
+        )
+    )
+    public var valueReads: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "The handler list that make rank-gaps writes with tools/shallow-handlers. "
+                + "The shallow section needs it.",
+            valueName: "path"
+        )
+    )
+    public var shallowHandlers: String?
 
     public init() {}
 
@@ -60,6 +79,16 @@ public struct GapsArguments: CLICommandArguments {
         if sections.contains("fields"), fieldReads == nil {
             throw ValidationError(
                 "the fields section needs --field-reads; make rank-gaps writes the list"
+            )
+        }
+        if !Set(sections).isDisjoint(with: ["flags", "enums"]), valueReads == nil {
+            throw ValidationError(
+                "the flags and enums sections need --value-reads; make rank-gaps writes the list"
+            )
+        }
+        if sections.contains("shallow"), shallowHandlers == nil {
+            throw ValidationError(
+                "the shallow section needs --shallow-handlers; make rank-gaps writes the list"
             )
         }
         try OptionCheck.atLeast(limit, 1, "--limit")

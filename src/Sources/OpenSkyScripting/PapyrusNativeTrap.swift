@@ -47,7 +47,8 @@ extension PapyrusNativeFunctions.TrapNatives {
             }
             return .returned(nthLinkedReference(of: target.key, count: count, world: target.world))
         }
-        // OpenSky never breaks a lock: a failed pick only costs the pick.
+        // Matches the game: forcing a lock open is a Fallout feature (CK wiki,
+        // "GetIsLockBroken"), so a failed pick costs only the pick and no lock breaks.
         reference("IsLockBroken", into: &registry) { _, _ in .returned(.boolean(false)) }
         registry.register(PapyrusNativeFunction(
             scriptName: "Utility",

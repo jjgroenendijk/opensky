@@ -106,7 +106,7 @@ extension PapyrusNativeFunctions.GameSessionNatives {
             }
             return .returned(.none)
         }
-        // A link to Bethesda's debug server; nothing listens, as in a retail game.
+        // Matches the game: a link to Bethesda's debug server, which no retail game reaches.
         registry.register(PapyrusNativeFunction(
             scriptName: "Debug", functionName: "DBSendPlayerPosition"
         ) { _, _ in .returned(.none) })
