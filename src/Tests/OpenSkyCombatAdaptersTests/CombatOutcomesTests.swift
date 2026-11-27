@@ -1,9 +1,12 @@
 // The combat world runs the coordinator's commands and shows kills and blood.
 
+import Foundation
 import OpenSkyCombat
 import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyGameData
 import OpenSkyPerceptionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -107,5 +110,33 @@ struct CombatOutcomesTests {
         host.fakeRagdollWorld.zeroHealthOutcomeResult = .dies
         #expect(adapter.canBeKilled(Self.foe, by: .player))
         #expect(host.fakeRagdollWorld.zeroHealthOutcomeCalls.map(\.key) == [Self.foe])
+    }
+
+    /// The player in first person hears `XNAM`, anyone else `SNAM`; each shot is a
+    /// detection event at the weapon's `VNAM` level.
+    @Test func aShotPlaysItsFireSoundAndAlertsListeners() throws {
+        let bow = FormID(0x300)
+        var level = Data()
+        level.appendUInt32(2)
+        let file = try ESMFixture.plugin(records: [ESMFixture.record(
+            "WEAP", formID: bow.rawValue,
+            data: ESMFixture.field("DATA", InventoryFixture.weaponData(
+                value: 10, weight: 5, damage: 7
+            )) + InventoryFixture.formIDField("SNAM", 0x51)
+                + InventoryFixture.formIDField("XNAM", 0x52) + ESMFixture.field("VNAM", level)
+        )])
+        host.fakeCombat.items = ItemDefinitionStore(file: file)
+        let director = FakeWorldAudioSoundDirectorPort()
+        host.fakeAudio.soundDirector = director
+        let perception = FakePerceptionRuntimePort()
+        perception.settings = .synthetic
+        host.fakePerception.runtime = perception
+        adapter.run([
+            .weaponFired(bow, by: .player, at: .zero, firstPerson: true),
+            .weaponFired(bow, by: Self.foe, at: .zero, firstPerson: false),
+            .weaponFired(FormID(0x399), by: Self.foe, at: .zero, firstPerson: false)
+        ])
+        #expect(director.playSoundCalls.map(\.formID) == [FormID(0x52), FormID(0x51)])
+        #expect(perception.noteSoundEventCalls.map(\.owner) == [.player, Self.foe])
     }
 }

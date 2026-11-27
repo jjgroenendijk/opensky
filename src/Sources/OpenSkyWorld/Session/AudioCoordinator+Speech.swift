@@ -38,7 +38,7 @@ struct SpeechChannel {
     var isWaiting = false
     var playing: VoicePlayback?
     var lip: LipSyncPlayback?
-    var options = SpokenLineOptions.standard
+    var options: SpokenLineOptions
     /// Runs when the last file played to its end, not when the line is stopped.
     var finished: (() -> Void)?
 }

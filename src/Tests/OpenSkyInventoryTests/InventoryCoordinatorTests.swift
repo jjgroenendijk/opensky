@@ -116,6 +116,7 @@ struct InventoryCoordinatorTests {
         )
         #expect(harness.coordinator.itemActions.dropPlayerItem(nil, count: 1).text
             .hasPrefix("Dropped 1 ×"))
+        #expect(harness.world.itemSounds == [Fixture.lockpickPutDownSound])
         let inventory = try #require(harness.coordinator.runtime?.inventory)
         #expect(inventory.count(of: Fixture.lockpick, in: .player) == 2)
     }
@@ -462,6 +463,7 @@ extension InventoryCoordinatorTests {
         var activateLabel: String?
         var crosshairInteraction: PlacedInteraction?
         var placement: DropPlacement?
+        var itemSounds: [FormID] = []
         var bounty: Int32 = 0
         var gameDaysPassed: Float?
         var caughtDays: [ReferenceKey: Float] = [:]
@@ -495,6 +497,10 @@ extension InventoryCoordinatorTests {
 
         func dropPlacement(of _: FormID?) -> DropPlacement? {
             placement
+        }
+
+        func playItemSound(_ sound: FormID, at _: SIMD3<Float>) {
+            itemSounds.append(sound)
         }
 
         func nearestActorEntry() -> RuntimeReferenceEntry? {

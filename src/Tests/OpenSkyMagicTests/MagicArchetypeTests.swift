@@ -2,11 +2,14 @@
 // what it forces on an actor, and what it asks the world to do. Semantics: the
 // Creation Kit wiki Magic Effect page, cited at `MagicArchetypeRule`.
 
+import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
@@ -312,5 +315,30 @@ struct MagicArchetypeTests {
         #expect(line.contains("calm: \(MagicArchetypeRule.influence(.calm).summary)"))
         #expect(line.contains("at magnitude 9.0"))
         #expect(MagicEffectControlReadout.influenceText(for: snapshot).contains("calmed"))
+    }
+}
+
+extension MagicArchetypeTests {
+    /// A disarm unequips every held weapon except one flagged `Can't Drop` (DNAM 0x8).
+    @Test func aDisarmKeepsAWeaponThatCannotDrop() throws {
+        func weapon(_ formID: FormID, flags: UInt16) -> Data {
+            ESMFixture.record("WEAP", formID: formID.rawValue, data: ESMFixture.field(
+                "DATA", InventoryFixture.weaponData(value: 10, weight: 5, damage: 7)
+            ) + ESMFixture.field("DNAM", InventoryFixture.weaponDNAM(
+                animation: 1, speed: 1, reach: 1, flags: flags
+            )))
+        }
+        let (loose, bound) = (FormID(0xA01), FormID(0xA02))
+        let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords
+            + ActiveEffectFixture.archetypeRecords
+            + [weapon(loose, flags: 0), weapon(bound, flags: 0x8)])
+        let equipment = FakeHandEquipment()
+        equipment.worn = [loose, bound]
+        world.inventory = FakeInventory(baselines: InventoryBaselineResolver.build(from: file))
+        world.equipment = equipment
+        let coordinator = try makeCoordinator()
+        Self.cast(Archetype.disarm, magnitude: 50, on: coordinator)
+        #expect(equipment.worn == [bound])
+        #expect(coordinator.effects?.store.miscStats.value("Weapons Disarmed") == 1)
     }
 }

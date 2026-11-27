@@ -12,6 +12,7 @@ import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 import Testing
 
 @MainActor
@@ -173,5 +174,13 @@ struct InventoryWorldAdapterTests {
             ConditionList(), sourcePlugin: "Skyrim.esm", merchant: Self.key
         ) == nil)
         #expect(host.fakeRuntimeState.conditionContextCalls.count == 2)
+    }
+
+    /// An item's pickup or putdown sound plays at the item, even while menus pause sound.
+    @Test func anItemSoundIsForcedAtItsPosition() {
+        let director = FakeWorldAudioSoundDirectorPort()
+        host.fakeAudio.soundDirector = director
+        adapter.playItemSound(FormID(0x51), at: SIMD3(1, 2, 3))
+        #expect(director.forcePlaySoundCalls.map(\.formID) == [FormID(0x51)])
     }
 }

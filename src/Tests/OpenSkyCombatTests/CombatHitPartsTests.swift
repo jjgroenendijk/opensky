@@ -36,6 +36,7 @@ struct CombatHitPartsTests {
         #expect(part.meleeResolvedWeapon(nil) == nil)
         #expect(!part.meleeSweeps(blow))
         #expect(part.meleePowerAttackStamina(5, weapon: nil) == 10)
+        #expect(part.meleeAttackData(event: "attackStart") == nil)
         part.applyMeleeHitSpell(blow, on: Self.foe)
         #expect(world.spellHits.isEmpty)
         #expect(!part.canPowerBash())

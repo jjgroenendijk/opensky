@@ -285,6 +285,8 @@ struct AlchemyCoordinatorTests {
 
 @MainActor
 final class FakeAlchemyWorld: InventoryWorld {
+    func playItemSound(_: FormID, at _: SIMD3<Float>) {}
+
     var hidesQuestItems: Bool {
         false
     }

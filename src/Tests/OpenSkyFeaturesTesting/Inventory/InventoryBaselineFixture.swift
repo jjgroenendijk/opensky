@@ -11,6 +11,8 @@ public import OpenSkyInventoryInterface
 public enum InventoryBaselineFixture {
     public static let gold = FormID(0x0000_000F)
     public static let lockpick = FormID(0x0000_0100)
+    /// The lockpick's `ZNAM` put-down sound.
+    public static let lockpickPutDownSound = FormID(0x0000_0105)
     public static let key = FormID(0x0000_0110)
     public static let sword = FormID(0x0000_0200)
     public static let greatsword = FormID(0x0000_0210)
@@ -56,7 +58,10 @@ public enum InventoryBaselineFixture {
 
     private static func miscRecords() -> Data {
         item("MISC", formID: gold.rawValue, editorID: "Gold001", value: 1, weight: 0)
-            + item("MISC", formID: lockpick.rawValue, editorID: "Lockpick", value: 5, weight: 0)
+            + item(
+                "MISC", formID: lockpick.rawValue, editorID: "Lockpick", value: 5, weight: 0,
+                extra: InventoryFixture.formIDField("ZNAM", lockpickPutDownSound.rawValue)
+            )
     }
 
     /// Two weapons on either side of the one-hand / two-hand EQUP split, each
@@ -154,13 +159,14 @@ public enum InventoryBaselineFixture {
         formID: UInt32,
         editorID: String,
         value: Int32,
-        weight: Float = 0
+        weight: Float = 0,
+        extra: Data = Data()
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         fields += ESMFixture.field(
             "DATA", InventoryFixture.valueWeightData(value: value, weight: weight)
         )
-        return ESMFixture.record(type, formID: formID, data: fields)
+        return ESMFixture.record(type, formID: formID, data: fields + extra)
     }
 
     // MARK: - Leveled lists

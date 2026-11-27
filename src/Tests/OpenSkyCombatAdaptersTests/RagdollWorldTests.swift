@@ -1,7 +1,7 @@
 // The ragdoll world runs the coordinator's commands and reads bodies, health, and deaths.
 
 import OpenSkyCombat
-import OpenSkyCombatAdapters
+@testable import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -167,5 +167,12 @@ struct RagdollWorldTests {
             "Mauls", "Bunnies Slaughtered"
         ])
         #expect(bridge.isInFactionCalls.map(\.faction) == [.generated(9)])
+    }
+
+    /// The `ACBS` bleedout override is in health points, so it becomes a share of the
+    /// permanent maximum; an actor with no health has none.
+    @Test func theBleedoutOverrideIsAShareOfMaximumHealth() {
+        #expect(RagdollRecoveryAdapter.RecoveryReads.share(points: 40, maximum: 200) == 0.2)
+        #expect(RagdollRecoveryAdapter.RecoveryReads.share(points: 40, maximum: 0) == 0)
     }
 }

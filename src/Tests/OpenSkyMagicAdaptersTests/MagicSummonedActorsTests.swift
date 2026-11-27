@@ -47,6 +47,21 @@ struct MagicSummonedActorsTests {
         #expect(perception.noteSummonCalls.map(\.caster) == [.player])
     }
 
+    /// A self-cast summon stands ahead of the player, along the player's facing, and turns
+    /// back to face the player.
+    @Test func aSelfCastSummonStandsAheadOfThePlayer() throws {
+        host.fakeGameSession = FakeGameSessionPort()
+        host.fakeStreamer.currentCellLocation = Self.cell
+        host.fakeWorldState.allocateGeneratedKeyResult = .generated(9)
+        host.fakeCombat.meleeAttacker = MeleeAttacker(key: .player, feet: .zero, facing: 0)
+        #expect(adapter.summonActor(FormID(0x30), at: .ahead(searchRadius: 512), for: .player)
+            == .generated(9))
+        let spawn = try #require(host.fakeWorldState.setCalls.compactMap {
+            $0.component as? ReferenceSpawnState
+        }.first)
+        #expect(spawn.placement.position.x == 256)
+    }
+
     @Test func thePlayersAllyIsCalmAndCommanded() {
         adapter.commandActor(Self.actor, for: .player)
         #expect(loop.setHostilityCalls.map(\.hostility) == [.neutral])

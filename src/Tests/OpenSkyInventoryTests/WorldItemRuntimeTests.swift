@@ -282,4 +282,13 @@ struct WorldItemRuntimeTests {
         #expect(abs(turned.x) < 1e-5 && abs(turned.y - 1) < 1e-5)
         #expect(abs(DropFan.advance(6, by: 0.5) - (6.5 - 2 * .pi)) < 1e-5)
     }
+
+    /// A wall stops the item short; an item with no bounds still sweeps a small sphere.
+    @Test func aWallShortensTheDrop() {
+        let reach = DropReach(distance: 100, radius: 0)
+        #expect(reach.sweepRadius == 1)
+        #expect(reach.stopping(at: 30).travel == 30)
+        #expect(reach.stopping(at: -5).travel == 0)
+        #expect(reach.stopping(at: nil).travel == 100)
+    }
 }
