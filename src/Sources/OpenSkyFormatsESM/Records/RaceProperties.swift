@@ -15,13 +15,9 @@ nonisolated public struct GenderPair<Value: Equatable & Sendable>: Equatable, Se
     }
 }
 
+/// The RACE DATA values beyond `Race.Stats` and `Race.Flags`, which hold the skill
+/// boosts, flags, starting values, carry weight, mass, regeneration, and unarmed damage.
 nonisolated public struct RaceProperties: Equatable, Sendable {
-    nonisolated struct SkillBoost: Equatable, Sendable {
-        /// An actor-value index, -1 for none.
-        let skill: Int8
-        let boost: Int8
-    }
-
     /// Mount data: where a rider sits, steps off, and the camera goes.
     nonisolated public struct MountOffsets: Equatable, Sendable {
         let mount: SIMD3<Float>
@@ -32,19 +28,11 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
         public static let fallbackDismount = SIMD3<Float>(-50, 0, 65)
     }
 
-    let skillBoosts: [SkillBoost]
     /// Two bytes xEdit leaves unnamed.
     let unknown: UInt16
     /// The height every actor of the race is drawn and moves at, per sex; 1 is the model's.
     public let height: GenderPair<Float>
     let weight: GenderPair<Float>
-    /// The flags `Race.Flags` names in part.
-    let flags: UInt32
-    let startingHealth: Float
-    let startingMagicka: Float
-    let startingStamina: Float
-    let baseCarryWeight: Float
-    let baseMass: Float
     public let accelerationRate: Float
     public let decelerationRate: Float
     /// 0 small, 1 medium, 2 large, 3 extra large.
@@ -54,10 +42,6 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     let hairBipedObject: Int32
     public let injuredHealthPercent: Float
     let shieldBipedObject: Int32
-    let healthRegen: Float
-    let magickaRegen: Float
-    let staminaRegen: Float
-    let unarmedDamage: Float
     let unarmedReach: Float
     let bodyBipedObject: Int32
     let aimAngleTolerance: Float
@@ -70,18 +54,11 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
     public let mountOffsets: MountOffsets?
 
     init(_ reader: inout BinaryReader) throws {
-        skillBoosts = try (0 ..< 7).map { _ in
-            try SkillBoost(skill: reader.readInt8(), boost: reader.readInt8())
-        }
+        reader.skip(14) // skill boosts: Race.Stats
         unknown = try reader.readUInt16()
         height = try GenderPair(male: reader.readFloat32(), female: reader.readFloat32())
         weight = try GenderPair(male: reader.readFloat32(), female: reader.readFloat32())
-        flags = try reader.readUInt32()
-        startingHealth = try reader.readFloat32()
-        startingMagicka = try reader.readFloat32()
-        startingStamina = try reader.readFloat32()
-        baseCarryWeight = try reader.readFloat32()
-        baseMass = try reader.readFloat32()
+        reader.skip(24) // flags, starting values, carry weight, mass: Race.Stats and Race.Flags
         accelerationRate = try reader.readFloat32()
         decelerationRate = try reader.readFloat32()
         size = try reader.readUInt32()
@@ -89,10 +66,7 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
         hairBipedObject = try reader.readInt32()
         injuredHealthPercent = try reader.readFloat32()
         shieldBipedObject = try reader.readInt32()
-        healthRegen = try reader.readFloat32()
-        magickaRegen = try reader.readFloat32()
-        staminaRegen = try reader.readFloat32()
-        unarmedDamage = try reader.readFloat32()
+        reader.skip(16) // regeneration and unarmed damage: Race.Stats
         unarmedReach = try reader.readFloat32()
         bodyBipedObject = try reader.readInt32()
         aimAngleTolerance = try reader.readFloat32()

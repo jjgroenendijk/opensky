@@ -25,9 +25,6 @@ extension FieldCensus {
         count("RACE mount", details.properties?.mountOffsets, [
             ("mount", { $0.mount }), ("dismount", { $0.dismount }), ("camera", { $0.camera })
         ])
-        count("RACE skill boost", details.properties?.skillBoosts ?? [], [
-            ("skill", { $0.skill }), ("boost", { $0.boost })
-        ])
         countAttacks("RACE attack", details.attacks)
         count("RACE movement", details.movementTypes, [("movementType", { $0.movementType })])
         countHead([details.headData.male, details.headData.female])

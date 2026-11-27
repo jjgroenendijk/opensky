@@ -32,23 +32,17 @@ extension FieldCensus {
 
     static var raceProperties: [Probe<RaceProperties>] {
         [
-            ("skillBoosts", { $0.skillBoosts }), ("unknown", { $0.unknown }),
-            ("height", { $0.height.male }), ("weight", { $0.weight.male }), ("flags", { $0.flags }),
-            ("startingHealth", { $0.startingHealth }), ("startingMagicka", { $0.startingMagicka }),
-            ("startingStamina", { $0.startingStamina }), (
-                "baseCarryWeight",
-                { $0.baseCarryWeight }
-            ),
-            ("baseMass", { $0.baseMass }), ("accelerationRate", { $0.accelerationRate }),
+            ("unknown", { $0.unknown }),
+            ("height", { $0.height.male }), ("weight", { $0.weight.male }),
+            ("accelerationRate", { $0.accelerationRate }),
             ("decelerationRate", { $0.decelerationRate }),
             ("headBipedObject", { $0.headBipedObject }), (
                 "hairBipedObject",
                 { $0.hairBipedObject }
             ),
             ("injuredHealthPercent", { $0.injuredHealthPercent }),
-            ("shieldBipedObject", { $0.shieldBipedObject }), ("healthRegen", { $0.healthRegen }),
-            ("magickaRegen", { $0.magickaRegen }), ("staminaRegen", { $0.staminaRegen }),
-            ("unarmedDamage", { $0.unarmedDamage }), ("unarmedReach", { $0.unarmedReach }),
+            ("shieldBipedObject", { $0.shieldBipedObject }),
+            ("unarmedReach", { $0.unarmedReach }),
             ("bodyBipedObject", { $0.bodyBipedObject }),
             ("aimAngleTolerance", { $0.aimAngleTolerance }), ("flightRadius", { $0.flightRadius }),
             ("angularAccelerationRate", { $0.angularAccelerationRate }),
