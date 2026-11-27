@@ -468,7 +468,8 @@ extension CombatLoopWorldPart {
                 attacker: blow.attacker
             )
             return damage.applyHealthDamage(
-                amount, to: key, attacker: blow.attacker, kind: .melee, canSever: severs
+                amount, to: key, attacker: blow.attacker, kind: .melee, canSever: severs,
+                weaponOnHit: blow.weapon.flatMap { shared.items?.weapon($0)?.onHit } ?? 0
             )
         }
 

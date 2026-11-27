@@ -25,7 +25,8 @@ extension CombatShared {
             to target: ReferenceKey,
             attacker: ReferenceKey?,
             kind: CombatHitKind = .other,
-            canSever: Bool = false
+            canSever: Bool = false,
+            weaponOnHit: UInt32 = 0
         ) -> Bool {
             guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
             else { return false }
@@ -42,9 +43,10 @@ extension CombatShared {
                 shared.playerStruckTarget = target
             }
             if landed {
-                let hit = CombatHitRecord(
+                var hit = CombatHitRecord(
                     damage: scaled, kind: kind, attacker: attacker, canSever: canSever
                 )
+                hit.weaponOnHit = weaponOnHit
                 shared.world.recordHealthHit(hit, on: target)
                 if kind != .other {
                     shared.pendingCommands.append(.drewBlood(hit, target: target))

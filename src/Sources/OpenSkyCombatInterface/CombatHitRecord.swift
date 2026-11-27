@@ -19,6 +19,8 @@ nonisolated public struct CombatHitRecord: Equatable, Sendable {
     /// A standing power attack with an edged or heavy weapon, by an attacker with the
     /// decapitation perk of its weapon's skill.
     public var canSever: Bool
+    /// The weapon's `DNAM` On Hit setting, which changes a killing blow's cut.
+    public var weaponOnHit: UInt32 = 0
 
     public init(
         damage: Float,

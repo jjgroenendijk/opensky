@@ -20,7 +20,7 @@ struct WeaponRecordTests {
         fields += ESMFixture.field(
             "DNAM",
             InventoryFixture.weaponDNAM(
-                animation: 1, speed: 1, reach: 0.7, flags: 0x08, skill: 6
+                animation: 1, speed: 1, reach: 0.7, flags: 0x08, skill: 6, onHit: 2
             )
         )
         fields += ESMFixture.field(
@@ -49,6 +49,7 @@ struct WeaponRecordTests {
         #expect(weapon.flags == [.cannotDrop])
         #expect(weapon.skill == 6)
         #expect(weapon.stagger == 0.75)
+        #expect(weapon.onHit == 2)
         #expect(weapon.criticalData?.damage == 3)
         #expect(weapon.criticalData?.effect == FormID(0x0AB))
         #expect(weapon.criticalData?.percentMultiplier == 1)

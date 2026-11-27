@@ -29,10 +29,22 @@ nonisolated public enum BodyPartCut: Equatable, Sendable {
     ) -> Self {
         let explodes = part.isChanceAbsolute
             ? part.chance >= 100 || roll < part.chance
-            : roll * 100 < explodePercent * part.chance
+            : roll < explodePercent * part.chance / 100
         if explodes {
             return .explode
         }
         return roll < dismemberChance ? .sever : .none
+    }
+
+    /// The cut after the weapon's `DNAM` On Hit setting: 1 turns a success into a
+    /// sever, 2 into an explode, and 3 stops both.
+    public func applying(weaponOnHit setting: UInt32) -> Self {
+        guard self != .none else { return self }
+        switch setting {
+        case 1: return .sever
+        case 2: return .explode
+        case 3: return .none
+        default: return self
+        }
     }
 }

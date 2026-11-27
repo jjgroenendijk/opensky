@@ -75,7 +75,7 @@ extension RagdollCoordinator {
                 roll: deathRandom.percent(),
                 explodePercent: deathSettings.explodePartChance,
                 dismemberChance: deathSettings.dismemberChance
-            )
+            ).applying(weaponOnHit: hit?.weaponOnHit ?? 0)
             switch cut {
             case .explode: explode(key, node: part.node)
             case .sever: dismember(key)

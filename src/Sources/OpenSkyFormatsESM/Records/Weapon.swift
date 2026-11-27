@@ -66,6 +66,8 @@ nonisolated public struct Weapon: Sendable {
     public internal(set) var skill: Int32?
     /// DNAM stagger magnitude.
     public internal(set) var stagger: Float
+    /// DNAM 0x24 On Hit: 0 rolls as usual, 1 dismember only, 2 explode only, 3 neither.
+    public internal(set) var onHit: UInt32 = 0
     /// DNAM 0x34-0x3C: the Rumble tab's left and right motor strength and seconds.
     public internal(set) var rumble: Rumble
     public internal(set) var criticalData: CriticalData?
@@ -109,6 +111,7 @@ nonisolated public struct Weapon: Sendable {
         flags = payload.flags
         skill = payload.skill
         stagger = payload.stagger
+        onHit = payload.onHit
         rumble = payload.rumble
         criticalData = payload.criticalData
         enchantment = payload.enchantment
@@ -132,6 +135,7 @@ nonisolated public struct Weapon: Sendable {
         var flags = Flags()
         var skill: Int32?
         var stagger: Float = 0
+        var onHit: UInt32 = 0
         var rumble = Rumble(left: 0, right: 0, seconds: 0)
         var criticalData: CriticalData?
         var enchantment: FormID?
@@ -186,7 +190,7 @@ nonisolated public struct Weapon: Sendable {
             damage = try reader.readUInt16()
         }
 
-        /// DNAM: 100 bytes; the engine reads offsets 0x00 to 0x0C, 0x34 to 0x3C,
+        /// DNAM: 100 bytes; the engine reads offsets 0x00 to 0x0C, 0x24, 0x34 to 0x3C,
         /// 0x4C and 0x60 and skips the rest.
         private mutating func decodeWeaponData(_ field: ESMField) throws {
             guard field.data.count >= 0x64 else {
@@ -200,6 +204,8 @@ nonisolated public struct Weapon: Sendable {
             speed = try reader.readFloat32()
             reach = try reader.readFloat32()
             flags = try Flags(rawValue: reader.readUInt16())
+            reader.seek(to: 0x24)
+            onHit = try reader.readUInt32()
             reader.seek(to: 0x34)
             rumble = try Rumble(
                 left: reader.readFloat32(), right: reader.readFloat32(),
@@ -325,6 +331,7 @@ nonisolated extension Weapon {
         weapon.flags = template.flags
         weapon.skill = template.skill
         weapon.stagger = template.stagger
+        weapon.onHit = template.onHit
         weapon.rumble = template.rumble
         weapon.criticalData = template.criticalData
         weapon.details.inherit(from: template.details)
