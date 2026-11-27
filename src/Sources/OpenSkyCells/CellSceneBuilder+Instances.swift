@@ -92,6 +92,7 @@ nonisolated extension CellSceneBuilder.CellInstanceResolver {
                 continue
             }
             let surface = owner.objectBuilder.surface(for: resolved)
+                .withAlphaCutoff(ref.details.alpha?.x)
             if
                 var instance = loadInstance(
                     ref: ref, model: (modelPath, surface),

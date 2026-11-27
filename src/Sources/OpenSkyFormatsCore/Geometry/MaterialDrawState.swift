@@ -17,6 +17,8 @@ nonisolated public struct MaterialDrawState: Hashable, Sendable {
     public var screenDoor = false
     /// SLSF2 Tree_Anim: the vertex alpha is the wind weight of a leaf, not opacity.
     public var windWeighted = false
+    /// Alpha flag 0x8000: a placed reference's `XALP` cutoff replaces the test threshold.
+    public var takesPlacedAlphaCutoff = false
 
     public init() {}
 

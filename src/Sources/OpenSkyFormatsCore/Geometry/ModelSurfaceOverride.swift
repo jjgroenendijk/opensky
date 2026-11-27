@@ -23,6 +23,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     public let skinTextures: SkinTextures?
     /// A static's directional material, laid over every lit shape.
     public let projected: ProjectedMaterial?
+    /// A placed reference's `XALP` cutoff, 0 to 1, for shapes whose alpha flags take it.
+    public let alphaCutoff: Float?
 
     /// The textures one named shape draws instead of its own.
     public struct ShapeTextures: Hashable, Sendable {
@@ -66,9 +68,11 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         detailTexture: String? = nil,
         faceTintTexture: String? = nil,
         skinTextures: SkinTextures? = nil,
-        projected: ProjectedMaterial? = nil
+        projected: ProjectedMaterial? = nil,
+        alphaCutoff: Float? = nil
     ) {
         self.projected = projected
+        self.alphaCutoff = alphaCutoff
         self.faceTintTexture = faceTintTexture
         self.skinTextures = skinTextures
         self.diffuseTexture = diffuseTexture
@@ -88,14 +92,26 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             diffuseTexture: surface?.diffuseTexture, normalTexture: surface?.normalTexture,
             tint: surface?.tint, shapes: surface?.shapes ?? [], skinTone: skinTone,
             detailTexture: surface?.detailTexture, faceTintTexture: surface?.faceTintTexture,
-            skinTextures: surface?.skinTextures, projected: surface?.projected
+            skinTextures: surface?.skinTextures, projected: surface?.projected,
+            alphaCutoff: surface?.alphaCutoff
+        )
+    }
+
+    /// This override with a placed reference's `XALP` cutoff byte; nil keeps it as it is.
+    public func withAlphaCutoff(_ cutoff: UInt8?) -> ModelSurfaceOverride {
+        guard let cutoff else { return self }
+        return ModelSurfaceOverride(
+            diffuseTexture: diffuseTexture, normalTexture: normalTexture, tint: tint,
+            shapes: shapes, skinTone: skinTone, detailTexture: detailTexture,
+            faceTintTexture: faceTintTexture, skinTextures: skinTextures, projected: projected,
+            alphaCutoff: Float(cutoff) / 255
         )
     }
 
     public var isEmpty: Bool {
         diffuseTexture == nil && normalTexture == nil && tint == nil && shapes.isEmpty
             && skinTone == nil && detailTexture == nil && faceTintTexture == nil
-            && skinTextures == nil && projected == nil
+            && skinTextures == nil && projected == nil && alphaCutoff == nil
     }
 
     /// Part of a mesh cache key: two overrides that draw alike key alike.
@@ -106,6 +122,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             + (faceTintTexture.map { "|facetint:" + $0 } ?? "")
             + (skinTextures.map { "|skintex:" + $0.cacheKey } ?? "")
             + (projected.map { "|" + $0.cacheKey } ?? "")
+            + (alphaCutoff.map { "|cutoff:\($0)" } ?? "")
         let shapes = shapes.map {
             "\($0.shapeName.lowercased())=\($0.diffuseTexture ?? "-"),\($0.normalTexture ?? "-")"
         }
@@ -132,7 +149,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     lightMask: skin?.lightMask, specular: skin?.specular,
                     replacesTint: tint != nil, skinTone: material.tintsSkin ? skinTone : nil
                 ),
-                projected: projected
+                projected: projected, alphaCutoff: alphaCutoff
             )
         }
         for index in meshes.indices {
@@ -148,7 +165,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     diffuse: swap.diffuseTexture, normal: swap.normalTexture, detail: nil,
                     faceTint: nil, lightMask: nil, specular: nil
                 ),
-                projected: projected
+                projected: projected, alphaCutoff: alphaCutoff
             ))
             meshes[index] = Self.mesh(mesh, colors: mesh.colors, materialSlot: materials.count - 1)
         }
@@ -178,7 +195,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     private static func retextured(
         _ material: Material,
         textures: Textures,
-        projected: ProjectedMaterial?
+        projected: ProjectedMaterial?,
+        alphaCutoff: Float?
     ) -> Material {
         var shading = material.shading
         if let projected, material.effect == nil, !material.waterSurface {
@@ -211,7 +229,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             specularStrength: material.specularStrength,
             doubleSided: material.doubleSided,
             alphaBlend: material.alphaBlend,
-            alphaTestThreshold: material.alphaTestThreshold,
+            alphaTestThreshold: material.drawState.takesPlacedAlphaCutoff
+                ? alphaCutoff ?? material.alphaTestThreshold : material.alphaTestThreshold,
             additiveBlend: material.additiveBlend,
             effect: material.effect,
             waterSurface: material.waterSurface,
