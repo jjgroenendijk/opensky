@@ -38,8 +38,10 @@ nonisolated public struct RecordFieldGaps: Sendable, Equatable {
         public let records: Int
     }
 
-    /// Distinct fields the data fills and engine code reads.
+    /// Distinct fields the data fills and engine code reads, or the game does not use.
     public let done: Int
+    /// The part of `done` the game does not use (`RecordDataUnused`).
+    public let unused: Int
     /// Fields the data fills and only the decoder touches, most used first.
     public let left: [Row]
     /// Fields the data fills that the list does not name: the index is older than the code.
@@ -47,12 +49,16 @@ nonisolated public struct RecordFieldGaps: Sendable, Equatable {
 
     public init(census: RecordFieldCensus, reads: RecordFieldReads) {
         var done = 0
+        var unused = 0
         var left: [Row] = []
         var unknown: [String] = []
         for (key, field) in census.fields {
             switch reads.fields[key] {
             case true?:
                 done += 1
+            case false? where RecordDataUnused.reason(forField: key) != nil:
+                done += 1
+                unused += 1
             case false?:
                 left.append(Row(name: Self.label(key, field), records: field.records))
             case nil:
@@ -60,6 +66,7 @@ nonisolated public struct RecordFieldGaps: Sendable, Equatable {
             }
         }
         self.done = done
+        self.unused = unused
         self.left = left.sorted {
             $0.records == $1.records ? $0.name < $1.name : $0.records > $1.records
         }

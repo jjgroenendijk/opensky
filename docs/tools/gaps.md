@@ -201,6 +201,9 @@ The section has two halves:
   up to three record types that fill it, because one Swift type can decode several types,
   such as `DOOR` and `ACTI`.
 
+A field the game does not use counts as done, such as a list count or a Creation Kit note
+([record data the game does not use](/formats/unused-record-data.md)).
+
 A field is read when code in another engine module reads it, or when a declaration of the
 record module reads it and that declaration is read, such as a computed property another
 module calls. A write does not count, and neither does a read in the type's own
