@@ -11,9 +11,8 @@ tags: [engine, ui, menu, swf, inventory, scaleform]
 
 The inventory menu lists what the player carries, filters it by category, and equips, unequips,
 drops, or uses the selected row. It can show itself through the vanilla `Interface\inventorymenu.swf`
-movie. It is a [menu mode](/engine/menu-mode.md) consumer. Like the
-[system menu](/engine/system-menu.md), it works with no install, renderer, or movie. Only the movie
-layer needs them.
+movie. It is a [menu mode](/engine/menu-mode.md) consumer. Like the [system menu](/engine/system-menu.md),
+it works with no install, renderer, or movie. Only the movie layer needs them.
 
 This menu fills the inventory list data that the [ActionScript scope](/decisions/swf-as2-scope.md)
 decision left for later: `_CategoriesList`, `EntriesA`, and `iSelectedIndex`.
@@ -33,11 +32,8 @@ Three rules are choices, not results:
   really carries it, and hiding it would lose it.
 - Rows sort by name, then FormID. So two items with the same name always have the same order.
 
-A weapon or ammunition without the Creation Kit's Playable box gets no row, such as a creature's
-claws. The Creation Kit says such a weapon "is invisible to the player and cannot be used", and
-that playable ammunition is what the player can "see in containers". Unequipping one is refused
-with `sCantUnequipGeneric` ([refused actions](#refused-actions)). Sources:
-<https://ck.uesp.net/wiki/Weapons>, <https://ck.uesp.net/wiki/Ammo>.
+A non-playable weapon or ammunition, such as a creature's claws, gets no row, and unequipping
+one is refused ([refused actions](#refused-actions); <https://ck.uesp.net/wiki/Weapons>).
 
 Categories group items by record type, in the vanilla tab order: Favorites, All, Weapons (`WEAP`
 and `AMMO`), Apparel, Potions, Scrolls (`SCRL`), Food, Ingredients, Books, Keys (`KEYM`), and Misc.
@@ -147,8 +143,7 @@ favourite. In the container, barter, and gift menus the other side's rows get th
 shifted left by 10 bits, so a bit at 1024 or above marks a row of the other side.
 
 The engine sends the tabs as `text`, `flag`, and `bDontHide` triples after one null value. The text
-comes from the localized strings. Only an
-all tab and the divider have `bDontHide` true.
+comes from the localized strings. Only an all tab and the divider have `bDontHide` true.
 
 | Tab, English text | `flag`, player side | `flag`, other side |
 | --- | --- | --- |
@@ -345,7 +340,7 @@ installed `itemcard.swf` and its `InventoryDefines`:
 | `type` | the card page: `ICT_ARMOR` 1, `ICT_WEAPON` 2, `ICT_MISC` 3, `ICT_BOOK` 4, `ICT_FOOD` 5, `ICT_POTION` 6, `ICT_INGREDIENT` 8, `ICT_KEY` 9, `ICT_SOUL_GEMS` 12 |
 | `name`, `value`, `weight` | the header line |
 | `damage`, `armor` | the weapon and armour numbers |
-| `effects` | the effect text of a potion, food, weapon, or armour piece |
+| `effects` | the effect text of a potion, food, weapon, or armour piece; a weapon's or armour's non-empty `DESC` comes first |
 | `itemEffect0` to `itemEffect3`, `numItemEffects` | an ingredient's known effects; the movie shows `$UNKNOWN` for an index below `numItemEffects` that has no name |
 | `charge` | a weapon's charge left, in percent; the Charge button reads it |
 | `description` | a book's `CNAM` line. When it is not empty, the movie goes to its `Books_Description` frame and shows it in `BookDescriptionLabel` |

@@ -67,7 +67,7 @@ are read as on a REFR ([placed references](/formats/placed-references.md#other-r
 
 | offset | type | meaning |
 | --- | --- | --- |
-| `0x00` | uint32 | flags: `0x01` female, `0x08` respawn, `0x10` auto-calc stats, `0x20` unique, `0x80` PC level multiplier |
+| `0x00` | uint32 | flags: `0x01` female, `0x08` respawn, `0x10` auto-calc stats, `0x20` unique, `0x80` PC level multiplier; more below |
 | `0x04` | int16 | magicka offset |
 | `0x06` | int16 | stamina offset |
 | `0x08` | uint16 | level, or level multiplier x1000 when the PC flag is set |
@@ -84,6 +84,18 @@ are read as on a REFR ([placed references](/formats/placed-references.md#other-r
 (if auto-calc stats is on, otherwise seems to be random)". So they are the editor's own
 answer. OpenSky uses them only to check its derivation, never as input. They are signed: a
 creature with a negative magicka offset stores a negative value here.
+
+More `ACBS` flags and what the game does with them:
+
+| Bit | Effect |
+| --- | --- |
+| `0x4` | The `TIAS` tint presets are kept at load only when this bit is set. The chargen preset NPCs set it |
+| `0x10000` | No blood on a hit, like the race no-blood flags `0x2000` and `0x4000` |
+| `0x40000` | The bleedout threshold is the `ACBS` bleedout override |
+| `0x80000` | The actor uses the animations of the opposite sex |
+
+The game reads `0x100` and `0x100000` too, with effects not yet known. No reader of `0x4000`,
+`0x20000`, `0x200000`, `0x4000000`, or `0x10000000` is known.
 
 Template flags say which field groups come from the `TPLT` record: `0x0001` traits,
 `0x0002` stats, `0x0004` factions, `0x0008` spell list, `0x0010` AI data, `0x0020` AI
@@ -153,7 +165,7 @@ chance none.
 | --- | --- | --- |
 | `0x00` | 7 x (int8, int8) + uint16 | skill bonuses: actor value, then bonus |
 | `0x10` | float32 x 4 | male and female height, then male and female weight |
-| `0x20` | uint32 | flags: `0x1` playable, `0x2` FaceGen head |
+| `0x20` | uint32 | flags: `0x1` playable, `0x2` FaceGen head; more under "RACE DATA in the game" |
 | `0x24` | float32 x 3 | starting health, magicka, stamina |
 | `0x30` | float32 x 4 | base carry weight, base mass, acceleration, deceleration |
 | `0x40` | uint32 | size: 0 small, 1 medium, 2 large, 3 extra large |
@@ -172,6 +184,53 @@ One-Handed, Block, Smithing, Light Armor, and Speech +5, which matches UESP. Eve
 vanilla race has 300 carry weight, mass 1, unarmed damage 4, starting values 50/50/50, and
 regen 0.7/3/5 percent of the maximum per second. The Creation Kit says: "Health Regen: The
 percentage of total Health that is regenerated each second".
+
+### RACE DATA in the game
+
+How the game uses the `DATA` values. Each length below is in game units and is multiplied by the
+actor's scale.
+
+- Unarmed reach: an actor with no weapon, or with the built-in fists, reaches this far. It is not
+  multiplied by `fCombatDistance` and never combines with a weapon's reach. `NordRace` reaches 96
+  units unarmed ([melee combat](/engine/melee-combat.md#reach-and-the-hit-volume)).
+- Acceleration, deceleration, and angular acceleration: the movement controller gets 1 divided by
+  each value, or 1 when the value is near zero. So 1 is neutral, and a larger value ramps faster.
+  Turning to face a combat target also uses 1 / angular acceleration times
+  `fCombatPathingRotationAccelerationMult`.
+- Angular tolerance, in degrees: how close the actor must turn toward a point before it faces it.
+  With a ranged weapon type, `fAIUseWeaponToleranceDegrees` replaces it.
+- Aim angle tolerance, in degrees: the combat aim tolerance is the larger of this and
+  `fCombatAngleTolerance`.
+- Flight radius: while the actor flies, its path requests use this radius.
+- Shield biped object: the worn armour in that slot is the actor's shield. Head and hair: the race
+  menu rebuilds the head from them after a race change.
+- The male and female weights, and the two bytes after the skill pairs, have no known reader.
+
+More `DATA` flags:
+
+| Bit | Effect | Vanilla races |
+| --- | --- | --- |
+| `0x8` | The movement controller tilts the body front and back | Four-legged animals |
+| `0x10` | The movement controller tilts the body left and right | Mudcrab, spiders, mammoth |
+| `0x20` | Probably no shadow | Ice wraith, magic anomaly |
+| `0x200` | The actor cannot move, and its AI does not move it | `dunMiddenEmptyRace` |
+| `0x8000` | Head tracking through the behaviour graph | |
+| `0x10000` | Spell aim starts at the magic node | |
+| `0x40000` | Another collision layer for the body | |
+| `0x80000` | Health regenerates at the full rate in combat ([actor values](/engine/actor-values.md)) | Trolls, werewolf |
+| `0x100000` | The actor's paths may open doors | |
+| `0x200000` | The player may talk to the actor, unless overridden | |
+| `0x800000` | Part of the pickpocket check | |
+| `0x1000000` | Read when a non-player actor's character controller is built | Dragons |
+| `0x4000000` | A race change rebuilds the head parts and adds the race's default head parts | |
+| `0x8000000` | A race change rebuilds the head parts from the race | `WerewolfBeastRace` |
+| `0x20000000` | Several membrane shaders may play on the actor at once | |
+| `0x40000000` | The actor may hold an item in the left hand | |
+| `0x80000000` | An actor query returns it; its caller is not known | Mammoth, giant |
+
+No reader of `0x800` is known. Flags 2: `0x1` turns on velocity-obstacle avoidance, but only when
+the INI setting `bUseVelocityObstacles:Pathfinding` is on. `0x2` changes how the actor reacts to
+a hit from the player, and `0x10` is read by the mount checks; their exact effects are not known.
 
 Skeleton blocks come in this order (seen on `NordRace`): `MNAM`, male `ANAM` + `MODT`,
 `FNAM`, female `ANAM` + `MODT`. Later `MNAM`/`FNAM` markers open other blocks, but those

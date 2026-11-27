@@ -122,6 +122,17 @@ this is a multiplier used in the reach formula: `fCombatDistance * NPCScale * We
 xEdit names the same `DNAM` member at the same offset. `fCombatDistance` is 141.000 on the local
 install.
 
+That formula covers a melee weapon. The other cases, each times the actor's scale:
+
+| Case | Reach |
+| --- | --- |
+| No weapon, or the built-in fists | The race's unarmed reach, without `fCombatDistance` |
+| A shield bash | `fCombatBashReach` (141 in `Skyrim.esm`) |
+| A bow, staff, or crossbow | 128 |
+
+For the player in a kill camera, the reach is also multiplied by `fVATSMeleeReachMult`. For
+example, `NordRace` at scale 1 reaches 96 units unarmed, and a sword with reach 1 reaches 141.
+
 The swing volume is a swept capsule. A swing is a blade segment moving along an arc, and a swept
 capsule is a safe outer shape for it. The arc is not rebuilt from the animation pose. A hit from
 one sampled frame of a 30 Hz clip lands wherever that frame was, and the contact frame is one mark,
