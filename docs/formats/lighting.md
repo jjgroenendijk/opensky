@@ -72,19 +72,28 @@ float32. When `DALC` exists, it replaces the directional ambient block of `DATA`
 
 | Offset | Bytes | Value |
 | --- | --- | --- |
-| 0 | 4 | Time, int32 |
+| 0 | 4 | Time, int32: how long a carried light burns, in seconds |
 | 4 | 4 | Radius, uint32 |
 | 8 | 4 | Color RGBX |
 | 12 | 4 | Flags, uint32 |
-| 16 | 4 | Falloff exponent, float32 |
-| 20 | 4 | FOV, float32. Skipped |
+| 16 | 4 | Falloff exponent, float32; 0 becomes 1 at load |
+| 20 | 4 | FOV, float32; 0 becomes 90 at load |
 | 24 | 4 | Near clip, float32. Skipped |
-| 28 | 4 | Flicker period, float32 |
+| 28 | 4 | Flicker period, float32; clamped to 0 to 1 at load |
 | 32 | 4 | Flicker intensity amplitude, float32 |
 | 36 | 4 | Flicker movement amplitude, float32 |
 | 40 | 8 | Value (uint32) and weight (float32), used by a light that can be carried |
 
-`FNAM` is the fade, a float32. Without it the fade is 1.
+`FNAM` is the fade, a float32. Without it the fade is 1. `SNAM` is the looping sound a
+placed light plays.
+
+The time is each carried light's starting burn time. While an actor holds the light, the
+time left drops by the frame time. At 0 or below, the light is unequipped and one is removed
+from the inventory. A negative time never runs out.
+
+The game sets flag `0x001` itself when the light's model is set up, from the model's nodes,
+so the record's value does not matter. Flag `0x020` makes a light that no actor holds skip
+creation. Nothing reads flag `0x2000`.
 
 Flag `0x002` marks a light that can be carried, such as a torch. OpenSky lists it as an
 inventory item with its `FULL` name, value, and weight.
@@ -103,7 +112,8 @@ doubles it. A flickering light gets smooth random brightness and moves by up to 
 amplitude. A pulsing light follows a sine wave. The brightness swings by the intensity
 amplitude, clamped to 0 to 1. [WARNING] The curve shapes, the period unit, and the slow factor
 are OpenSky choices, not checked against the game. xEdit shows the period with a 0.01
-display scale, so the stored unit may differ.
+display scale, and the game clamps the stored value to 0 to 1, so seconds per cycle is likely
+wrong.
 
 It is the player setting `rendering.lightAnimation`, also on the launcher's Graphics page.
 

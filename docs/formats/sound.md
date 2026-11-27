@@ -28,7 +28,7 @@ what the settings do.
 | `EDID` | zstring | Editor ID |
 | `CNAM` | uint32 | Descriptor type |
 | `GNAM` | FormID | Sound category (`SNCT`) |
-| `SNAM` | FormID | Alternate descriptor |
+| `SNAM` | uint32 | Kept as a raw number; nothing reads it while the game runs |
 | `ANAM` | zstring | One sound file path. Repeats, in order |
 | `ONAM` | FormID | Output model |
 | `FNAM` | uint32 | Older flags, below |
@@ -48,7 +48,20 @@ any other value as unknown. It does not guess what it means.
 `FNAM` is the older flags word, and shares its value with `LNAM`: the later field wins. Three
 bits move to their `LNAM` place: `0x10` is loop, `0x02000000` fast envelope, and `0x04000000`
 slow envelope. 63 `Skyrim.esm` descriptors use `FNAM`, with values 0, 1, 2, and `0x11` (a loop).
-None has both fields. OpenSky reads the looping from `FNAM` in the same way.
+None has both fields. OpenSky reads the looping from `FNAM` in the same way. Every other bit of
+the word, from either field, goes into the flags of each play unchanged. So the low bits
+`0x1`, `0x2`, and `0x4` join the output routing bits below.
+
+How the game uses the other fields when the descriptor plays:
+
+- `CTDA` conditions run with the player as subject and target. When they fail, the sound does
+  not play.
+- `ONAM`, the output model: with its flag bit 0 set, a listener beyond the model's maximum
+  attenuation distance, or a model with no attenuation curve, means the sound does not play.
+  The model also picks the routing: flag bit 0 with a non-zero second value routes through
+  bit 4, flag bit 0 alone through bit 1, and no flag or no model through bit 2. The model's
+  attenuation data goes to the player of the sound
+  ([output models](/formats/sound-output-reverb.md)).
 
 `LNAM` byte 3 is the rumble send: the low four bits drive one motor and the high four bits the
 other, each at the four-bit value times 1 percent of full strength
