@@ -45,6 +45,9 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `conditions` | A condition function index in a `CTDA` | The whole-game condition registry answers it | Conditions in all active plugins |
 | `records` | A record type in the active plugins | It has a decoder that neither throws nor leaves a field unread | Records |
 | `fields` | A stored field of a decoded record type that some record fills | Engine code reads it after decoding | Records that fill it |
+| `flags` | A bit of a decoded flags field that some record sets | Engine code reads the bit's named constant | Records that set it |
+| `enums` | A case of a decoded enum field that some record uses | Engine code names the case | Records that use it |
+| `shallow` | A Papyrus native, condition function, or perk entry-point function that has a handler | The handler does work, or does nothing on purpose | Call sites, conditions, perk effects |
 | `settings` | A game setting (`GMST`) a plugin defines | A settings reader asks for it | Plugins that set it |
 | `magic` | A magic effect archetype | The active-effect planner applies it | `MGEF` records |
 | `perks` | A perk entry point, and an entry-point function | Engine code reads the entry point; the evaluator computes the function | Perk effects |
@@ -56,9 +59,9 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `audio` | A sound file variant, and lip sync data | The engine opens and decodes it | Files |
 | `swf` | An interface movie that talks to the engine, and a SWF tag | A menu bridge drives the movie; a decoder reads the tag | GameDelegate names, tags |
 
-The `records`, `fields`, `conditions`, `settings`, `magic`, `perks`, and `packages` sections read the
-active load order, so mods count too. The other sections read the files inside the archives;
-loose files are not read.
+The `records`, `fields`, `flags`, `enums`, `conditions`, `settings`, `magic`, `perks`, and
+`packages` sections read the active load order, so mods count too. The other sections read
+the files inside the archives; loose files are not read.
 
 Some sections have no total to count against, so they show "-" in the summary: decode
 failures, behaviour features ignored, and the AS2 runtime. They list what to check.
@@ -210,6 +213,67 @@ What the rule cannot see:
 - A field reached only through reflection, `Codable`, or a synthesised `==` counts as unread.
 - A filled field the list does not name is a note, not a row: the index is older than the
   code. Run `make rank-gaps` again.
+
+### Record flag bits and enum values
+
+A field that engine code reads can still be read only in part. `flags` asks which bits of a
+flags field the data sets and which of them engine code tests. `enums` asks which values of
+an enum field the data uses and which of them engine code handles. A weapon flag set on
+hundreds of weapons that no rule tests is a behaviour the engine ignores.
+
+Both use the same two halves as `fields`. The reflection walk also notes, for each field,
+every set bit of an `OptionSet` value and the case of each enum value. The index script
+writes `value-reads.tsv` beside `field-reads.tsv`, and `openskycli gaps --value-reads` reads
+it.
+
+- A bit is tested when engine code reads the bit's named constant, such as
+  `Weapon.Flags.nonPlayable`, by the same rule as a field read. A constant read in the type's
+  own decoder counts too, because the decoder turns the bit into another field, which the
+  `fields` area checks. A set bit with no named constant is a row named `unnamed`.
+- A case is handled when engine code names it, as a `switch` arm or a `==` comparison does.
+  A `default` branch names no case, so a value that only a default branch reaches is left.
+  The enum's own initializers, `rawValue`, and `description` do not count, because they decode
+  or print the value. A value outside the decoder's known set is kept as an `unknown` case
+  with its raw number, such as `.unknown 7`, and is always left.
+
+What the check cannot see:
+
+- A branch that names a case and then does nothing counts as handled.
+- A flags field stored as a plain integer, not an `OptionSet`, has no bit names. A note lists
+  each such field, with the records that set any bit in it.
+- Reflection cannot name a case of an enum that prints its own `description`, such as
+  `ActorAggression`. A note lists these types.
+- A raw enum value stored as a plain integer, such as a type byte, is not an enum field.
+
+### Shallow handlers
+
+`papyrus`, `conditions`, and `perks` count an item as done when a handler exists. `shallow`
+asks whether the handler does any work. A handler that only answers a constant counts as
+left, ranked by how often the data uses it. `Game.UsingGamepad` answering `false` every time
+is an example.
+
+- Natives and condition functions: `tools/shallow-handlers` reads `src/Sources` with
+  SwiftSyntax and writes `shallow-handlers.tsv`, which `openskycli gaps --shallow-handlers`
+  reads. It finds each registration by its names: `("Sound", "Play")`,
+  `(scriptName:functionName:)`, a helper that names only the function, such as
+  `reference("GetDistance")`, or `ConditionFunction(index:name:)`. A body is shallow when,
+  apart from log lines, it is one constant: a literal, a member such as `.none`, or a call
+  such as `.returned(.boolean(true))` whose arguments are constants. A row of a stub table,
+  such as the trap stubs that answer `.deviated(_, .stubbed)`, is shallow too.
+- Perk entry-point functions are pure, so the CLI runs each one the evaluator computes with
+  two values and six payloads. It is shallow when every result is the same.
+
+A handler is shallow on purpose when the game does nothing there either. The comment on its
+registration then starts with `Matches the game:` and gives the reason, such as the
+`IsHorseStolen` condition, which the CK wiki calls a no-op. It counts as done, and a note
+lists it with its reason.
+
+What the check cannot see:
+
+- A body that does work and still answers wrong, such as a guard that always fails.
+- A registration built in a loop from names that are not literals, other than a stub table.
+- A helper that names only the function is matched to the scripts' calls by that name alone,
+  so its uses add up the same function name on every script.
 
 ### Rules
 

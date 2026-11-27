@@ -47,6 +47,28 @@ nonisolated public enum PerkEntryPointEvaluator: Sendable {
         return apply(probe, to: 0) { _ in nil } != .failure(.unsupportedFunction(function))
     }
 
+    /// Whether `function` is computed but its result changes with neither the value nor the
+    /// payload: it answers a constant, so it does no work (docs/tools/gaps.md).
+    static func isShallow(_ function: PerkFunction) -> Bool {
+        let payloads: [PerkFunctionData] = [
+            .float(3), .float(7), .floatPair(3, 4), .floatPair(7, 8),
+            .actorValueMultiplier(actorValue: 1, factor: 2),
+            .actorValueMultiplier(actorValue: 2, factor: 5)
+        ]
+        var results: Set<Float> = []
+        for value: Float in [2, 5] {
+            for payload in payloads {
+                let operand = PerkEntryPointOperand(function: function, data: payload)
+                if case let .success(result) = apply(operand, to: value, actorValue: {
+                    Float($0) * 10
+                }) {
+                    results.insert(result)
+                }
+            }
+        }
+        return results.count == 1
+    }
+
     /// Descending priority, ties in the caller's order.
     ///
     /// Sorted on the index alongside the element because Swift's `sort` is not

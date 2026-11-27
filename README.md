@@ -39,7 +39,12 @@ Measured on 2026-11-26 by `make rank-gaps`.
 | Condition functions | 258 | 0 | 258 | 100% |
 | Record types | 120 | 0 | 120 | 100% |
 | Record fields | 1575 | 451 | 2026 | 77% |
+| Record flag bits | 203 | 141 | 344 | 59% |
+| Record enum values | 112 | 38 | 150 | 74% |
 | Game settings | 1628 | 20 | 1648 | 98% |
+| Shallow Papyrus natives | 263 | 11 | 274 | 95% |
+| Shallow condition functions | 183 | 0 | 183 | 100% |
+| Shallow perk functions | 5 | 0 | 5 | 100% |
 | Magic effect archetypes | 37 | 0 | 37 | 100% |
 | Perk entry points | 68 | 0 | 68 | 100% |
 | Perk entry-point functions | 9 | 0 | 9 | 100% |
