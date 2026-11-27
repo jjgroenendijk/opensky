@@ -26,6 +26,11 @@ nonisolated extension BehaviorGraphInstance {
         return true
     }
 
+    /// Whether the root or a referenced graph declares the event `raiseEvent` would raise.
+    public func declaresEvent(named name: String) -> Bool {
+        events.index(of: name) != nil || referencedGraphDeclares(name)
+    }
+
     func referencedGraphDeclares(_ name: String) -> Bool {
         referencedGraphs.values.contains { child in
             guard let child else { return false }

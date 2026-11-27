@@ -9,8 +9,18 @@ extension PackageProcedureInputs {
     /// Orbit walks this many points round its circle.
     static let orbitPoints = 8
 
+    /// An actor that already sits in the seat its procedure reserved skips the walk, so
+    /// the step ends at once and the actor stays seated (docs/engine/furniture.md).
     func build(resolver: some PackageInputResolving) -> PackageLeafSetup {
-        guard !leaf.inputIndexes.isEmpty else { return legacy(resolver: resolver) }
+        var result = leaf.inputIndexes.isEmpty
+            ? legacy(resolver: resolver) : withInputs(resolver: resolver)
+        if let seat = result.seat, resolver.sitsIn(seat) {
+            result.setup.walks = false
+        }
+        return result
+    }
+
+    private func withInputs(resolver: some PackageInputResolving) -> PackageLeafSetup {
         let parameters = PackageProcedureParameters.table[leaf.kind] ?? PackageProcedureParameters()
         let place = place(at: parameters.place, resolver: resolver)
         let targets = references(at: parameters.target, resolver: resolver)

@@ -125,6 +125,8 @@ public final class ActorGraphCoordinator {
         var shown = ActorGraphMotion.still
         var gait = ActorGraphGait()
         var pendingEvents: [String] = []
+        /// Events raised before the graph heard the drive stop, for the update after it.
+        var afterStop: [String] = []
         var lastFeet: SIMD3<Float>?
         var lastRotation: Float?
         var sinceStep: Float = 0
@@ -311,6 +313,7 @@ public final class ActorGraphCoordinator {
         lodDistance: Float
     ) {
         let seconds = entry.sinceStep
+        let wasMoving = entry.shown.isMoving
         let input = entry.stepInput(for: candidate, seconds: seconds)
         let instance = entry.instance
         for (name, value) in ActorGraphCore.variables(input) {
@@ -325,6 +328,11 @@ public final class ActorGraphCoordinator {
             instance.raiseEvent(named: event)
         }
         entry.pendingEvents = []
+        // Held events follow the update that heard the stop, or go now if the drive moved on.
+        if !wasMoving || entry.shown.isMoving {
+            entry.afterStop.forEach { instance.raiseEvent(named: $0) }
+            entry.afterStop = []
+        }
         let result = instance.update(deltaTime: seconds)
         applyRootMotion(result.rootMotion, of: instance, to: candidate)
         entry.steps += 1

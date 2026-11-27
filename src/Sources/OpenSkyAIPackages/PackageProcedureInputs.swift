@@ -15,6 +15,14 @@ protocol PackageInputResolving {
     func position(of reference: ReferenceKey) -> SIMD3<Float>?
     func patrolPath(from start: Package.Target) -> [SIMD3<Float>]?
     func seat(in furniture: ReferenceKey, animation: UInt16) -> PackageSeat?
+    /// Whether the actor already sits in `seat`, so a sit there needs no walk.
+    func sitsIn(_ seat: PackageSeat) -> Bool
+}
+
+extension PackageInputResolving {
+    func sitsIn(_: PackageSeat) -> Bool {
+        false
+    }
 }
 
 /// Where each kind reads its parameters, as positions in its `PKC2` list.

@@ -8,12 +8,9 @@ tags: [engine, verification]
 
 # Unverified values
 
-Some numbers and rules have no open source: the game keeps them in its code, and no record,
-setting, or wiki page gives them. OpenSky then picks a value. This page lists every such
-choice in one place, so that each one can be checked later against the
-[reference game](/tools/reference-game.md) or a new source.
-
-Each row names the value, OpenSky's choice, and the page with the detail and its sources.
+Some numbers and rules have no open source: no record, setting, or wiki page gives them, so
+OpenSky picks a value. Each row names the value, OpenSky's choice, and the page with the detail
+and its sources, so it can be checked later against the [reference game](/tools/reference-game.md).
 
 ## How to use this page
 
@@ -88,6 +85,7 @@ The combat values are on their own page: [unverified combat values](/engine/unve
 | Furniture rotation | Reset on standing up | [furniture](/engine/furniture.md) |
 | Height limit for arriving at furniture | 128 units | [furniture](/engine/furniture.md#arriving-at-the-seat) |
 | Longest wait for the turn to a seat's heading | 3 s, then the actor sits | [furniture](/engine/furniture.md#arriving-at-the-seat) |
+| A kept seat with no next package | The actor gets up on the next package pass | [furniture](/engine/furniture.md#sitting-down-and-standing-up) |
 | Weapon change while drawn | Sheathe the old hand, then draw the new one | [combat graph names](/engine/combat-graph-names.md) |
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Cart tow line | Spring 6 rad/s at damping 0.35, play 24 units, wheel drag 0.4 per second, front axle swing 7 rad/s at damping 0.5 | [vehicles](/engine/vehicles.md#towing) |

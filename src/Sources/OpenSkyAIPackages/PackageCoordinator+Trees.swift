@@ -25,6 +25,7 @@ extension PackageCoordinator {
             }
             if executions[actor]?.fromSchedule == true {
                 leaveExecution(of: actor)
+                settleKeptSeat(of: actor, next: nil)
             }
         }
         retryWaitingMoves()
@@ -41,6 +42,7 @@ extension PackageCoordinator {
             runsTree(actor, package: current)
         else {
             leaveExecution(of: actor)
+            settleKeptSeat(of: actor, next: nil)
             return
         }
         guard executions[actor]?.package != current.package.formID else {
@@ -58,6 +60,7 @@ extension PackageCoordinator {
         updateMount(actor, rides: execution.ridesHorse)
         let commands = execution.runner.start(host: &session)
         executions[actor] = execution
+        settleKeptSeat(of: actor, next: execution)
         if fromSchedule, runtime.mustComplete(current) {
             self.runtime?.setCompleting(current.package.formID, actor: actor)
         }
@@ -112,9 +115,24 @@ extension PackageCoordinator {
             world?.stopPackageActor(mounts[actor] ?? actor)
         }
         // A seat reserved on the walk there is freed too, though the actor never sat.
-        world?.unseatPackageActor(actor, from: execution.seat)
+        // A seat the actor sits in waits for the next package.
+        if let seat = execution.seat, world?.packageActorSeat(actor) == seat {
+            keptSeats[actor] = seat
+            world?.unseatPackageActor(actor, from: nil)
+        } else {
+            world?.unseatPackageActor(actor, from: execution.seat)
+        }
         if let package = attempt({ try store?.resolve(execution.package).package }) {
             world?.reportProcedure(.change, actor: actor, package: package)
+        }
+    }
+
+    /// The actor stays seated when its next package uses the kept seat; otherwise it
+    /// gets up through its exit idle before that package walks it on.
+    func settleKeptSeat(of actor: ReferenceKey, next: PackageOverrideExecution?) {
+        guard let seat = keptSeats.removeValue(forKey: actor) else { return }
+        if next?.uses(seat) != true {
+            world?.unseatPackageActor(actor, from: seat)
         }
     }
 

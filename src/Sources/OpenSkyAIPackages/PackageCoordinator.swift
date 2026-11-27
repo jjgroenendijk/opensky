@@ -54,6 +54,8 @@ public protocol PackageWorld: AnyObject {
     ) -> Float?
     /// The actor leaves `seat`, or nil when it never sat, and frees every seat it reserved.
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat?)
+    /// The seat the actor sits in now; nil while it stands or gets up.
+    func packageActorSeat(_ actor: ReferenceKey) -> PackageSeat?
     /// A held package started, finished, or was left. Its fragments run here.
     func packageProcedure(_ event: PackageScriptEvent)
     /// Seats `rider` on its horse and returns the horse, or nil when it has none loaded.
@@ -288,6 +290,9 @@ public final class PackageCoordinator {
     var heldSteps: [ReferenceKey: [(event: PackageProcedureEvent, leaf: Int)]] = [:]
     /// Actors at their seat that still turn to its heading.
     var seatTurns: [ReferenceKey: FurnitureSeatTurn] = [:]
+    /// Seats whose package ended while the actor sat in them. The next package keeps the
+    /// seat when it uses it; else the actor gets up (docs/engine/furniture.md).
+    var keptSeats: [ReferenceKey: PackageSeat] = [:]
     /// Seconds since a walk of the actor gave up. Its failed package starts again after
     /// `failedWalkRetrySeconds`. OpenSky's value (docs/engine/unverified-values.md).
     var failedWalkSeconds: [ReferenceKey: Float] = [:]
