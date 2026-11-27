@@ -100,16 +100,23 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// The ground model, relative to `Data/`, that the inventory preview turns. An
     /// armour piece names its male world model.
     public let modelPath: String?
+    /// `YNAM`, the item's own pickup sound. Nil uses its kind's default.
+    public var pickUpSound: FormID?
+    /// `ZNAM`, the item's own putdown sound. Nil uses its kind's default.
+    public var putDownSound: FormID?
 
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
     func resolvingName(with strings: LocalizedStrings) -> ItemDefinition {
         guard name?.tableIDValue != nil, let text = strings.resolve(name) else { return self }
-        return ItemDefinition(
+        var resolved = ItemDefinition(
             formID: formID, family: family, editorID: editorID, name: .inline(text),
             value: value, weight: weight, keywords: keywords, enchantment: enchantment,
             modelPath: modelPath
         )
+        resolved.pickUpSound = pickUpSound
+        resolved.putDownSound = putDownSound
+        return resolved
     }
 
     /// v1 stacking key: the base FormID. See the file header for why this is
@@ -151,6 +158,9 @@ nonisolated public final class ItemDefinitionStore {
     /// PROJ decodes, keyed by raw FormID. Not carryable, but an arrow's shot needs
     /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
+
+    /// The pickup and putdown sounds of items that name none of their own.
+    public internal(set) var soundDefaults = ItemSoundDefaults()
 
     /// The weapon terms of `enchantedValue(of:settings:)`, from the load order.
     public var enchantedValueSettings = EnchantedValueSettings.vanilla
@@ -250,6 +260,7 @@ nonisolated public final class ItemDefinitionStore {
         scrolls = Self.decodeAll("SCRL", in: loadOrder, skipped: &repeated) {
             try Scroll(record: $0, localized: $1)
         }
+        soundDefaults = ItemSoundDefaults(loadOrder: loadOrder)
     }
 
     /// The armour type of a worn piece — heavy, light or clothing — or nil when
@@ -411,7 +422,7 @@ nonisolated enum ItemDefinitionViews {
             keywords: armor.keywords.keywords,
             enchantment: enchantment(armor.enchantment, charge: nil, enchantments),
             modelPath: (armor.details.maleWorldModel ?? armor.details.femaleWorldModel)?.path
-        )
+        ).with(pickUp: armor.details.pickupSound, putDown: armor.details.dropSound)
     }
 
     /// The enchantment view for one record. The link is carried whether or not
@@ -513,6 +524,15 @@ nonisolated enum ItemDefinitionViews {
             keywords: fields.keywords.keywords,
             enchantment: enchantment,
             modelPath: fields.modelPath
-        )
+        ).with(pickUp: fields.pickupSound, putDown: fields.dropSound)
+    }
+}
+
+nonisolated extension ItemDefinition {
+    func with(pickUp: FormID?, putDown: FormID?) -> Self {
+        var sounded = self
+        sounded.pickUpSound = pickUp
+        sounded.putDownSound = putDown
+        return sounded
     }
 }

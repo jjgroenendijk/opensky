@@ -53,6 +53,8 @@ extension MagicArchetypeEffectsAdapter {
         switch command {
         case let .castingSound(sound, caster, starts):
             castingSound(sound, caster: caster, starts: starts)
+        case let .itemUseSound(sound, actor):
+            castingSound(sound, caster: actor, starts: true)
         case let .paintActor(actor, shader, plugin, shown):
             heldMagic.paintActor(actor, shader: shader, plugin: plugin, shown: shown)
         case let .castingArt(art, plugin, caster, hand, starts):

@@ -56,6 +56,8 @@ public protocol InventoryWorld: AnyObject {
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s
     /// prompt, such as a werewolf's "Feed". Nil keeps the authored label.
     func perkActivateLabel(for reference: FormID) -> String?
+    /// Plays the `SNDR` `sound` at `position`, such as an item's pickup sound.
+    func playItemSound(_ sound: FormID, at position: SIMD3<Float>)
     /// Whether `base` is a `BOOK`, which the crosshair offers to read.
     func isBook(_ base: FormID) -> Bool
     /// Bases of the items a running quest holds in a Quest Object alias.
@@ -114,6 +116,8 @@ extension InventoryWorld {
     public func perkActivateLabel(for _: FormID) -> String? {
         nil
     }
+
+    public func playItemSound(_: FormID, at _: SIMD3<Float>) {}
 
     public func isBook(_: FormID) -> Bool {
         false

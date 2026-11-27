@@ -14,6 +14,7 @@ final class InventoryHost: InventoryWorldHost, InventoryReadoutsHost, InventoryP
 {
     let fakeActorValues = FakeActorValuePort()
     let fakeActorWorld = FakeActorWorldPort()
+    let fakeAudio = FakeAudioPort()
     let fakeCombat = FakeCombatPort()
     let fakeCrime = FakeCrimePort()
     let fakeFactions = FakeFactionPort()
@@ -46,6 +47,10 @@ final class InventoryHost: InventoryWorldHost, InventoryReadoutsHost, InventoryP
 
     var actorWorld: any ActorWorldPort {
         fakeActorWorld
+    }
+
+    var audio: any AudioPort {
+        fakeAudio
     }
 
     var combat: any CombatPort {

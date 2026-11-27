@@ -57,6 +57,12 @@ extension MagicCoordinator.ItemUse {
             if outcome?.kind == .ingredient {
                 coordinator.world.playerAteIngredient(item)
             }
+            if
+                outcome != nil, let sound = inventory.baselines.items.ingestibles[item.rawValue]?
+                    .consumeSound
+            {
+                coordinator.pendingCommands.append(.itemUseSound(sound, actor: .player))
+            }
             if let kind = outcome?.kind {
                 let flags = inventory.baselines.items.ingestibles[item.rawValue]?.flags
                 let stat = ItemUseStats.stat(

@@ -28,6 +28,7 @@ public import OpenSkyWorldState
 /// What `InventoryWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 public protocol InventoryWorldHost: AnyObject, SendableMetatype {
+    var audio: any AudioPort { get }
     var crime: any CrimePort { get }
     var furniture: any FurniturePort { get }
     var hud: any HUDPort { get }
