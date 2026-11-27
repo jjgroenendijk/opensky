@@ -22,11 +22,17 @@ install with a field census.
 
 | Field | Size | Meaning |
 | --- | --- | --- |
-| `ENAM` | 56 | Older 14-float block, kept as floats |
+| `ENAM` | 56 | Older 14-float block, below |
 | `HNAM` | 36 | HDR: eye-adapt speed, bloom blur radius, bloom threshold, bloom scale, receive-bloom threshold, white, sunlight scale, sky scale, eye-adapt strength |
 | `CNAM` | 12 | Cinematic: saturation, brightness, contrast |
 | `TNAM` | 16 | Tint: amount, then RGB |
 | `DNAM` | 12 or 16 | Depth of field: strength, distance, range; the 16-byte form adds 2 unnamed bytes and a uint16 sky blur radius |
+
+`ENAM` sets the same values as the newer fields: floats 0 to 3 are eye-adapt speed, bloom blur
+radius, bloom threshold, and bloom scale; float 4 sets both the receive-bloom threshold and white;
+float 5 is sunlight scale, float 6 sky scale, floats 7 to 9 the `CNAM` values, and floats 10 to 13
+the `TNAM` values. Eye-adapt strength and depth of field keep their values. A later `HNAM`,
+`CNAM`, or `TNAM` overrides it. Two vanilla records carry `ENAM`.
 
 505 records: `DNAM` is 12 or 16 bytes.
 
