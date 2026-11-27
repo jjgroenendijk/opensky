@@ -28,10 +28,6 @@ nonisolated public struct ItemSoundDefaults: Equatable, Sendable {
         }
     }
 
-    public init(sounds: [String: FormID]) {
-        self.sounds = sounds
-    }
-
     /// The default sound of a `family` item for `event`.
     public func sound(for family: ItemDefinition.Family, _ event: ItemSoundEvent) -> FormID? {
         let kind = switch family {

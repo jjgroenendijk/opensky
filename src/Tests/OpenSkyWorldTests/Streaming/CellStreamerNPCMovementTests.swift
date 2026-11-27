@@ -69,6 +69,19 @@ struct CellStreamerNPCMovementTests {
         #expect(streamer.actors.turnActor(Self.actor, toHeading: 0, within: tolerance) == .pi)
     }
 
+    /// A race with the immobile flag never walks; a race's angular tolerance in degrees
+    /// sets how far off a facing turn may stop.
+    @Test
+    func anImmobileActorStaysAndARaceToleranceTurns() throws {
+        let streamer = try Self.streamerWithWalker()
+        streamer.actors.npcAngularTolerance = { _ in 90 }
+        #expect(streamer.actors.npcAngularTolerance?(Self.actor) == 90)
+        #expect(streamer.actors.faceActor(Self.actor, towards: SIMD3(30, 300, 0)))
+        streamer.actors.npcIsImmobile = { _ in true }
+        #expect(streamer.actors.npcIsImmobile?(Self.actor) == true)
+        #expect(streamer.actors.moveActor(Self.actor, to: SIMD3(150, 30, 0)) == .immobile)
+    }
+
     @Test
     func rootMotionMovesAStandingActorButNotAWalkingOne() throws {
         let streamer = try Self.streamerWithWalker()

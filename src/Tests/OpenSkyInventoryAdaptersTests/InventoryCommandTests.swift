@@ -81,6 +81,8 @@ struct InventoryCommandTests {
         inventory.scriptItems.scriptEquippedWeaponResult = .some(Self.item)
         inventory.scriptItems.scriptEquippedShieldResult = .some(nil)
         inventory.scriptItems.scriptGoldValueResult = 25
+        inventory.scriptItems.scriptApparatusQualityResult = 3
+        inventory.scriptItems.scriptSetApparatusQualityResult = true
         inventory.alchemyLab.learnIngredientEffectsResult = true
         inventory.alchemyLab.learnNextIngredientEffectResult = 2
         inventory.alchemyLab.isHostileItemResult = false
@@ -91,6 +93,8 @@ struct InventoryCommandTests {
         #expect(adapter.equippedWeapon(on: Self.actor, leftHand: true) == .some(Self.item))
         #expect(adapter.equippedShield(on: Self.actor) == .some(nil))
         #expect(adapter.goldValue(of: Self.item) == 25)
+        #expect(adapter.apparatusQuality(of: Self.item) == 3)
+        #expect(adapter.setApparatusQuality(4, of: Self.item))
         #expect(adapter.learnIngredientEffects(Self.item, indices: [0]))
         #expect(adapter.learnNextIngredientEffect(Self.item) == 2)
         #expect(adapter.isHostileItem(Self.item) == false)

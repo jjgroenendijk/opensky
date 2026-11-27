@@ -72,4 +72,35 @@ struct ActorAttackListTests {
         #expect(inherited.first?.properties?.staminaMultiplier == 2)
         #expect(resolver.attacks(base: FormID(0x602), race: nil).isEmpty)
     }
+
+    /// A race takes its `ATKR` race's attacks for the events it does not have.
+    @Test func aRaceMergesItsAttackRace() throws {
+        func race(_ formID: UInt32, _ fields: Data) throws -> Race {
+            try Race(record: FactionFixture.decode(ESMFixture.record(
+                "RACE", formID: formID,
+                data: ESMFixture.field("DATA", Data(count: 128)) + fields
+            )), localized: false)
+        }
+        let base = try race(
+            0x700,
+            Self.fields("attackStart", damage: 2)
+                + Self.fields("bashStart", damage: 1)
+        )
+        var link = Data()
+        link.appendUInt32(0x700)
+        let own = try race(
+            0x701,
+            ESMFixture.field("ATKR", link)
+                + Self.fields("attackStart", damage: 4)
+        )
+        let resolver = ActorValueResolver(
+            templates: ActorTemplateResolver(actors: [:], leveledActors: [:]),
+            races: [0x700: base, 0x701: own]
+        )
+        let attacks = resolver.raceAttacks(FormID(0x701))
+        #expect(attacks.map(\.event) == ["attackStart", "bashStart"])
+        #expect(attacks.first?.properties?.damageMultiplier == 4)
+        #expect(resolver.raceAttacks(FormID(0x799)).isEmpty)
+        #expect(resolver.attacks(base: FormID(0x799), race: FormID(0x700)).count == 2)
+    }
 }

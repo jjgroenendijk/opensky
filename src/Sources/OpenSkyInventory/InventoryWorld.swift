@@ -118,8 +118,6 @@ extension InventoryWorld {
         nil
     }
 
-    public func playItemSound(_: FormID, at _: SIMD3<Float>) {}
-
     public func isBook(_: FormID) -> Bool {
         false
     }

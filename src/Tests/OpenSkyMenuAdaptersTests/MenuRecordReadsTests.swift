@@ -32,6 +32,9 @@ struct MenuRecordReadsTests {
         let messages = MessageWorldAdapter(game: host, stage: nil, now: { Date() })
         #expect(messages.systemMenuTopics(.help).isEmpty)
         #expect(menus().skillsRace.perkSkySource == nil)
+        #expect(menus().recordFlags(of: .player) == nil)
+        #expect(menus().recordFlags(of: Self.actor) == nil)
+        #expect(menus().attacks(of: .player).isEmpty)
         host.fakeMapWorld.settingTextsResult = GameSettingTexts<PlayerNameText>.vanilla
         #expect(menus().playerNameAndRace.name == "Prisoner")
         let loading = LoadingScreenWorldAdapter(game: host, stage: nil, clock: { Date() })

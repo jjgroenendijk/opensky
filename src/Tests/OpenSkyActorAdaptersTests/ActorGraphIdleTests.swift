@@ -1,9 +1,14 @@
 // The actor graph, animation event, idle, and object animation worlds forward to their ports.
 
+import Foundation
 import OpenSkyActorAdapters
+import OpenSkyActorPresentation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import Testing
@@ -37,6 +42,35 @@ struct ActorGraphIdleTests {
         events.releaseAnimationSound(editorID: "NPCFoot", source: Self.actor)
         #expect(!events.playSoundType(2, source: Self.actor, at: .zero), "no sound director")
         events.endAnimationSounds(source: Self.actor)
+    }
+
+    /// A draw plays NAM9; a swing starts the NAM7 loop with TNAM; the end of the attack
+    /// stops the loop. No session means no sound.
+    @Test func weaponEventsPlayTheHeldWeaponsSounds() throws {
+        let events = AnimationEventWorldAdapter(game: host, stage: nil)
+        #expect(!events.playWeaponSound(.draw, source: Self.actor, at: .zero))
+        let sword = FormID(0x300)
+        let file = try ESMFixture.plugin(records: [ESMFixture.record(
+            "WEAP", formID: sword.rawValue,
+            data: ESMFixture.field("DATA", InventoryFixture.weaponData(
+                value: 10, weight: 5, damage: 7
+            )) + InventoryFixture.formIDField("NAM9", 0x61)
+                + InventoryFixture.formIDField("NAM7", 0x64)
+                + InventoryFixture.formIDField("TNAM", 0x63)
+        )])
+        host.fakeCombat.items = ItemDefinitionStore(file: file)
+        host.fakeInventory.scriptItems.scriptEquippedWeaponResult = .some(sword)
+        let session = FakeGameSessionPort()
+        let director = FakeWorldAudioSoundDirectorPort()
+        director.playSoundResult = true
+        session.soundDirector = director
+        host.gameSession = session
+        #expect(events.playWeaponSound(.draw, source: Self.actor, at: .zero))
+        #expect(events.playWeaponSound(.swing(leftHand: false), source: Self.actor, at: .zero))
+        #expect(events.playWeaponSound(.attackEnd, source: Self.actor, at: .zero))
+        #expect(!events.playWeaponSound(.sheathe, source: Self.actor, at: .zero))
+        #expect(director.playSoundCalls.map(\.formID) == [FormID(0x61), FormID(0x64), FormID(0x63)])
+        #expect(director.stopSoundCalls.map(\.formID) == [FormID(0x64)])
     }
 
     @Test func theClothWorldFindsNoCapeWithoutAScene() {

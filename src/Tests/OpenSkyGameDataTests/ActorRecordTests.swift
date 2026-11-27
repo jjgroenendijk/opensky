@@ -304,6 +304,9 @@ struct ActorTemplateResolverTests {
         #expect(try npcs.resolveStats(base: FormID(0x100)).bleedoutOverride?.value == 40)
         #expect(try npcs.resolveStats(base: FormID(0x101)).bleedoutOverride?.value == nil)
         #expect(try npcs.resolveStats(base: FormID(0x102)).bleedoutOverride?.value == -5)
+        let values = ActorValueResolver(templates: npcs, races: [:])
+        #expect(values.bleedoutOverride(ofBase: FormID(0x102)) == -5)
+        #expect(values.bleedoutOverride(ofBase: FormID(0x101)) == nil)
     }
 
     /// ACBS 0x80000 is a Traits flag.
