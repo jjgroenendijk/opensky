@@ -93,4 +93,16 @@ struct ActorSoundsTests {
             sound: Self.breath
         )] == nil)
     }
+
+    /// A held weapon's loop plays while its holder lives, awake or not.
+    @Test func aWeaponLoopPlaysWhileItsHolderLives() {
+        let loop = FormID(0x42)
+        var source = ActorSoundSource(
+            key: .generated(1), position: .zero, sounds: .none, isConscious: false
+        )
+        source.weaponLoops = [loop]
+        #expect(ActorLoopPlan.wanted([source], listener: .zero).keys.map(\.sound) == [loop])
+        source.isAlive = false
+        #expect(ActorLoopPlan.wanted([source], listener: .zero).isEmpty)
+    }
 }

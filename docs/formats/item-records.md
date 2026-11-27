@@ -188,6 +188,10 @@ on 2,435 vanilla weapons, not an "attack fail" sound. After `SNAM` or `XNAM`, th
 level makes a detection event at the shooter. The 7 bound weapons use `UNAM` for
 `MAGConjureBoundWeaponLP`.
 
+OpenSky starts the `NAM7` loop on each swing event and stops it on the `attackStop` event, so a
+chain of swings keeps it playing. The `UNAM` loop plays while the holder is alive, for the
+player and for NPCs near the listener.
+
 The item card shows a weapon's `DESC` as its effect text when it is not empty. Only an empty
 `DESC` shows the enchantment's text instead. 33 `Skyrim.esm` weapons have one, such as
 `SilverSword` and the Nightingale bow. The same holds for armour: 28 `ARMO` records.

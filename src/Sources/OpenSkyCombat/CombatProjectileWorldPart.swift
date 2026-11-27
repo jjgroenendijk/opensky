@@ -50,6 +50,12 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
     }
 
     func projectileLaunched(_ projectile: LiveProjectile) {
+        if let weapon = projectile.payload.arrow?.weapon {
+            shared.pendingCommands.append(.weaponFired(
+                weapon, by: projectile.shooter, at: projectile.launchPosition,
+                firstPerson: projectile.firedInFirstPerson
+            ))
+        }
         let visuals = projectile.profile.visuals
         guard visuals.hasMuzzleFlash else { return }
         shared.pendingCommands.append(.muzzleFlash(

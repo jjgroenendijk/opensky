@@ -78,6 +78,10 @@ nonisolated public struct ActorSoundSource: Equatable, Sendable {
     public var position: SIMD3<Float>
     public var sounds: ActorSounds
     public var isConscious: Bool
+    /// The `WEAP` `UNAM` loops of the weapons the actor holds.
+    public var weaponLoops: [FormID] = []
+    /// A weapon loop plays while its holder lives, awake or not.
+    public var isAlive = true
 
     public init(
         key: ReferenceKey, position: SIMD3<Float>, sounds: ActorSounds, isConscious: Bool
@@ -86,6 +90,11 @@ nonisolated public struct ActorSoundSource: Equatable, Sendable {
         self.position = position
         self.sounds = sounds
         self.isConscious = isConscious
+    }
+
+    /// The loops that play now.
+    public var loops: [FormID] {
+        sounds.loops(isConscious: isConscious) + (isAlive ? weaponLoops : [])
     }
 }
 
@@ -117,7 +126,7 @@ nonisolated public enum ActorLoopPlan {
             .prefix(actorLimit)
         var wanted: [ActorLoop: SIMD3<Float>] = [:]
         for (source, _) in near {
-            for sound in source.sounds.loops(isConscious: source.isConscious) {
+            for sound in source.loops {
                 wanted[ActorLoop(actor: source.key, sound: sound)] = source.position
             }
         }

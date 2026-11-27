@@ -13,8 +13,7 @@ setting, or wiki page gives them. OpenSky then picks a value. This page lists ev
 choice in one place, so that each one can be checked later against the
 [reference game](/tools/reference-game.md) or a new source.
 
-Each row names the value, what OpenSky uses, and the page that explains it. The page holds
-the detail and the sources it did find.
+Each row names the value, OpenSky's choice, and the page with the detail and its sources.
 
 ## How to use this page
 
@@ -398,3 +397,4 @@ the detail and the sources it did find.
 | Vendor stock order | A buy takes the chest's copies before the vendor's own, and a sale pays from the chest's gold first | [vendor factions](/engine/vendor-factions.md#stock-gold-and-what-a-vendor-takes-in-the-game) |
 | Vendor's worn items | The vendor's own side leaves out the items it wears | [vendor factions](/engine/vendor-factions.md#stock-gold-and-what-a-vendor-takes-in-the-game) |
 | Copy row stolen count | A row per copy counts the stolen copies from the plainest row up | [item copies](/engine/item-copies.md#names-and-poisons-in-the-game) |
+| Weapon attack loop end | The `WEAP` `NAM7` loop stops on the `attackStop` animation event | [item records](/formats/item-records.md) |
