@@ -5,40 +5,22 @@
 public import Foundation
 public import OpenSkyFormatsCore
 
-/// XLOC lock level. An unknown byte keeps its value.
-nonisolated public enum LockLevel: Equatable, Sendable {
-    case novice
-    case apprentice
-    case adept
-    case expert
-    case master
-    case requiresKey
-    case unknown(UInt8)
+/// XLOC lock level. The game bands any number by the `iLockLevelMax*` settings, so a
+/// value between the Creation Kit's choices is valid (docs/engine/locks.md).
+nonisolated public struct LockLevel: RawRepresentable, Hashable, Sendable {
+    public let rawValue: UInt8
 
-    init(rawValue: UInt8) {
-        self = switch rawValue {
-        case 1: .novice
-        case 25: .apprentice
-        case 50: .adept
-        case 75: .expert
-        case 100: .master
-        case 255: .requiresKey
-        default: .unknown(rawValue)
-        }
+    public init(rawValue: UInt8) {
+        self.rawValue = rawValue
     }
 
-    /// The XLOC byte as written.
-    public var rawValue: UInt8 {
-        switch self {
-        case .novice: 1
-        case .apprentice: 25
-        case .adept: 50
-        case .expert: 75
-        case .master: 100
-        case .requiresKey: 255
-        case let .unknown(value): value
-        }
-    }
+    /// The levels the Creation Kit writes.
+    public static let novice = LockLevel(rawValue: 1)
+    public static let apprentice = LockLevel(rawValue: 25)
+    public static let adept = LockLevel(rawValue: 50)
+    public static let expert = LockLevel(rawValue: 75)
+    public static let master = LockLevel(rawValue: 100)
+    public static let requiresKey = LockLevel(rawValue: 255)
 }
 
 /// XLOC: level, key, and flags. Vanilla writes 20 bytes; xEdit allows any size from 4.

@@ -132,8 +132,10 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbXLOC`
 
 `XLOC` is 20 bytes on every one of the 1,505 vanilla locks: uint8 level, 3 unused bytes,
 a `KEYM` FormID, uint8 flags (0x04 leveled), and 11 more bytes. Levels are 1 novice,
-25 apprentice, 50 adept, 75 expert, 100 master, and 255 requires key; another value keeps
-its number. Shorter fields from 4 bytes up decode what they hold.
+25 apprentice, 50 adept, 75 expert, 100 master, and 255 requires key. The decoder keeps the
+number: the game bands any value by its `iLockLevelMax*` settings, and 310 vanilla locks store
+0, which reads as Novice ([locks](/engine/locks.md#levels)). Shorter fields from 4 bytes up
+decode what they hold.
 
 `XESP` is a parent reference and uint8 flags (0x01 opposite of parent, 0x02 pop in), then
 3 unused bytes. `REFR`, `ACHR`, and `PHZD` carry it.
