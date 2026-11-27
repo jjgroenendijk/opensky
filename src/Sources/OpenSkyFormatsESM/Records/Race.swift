@@ -100,12 +100,16 @@ nonisolated public struct Race: Sendable {
         public static let swims = Flags(rawValue: 0x0000_0040)
         public static let flies = Flags(rawValue: 0x0000_0080)
         public static let walks = Flags(rawValue: 0x0000_0100)
+        /// The actor cannot move, and its AI does not move it.
+        public static let immobile = Flags(rawValue: 0x0000_0200)
         /// A hit does not knock the actor back.
         public static let notPushable = Flags(rawValue: 0x0000_0400)
         public static let noBloodSpray = Flags(rawValue: 0x0000_2000)
         public static let noBloodDecal = Flags(rawValue: 0x0000_4000)
         /// A knockdown staggers the actor instead.
         public static let noKnockdowns = Flags(rawValue: 0x0040_0000)
+        /// The player may talk to the actor, unless a script says otherwise.
+        public static let allowsPlayerDialogue = Flags(rawValue: 0x0020_0000)
         /// Health regenerates at the full rate in combat: trolls and the werewolf.
         public static let regeneratesHealthInCombat = Flags(rawValue: 0x0008_0000)
         public static let noWeaponBlood = Flags(rawValue: 0x0200_0000)

@@ -28,9 +28,11 @@ public import simd
 @MainActor
 public protocol DialogueSpeakersHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var factions: any FactionPort { get }
     var mountWorld: any MountWorldPort { get }
+    var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var worldRecords: (any WorldRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
@@ -43,15 +45,18 @@ public struct DialogueSpeakersAdapter {
 }
 
 extension DialogueSpeakersAdapter {
-    /// Dead and hostile actors are left out, and so are actors `ray` cannot reach. An actor
-    /// with no passing topic still opens an empty menu, so the condition trace can explain why.
+    /// Dead and hostile actors are left out, and so are actors `ray` cannot reach and actors
+    /// the player may not talk to. An actor with no passing topic still opens an empty menu,
+    /// so the condition trace can explain why.
     public func talkCandidates(along ray: InteractionRay) -> [TalkCandidate] {
         let streamer = game.streamer
         return game.actorWorld.combatActors().compactMap { observation in
+            let mountLabel = game.mountWorld.promptLabel(for: observation.key)
             guard
                 TalkTargetPicker.mayReach(observation.feet, along: ray),
                 !observation.isDead,
                 game.factions.hostility(of: observation.key) != .hostile,
+                mountLabel != nil || allowsPlayerDialogue(observation.key),
                 let entry = streamer.referenceEntry(key: observation.key),
                 let actor = entry.placedActor
             else {
@@ -63,9 +68,20 @@ extension DialogueSpeakersAdapter {
                 base: actor.base,
                 feet: observation.feet,
                 name: speakerName(entry: entry, fallback: observation.name),
-                actionLabel: game.mountWorld.promptLabel(for: observation.key)
+                actionLabel: mountLabel
             )
         }
+    }
+
+    /// `Actor.AllowPCDialogue` wins; without it, the race's `DATA` flag `0x200000` decides.
+    func allowsPlayerDialogue(_ actor: ReferenceKey) -> Bool {
+        if
+            let scripted = game.scripts.bridge?.scriptedState(of: actor)
+                .flag(ScriptedStateName.pcDialogue)
+        {
+            return scripted
+        }
+        return game.effectsWorld.race(of: actor)?.flags.contains(.allowsPlayerDialogue) ?? true
     }
 
     private func speakerName(entry: RuntimeReferenceEntry, fallback: String) -> String {

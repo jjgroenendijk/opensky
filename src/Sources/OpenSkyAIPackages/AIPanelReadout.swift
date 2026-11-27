@@ -17,6 +17,8 @@ nonisolated enum AINavigationReadout: Sendable {
             "Move: \(actor) is pathing to the crosshair point."
         case .actorNotResident:
             "Cannot move \(actor): it is no longer resident."
+        case .immobile:
+            "Cannot move \(actor): its race cannot move."
         case let .noPath(reason):
             "Cannot move \(actor): no navmesh path — \(missText(reason))."
         case .moverCapReached:

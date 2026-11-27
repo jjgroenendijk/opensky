@@ -27,6 +27,7 @@ extension CellNPCMovers {
         else {
             return .actorNotResident
         }
+        guard streamer.npcMovementState.isImmobile?(actor) != true else { return .immobile }
         if
             !direct, runSlowdown == nil,
             streamer.actors.npcMovement.repace(

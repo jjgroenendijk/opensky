@@ -128,6 +128,8 @@ nonisolated public struct NavigationPathQuery: Equatable, Sendable {
 nonisolated public enum NPCMoveCommandResult: Equatable, Sendable {
     case started
     case actorNotResident
+    /// The actor's race has `DATA` flag `0x200`.
+    case immobile
     case noPath(NavigationPathMiss)
     case moverCapReached
 }

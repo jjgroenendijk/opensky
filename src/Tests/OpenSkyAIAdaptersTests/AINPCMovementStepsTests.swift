@@ -21,6 +21,8 @@ struct AINPCMovementStepsTests {
         var npcMovementSpeeds: ((ReferenceKey) -> ActorMovementSpeeds)?
         var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
         var npcHeightScale: ((ReferenceKey) -> Float)?
+        var npcIsImmobile: ((ReferenceKey) -> Bool)?
+        var npcAngularTolerance: ((ReferenceKey) -> Float?)?
         var rebuilt: [CellSceneLocation] = []
         var cellStreamer: Hooks {
             self
@@ -60,6 +62,7 @@ struct AINPCMovementStepsTests {
         #expect(hooks.onNPCLocomotionDrive != nil)
         #expect(hooks.onNPCLanding != nil)
         #expect(hooks.npcStandingActors != nil)
+        #expect(hooks.npcIsImmobile?(Self.actor) == false)
         #expect(hooks.rebuilt.isEmpty)
     }
 }

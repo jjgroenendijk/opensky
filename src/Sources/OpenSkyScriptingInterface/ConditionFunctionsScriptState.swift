@@ -49,6 +49,8 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let restrained = "restrained"
     public static let playerTeammate = "playerTeammate"
     public static let allowFlying = "allowFlying"
+    /// `Actor.AllowPCDialogue`.
+    public static let pcDialogue = "pcDialogue"
     public static let flyingMountLandingRefused = "flyingMountLandingRefused"
     public static let alerted = "alerted"
     public static let bribed = "bribed"

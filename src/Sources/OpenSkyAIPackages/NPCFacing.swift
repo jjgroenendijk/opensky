@@ -24,6 +24,8 @@ nonisolated public struct NPCFaceStart: Equatable, Sendable {
     /// The world point to turn towards. Only its horizontal bearing is used —
     /// an actor turns about world +Z and never leans.
     public let target: SIMD3<Float>
+    /// Radians: the race's angular tolerance. Inside it the actor faces the target.
+    public var angularTolerance = NPCFacingHold.settleTolerance
 
     public init(
         actor: ReferenceKey,
@@ -57,6 +59,8 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     public private(set) var yaw: Float
     /// How fast the actor turns, in radians per second: `fActorDefaultTurningSpeed`.
     public var turnRate = MovementSpeedSettings.vanilla.defaultTurnRate
+    /// Radians: a bearing this close counts as faced, so the actor stops turning.
+    public var angularTolerance = Self.settleTolerance
 
     public init(
         start: NPCFaceStart,
@@ -71,13 +75,14 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
         self.feetPosition = feetPosition
         self.yaw = yaw
         targetYaw = Self.bearing(from: feetPosition, to: start.target, fallback: yaw)
+        angularTolerance = start.angularTolerance
     }
 
     /// True once the actor is pointing where it was asked to point, to within
     /// half a degree — below what a viewer can see and above what the fixed
     /// step's own arithmetic settles to.
     var isSettled: Bool {
-        abs(NPCYawMath.shortestTurn(from: yaw, to: targetYaw)) <= Self.settleTolerance
+        abs(NPCYawMath.shortestTurn(from: yaw, to: targetYaw)) <= angularTolerance
     }
 
     /// Re-aims a hold that is already running, so a player who walks around a
@@ -92,11 +97,13 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     /// actor still has to be told it is still: that is what returns it to its
     /// idle clip after a walk.
     public mutating func advance(by frameTime: Float) -> NPCLocomotionDriveUpdate {
-        yaw = NPCYawMath.turn(
-            from: yaw,
-            to: targetYaw,
-            maximum: turnRate * max(frameTime, 0)
-        )
+        if !isSettled {
+            yaw = NPCYawMath.turn(
+                from: yaw,
+                to: targetYaw,
+                maximum: turnRate * max(frameTime, 0)
+            )
+        }
         return NPCLocomotionDriveUpdate(
             actor: actor,
             intent: .still,
@@ -138,7 +145,8 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
         NPCMovementPersistence(actor: actor, transform: transform, cell: nil, reason: reason)
     }
 
-    static let settleTolerance = MatrixMath.radians(fromDegrees: 0.5)
+    /// The tolerance of an actor with no race.
+    public static let settleTolerance = MatrixMath.radians(fromDegrees: 0.5)
 
     /// The yaw that points from `origin` at `target`, or `fallback` when the
     /// two are the same column of air.

@@ -57,7 +57,7 @@ extension PapyrusNativeFunctions.ScriptStateNatives {
         ScriptedFlag("Actor", "SetHeadTracking", "headTracking"),
         ScriptedFlag("Actor", "SetPlayerResistingArrest", "resistingArrest"),
         ScriptedFlag("Actor", "AllowBleedoutDialogue", "bleedoutDialogue"),
-        ScriptedFlag("Actor", "AllowPCDialogue", "pcDialogue"),
+        ScriptedFlag("Actor", "AllowPCDialogue", ScriptedStateName.pcDialogue),
         ScriptedFlag("ObjectReference", "IgnoreFriendlyHits", "ignoreFriendlyHits"),
         ScriptedFlag("ObjectReference", "SetNoFavorAllowed", "noFavorAllowed"),
         ScriptedFlag("ActorBase", "SetEssential", ScriptedStateName.essential),
