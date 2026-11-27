@@ -71,7 +71,12 @@ flowchart TD
   Otherwise the base is fast walk.
 - In the slow band the fighter brakes harder: its deceleration is multiplied by
   `fCombatApproachTargetSlowdownDecelerationMult`, 10, not by `fCombatPathingDecelerationMult`,
-  2.
+  2. Outside it the race's acceleration, deceleration, and angular acceleration are multiplied
+  by `fCombatPathingAccelerationMult`, `fCombatPathingDecelerationMult`, and
+  `fCombatPathingRotationAccelerationMult`, 2 each, and the turn speed is at least
+  `fCombatPathingNormalizedRotationSpeed`, 2.25 ([RACE DATA](/formats/actors.md#race-data-in-the-game)).
+  How fighters circle, fall back, flank, and strafe comes from their
+  [combat style](/formats/combat-style.md#what-the-values-change).
 
 ## Sprint
 

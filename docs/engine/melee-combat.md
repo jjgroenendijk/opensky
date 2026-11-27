@@ -139,7 +139,9 @@ one sampled frame of a 30 Hz clip lands wherever that frame was, and the contact
 not a window. The volume uses the attacker's facing at the contact frame, which is where the
 player aimed.
 
-Two numbers are OpenSky's choices. Vanilla's hit volume is in its code, not in the install:
+The game tests each attack against a cone from its [attack data](/engine/attack-data.md#the-hit-cone):
+a half-angle of the `ATKD` strike angle (default 35 degrees), turned by the attack angle. OpenSky
+sweeps a capsule instead. Two of its numbers are OpenSky's choices:
 
 - Half height: 0.25 x capsule height, centered on the chest. It reaches a target on the same
   floor, but not one standing on a table.
@@ -165,8 +167,9 @@ Sweep perk) makes a swing hit every target it reaches, nearest first, then the l
 
 ## Damage
 
-Unblocked damage is the `WEAP` `DATA` base damage. How blocking and bonus terms change it is on
-the [melee damage](/engine/melee-damage.md) page.
+Unblocked damage starts from the `WEAP` `DATA` base damage, scaled by skill and by the attack's
+`ATKD` damage multiplier. The whole formula, with blocking and the bonus terms, is on the
+[melee damage](/engine/melee-damage.md) page.
 
 ## Stagger
 
@@ -238,7 +241,9 @@ takes the block button. The player cannot block then; UESP
   buttons raises `attackPowerStartDualWield`.
 - A left strike uses the left weapon's damage, reach, weight, and enchantment. A dual strike lands
   both weapons on its contact frame, one blow each, right first.
-- A left power attack pays the left weapon's stamina. A dual power attack pays both weapons'.
+- A left power attack pays the left weapon's stamina. A dual power attack pays both weapons'. The
+  game applies the power attack stamina entry point with the right-hand weapon
+  ([attack data](/engine/attack-data.md#stamina)).
 
 An NPC with a sword, dagger, war axe, or mace in each hand swings right, then left, then with both,
 in turn. Its hands follow the same left-hand rule as the player's. A left swing plays the left

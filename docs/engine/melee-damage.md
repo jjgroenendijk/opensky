@@ -99,7 +99,14 @@ The perk terms are the attacker's and the target's perk entry points
 
 Skill. UESP "Skyrim:Weapons" gives the player's damage as `base * (1 + skill / 200)`. This is
 `1 + (fDamagePCSkillMax - 1) * skill / 100` with the install's 1.5. The skill is One-Handed,
-Two-Handed, or Archery for the weapon's family. An unarmed hit and an NPC's hit are not scaled.
+Two-Handed, or Archery for the weapon's family. An NPC's skill factor runs from
+`fDamageSkillMin` (1) to `fDamageSkillMax` (3) in the same way.
+
+The game builds the weapon term as
+`((base + ammo) * fDamageWeaponMult + tempering) * skill * ATKD damage mult + MeleeDamage`.
+`fDamageWeaponMult` is 1. MeleeDamage is actor value 34; some unarmed hits add UnarmedDamage,
+actor value 35, instead. An unarmed hit is also multiplied by the attack's `ATKD` damage
+multiplier ([attack data](/engine/attack-data.md)).
 
 Sneak attacks. UESP "Skyrim:Sneak": a hit on a target that has not detected the attacker
 multiplies by the weapon family's setting.
