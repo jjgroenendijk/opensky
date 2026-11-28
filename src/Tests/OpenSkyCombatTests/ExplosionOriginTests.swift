@@ -94,6 +94,16 @@ struct ExplosionOriginTests {
         #expect(abs((report.damaged[Self.npc] ?? 0) - scaled) < 0.001)
     }
 
+    @Test func aWorldThatCastsNoEnchantmentReportsNone() throws {
+        let world = FakeOriginExplosionWorld()
+        world.targets = [MeleeTarget(key: Self.npc, feet: .zero)]
+        var spec = Self.blast
+        spec.enchantment = Self.barrel
+        let report = try Self.runtime(world).detonate(spec, at: .zero, cause: .debug)
+        #expect(report.enchanted.isEmpty)
+        #expect(report.damaged[Self.npc] != nil)
+    }
+
     @Test func aWallShieldsAnActorUnlessTheBlastIgnoresLineOfSight() throws {
         let world = FakeOriginExplosionWorld()
         world.targets = [MeleeTarget(key: Self.npc, feet: SIMD3(100, 0, 0))]

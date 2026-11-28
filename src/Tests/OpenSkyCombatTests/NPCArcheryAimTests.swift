@@ -6,7 +6,8 @@ import OpenSkyActorsInterface
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
+@testable import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 import Testing
 
@@ -85,5 +86,40 @@ struct NPCArcheryAimTests {
         #expect(!world.arrowShots.isEmpty)
         #expect(world.arrowShots.first?.bow.handType == .bow)
         #expect(world.damage[.player] == nil)
+    }
+
+    @Test func aProjectileWithoutAimCorrectionFliesStraightAtTheTarget() {
+        let origin = SIMD3<Float>(0, 0, 100)
+        let centre = SIMD3<Float>(1000, 0, 100)
+        let moving = SIMD3<Float>(0, 300, 0)
+        var record = Projectile(
+            formID: FormID(0x10), flags: [.disableCombatAimCorrection], gravityFactor: 0.35,
+            speed: 3000, range: 0, modelPath: nil
+        )
+        var random = ConditionRandom(seed: 5)
+        let straight = CombatLoopWorldPart.ArcheryShots.launch(
+            (origin, centre), velocity: moving,
+            profile: ProjectileProfile(record: record), random: &random
+        )
+        #expect(straight == SIMD3(1, 0, 0))
+        record = Projectile(
+            formID: FormID(0x10), flags: [], gravityFactor: 0.35, speed: 3000, range: 0,
+            modelPath: nil
+        )
+        let corrected = CombatLoopWorldPart.ArcheryShots.launch(
+            (origin, centre), velocity: moving,
+            profile: ProjectileProfile(record: record), random: &random
+        )
+        #expect(corrected.y > 0.05)
+        #expect(corrected.z > 0)
+    }
+
+    @Test func aLobberAimsForFullWorldGravity() {
+        var profile = ProjectileProfile(
+            speed: 1000, gravityFactor: 0.2, range: 0, collisionRadius: 1
+        )
+        #expect(profile.aimGravityFactor == 0.2)
+        profile.kind = .lobber
+        #expect(profile.aimGravityFactor == 1)
     }
 }

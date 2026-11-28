@@ -121,9 +121,9 @@ Every projectile in flight, an arrow or a spell, draws what its `PROJ` names
 - The `MODL` model at the projectile, with its +Y along the velocity. Its particle systems run
   and follow it.
 - The `DATA` light (offset 0x10) at the projectile, at its full colour.
-- With the muzzle flash flag (0x08): the `NAM1` model at the launch point, along the shot, and
-  the muzzle flash light (0x14), for the muzzle flash duration (0x2C). The light fades out
-  over that time.
+- With the muzzle flash flag (0x08) and a `NAM1` model: that model at the launch point, along the
+  shot, and the muzzle flash light (0x14), for the muzzle flash duration (0x2C). The light fades
+  out over that time.
 
 When a spell lands, its impact plays from the `MGEF` impact data set of the effect that names the
 projectile, on the material it struck: the model, the decal, and the sound. An arrow keeps the

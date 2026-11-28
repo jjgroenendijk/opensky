@@ -97,6 +97,8 @@ struct ProjectileRuntimeTests {
         flash.muzzleFlashLight = FormID(0x0001_0001)
         #expect(!flash.hasMuzzleFlash)
         flash.muzzleFlashDuration = 0.2
+        #expect(!flash.hasMuzzleFlash)
+        flash.muzzleFlashModel = "Weapons\\MuzzleFlash.nif"
         #expect(flash.hasMuzzleFlash)
     }
 

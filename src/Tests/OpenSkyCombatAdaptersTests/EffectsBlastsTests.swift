@@ -36,6 +36,13 @@ struct EffectsBlastsTests {
         adapter.startExplosionImageSpace(Self.light, strength: 1)
     }
 
+    @Test func anExplosionEnchantmentGoesToMagic() {
+        host.fakeMagicWorld.castEnchantmentResult = [Self.actor]
+        let reached = adapter.castExplosionEnchantment(Self.light, from: .player, on: [Self.actor])
+        #expect(reached == [Self.actor])
+        #expect(host.fakeMagicWorld.castEnchantmentCalls.count == 1)
+    }
+
     @Test func modelsAndLightsGoToTheEffects() {
         adapter.showExplosionModel("Effects/Blast.nif", at: SIMD3(1, 2, 3))
         adapter.showExplosionLight(Self.light, at: .zero)

@@ -33,6 +33,7 @@ nonisolated public final class FakeMagicPort: MagicPort {
     public var applySpellHitCalls: [SpellHit] = []
     public var applySpellHitResult: SpellHitReport?
     public var caster: CasterRuntime?
+    public var enchantmentStore: EnchantmentStore?
     public var commanded: [CommandedActor] = []
     public var runeMarkers: [RuneMarker] = []
     public var healthDamageCalls: [SpellPayload] = []

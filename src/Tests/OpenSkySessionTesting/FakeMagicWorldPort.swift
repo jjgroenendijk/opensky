@@ -19,8 +19,26 @@ nonisolated public final class FakeMagicWorldPort: MagicWorldPort {
     public var shoutCooldownResult: Float = 0
     public var staggerActorCalls: [(key: ReferenceKey, magnitude: Float)] = []
     public var staggerActorResult = false
+    public var castEnchantmentCalls: [CastEnchantmentCall] = []
+    public var castEnchantmentResult: [ReferenceKey] = []
 
     public init() {}
+}
+
+extension FakeMagicWorldPort {
+    nonisolated public struct CastEnchantmentCall: CustomStringConvertible {
+        public let enchantment: ReferenceKey
+        public let caster: ReferenceKey?
+        public let targets: [ReferenceKey]
+
+        public var description: String {
+            [
+                "enchantment: " + String(describing: enchantment),
+                "caster: " + String(describing: caster),
+                "targets: " + String(describing: targets)
+            ].joined(separator: ", ")
+        }
+    }
 }
 
 nonisolated extension FakeMagicWorldPort {
@@ -57,5 +75,17 @@ nonisolated extension FakeMagicWorldPort {
     public func staggerActor(_ key: ReferenceKey, magnitude: Float) -> Bool {
         staggerActorCalls.append((key: key, magnitude: magnitude))
         return staggerActorResult
+    }
+
+    @discardableResult
+    public func castEnchantment(
+        _ enchantment: ReferenceKey, from caster: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey] {
+        castEnchantmentCalls.append(CastEnchantmentCall(
+            enchantment: enchantment,
+            caster: caster,
+            targets: targets
+        ))
+        return castEnchantmentResult
     }
 }

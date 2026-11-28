@@ -225,9 +225,8 @@ Example: in first person a target sits 0.6 degrees off the crosshair. The shot t
 - A surface whose material OpenSky cannot name holds the arrow, and so does every surface when the
   load order has no material records.
 - The `PROJ` flags Can Be Picked Up and Can Be Disabled are not read. A stuck arrow is a placed
-  `AMMO`, so every one can be taken with the item rules.
+  `AMMO`, so every one can be taken with the item rules. Every vanilla arrow sets Can Be Picked Up.
 - An arrow sticks in an actor at the actor's position when it hit, not on a bone. No arrow
   impales.
 - Any hit on an actor with a shield can be deflected, not only a hit on the shield's own body.
-- The projectile kind (missile, arrow, beam, lobber) and the flags Supersonic, Pass Through Small
-  Transparent, and No Combat Aim Correction change nothing yet.
+- The projectile kind (missile, arrow, beam, lobber) changes only the aim of a lobber.

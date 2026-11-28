@@ -86,6 +86,25 @@ public final class MagicWorldAdapter {
         return report
     }
 
+    /// Without a caster each target casts it on itself, so nobody is blamed.
+    @discardableResult
+    public func castEnchantment(
+        _ enchantment: ReferenceKey, from caster: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey] {
+        guard let spell = game.magic.enchantmentStore?.enchantment(key: enchantment)?.staffSpell
+        else { return [] }
+        var reached: [ReferenceKey] = []
+        for target in targets {
+            let payload = spell.payload(caster: caster ?? target)
+            if target == caster, payload.isHostile {
+                continue
+            }
+            applySpellHit(SpellHit(payload: payload, targets: [SpellHitTarget(key: target)]))
+            reached.append(target)
+        }
+        return reached
+    }
+
     public func noteSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
         game.scripts.runtime?.queueSpellCast(spell, by: caster)
     }

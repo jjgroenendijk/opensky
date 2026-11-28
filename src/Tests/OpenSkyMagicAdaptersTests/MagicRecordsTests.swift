@@ -99,4 +99,24 @@ struct MagicRecordsTests {
         host.worldRecords = records
         #expect(adapter.enchantment(base, fits: FormID(0x500)))
     }
+
+    @Test func anExplosionEnchantmentSparesAHostileShooter() throws {
+        let record = EnchantmentFixture.record(
+            formID: 0x43, editorID: "TestEnchBlast", name: "Blast",
+            enit: EnchantmentFixture.enit(cost: 0, flags: 1, amount: 0),
+            effects: [.init(0x50, magnitude: 25)]
+        )
+        let file = try SpellStoreFixture.plugin(records: SpellStoreFixture.effectRecords + [record])
+        let index = RecordIndex(plugins: [("base.esm", file)], recordTypes: ["MGEF", "ENCH"])
+        host.fakeMagic.enchantmentStore = EnchantmentStore(index: index)
+        host.fakeMagic.applySpellHitResult = SpellHitReport()
+        let blast = ReferenceKey.plugin(name: "base.esm", objectID: 0x43)
+        let reached = adapter.castEnchantment(blast, from: .player, on: [.player, Self.target])
+        #expect(reached == [Self.target])
+        #expect(host.fakeMagic.applySpellHitCalls.map(\.payload.caster) == [.player])
+        _ = adapter.castEnchantment(blast, from: nil, on: [Self.target])
+        #expect(host.fakeMagic.applySpellHitCalls.last?.payload.caster == Self.target)
+        let missing = ReferenceKey.plugin(name: "base.esm", objectID: 0x44)
+        #expect(adapter.castEnchantment(missing, from: .player, on: [Self.target]).isEmpty)
+    }
 }

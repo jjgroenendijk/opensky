@@ -25,6 +25,7 @@ struct AgentDestructionReadoutTests {
             hazardPlaced: false, debrisThrown: 2
         )
         report.objectsDamaged = [.generated(5): 40]
+        report.enchanted = [.generated(4)]
         host.fakeCombat.explosions.reports = [report]
         host.fakeMagic.runeMarkers = [RuneMarker(position: [4, 5, 6], projectile: nil, isLit: true)]
         host.fakeCinematicCamera.isPlaying = true
@@ -38,6 +39,9 @@ struct AgentDestructionReadoutTests {
         #expect(reply.value(atPath: "explosions.0.debrisThrown") == .init(2))
         #expect(reply.value(atPath: "explosions.0.objectsDamaged") == .object([
             ReferenceKey.generated(5).description: .init(Float(40))
+        ]))
+        #expect(reply.value(atPath: "explosions.0.enchanted") == .array([
+            .string(ReferenceKey.generated(4).description)
         ]))
         #expect(reply.value(atPath: "runes.0.lit") == .bool(true))
         #expect(reply.value(atPath: "killCamPlaying") == .bool(true))

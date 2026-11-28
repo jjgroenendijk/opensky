@@ -37,6 +37,8 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public var verticalOffset: Float = 0
     /// `DATA` flag `0x80`: a chain explosion, which a spell's area search skips.
     public var isChain = false
+    /// `EITM`: cast at full strength on each actor the blast reaches.
+    public var enchantment: ReferenceKey?
 
     public init(
         name: String,
@@ -144,6 +146,8 @@ nonisolated public struct ExplosionReport: Equatable, Sendable {
     public var objectsDamaged: [ReferenceKey: Float] = [:]
     /// Whether the placed object went into the world as a new reference.
     public var objectPlaced = false
+    /// The actors the `EXPL` enchantment was cast on.
+    public var enchanted: [ReferenceKey] = []
 
     public init(
         name: String,

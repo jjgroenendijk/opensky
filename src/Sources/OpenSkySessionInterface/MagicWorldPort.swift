@@ -11,4 +11,9 @@ public protocol MagicWorldPort: AnyObject {
     /// A shout word's cooldown: its recovery time scaled by `multiplier`.
     func shoutCooldown(recovery: Float, multiplier: Float) -> Float
     @discardableResult func staggerActor(_ key: ReferenceKey, magnitude: Float) -> Bool
+    /// Casts an `ENCH` at full strength from `caster` on `targets`; a hostile one skips
+    /// the caster. Returns the actors it reached.
+    @discardableResult func castEnchantment(
+        _ enchantment: ReferenceKey, from caster: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey]
 }

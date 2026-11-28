@@ -197,6 +197,12 @@ extension EffectsWorldAdapter {
         blasts.applyExplosionDamage(amount, to: target)
     }
 
+    public func castExplosionEnchantment(
+        _ enchantment: ReferenceKey, from shooter: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey] {
+        hosts.magicWorld.castEnchantment(enchantment, from: shooter, on: targets)
+    }
+
     public func playExplosionSound(_ sound: ReferenceKey, at position: SIMD3<Float>) {
         blasts.playExplosionSound(sound, at: position)
     }

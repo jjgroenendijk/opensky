@@ -333,3 +333,5 @@ How OpenSky's NPC archers differ from the range rules above:
 - The style's group offensive multiplier is not applied, and an explosion radius does not raise
   the minimum range.
 - The back-off has no 60-degree view check, and the path is not kept by the 20-degree rule.
+- The lead's flight time is always the straight distance over the speed. The aim point is never
+  the feet for a large blast, and the noise does not move it toward a second body point.

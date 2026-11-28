@@ -40,6 +40,12 @@ public protocol ExplosionWorld: AnyObject {
     func placeExplosionObject(_ placement: ExplosionObjectPlacement) -> Bool
     /// `owner` made a detection sound event of the `EXPL` sound level at `position`.
     func noteExplosionSound(owner: ReferenceKey, level: UInt32?, at position: SIMD3<Float>)
+    /// Casts the `EXPL` enchantment from `shooter` on `targets`; a hostile one skips the
+    /// shooter. Returns the actors it reached.
+    @discardableResult
+    func castExplosionEnchantment(
+        _ enchantment: ReferenceKey, from shooter: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey]
 }
 
 extension ExplosionWorld {
@@ -63,4 +69,10 @@ extension ExplosionWorld {
     }
 
     public func noteExplosionSound(owner _: ReferenceKey, level _: UInt32?, at _: SIMD3<Float>) {}
+
+    public func castExplosionEnchantment(
+        _: ReferenceKey, from _: ReferenceKey?, on _: [ReferenceKey]
+    ) -> [ReferenceKey] {
+        []
+    }
 }

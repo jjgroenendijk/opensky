@@ -30,7 +30,7 @@ nonisolated public struct Projectile: Equatable, Sendable {
         static let supersonic = Flags(rawValue: 0x0080)
         static let pinsLimbs = Flags(rawValue: 0x0100)
         static let passThroughSmallTransparent = Flags(rawValue: 0x0200)
-        static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
+        public static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
         /// xEdit names bit 11 `Rotation`; UESP's table stops at bit 10.
         static let rotation = Flags(rawValue: 0x0800)
     }
