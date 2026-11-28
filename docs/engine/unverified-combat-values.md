@@ -71,3 +71,4 @@ apply: each row names the value, OpenSky's choice, and the page with the detail.
 | Per-hand roll order | The right hand rolls first; the left rolls only when it fails | [combat blocking](/engine/combat-blocking.md#in-opensky) |
 | `CSCR` flank defaults | A style without a flank distance or stalk time reads 0.2 for each | [combat movement](/engine/combat-movement.md#in-opensky) |
 | Flank goal | The free place nearest the NPC's bearing; the stalk jogs to `reach + 128` | [combat movement](/engine/combat-movement.md#in-opensky) |
+| Final advance | Within 256 units of the place distance, the advance walks at the target | [combat movement](/engine/combat-movement.md#in-opensky) |

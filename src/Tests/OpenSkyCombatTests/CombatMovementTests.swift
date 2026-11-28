@@ -143,6 +143,19 @@ struct CombatMovementTests {
         #expect(abs(point.x) < 0.01)
     }
 
+    @Test func nearItsPlaceTheAdvanceWalksStraightAtTheTarget() {
+        var machine = Self.styled()
+        var inputs = Fixture.inputs(distance: Fixture.reach + 100)
+        inputs.place = CombatPlaceInputs(
+            bearing: 0, halfWidth: 0.3, isOutOfPosition: true, canBookHere: false,
+            goalBearing: .pi / 2
+        )
+        let steps = Self.run(&machine, seconds: 0.1, inputs: inputs, reached: true)
+        let approach = steps.first { $0.booksPlace != nil }
+        #expect(approach?.booksPlace == .pi / 2)
+        #expect(approach?.command == .approach(inputs.targetPosition))
+    }
+
     @Test func anNPCOutOfPositionBooksWhereItStandsOrRepositions() {
         var machine = Self.styled()
         var here = Fixture.inputs()
