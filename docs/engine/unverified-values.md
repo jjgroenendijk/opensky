@@ -196,6 +196,7 @@ The combat values are on their own page: [unverified combat values](unverified-c
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
+| A one-entry ARMA skin swap list | Swaps nothing; the `NAM0`/`NAM1` set stays | [armour](../formats/armor.md#skin-texture) |
 | Far particle systems | Stepped in the update bands, waiting at most 1/15 s | [update bands](update-bands.md#systems-that-use-the-bands) |
 | Grass near lists | The draw distance plus 1,024 units, built again after the camera moves 512 to 1,024 units | [update bands](update-bands.md#grass) |
 | Actor camera fade bodies | A bone body's node bound is half its length plus its radius; a movement capsule's bound is half its height; a hull is the sphere around its points | [actor camera fade](actor-camera-fade.md#opensky) |

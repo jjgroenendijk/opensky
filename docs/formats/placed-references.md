@@ -34,7 +34,8 @@ Sources: UESP [`/REFR`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
 | `VMAD` | struct | scripts ([VMAD](vmad.md)) |
 
 `XTEL` is always 32 bytes: destination door REFR FormID, position float32[3], rotation
-float32[3] in radians, and uint32 flags (`0x01` no alarm). Any other size is malformed.
+float32[3] in radians, and uint32 flags (`0x01` no alarm). Any other size is malformed. The
+game keeps only the low byte of the flags, and nothing reads `0x01`.
 
 `XOWN` is a 4-byte FormID in Skyrim. xEdit's
 [`wbOwnership`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas)

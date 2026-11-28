@@ -159,6 +159,6 @@ an activation from opening or closing the reference.
 | `Activate(_, abDefaultProcessingOnly)` | Ignores the flag | This path has no built-in activation behavior to limit |
 | `Activate` and the open state | Never opens | Only the use key knows the action was an open. A scripted activation records itself without claiming the target opened |
 | `XESP` enable parents | Not followed | `Enable` and `Disable` act on the receiver alone |
-| A constant global | Written anyway | The Creation Kit rule stops editing a constant in the editor. Nothing open says the engine refuses a scripted write |
+| A constant global | Keeps its value | `SetValue` on a `GLOB` with record flag `0x40` changes nothing, as in the game, which logs "Cannot set the value of a constant GlobalVariable" |
 | `Delete` | Writes the change at once | The wiki says it waits until nothing holds the reference. OpenSky has no reference counting |
 | `PlayAnimation` and its two siblings | Return true with no effect | Counted as a deferred animation, not treated as done |
