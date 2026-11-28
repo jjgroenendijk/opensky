@@ -99,7 +99,19 @@ shader goes on the weapon only when its own flags have bit 24 set. The costliest
 
 The equip ability (`0x80`) follows the casting slots: left hand, right hand, voice, and instant.
 When a slot gets a spell, scroll, staff, or other casting item, the ability of each of its effects
-is cast on the actor. When the item leaves its last slot, those abilities are dispelled.
+is cast on the actor. When the item leaves its last slot, those abilities are dispelled. An
+enchanted weapon's enchantment sits in the slot of its hand, so its equip abilities follow the
+weapon as it is equipped and unequipped.
+
+The script-effect AI score (`0x90`) is the value the combat AI gives an effect of the Script
+archetype when it rates a spell. Other archetypes get a value worked out from their magnitude and
+actor value. The script-effect AI delay (`0x94`) is a wait: after an NPC casts such a spell, it
+picks no script-effect spell again until the delay has passed. All script-effect spells of one
+caster share that wait.
+
+The menu display object (`MDOB`) and the spellmaking area (`0x2C`) change nothing in play; only
+menus and the editor read them. The game does not check an art object's type (`ARTO DNAM`) when
+it starts hit-effect art.
 
 The flags with known meaning are: hostile, recover, detrimental, snap to navmesh, no hit
 event, dispel with keywords, no duration, no magnitude, no area, effects persist, gory
@@ -116,12 +128,16 @@ What the game does with some of them:
 | 12 | Effects persist | Objects the effect places are persistent references, and they are cleaned up when the effect ends |
 | 14 | Gory visuals | With the `bDisableAllGore` INI switch on, the hit shader and hit art do not start |
 | 24 | (unnamed) | The effect is left out of the spell's cost, its charge time, and the choice of its main effect |
-| 26 | Painless | The target plays no pain or hit reaction |
+| 26 | Painless | The target makes no pain reaction: no Hit combat line, and on the player no hit effect or rumble |
 | 27 | No hit effect | The hit shader and hit-effect art do not start on the target |
 | 28 | No death dispel | Each frame, an effect on a dying or dead actor ends unless this bit is set. This holds for every archetype, abilities too. Reanimate is the one exception: it stays while it holds the body |
 
-A target reacts with pain only to a hostile or detrimental effect that is not painless and not
-from an ability (spell type 4).
+A target reacts with pain when an effect starts on it, if the effect is hostile (the detrimental
+flag is not checked), is not painless, and is not from an ability (spell type 4). The target must
+be alive. The pain reaction is the target's Hit combat dialogue line (`DIAL` category Combat,
+subtype Hit), at most once every 1.5 s for each actor. On the player it also adds a hit effect of
+strength 1.5 and a controller rumble of 0.75 for 0.5 s. It is not a stagger and plays no hit
+animation.
 
 Casting types are constant effect, fire and forget, concentration, and scroll (value 3,
 which only scrolls use). Deliveries are self, touch, aimed, target actor, and target
