@@ -169,6 +169,8 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     var canBash = false
     /// The fighter's place around its target. Nil for a fighter that books none.
     var place: CombatPlaceInputs?
+    /// A one-handed melee weapon in each hand, so each hand rolls its own attack chance.
+    var holdsTwoWeapons = false
 
     init(
         actorPosition: SIMD3<Float>,
@@ -270,4 +272,6 @@ nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     var pace: CombatPace?
     /// The bearing from the target, in radians, of the place the actor books this step.
     var booksPlace: Float?
+    /// The hand whose roll started the attack, for an actor that rolls per hand.
+    var attackHand: MeleeStrikeHand?
 }

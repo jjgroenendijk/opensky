@@ -83,6 +83,7 @@ struct NPCBashTests {
             elapsed += CombatLoopRuntime.fixedStepSeconds
         }
         #expect(world.bashLines.first == [Self.opponent, .player])
+        #expect(world.clips.contains { $0.clip == .bash && $0.key == Self.opponent })
         #expect(runtime.pickedAttacks[Self.opponent]?.event == "bashStart")
         #expect((runtime.behaviors[Self.opponent]?.bashCount ?? 0) >= 1)
         #expect(world.damage[.player] != nil)

@@ -246,9 +246,7 @@ knockdown push. These parts are not built yet:
 
 - Reach at contact is OpenSky's swing volume, not the edge-to-edge distance. There is no physics
   cast after a miss, and no sweep.
-- The left-hand pool is chosen only for a left-hand swing. The left-hand flag does not limit which
-  hand the AI swings.
-- A bash plays the NPC's plain attack clip, not the attack's bash animation
+- A bash plays a fixed bash clip, not the attack's own bash animation
   ([combat blocking](/engine/combat-blocking.md#in-opensky)).
 
 `openskycli game state assist` lists each NPC's picked attack under `attackPicks`.

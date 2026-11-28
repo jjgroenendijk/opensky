@@ -63,6 +63,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var blockLoop = CombatBlockLoop()
     /// The surround, distant circle, and strafe moves of a styled actor.
     var paths = CombatPathMoves()
+    /// The hand whose roll passed, for an actor that rolls per hand. It keeps through a combo.
+    var attackHand: MeleeStrikeHand?
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -281,6 +283,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         enter(.windup)
         var step = unchanged()
         step.startedAttack = true
+        step.attackHand = attackHand
         return step
     }
 

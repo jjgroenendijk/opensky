@@ -245,7 +245,10 @@ takes the block button. The player cannot block then; UESP
   game applies the power attack stamina entry point with the right-hand weapon
   ([attack data](/engine/attack-data.md#stamina)).
 
-An NPC with a sword, dagger, war axe, or mace in each hand swings right, then left, then with both,
-in turn. Its hands follow the same left-hand rule as the player's. A left swing plays the left
-punch clip, `h2h_attackleft.hkx`, the way a right swing plays the right punch clip. Each swing's
-kill move uses the action for its hand.
+An NPC with a sword, dagger, war axe, or mace in each hand and a combat style rolls its attack
+chance for each hand ([combat blocking](/engine/combat-blocking.md#loops-that-run-together)). The
+right hand rolls first, then the left, and the first to pass attacks. A right-hand pick of a
+dual-wield attack swings both weapons. Such an NPC without a combat style swings right, then left,
+then with both, in turn. Its hands follow the same left-hand rule as the player's. A left swing
+plays the left punch clip, `h2h_attackleft.hkx`, the way a right swing plays the right punch clip.
+Each swing's kill move uses the action for its hand.

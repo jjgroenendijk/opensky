@@ -12,9 +12,16 @@ nonisolated public struct NPCStrikes: Equatable, Sendable {
     public private(set) var hand = MeleeStrikeHand.right
     private(set) var count = 0
 
-    mutating func start(dual: Bool) {
-        hand = dual ? Self.order[count % Self.order.count] : .right
+    /// Starts a swing. An actor that rolls per hand names its hand; any other takes the
+    /// next hand of the order.
+    mutating func start(dual: Bool, hand rolled: MeleeStrikeHand? = nil) {
+        hand = dual ? rolled ?? Self.order[count % Self.order.count] : .right
         count += 1
+    }
+
+    /// The right hand's pick was a dual-wield attack, so the swing lands both weapons.
+    mutating func swingBoth() {
+        hand = .dual
     }
 
     /// The weapon whose reach the swing has.

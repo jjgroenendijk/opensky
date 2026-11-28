@@ -30,13 +30,22 @@ nonisolated extension CombatBehaviorMachine {
     }
 
     /// Rolls the attack chance when a roll is due; a failed roll waits `attackRollSeconds`.
-    /// Without an attack chance, the attack interval is the wait.
+    /// Without an attack chance, the attack interval is the wait. With a weapon in each
+    /// hand, the right hand rolls, then the left, and the first to pass attacks.
     mutating func rollsAttack(_ inputs: CombatBehaviorInputs) -> Bool {
+        attackHand = nil
         guard settings.attackChance != nil else {
             return phaseSeconds >= settings.attackIntervalSeconds
         }
         guard phaseSeconds >= nextAttackRoll else { return false }
         nextAttackRoll = phaseSeconds + settings.attackRollSeconds
-        return Float(random.percent()) / 100 < attackChance(inputs)
+        let chance = attackChance(inputs)
+        if Float(random.percent()) / 100 < chance {
+            attackHand = inputs.holdsTwoWeapons ? .right : nil
+            return true
+        }
+        guard inputs.holdsTwoWeapons, Float(random.percent()) / 100 < chance else { return false }
+        attackHand = .left
+        return true
     }
 }
