@@ -46,4 +46,5 @@ Most members are floats. These are not:
 | Scene-graph emit depth limit (last) | uint16 and 2 unused bytes |
 
 Flags: 0x01 no membrane shader, 0x08 no particle shader, 0x20 skin only, 0x8000 animated
-particles, 0x01000000 blood geometry. A size that is not a multiple of 4 is tallied.
+particles, 0x01000000 blood geometry: on a weapon enchantment the shader covers the weapon's
+blood geometry instead of the whole model. A size that is not a multiple of 4 is tallied.
