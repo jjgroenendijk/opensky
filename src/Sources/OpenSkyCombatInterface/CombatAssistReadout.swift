@@ -55,9 +55,26 @@ nonisolated public struct CombatAssistReadout: Equatable, Sendable {
         }
     }
 
+    /// One styled fighter's block loop.
+    nonisolated public struct Guards: Equatable, Sendable {
+        public var actor: ReferenceKey
+        /// `block` or `blockAttack` while the guard is up; nil otherwise.
+        public var current: String?
+        public var raised: Int
+        public var bashes: Int
+
+        public init(actor: ReferenceKey, current: String?, raised: Int, bashes: Int) {
+            self.actor = actor
+            self.current = current
+            self.raised = raised
+            self.bashes = bashes
+        }
+    }
+
     public var tracks: [Track] = []
     public var attackPicks: [AttackPick] = []
     public var closeMoves: [CloseMoves] = []
+    public var guards: [Guards] = []
     /// The target the player's last shot turned toward. Nil when it turned to none.
     public var autoAim: ProjectileAimPick?
     public var threats: [DangerThreat] = []

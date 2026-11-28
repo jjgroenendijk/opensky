@@ -162,6 +162,11 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     var targetVelocity = SIMD3<Float>.zero
     /// The target is the player, against whom the circle angle is smaller.
     var targetIsPlayer = false
+    /// What the target does, which the block loop reads.
+    var target = CombatTargetActions()
+    /// The item in the hand can block; it can bash, and the attack list has a bash.
+    var canBlock = false
+    var canBash = false
 
     init(
         actorPosition: SIMD3<Float>,
@@ -235,6 +240,8 @@ nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     /// True on the step an attack began, which is the step the attack clip is
     /// asked for.
     var startedAttack = false
+    /// True on the step a bash began, with `startedAttack`.
+    var startedBash = false
     /// True on the contact step, which is the step the hit volume runs on.
     var reachedContact = false
     /// True on the step a guard went up.

@@ -243,7 +243,7 @@ knockdown push. These parts are not built yet:
   cast after a miss, and no sweep.
 - The left-hand pool is chosen only for a left-hand swing. The left-hand flag does not limit which
   hand the AI swings.
-- The bash state and its damage are not built. An attack with the bash flag is left out of the
-  pick.
+- A bash plays the NPC's plain attack clip, not the attack's bash animation
+  ([combat blocking](/engine/combat-blocking.md#in-opensky)).
 
 `openskycli game state assist` lists each NPC's picked attack under `attackPicks`.

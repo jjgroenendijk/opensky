@@ -12,8 +12,8 @@ extension CombatLoopRuntime.BehaviorDrive {
     /// actor with no attack list, or with no attack that may start, swings plainly.
     @discardableResult
     func pickAttack(
-        for swing: NPCSwing, by actor: CombatActorObservation, at target: MeleeTarget,
-        world: any CombatLoopWorld
+        for swing: NPCSwing, bash: Bool = false, by actor: CombatActorObservation,
+        at target: MeleeTarget, world: any CombatLoopWorld
     ) -> NPCAttack? {
         owner.pickedAttacks[actor.key] = nil
         guard !swing.shoots else { return nil }
@@ -21,7 +21,7 @@ extension CombatLoopRuntime.BehaviorDrive {
         guard !list.isEmpty else { return nil }
         let now = owner.stepSeconds
         var situation = NPCAttackSituation()
-        situation.pool = swing.hand == .left ? .leftHand : .general
+        situation.pool = bash ? .bash : swing.hand == .left ? .leftHand : .general
         let targetPhase = owner.behaviors[target.key]?.phase
         situation.targetIsStaggered = targetPhase == .staggered
         situation.targetBlocksTowardAttacker = targetPhase == .blocking

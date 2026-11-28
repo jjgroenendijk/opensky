@@ -5,6 +5,7 @@
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import Testing
 
 @MainActor
@@ -111,5 +112,13 @@ struct CombatStyleTuningTests {
         let aggressive = damageTaken(Self.tuning(offense: 1))
         #expect(neutral > 0)
         #expect(aggressive > neutral)
+    }
+
+    @Test func theStylesBashValuesComeFromItsMeleeBlock() throws {
+        let style = try CombatStyle(record: ESMFixture.record("CSTY", fields: [
+            ("CSGD", ESMFixture.f32(0.5, 0.5)), ("CSME", ESMFixture.f32(1, 1, 1, 2, 3, 4, 5))
+        ]))
+        let bash = CombatStyleTuning(style: style).bash
+        #expect(bash.bash == 2 && bash.recoil == 3 && bash.attack == 4 && bash.powerAttack == 5)
     }
 }

@@ -61,3 +61,6 @@ apply: each row names the value, OpenSky's choice, and the page with the detail.
 | Close-range move arrival | A back off, circle, or fallback has arrived within 32 units of its point | [combat style](/formats/combat-style.md#where-opensky-differs) |
 | Close-range move timeout | A close-range move that has not arrived after 5 s fails | [combat style](/formats/combat-style.md#where-opensky-differs) |
 | Target moving away | A target moves away when its speed away from the actor is above 1 unit a second | [combat style](/formats/combat-style.md#where-opensky-differs) |
+| Bare-hand block | Bare hands block only with a shield, and never bash | [combat blocking](/engine/combat-blocking.md#in-opensky) |
+| Block attack distance | The per-fighter distance is both actors' radii | [combat blocking](/engine/combat-blocking.md#in-opensky) |
+| `CSME` bash defaults | A missing bash value reads as 1 | [combat blocking](/engine/combat-blocking.md#in-opensky) |

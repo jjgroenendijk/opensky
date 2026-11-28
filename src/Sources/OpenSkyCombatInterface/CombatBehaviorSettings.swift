@@ -126,6 +126,8 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// The back off, circle, and fall back moves in reach. A combat style sets them; nil
     /// holds still between attacks.
     public var closeRange: CombatCloseRangeSettings?
+    /// The block loop. A combat style sets it; nil rolls the block chance once per gap.
+    public var blockLoop: CombatBlockLoopSettings?
 
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()

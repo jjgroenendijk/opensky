@@ -11,11 +11,15 @@ nonisolated extension CombatBehaviorMachine {
     static let lastAttackBonus: Float = 1.5
     static let lastAttackBonusSeconds: Float = 5
 
-    /// The attack chance for this roll, with the staggered-target and last-attack terms.
+    /// The attack chance for this roll, with the staggered-target, blocking, and last-attack
+    /// terms.
     func attackChance(_ inputs: CombatBehaviorInputs) -> Float {
         var chance = settings.attackChance ?? 1
         if inputs.targetIsStaggered {
             chance *= settings.staggeredAttackMult
+        } else if phase == .blocking, let loop = settings.blockLoop {
+            chance *= inputs.target.attack == .none ? loop.attackChanceBlockingMult
+                : loop.attackChanceBlockingSwingMult
         }
         if secondsSinceShot.isFinite {
             let share = min(max(0, secondsSinceShot), Self.lastAttackBonusSeconds)

@@ -308,6 +308,7 @@ public final class CombatLoopRuntime: CombatControlling {
         var tuned = behaviorSettings.tuned(by: tuning)
         if world?.combatWearsShield(key) == false {
             tuned.blockChance *= max(0, combatAI.blockChanceWeaponMult)
+            tuned.blockLoop?.blockChance *= max(0, combatAI.blockChanceWeaponMult)
         }
         return CombatBehaviorMachine(
             settings: combatAI.applyingFlee(
@@ -329,6 +330,11 @@ public final class CombatLoopRuntime: CombatControlling {
     /// No path reaches `key`'s close-range move. Returns the circle's other side to try.
     func refuseCloseMove(of key: ReferenceKey) -> SIMD3<Float>? {
         behaviors[key]?.refuseCloseMove()
+    }
+
+    /// The bash pick found nothing for `key`'s machine.
+    func cancelBash(of key: ReferenceKey) {
+        behaviors[key]?.cancelBash()
     }
 
     public func parkBehavior(of key: ReferenceKey) {

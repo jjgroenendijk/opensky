@@ -24,7 +24,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     public private(set) var fightCount = 0
     private(set) var attackCount = 0
     private(set) var contactCount = 0
-    private(set) var blockCount = 0
+    var blockCount = 0
     private(set) var searchCount = 0
     /// Casts begun since construction, which differs from casts released by the
     /// ones a stagger or a retreat interrupted.
@@ -59,6 +59,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var nextAttackRoll: Float = 0
     /// The back off, circle, and fall back moves while spacing.
     var closeMoves = CombatCloseMoveLoop()
+    /// The block, block attack, and bash rolls of a styled actor.
+    var blockLoop = CombatBlockLoop()
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -88,6 +90,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         secondsSinceCommand += seconds
         secondsSinceShot += seconds
         shoutCooldown = max(0, shoutCooldown - seconds)
+        blockLoop.tick(seconds)
         advanceFlight(seconds: seconds, inputs: inputs)
         var step = advance(inputs)
         // A released cast cleared `pendingCast` itself, so what is left here is
@@ -217,21 +220,15 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         if let archer = advanceArcherSpacing(inputs) {
             return archer
         }
+        if let defence = blockLoopPass(inputs) {
+            return leaveCloseMoves(defence, wasMoving: closeMoves.move != nil)
+        }
         let move = advanceCloseMoves(inputs)
         guard
             inputs.distance <= inputs.holdDistance(settings: settings), inputs.weaponOut,
             rollsAttack(inputs) else { return move }
         let wasMoving = closeMoves.move != nil
         return leaveCloseMoves(startAttackOrCast(inputs), wasMoving: wasMoving)
-    }
-
-    private mutating func advanceBlocking(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard phaseSeconds >= settings.blockSeconds, inputs.weaponOut else { return unchanged() }
-        guard inputs.distance <= inputs.holdDistance(settings: settings) else {
-            enter(.approaching)
-            return approach(inputs)
-        }
-        return startAttackOrCast(inputs)
     }
 
     mutating func startCast(_ option: CombatSpellOption) -> CombatBehaviorStep {
@@ -278,25 +275,6 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         enter(.windup)
         var step = unchanged()
         step.startedAttack = true
-        return step
-    }
-
-    /// Enters the gap between attacks, either waiting it out or spending it
-    /// with the guard up. Rolled once here rather than once per step, so the
-    /// stated probability is per attack cycle and not per sixtieth of a second.
-    mutating func enterSpacing() -> CombatBehaviorStep {
-        let roll = Float(random.percent()) / 100
-        guard roll < settings.blockChance else {
-            enter(.spacing)
-            var step = unchanged()
-            step.command = command(.hold)
-            return step
-        }
-        blockCount += 1
-        enter(.blocking)
-        var step = unchanged()
-        step.raisedBlock = true
-        step.command = command(.hold)
         return step
     }
 
@@ -388,6 +366,7 @@ nonisolated extension CombatBehaviorMachine {
         if next != phase {
             closeMoves = CombatCloseMoveLoop(startedCount: closeMoves.startedCount)
         }
+        keepBlockLoop(entering: next)
         phase = next
         phaseSeconds = 0
         nextAttackRoll = 0
@@ -405,7 +384,7 @@ nonisolated extension CombatBehaviorMachine {
     /// The one place a swing and a cast are chosen between
     /// (docs/engine/combat-behavior.md). Out of weapon reach, cast on the ranged roll;
     /// in reach, cast with probability `castChance`. Uses the seeded block-roll RNG.
-    private mutating func startAttackOrCast(
+    mutating func startAttackOrCast(
         _ inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
         if let special = startSpecialCast(inputs) {
@@ -457,7 +436,9 @@ nonisolated extension CombatBehaviorMachine {
     }
 
     private mutating func rollsChain(_ inputs: CombatBehaviorInputs) -> Bool {
-        guard inputs.canChain, comboSwings + 1 < settings.maximumComboSwings else { return false }
+        guard
+            inputs.canChain, !blockLoop.isBashing,
+            comboSwings + 1 < settings.maximumComboSwings else { return false }
         return Float(random.percent()) / 100 < settings.comboChance
     }
 }
