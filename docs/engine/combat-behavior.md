@@ -153,9 +153,10 @@ same damage formula.
 The block roll happens once per attack cycle, when the actor enters the gap, not once per step. So
 the block chance means what it says: per attack, not per sixtieth of a second.
 
-The game has no fixed block time. Its block loop rolls block attack, offensive bash, and block on
-every pass, and waits 0.25 s when none passes
-([bash chances](/formats/combat-style.md#attack-and-bash-chances)).
+The game's block loop rolls block attack, offensive bash, and block on every pass, and waits 0.25 s
+when none passes. A block does not need the target to attack. It holds for the style's block time
+unless the target walks out of the stop distance, and never drops during a swing at the blocker
+([combat blocking](/engine/combat-blocking.md)).
 
 ## Game settings
 

@@ -83,13 +83,14 @@ the branches in this order: out of range, out of position, in range.
 
 | Where | Choices |
 | --- | --- |
-| Out of range | Advance; fall back to a ranged weapon, only when the actor's range is beyond `fCombatRangedDistance` (1024) |
-| Out of position | Reposition, surround, or distant circle, weighted by the distant circle chance |
+| Out of range | Fall back to a ranged weapon, advance, surround, distant circle, or stay |
+| Out of position | Reposition, surround, or stay |
 | In range | Circle, fall back, back off, or stay, as below |
 
-Out of range means the distance predicted half a second ahead is above the actor's reach. A
-strafe goes a random distance between 96 units and the strafe maximum, and at least three times
-the actor's radius.
+Out of range means the distance predicted half a second ahead is above the actor's reach plus its
+inner advance radius. Out of position means the actor holds no place around its target, or has
+moved out of it. The [combat movement](/engine/combat-movement.md) page gives those two branches,
+and the strafe, which only the ranged movement loop uses.
 
 ```mermaid
 flowchart TD
@@ -170,8 +171,10 @@ Example: offensive 0.5 gives `0.05 + 0.95 * 0.5 = 0.525`. Two seconds after its 
 the actor rolls `0.525 * 1.2 = 0.63`.
 
 A separate block loop makes the defensive choices. Each pass tries, in order: the block attack
-chance, and on a pass the bash chance to bash; the offensive bash chance; the block chance, and
-while blocking the bash chance to bash. When none passes it waits 0.25 s.
+chance, a block raised against a swing in its windup; the offensive bash chance, a bash without a
+block; and the block chance. While either block holds, the actor rolls the bash chance every
+0.25 s. When none passes it waits 0.25 s. The [combat blocking](/engine/combat-blocking.md) page
+gives when each starts and ends.
 
 The bash chance is `lerp(defensive, fCombatBashChanceMin 0.025, fCombatBashChanceMax 0.2)` and
 the offensive bash chance `lerp(offensive, fCombatOffensiveBashChanceMin 0,
@@ -183,13 +186,15 @@ blocks toward the attacker within the 35 degree hit cone.
 The attack staggered, power attack staggered, and power attack blocking values also weight the
 choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
 
-With flanking, the flank distance is added to a radius of the target to give the distance the
-actor flanks at. The stalk time starts a stalk timer. A stalk reaches 256 units, and the actor
-counts as near the flank point within 384.
+With flanking, the flank distance is added to the actor's reach to give the distance a flanking
+path may swing out to. A stalk starts only within `reach + 256` and keeps the actor between its
+reach and `reach + 256`. Within `reach + 384` the flank goal may lie at any angle
+([flanking](/engine/combat-movement.md#flanking)).
 
-`DATA` 0x04 allows dual wielding for a race with `DATA` flag 0x40000000, which allows a
-left-hand item. `DATA` 0x02 lets the actor use flanking movement; without it the actor never
-flanks. No reader of the dueling, charging, or retarget bits is known.
+`DATA` 0x04, together with race `DATA` flag 0x40000000, lets a weapon that only fits the right
+hand go in either hand ([dual wielding](/engine/combat-blocking.md#loops-that-run-together)).
+`DATA` 0x02 makes the actor always use flanking movement; without it the actor never flanks. No
+reader of the dueling, charging, or retarget bits is known.
 
 ## The general block
 
@@ -203,8 +208,8 @@ flanks. No reader of the dueling, charging, or retarget bits is known.
 | Uses `O` | Uses `Df` |
 | --- | --- |
 | Attack chance, offensive bash chance | Block chance, block attack chance, bash chance |
-| Ranged attack chance: `lerp(O, fCombatRangedAttackChanceMin, Max)` | Block start distance: `lerp(Df, fCombatBlockStartDistanceMin 32, Max 192)`, and the same for the stop distance |
-| Immediate offensive spell chance: `lerp(O, 0.05, 0.75)` from the `fCombatCastImmediateOffensiveMagicChance` pair | Block time: three-point lerp of `fCombatBlockTimeMin`, `Mid`, `Max` at `2 * Df - 1` |
+| Ranged attack chance: `lerp(O, fCombatRangedAttackChanceMin, Max)` | Block start distance: `lerp(Df, fCombatBlockStartDistanceMin 32, Max 192)`, and the stop distance `lerp(Df, 128, 384)`, each plus both radii and the target's weapon reach |
+| Immediate offensive spell chance: `lerp(O, 0.05, 0.75)` from the `fCombatCastImmediateOffensiveMagicChance` pair | Block time: three-point lerp of `fCombatBlockTimeMin` 4, `Mid` 8, `Max` 10,000 s at `2 * Df - 1` |
 | Immediate spell hold time and concentration spell chance, cast and wait times, from their settings | Cover search distance: `lerp(Df, fCombatCoverSearchDistanceMin 1536, Max 3072)` |
 | Orbit time: random between `fCombatOrbitTimeMin` (3) and `lerp(O, fCombatOrbitTimeMax 12, Min)` | The health and magicka percents to restore at |
 
@@ -240,8 +245,9 @@ with their chances, angles, distances, and waits. These parts are not built yet:
 
 - An actor without a combat style waits a fixed attack interval and makes no close-range moves.
   In the game such an actor uses the default style.
-- The out-of-range and out-of-position choices: distant circle, surround, reposition, strafe,
-  and falling back to a ranged weapon.
+- The out-of-range and out-of-position choices: distant circle, surround, reposition, and
+  falling back to a ranged weapon. No actor books a place around its target, and the ranged loop
+  does not strafe.
 - Some move checks: a circle ending once its path point is within half the reach of the target,
   a fallback cancelled 1.5 radii off its path point or by the angle bands, and the 64-unit navmesh
   tolerance. The per-fighter distance is taken as 0.
@@ -249,8 +255,9 @@ with their chances, angles, distances, and waits. These parts are not built yet:
   1 unit a second. These values are OpenSky's
   ([unverified combat values](/engine/unverified-combat-values.md)).
 - The blocking terms of the attack chance: an NPC holds its guard for a fixed time, then attacks.
-- The block loop: OpenSky rolls the block chance once per gap between attacks.
+- The block loop ([combat blocking](/engine/combat-blocking.md)): OpenSky rolls the block chance
+  once per gap between attacks.
 - Bashes and their chances.
-- The flanking flag and the dual-wield flag.
+- The flanking flag ([flanking](/engine/combat-movement.md#flanking)) and the dual-wield flag.
 
 `openskycli game state assist` lists each styled fighter's move under `closeMoves`.
