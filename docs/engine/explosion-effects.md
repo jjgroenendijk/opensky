@@ -66,8 +66,11 @@ to 99.
   A chance of 100 or more always explodes.
 - Otherwise, it explodes when r is below the game's explode percentage (75) × the part's
   chance / 100.
-- A part that does not explode is cut off when r is below the game's dismember chance (50)
-  ([decapitation](ragdoll.md#decapitation)).
+- A part that does not explode is cut off when r is below the game's dismember chance (50).
+
+The game only marks the hit with the result. Nothing in the game acts on the mark, so no part
+explodes or is cut off this way. Decapitation is a separate path that does not use this roll
+([decapitation](ragdoll.md#decapitation)).
 
 Vanilla data has no explodable part, so a test needs a synthetic record.
 
@@ -98,6 +101,9 @@ flowchart TD
 - An exploded part is kept in the death state like a cut head, with a flag. The body is drawn
   without the part, and no piece of it is left to fall. A save keeps it
   ([save actor chunks](../formats/opensky-save-actor-chunks.md#deth-deaths)).
+- [WARNING] OpenSky acts on the mark, which the game does not. The roll uses the part the
+  killing hit struck ([body parts](../formats/body-parts.md#which-part-a-hit-strikes)), or the
+  first explodable part for a hit that found none.
 - A blown-off part plays the part's explodable explosion. Its debris and decals are not drawn.
 - A part that does not explode is cut off by the same roll, with no perk needed. A body with no
   explodable part keeps the perk rule of [decapitation](ragdoll.md#decapitation).

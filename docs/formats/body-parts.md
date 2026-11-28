@@ -66,6 +66,11 @@ the install.
 
 Node names match a skeleton without regard to case.
 
+The game reads only the low byte of each debris count, so both counts run from 0 to 255. A
+limb-replacement scale, severable debris scale, or explodable debris scale of exactly 0 becomes
+0.1 after loading. A record holds at most one part of each of the six types: the game looks a
+part up by its type.
+
 ## Skeleton nodes
 
 A `BPTD` part names a skeleton node in `BPNN`. OpenSky checks each name against the
@@ -87,7 +92,12 @@ and takes the node of the target's model that the line crosses. From the player 
 the aim and is 512 units long. From an NPC it runs from the attacker's torso to the target. When
 the line finds no point on the model, the hit point is 32 units along the line between the two.
 
-The node gives a part type (`BPND` byte 5). The hit keeps only the type. A later step asks the
+The node gives a part type. When an actor's model is set up, each part's `BPNN` name is looked
+up in its skeleton. A hit walks up from the node it struck through its parents. The first node
+that is one of those part nodes gives the part type (`BPND` byte 5). When the walk reaches the
+actor's root first, the hit has no part, not the torso: no damage multiplier, no limb damage,
+and no roll below apply. A hit aimed at one limb takes the part whose actor value matches that
+limb instead. The hit keeps only the type. A later step asks the
 actor's `BPTD` for its part of that type. The part's to-hit chance is the weight of a roll with
 one candidate, so it only matters at 0: then no part is noted. Flag `0x40` does not choose the
 part; it changes the explode roll below.
@@ -146,13 +156,43 @@ flowchart TD
 Example: explosion chance 40, no flag `0x40`. The explode test is `R < 30`, so a roll of 12
 explodes the part, 41 dismembers it, and 60 does nothing.
 
-An explode places the explodable explosion at the hit point and throws the explodable debris:
-its count, at the explodable debris scale times the actor's scale. The limb-replacement model is
-attached at the absolute value of the limb-replacement scale. The limb is hidden after
-`fExplodeLimbRemovalDelay` seconds (0.03), or `fExplodeLimbRemovalDelayVATS` (0) in VATS.
+No step of the game acts on either result. The hit is marked to dismember or to explode, and
+nothing spawns from the mark. The game holds a routine that would place the explodable explosion,
+throw the explodable debris, and attach the limb-replacement model, but nothing runs it. So the
+severable and explodable explosions, the debris counts and scales, the gore offset, the gore
+rotation, the gore target bone (`NAM4`), the explodable impact data set, and both decal counts
+change nothing in play.
 
 The INI switch that disables all gore stops all of this, and also blood decals, hit splatter,
 and decapitation.
+
+### Blood around a hit
+
+The severable impact data set works on every hit with blood. It sprays blood on the ground and
+on walls near the struck actor.
+
+1. Blood needs a living actor that bleeds, and the gore switch on. A race with both the no blood
+   spray and the no blood decal flag shows none.
+2. The weapon's or projectile's impact plays on the body, picked by the race's material: its
+   particle at the hit point, its decal on the body, and its sound.
+3. Then the struck part's severable impact data set gives a second impact for the same material.
+   With chance 0.75, a ray leaves the hit point. Its direction is twice the hit direction plus a
+   random offset from -0.3 to 0.3 on each axis, normalised, with its height part lowered by 0.5.
+   The ray is 512 units long.
+4. The first world surface the ray meets takes exactly one decal of that impact, with the
+   impact's size and colour. The decal counts in `BPND` do not change how many.
+
+Blood farther from the camera than the game's particle distance (2048 in `Skyrim.esm`) is
+skipped.
+
+Example: a sword hits a bandit from the west. The spray points east, so the ray runs east and
+down, and its decal lands on the floor or a wall east of the bandit.
+
+### Parts the game reads elsewhere
+
+The look-at part (type 3) gives the point other actors look at; without it the head (1) does.
+The eye part (2) gives the eye angles against the head. The IK start node (`BPNI`), the tracking
+max angle, and the IK flags 0x02, 0x04, 0x10, and 0x20 change nothing in play.
 
 ### Decapitation
 
@@ -168,10 +208,22 @@ In `Skyrim.esm` every part has flags 0 except the draugr head (`0x32`) and the d
 multiplier 1, actor value -1, health percent 5, and to-hit chance
 100. No part in `Skyrim.esm`, `Dawnguard.esm`, or `Dragonborn.esm` is severable or
 explodable, so vanilla actors never dismember or explode this way.
+`DefaultBodyPartData` names `BloodSprayImpactSetRed` as the severable and explodable impact data
+set of its head and torso parts, with decal counts of 4. So vanilla hits use the blood spray
+above.
 
 ## Where OpenSky differs
 
-A hit lands on the actor, not on one of its nodes. So the parts of `BPND` that work per hit are
-not used yet: the damage multiplier, the health percent, the to-hit chance, and the
-actor value of a limb. Severing and exploding on a killing blow use the part data and the weapon's
-On Hit setting as this page describes.
+- A hit takes the part whose node, in the actor's current pose, lies nearest the hit point. A
+  melee or arrow hit uses its contact point. An NPC's blow has no contact point, so the part
+  nearest the attacker's torso is taken. A part with to-hit chance 0 is never struck. OpenSky has
+  no collision bodies per bone, so it does not walk up from the struck node. A hit aimed at one
+  limb is not modelled.
+- An arrow or bolt applies the part's damage multiplier. A staff does not yet.
+- Limb damage goes on the part's actor value. Perk entry point Adjust Limb Damage is not applied,
+  and a crippled limb has no effect yet.
+- The blood spray uses the session's static collision for its ray, and skips the camera distance
+  check.
+- On a killing blow, OpenSky still explodes or cuts off the struck part as the roll gives
+  ([exploding body parts](../engine/explosion-effects.md#exploding-body-parts)). The game marks the
+  hit and does nothing more.

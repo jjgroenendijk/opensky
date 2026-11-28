@@ -162,7 +162,8 @@ OpenSky rolls `iCombatDismemberPartChance` on such a kill, with any blade, axe, 
 
 - The node of the race's `BPTD` head part is kept in the death state. The write rebuilds the
   cell, and the build draws the actor as two pieces. A loaded save shows them the same way.
-- The part's severable explosion plays unless the race has the no-blood-spray flag.
+- The part's severable explosion plays unless the race has the no-blood-spray flag. This is
+  OpenSky's choice: the game plays the race's blood effect for 5 s instead.
 - The race's `NAM7` decapitation art is attached. Without it, `sDismemberParticleDefault` plays,
   which `Skyrim.esm` leaves empty.
 - The default blood decal goes on the ground unless the race has the no-blood-decal flag.
