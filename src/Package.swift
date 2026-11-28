@@ -679,15 +679,16 @@ targets += feature(
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics", "OpenSkyAudio", "OpenSkyWorldState",
         "OpenSkyConditions", "OpenSkyActorsInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
-        "OpenSkyWorldInterface"
+        "OpenSkyRenderCore", "OpenSkyWorldInterface"
     ],
     tests: [
-        "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyBehavior",
+        "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyBehavior",
         "OpenSkyCombatFixtures", "OpenSkyConditions",
         "OpenSkyCombatInterface", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyGameData",
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
-        "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyWorldState", "OpenSkyEngineTesting"
+        "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyRenderCore", "OpenSkyWorldState",
+        "OpenSkyEngineTesting"
     ]
 )
 targets += feature(

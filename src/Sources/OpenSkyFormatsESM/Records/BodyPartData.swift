@@ -7,16 +7,16 @@ public import OpenSkyFormatsCore
 
 /// BPND, 84 bytes.
 nonisolated public struct BodyPartNodeData: Equatable, Sendable {
-    let damageMultiplier: Float
+    public let damageMultiplier: Float
     /// 0x01 severable, 0x02 IK data, 0x04 IK biped data, 0x08 explodable,
     /// 0x10 IK is head, 0x20 IK headtracking, 0x40 absolute to-hit chance.
     public let flags: UInt8
     /// 0 torso, 1 head, 2 eye, 3 look-at, 4 fly grab, 5 saddle.
     public let partType: UInt8
-    let healthPercent: UInt8
+    public let healthPercent: UInt8
     /// An actor-value index, -1 for none.
-    let actorValue: Int8
-    let toHitChance: UInt8
+    public let actorValue: Int8
+    public let toHitChance: UInt8
     public let explosionChance: UInt8
     let explodableDebrisCount: UInt16
     let explodableDebris: FormID?
@@ -29,7 +29,7 @@ nonisolated public struct BodyPartNodeData: Equatable, Sendable {
     let severableDebrisScale: Float
     let goreOffset: SIMD3<Float>
     let goreRotation: SIMD3<Float>
-    let severableImpactDataSet: FormID?
+    public let severableImpactDataSet: FormID?
     let explodableImpactDataSet: FormID?
     let severableDecalCount: UInt8
     let explodableDecalCount: UInt8

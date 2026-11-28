@@ -184,6 +184,22 @@ extension CombatActorFactsAdapter {
         return true
     }
 
+    public func baseActorValue(at index: Int32, of key: ReferenceKey) -> Float? {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return nil }
+        return runtime.baseValue(at: index, on: holder)
+    }
+
+    public func damageActorValue(at index: Int32, by amount: Float, of key: ReferenceKey) {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return }
+        runtime.damage(at: index, by: amount, on: holder)
+    }
+
     public func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool {
         guard
             let perk = game.perks.runtime?.perks.perk(editorID: editorID),

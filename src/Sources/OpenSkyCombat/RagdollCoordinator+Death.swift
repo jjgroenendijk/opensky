@@ -69,7 +69,9 @@ extension RagdollCoordinator {
         if deathRandom.percent() < deathSettings.dropWeaponChance, world.dropWeapon(of: key) {
             deathEffects.droppedWeapons += 1
         }
-        if let part = world.explodablePart(of: key) {
+        // A hit that found its part rolls on that part; any other on the first explodable.
+        let explodable = hit?.struckPart.map(\.explodable) ?? world.explodablePart(of: key)
+        if let part = explodable {
             let cut = BodyPartCut.of(
                 part,
                 roll: deathRandom.percent(),

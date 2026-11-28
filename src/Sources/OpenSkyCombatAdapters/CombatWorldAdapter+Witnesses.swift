@@ -23,7 +23,7 @@ import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
@@ -319,6 +319,20 @@ extension CombatWorldAdapter {
         motion.recordHealthHit(hit, on: key)
     }
 
+    public func struckBodyPart(
+        of target: ReferenceKey, at point: SIMD3<Float>?, from attacker: ReferenceKey?
+    ) -> StruckBodyPart? {
+        impactEffects.struckBodyPart(of: target, at: point, from: attacker)
+    }
+
+    public func baseActorValue(at index: Int32, of key: ReferenceKey) -> Float? {
+        actorFacts.baseActorValue(at: index, of: key)
+    }
+
+    public func damageActorValue(at index: Int32, by amount: Float, of key: ReferenceKey) {
+        actorFacts.damageActorValue(at: index, by: amount, of: key)
+    }
+
     public func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact? {
         WitnessReads(owner: self).impact(dataSet: dataSet, material: material)
     }
@@ -337,6 +351,12 @@ extension CombatWorldAdapter {
 
     public func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         motion.sweep(query)
+    }
+
+    public func groundHit(
+        from point: SIMD3<Float>, along direction: SIMD3<Float>, within reach: Float
+    ) -> TerrainRayHit? {
+        motion.groundHit(from: point, along: direction, within: reach)
     }
 
     public func residentCells() -> Set<CellSceneLocation> {

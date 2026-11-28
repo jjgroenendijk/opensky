@@ -109,13 +109,29 @@ final class CombatMeleeWorldPart: CombatSharedPart, MeleeCombatWorld {
     /// The player's own swing: the melee runtime only ever swings for the player.
     @discardableResult
     func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+        landMeleeDamage(amount, to: target, at: nil)
+    }
+
+    @discardableResult
+    func applyMeleeDamage(
+        _ amount: Float,
+        to target: ReferenceKey,
+        at point: SIMD3<Float>
+    ) -> Bool {
+        landMeleeDamage(amount, to: target, at: point)
+    }
+
+    private func landMeleeDamage(
+        _ amount: Float, to target: ReferenceKey, at point: SIMD3<Float>?
+    ) -> Bool {
         let melee = shared.melee
         let standingPower = melee?.strikeKind == .power && melee?.powerDirection == .inPlace
         let damage = shared.damage
         let severs = standingPower && melee
             .map { damage.canSever(handType: $0.weapon.handType) } == true
         return damage.applyHealthDamage(
-            amount, to: target, attacker: meleeAttacker.key, kind: .melee, canSever: severs
+            amount, to: target, attacker: meleeAttacker.key, kind: .melee, canSever: severs,
+            at: point
         )
     }
 

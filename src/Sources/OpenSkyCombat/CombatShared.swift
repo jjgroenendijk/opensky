@@ -43,6 +43,8 @@ final class CombatShared {
 
     /// Draws an NPC archer's aim noise and spread.
     var archeryRandom = ConditionRandom()
+    /// Draws the blood sprayed around a hit on a body part.
+    var bloodRandom = ConditionRandom()
     /// The last release check of a player's ranged kill cam, for `state projectiles`.
     var lastKillCamCheck: ProjectileReadout.KillCamCheck?
 

@@ -30,6 +30,9 @@ public protocol EffectsPort: AnyObject {
         at position: SIMD3<Float>,
         on surface: ImpactSurface
     )
+    @discardableResult func placeImpactDecal(
+        _ decal: ImpactDecal, at position: SIMD3<Float>, normal: SIMD3<Float>
+    ) -> Bool
     var skinDecals: SkinDecalRuntime { get }
     @discardableResult func splatterScreen(damage: Float) -> Int
     @discardableResult func splatterScreen(count: Int) -> Int

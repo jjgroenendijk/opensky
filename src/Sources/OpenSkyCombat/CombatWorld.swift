@@ -13,6 +13,7 @@ public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyPhysics
 public import OpenSkyProgressionInterface
+public import OpenSkyRenderCore
 public import OpenSkyWorldState
 import simd
 
@@ -134,6 +135,15 @@ public protocol CombatWorld: AnyObject {
     func pauseBowZoomStamina()
     /// A landed health hit, kept for the death effects of the actor it may kill.
     func recordHealthHit(_ hit: CombatHitRecord, on key: ReferenceKey)
+    /// The part of `target`'s body part data that a hit struck: the part nearest
+    /// `point`, or, with no point, the part nearest the attacker's torso.
+    func struckBodyPart(
+        of target: ReferenceKey, at point: SIMD3<Float>?, from attacker: ReferenceKey?
+    ) -> StruckBodyPart?
+    /// `key`'s base actor value at AVIF `index`.
+    func baseActorValue(at index: Int32, of key: ReferenceKey) -> Float?
+    /// Damages `key`'s actor value at AVIF `index`, as a damage a restore undoes.
+    func damageActorValue(at index: Int32, by amount: Float, of key: ReferenceKey)
     /// Whether `key` owns the perk with `editorID`.
     func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool
     /// Whether any perk `key` owns has an entry at `entryPoint`, whatever its conditions.
@@ -186,6 +196,10 @@ public protocol CombatWorld: AnyObject {
     func impactMaterial(of actor: ReferenceKey) -> FormID?
 
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit?
+    /// Where a ray first meets the land, which the static sweep does not hold.
+    func groundHit(
+        from point: SIMD3<Float>, along direction: SIMD3<Float>, within reach: Float
+    ) -> TerrainRayHit?
     func residentCells() -> Set<CellSceneLocation>
     /// Spawns a stuck arrow. Nil when the store refused it.
     func spawn(_ reference: ReferenceSpawnState, in location: CellSceneLocation) -> ReferenceKey?

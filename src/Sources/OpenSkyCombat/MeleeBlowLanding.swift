@@ -29,7 +29,7 @@ struct MeleeBlowLanding {
     func land(
         _ hit: MeleeHit, damage: MeleeDamageResult, random: inout ConditionRandom
     ) -> Bool {
-        let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
+        let landed = world.applyMeleeDamage(damage.applied, to: hit.target, at: hit.position)
         if damage.wasBlocked {
             world.applyBlockStamina(damage, to: hit.target)
         }

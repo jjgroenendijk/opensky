@@ -130,6 +130,30 @@ struct RagdollDeathEffectsTests {
     }
 
     @Test
+    func theStruckPartDecidesTheRollOverTheFirstExplodablePart() {
+        let (coordinator, world) = Self.session()
+        world.explodable = ExplodablePart(
+            node: "NPC Head [Head]",
+            chance: 100,
+            isChanceAbsolute: true
+        )
+        var torso = CombatHitRecord(damage: 40, kind: .melee)
+        torso.struckPart = StruckBodyPart(partType: 0, node: "NPC Spine")
+        coordinator.noteHit(torso, on: Self.victim)
+        Self.kill(coordinator, world)
+        #expect(coordinator.deathEffects.explodedParts == 0, "the torso is not explodable")
+        let (second, secondWorld) = Self.session()
+        var tail = CombatHitRecord(damage: 40, kind: .melee)
+        tail.struckPart = StruckBodyPart(
+            partType: 5, node: "NPC Tail",
+            explodable: ExplodablePart(node: "NPC Tail", chance: 100, isChanceAbsolute: true)
+        )
+        second.noteHit(tail, on: Self.victim)
+        Self.kill(second, secondWorld)
+        #expect(secondWorld.partExplosions.map(\.1) == ["NPC Tail"])
+    }
+
+    @Test
     func aBlowThatCannotSeverLeavesTheHead() {
         var settings = DeathSettings.vanilla
         settings.dismemberChance = 100

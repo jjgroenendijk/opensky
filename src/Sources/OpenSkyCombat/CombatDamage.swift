@@ -26,12 +26,16 @@ extension CombatShared {
             attacker: ReferenceKey?,
             kind: CombatHitKind = .other,
             canSever: Bool = false,
-            weaponOnHit: UInt32 = 0
+            weaponOnHit: UInt32 = 0,
+            at point: SIMD3<Float>? = nil
         ) -> Bool {
             guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
             else { return false }
+            let part = kind == .other ? nil
+                : shared.world.struckBodyPart(of: target, at: point, from: attacker)
             let scaled = DifficultyDamage.scaled(
-                amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
+                amount * BodyPartHitRules.damageMultiplier(of: part, kind: kind),
+                attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
                 multipliers: difficultyMultipliers
             ) * (shared.world.isInKillMove(target) ? KillMoveAttempt.damageMultiplier : 1)
             let health = shared.world.health(of: target)
@@ -47,7 +51,11 @@ extension CombatShared {
                     damage: scaled, kind: kind, attacker: attacker, canSever: canSever
                 )
                 hit.weaponOnHit = weaponOnHit
+                hit.struckPart = part
                 shared.world.recordHealthHit(hit, on: target)
+                if let part {
+                    BodyPartHits(shared: shared).land(hit, on: part, target: target, at: point)
+                }
                 if kind != .other {
                     shared.pendingCommands.append(.drewBlood(hit, target: target))
                 }

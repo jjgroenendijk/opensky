@@ -42,7 +42,17 @@ final class CombatProjectileWorldPart: CombatSharedPart, ProjectileWorld {
     func applyProjectileDamage(
         _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
     ) -> Bool {
-        AimAndDamage(owner: self).applyProjectileDamage(amount, to: target, from: shooter)
+        AimAndDamage(owner: self).applyProjectileDamage(amount, to: target, from: shooter, at: nil)
+    }
+
+    @discardableResult
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey,
+        at point: SIMD3<Float>
+    ) -> Bool {
+        AimAndDamage(owner: self).applyProjectileDamage(
+            amount, to: target, from: shooter, at: point
+        )
     }
 
     func projectileIsSneakAttack(by shooter: ReferenceKey, on target: ReferenceKey) -> Bool {
@@ -176,7 +186,8 @@ extension CombatProjectileWorldPart {
 
         @discardableResult
         func applyProjectileDamage(
-            _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
+            _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey,
+            at point: SIMD3<Float>?
         ) -> Bool {
             guard !owner.shared.perks.deflectsArrow(target) else { return false }
             let damage = owner.shared.damage
@@ -185,7 +196,8 @@ extension CombatProjectileWorldPart {
                     amount,
                     to: target,
                     attacker: shooter,
-                    kind: .ranged
+                    kind: .ranged,
+                    at: point
                 )
             }
             let weapon = owner.shared.gear.playerWeapon()
@@ -201,7 +213,8 @@ extension CombatProjectileWorldPart {
             strikes.countCriticalStats(strike, blow: blow, on: target)
             strikes.reportCriticalStrike(strike, blow: blow, on: target)
             let landed = damage.applyHealthDamage(
-                strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged
+                strike.damage(base: amount), to: target, attacker: shooter, kind: .ranged,
+                at: point
             )
             if landed {
                 owner.shared.perks.applyPerkHitSpell(blow, on: target)
