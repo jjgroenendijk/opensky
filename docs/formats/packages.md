@@ -51,7 +51,8 @@ OpenSky names these flags: must complete, keep speed at goal, unlock doors at pa
 sneak, ignore combat, weapons unequipped, weapon drawn, and wear sleep outfit
 ([UESP PACK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK)). It keeps the other
 bits as raw values. The two door flags open the owner's cell to the player
-([trespass](../engine/crime.md#opened-by-the-owner)).
+([trespass](../engine/crime.md#opened-by-the-owner)). The wear sleep outfit flag (`0x20000000`)
+is only copied with the other flags; nothing reads it, so a package puts no outfit on.
 
 ## PSDT: schedule, 12 bytes
 

@@ -317,6 +317,10 @@ How the game uses some of them:
 - `ANAM` is a far-away model, an `ARMO`. `DNAM` byte 44 is its distance, a float clamped to
   65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
   from the camera wears one `ANAM` item; a nearer actor has it taken off.
+- `DOFT` and `SOFT`: the items of both outfits go into the actor's inventory as outfit items.
+  Only the default outfit is worn. `SetOutfit` with a new outfit takes the old outfit's items
+  away, stores the new outfit on the base, adds its items, and equips them at once when the
+  actor is enabled. No rule is known that puts the sleep outfit on by itself.
 - `QNAM` texture lighting: each float times 255 is kept as a byte.
 - `OBND` places a summon: its 2D radius is the room the summon needs
   ([Summon Creature](../engine/magic-archetypes.md)).

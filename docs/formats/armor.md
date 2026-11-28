@@ -65,7 +65,7 @@ On ARMO, `MODL` is a 4-byte ARMA FormID, not a path. `SkinNaked` has 25 of them.
 textures it may swap to. `MO2S` to `MO5S` are per-shape alternate textures, laid out like
 `MODS`. Many ARMAs have a male model only, and both genders wear it (`StormCloakBootsAA`).
 First-person models are rare: of the ARMAs for vanilla iron armor, only the torso and hands
-have one.
+have one. No game code reads `ONAM`, the art object.
 
 ## Skin texture
 
@@ -85,9 +85,15 @@ same files, which confirms the mapping: `TX00` to slot 0, `TX01` to 1, `TX03` to
 to 7.
 
 The swap list in `NAM2`/`NAM3` "would be used if the skinny and large versions of the NPC had a
-different texture set" (<https://ck.uesp.net/wiki/ArmorAddon>). Five vanilla skin ARMAs set one,
-such as `NakedTorso` with `SkinFemaleHumanBody`, and every one of those `FLST`s is empty. So the
-game has no texture to swap to, and OpenSky draws the skin set alone, as the game does.
+different texture set" (<https://ck.uesp.net/wiki/ArmorAddon>). A female wearer reads the male
+list when hers is empty. A list with more than one entry gives the entry
+`trunc(weight * 0.0099 * count)`, where `weight` is the NPC's `NAM7` weight, 0 to 100. For
+example, a list of 3 sets and a weight of 70 gives `trunc(2.079)`, entry 2.
+
+Five vanilla skin ARMAs set a list, such as `NakedTorso` with `SkinFemaleHumanBody`. Each list
+holds one `TXST`, and `SkinFemaleArgonainBody` holds the human `SkinBodyFemale_1`. Female
+Argonians in the game show scales, so a one-entry list swaps nothing, and OpenSky draws the
+`NAM0`/`NAM1` set.
 
 `DNAM`: `0x00` uint8 male priority, `0x01` uint8 female priority, `0x02` 4 bytes (xEdit:
 weight-slider flags; UESP: one unknown uint32), `0x06` uint8 detection sound value, `0x07`

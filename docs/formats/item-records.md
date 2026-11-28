@@ -173,6 +173,12 @@ the node a projectile launches from. Otherwise the game uses `ProjectileNode`, t
 `##ProjectileNode`. Flags-2 bit `0x40` gives the weapon a score of 0 when an NPC picks a
 combat weapon, so the AI never picks it for normal combat.
 
+Flags-2 is the uint32 at `0x28`, and the game keeps its low 16 bits. Bit `0x01` (player only)
+keeps the weapon out of every NPC weapon choice. Bit `0x2000` marks a bound weapon.
+
+`WNAM` names a `STAT`. The player's weapon shows that static's model, in first and in third
+person. An NPC's weapon shows the weapon's own `MODL`.
+
 `CNAM` names a template weapon. At load, after the template's own load, the template
 overwrites this weapon's model with its `MODT` and `MODS`, icon, weight, `DATA` damage,
 destruction data, equip slot, message icon, pickup and putdown sounds, `BIDS` and `BAMT`,
@@ -181,7 +187,8 @@ weapon sounds. The name, enchantment, value, and `NNAM` stay this weapon's own.
 
 A weapon with "Can't Drop" set "cannot be disarmed and does not fall off when actor dies"
 (<https://ck.uesp.net/wiki/Weapons>). So a disarm effect leaves it in the hand, and a death
-never drops it. A non-playable weapon is hidden from the player
+never drops it. An embedded weapon (flag `0x20`) also stays with its owner at death. A
+non-playable weapon is hidden from the player
 ([inventory menu](../engine/inventory-menu.md#row-list)).
 
 Reach
@@ -263,6 +270,10 @@ xEdit: `wbCOED` line 2305, `wbCNTO` 2315, `wbCOCT` 2329, `wbRecord(CONT, ...)` 4
 `CNTO` item can be a carried item or an `LVLI`. The middle word of `COED` is a GLOB FormID
 when the owner is an NPC_, and a faction rank when it is a FACT. The `DATA` float is
 documented as a misplaced weight that is always 0.
+
+Only the `DATA` flags byte is read. A container with an open animation plays its `SNAM` open
+sound and its `QNAM` close sound only when flag `0x01` is set. A container without an animation
+always plays them. No game code reads flag `0x04` (show owner).
 
 ## ARMO inventory fields
 
