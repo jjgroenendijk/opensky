@@ -218,6 +218,37 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
         return found.sorted { Self.projection($0, precedes: $1) }.map(\.position)
     }
 
+    /// How far in XY a triangle's nearest point may sit from a point and still count as
+    /// straight below it, in world units.
+    public static let dropTolerance: Float = 1
+
+    /// The highest walkable triangle point straight below `point`, nil when none lies
+    /// under it. An actor placed in the air paths from here while it falls.
+    public func dropProjection(
+        of point: SIMD3<Float>, largeActor: Bool = false
+    ) -> NavigationProjection? {
+        var highest: NavigationProjection?
+        for mesh in navmeshes.values {
+            for index in mesh.triangles.indices {
+                let triangle = mesh.triangles[index]
+                guard triangle.isWalkable(largeActor: largeActor) else { continue }
+                let position = NavigationGeometry.closestPoint(on: triangle, to: point)
+                let offset = SIMD2(position.x - point.x, position.y - point.y)
+                guard simd_length(offset) <= Self.dropTolerance, position.z <= point.z
+                else { continue }
+                let candidate = NavigationProjection(
+                    triangle: NavigationTriangleID(navmesh: mesh.formID, triangle: index),
+                    position: position,
+                    distance: point.z - position.z
+                )
+                if Self.projection(candidate, precedes: highest) {
+                    highest = candidate
+                }
+            }
+        }
+        return highest
+    }
+
     public func pathIsCurrent(
         _ path: NavigationPath,
         target: SIMD3<Float>,

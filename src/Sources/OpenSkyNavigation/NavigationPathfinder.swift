@@ -84,16 +84,12 @@ nonisolated extension RuntimeNavigationGraph {
             in graph: RuntimeNavigationGraph,
             scratch: inout NavigationQueryScratch
         ) -> NavigationPathResult {
-            guard
-                case let .hit(start) = graph.projection(
-                    of: query.start, searchRadius: query.projectionRadius,
-                    largeActor: query.largeActor
-                ) else { return .miss(.startProjection) }
-            guard
-                case let .hit(target) = graph.projection(
-                    of: query.target, searchRadius: query.projectionRadius,
-                    largeActor: query.largeActor
-                ) else { return .miss(.targetProjection) }
+            guard let start = landing(of: query.start, query, in: graph) else {
+                return .miss(.startProjection)
+            }
+            guard let target = landing(of: query.target, query, in: graph) else {
+                return .miss(.targetProjection)
+            }
 
             scratch.reset()
             scratch.costs[start.triangle] = 0
@@ -121,6 +117,19 @@ nonisolated extension RuntimeNavigationGraph {
                 )
             }
             return .miss(.disconnected)
+        }
+
+        /// The nearest triangle within the search reach, or for a point above the
+        /// navmesh, such as an actor placed in the air, the triangle it falls onto.
+        private static func landing(
+            of point: SIMD3<Float>, _ query: NavigationPathQuery, in graph: RuntimeNavigationGraph
+        ) -> NavigationProjection? {
+            if case let .hit(found) = graph.projection(
+                of: point, searchRadius: query.projectionRadius, largeActor: query.largeActor
+            ) {
+                return found
+            }
+            return graph.dropProjection(of: point, largeActor: query.largeActor)
         }
 
         private static func expand(

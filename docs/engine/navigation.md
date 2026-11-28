@@ -32,6 +32,13 @@ Z from that triangle's plane. The nearest point can be on a face or an edge. The
 most 256 units and reports a miss instead of using far geometry. Equal distances are broken by
 triangle ID.
 
+A start or target with no triangle in that reach falls back to the highest walkable triangle
+straight below it, within 1 unit in XY. An actor placed in the air, such as a creature placed at a
+jumping player, then paths from the ground below. Its mover starts at the placed height, and the
+character controller's gravity brings it down while it walks. Example: a creature placed 460 units
+above the navmesh lands in under a second and walks to its target. A point with no navmesh below
+it still misses.
+
 A-star search runs over triangles:
 
 - Crossing a shared edge costs the distance from the source center to the edge middle, plus from
