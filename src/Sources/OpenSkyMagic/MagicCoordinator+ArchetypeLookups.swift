@@ -38,7 +38,7 @@ extension MagicCoordinator.ArchetypeLookups {
                 ? .disease : .other
         case .potion:
             isPoison(source.record) ? .poison : .other
-        case .ingredient, .enchantment, .perk, .ability:
+        case .ingredient, .enchantment, .perk, .ability, .equipAbility:
             .other
         }
     }

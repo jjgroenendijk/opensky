@@ -70,7 +70,7 @@ extension MagicCoordinator.AbilityReconciler {
     private func sourceEntries(of source: ActiveEffectSource) -> [ResolvedSpellEffect]? {
         guard let id = source.record.resolvedID else { return nil }
         switch source.kind {
-        case .spell, .perk, .ability:
+        case .spell, .perk, .ability, .equipAbility:
             return coordinator.caster?.spellbook.spells.spell(id)?.effects
         case .enchantment:
             return coordinator.enchantmentStore?.enchantment(id)?.effects

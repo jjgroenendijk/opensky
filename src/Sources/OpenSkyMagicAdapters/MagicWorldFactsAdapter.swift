@@ -27,6 +27,7 @@ public protocol MagicWorldFactsHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var messages: any MessageCoordinatorPort { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var perks: any PerkPort { get }
     var progression: any ProgressionPort { get }
 }
@@ -68,6 +69,10 @@ extension MagicWorldFactsAdapter {
 
     public func residentActorKeys() -> [ReferenceKey] {
         game.actorWorld.combatActors().map(\.key)
+    }
+
+    public func weaponsDrawn(of key: ReferenceKey) -> Bool {
+        game.actorPlayback(for: key)?.weaponsDrawn == true
     }
 
     public func actorName(_ holder: ActorValueHolder) -> String {

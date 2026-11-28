@@ -1,5 +1,6 @@
 // The spellbook runtime over the fixture records.
 
+public import Foundation
 public import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -11,9 +12,10 @@ extension SpellbookFixture {
     /// snapshot it.
     public static func runtime(
         store: WorldStateStore = WorldStateStore(),
-        equipment: (any EquipmentAccess)? = nil
+        equipment: (any EquipmentAccess)? = nil,
+        extraRecords: [Data] = []
     ) throws -> (SpellbookRuntime, WorldStateStore) {
-        let index = try index()
+        let index = try index(extraRecords: extraRecords)
         return (
             SpellbookRuntime(
                 store: store,

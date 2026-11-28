@@ -24,6 +24,8 @@ nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, 
     case perk = 4
     /// A SPEL of type ability the actor knows. It lasts while the spell is known.
     case ability = 5
+    /// A SPEL ability an `MGEF` equip ability grants while its item is in a casting slot.
+    case equipAbility = 6
 
     public var describedName: String {
         switch self {
@@ -33,6 +35,7 @@ nonisolated public enum ActiveEffectSourceKind: UInt32, CaseIterable, Hashable, 
         case .enchantment: "enchantment"
         case .perk: "perk"
         case .ability: "ability"
+        case .equipAbility: "equip ability"
         }
     }
 }

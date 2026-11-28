@@ -35,4 +35,22 @@ nonisolated public enum MagicCommand: Equatable, Sendable {
     case paintActor(ReferenceKey, shader: FormID, plugin: String, shown: Bool)
     /// A spell reached someone: its hit shaders, art, sounds, and image-space modifier.
     case spellHit(SpellHitEvent)
+    /// Show or hide a weapon enchantment's shader and art on the actor's held weapon.
+    case weaponEnchantVisual(WeaponEnchantVisual, actor: ReferenceKey, shown: Bool)
+}
+
+/// The look of a readied enchanted weapon: its main effect's enchant shader and art, or
+/// the `RFCT` that replaces both. Every link is written in `plugin`.
+nonisolated public struct WeaponEnchantVisual: Equatable, Hashable, Sendable {
+    public let plugin: String
+    public let shader: FormID?
+    public let art: FormID?
+    public let visuals: FormID?
+
+    public init(plugin: String, shader: FormID?, art: FormID?, visuals: FormID? = nil) {
+        self.plugin = plugin
+        self.shader = shader
+        self.art = art
+        self.visuals = visuals
+    }
 }

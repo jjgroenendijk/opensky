@@ -211,7 +211,12 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         guard
             shared.allowsActorCasting,
             let facts = shared.world.castingFacts(of: key) else { return .none }
-        return CombatCore.castingProfile(facts)
+        guard shared.scriptSpellWaits[key] != nil else { return CombatCore.castingProfile(facts) }
+        return CombatCore.castingProfile(CombatCastingFacts(
+            magicka: facts.magicka,
+            spells: facts.spells.filter { $0.option.scriptDelay == nil },
+            shouts: facts.shouts
+        ))
     }
 
     /// A shout takes no hand, so there is nothing to ready.
@@ -225,6 +230,9 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         let finished = option.purpose == .shout
             ? shared.world.shout(option.spell, by: key) : shared.world.releaseCast(by: key)
         shared.actorCastCount += finished ? 1 : 0
+        if finished, let delay = option.scriptDelay, delay > 0 {
+            shared.scriptSpellWaits[key] = delay
+        }
         return finished
     }
 

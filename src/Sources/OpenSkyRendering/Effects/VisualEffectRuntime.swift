@@ -17,11 +17,17 @@ nonisolated public enum EffectAnchor: Hashable, Sendable {
     case surface(SIMD3<Float>, normal: SIMD3<Float>)
     /// A point, with the model's +Y turned along `forward`, such as a muzzle flash.
     case facing(SIMD3<Float>, forward: SIMD3<Float>)
+    /// The weapon an actor holds: art hangs at its weapon node, a membrane covers the
+    /// weapon only.
+    case weapon(ReferenceKey)
+
+    /// The skeleton node a drawn weapon hangs from.
+    public static let weaponNode = "Weapon"
 }
 
 /// Why an effect is live, for the readout and for removing one source's effects.
 nonisolated public enum VisualEffectCause: String, Equatable, Sendable, CaseIterable {
-    case race, spellHit, explosion, impact, script, casting, debug
+    case race, spellHit, explosion, impact, script, casting, enchantment, debug
 }
 
 /// The resolved look of one `RFCT` (or one `EFSH` alone).
@@ -129,11 +135,14 @@ nonisolated public struct VisualEffectRuntime: Sendable {
     }
 
     /// Removes every effect on `anchor`, for an actor that unloads or dies. An actor
-    /// anchor also takes the effects on that actor's bones.
+    /// anchor also takes the effects on that actor's bones and weapon.
     public mutating func detachAll(from anchor: EffectAnchor) {
         instances.removeAll { instance in
-            if case let .actor(key) = anchor, case let .node(owner, _) = instance.anchor {
-                return owner == key
+            if case let .actor(key) = anchor {
+                switch instance.anchor {
+                case let .node(owner, _), let .weapon(owner): return owner == key
+                default: break
+                }
             }
             return instance.anchor == anchor
         }

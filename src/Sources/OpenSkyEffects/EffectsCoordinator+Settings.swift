@@ -8,6 +8,7 @@ extension EffectsCoordinator {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         impactModelsEnabled = store.bool(.impactEffects)
         screenBloodEnabled = store.bool(.screenBlood)
+        goreEnabled = store.bool(.gore)
         healthCues.pulseEnabled = store.bool(.lowHealthPulse)
         decalsEnabled = store.bool(.decals)
         let limit = store.value(.decalLimit)

@@ -116,6 +116,8 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
     func isOnFlyingMount(_ key: ReferenceKey) -> Bool
     /// The actor no longer refuses a pickpocket for having caught the player.
     func forgetPickpocketCatch(of key: ReferenceKey)
+    /// Whether `key` holds its weapons out, which shows a weapon enchantment.
+    func weaponsDrawn(of key: ReferenceKey) -> Bool
 }
 
 extension MagicWorld {

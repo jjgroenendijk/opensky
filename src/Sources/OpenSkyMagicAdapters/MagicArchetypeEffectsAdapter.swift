@@ -67,6 +67,8 @@ extension MagicArchetypeEffectsAdapter {
                 shown: starts
             )
         case let .spellHit(event): game.effectsWorld.handleSpellHit(event)
+        case let .weaponEnchantVisual(visual, actor, shown):
+            heldMagic.showWeaponEnchant(visual, on: actor, shown: shown)
         case let .notice(text): game.hud.showNotification(text)
         default: return false
         }

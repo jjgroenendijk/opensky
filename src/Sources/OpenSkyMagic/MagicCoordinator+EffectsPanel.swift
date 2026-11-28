@@ -78,7 +78,7 @@ extension MagicCoordinator.EffectsPanel {
         case .ingredient: "sIngredient"
         case .spell: "sMagicTypeSpell"
         case .enchantment: "sMagicTypeEnchantment"
-        case .ability: "sMagicTypeAbility"
+        case .ability, .equipAbility: "sMagicTypeAbility"
         case .perk: nil
         }
         return setting.map { coordinator.texts.magic.word($0, or: kind.describedName) } ?? kind

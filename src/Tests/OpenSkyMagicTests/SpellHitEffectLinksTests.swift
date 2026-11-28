@@ -26,5 +26,6 @@ struct SpellHitEffectLinksTests {
 
         #expect(links.map(\SpellHitEffectLinks.isMain) == [false, true, false])
         #expect(links.allSatisfy { $0.explosion != nil && $0.area > 0 })
+        #expect(links.allSatisfy { !$0.isGory })
     }
 }

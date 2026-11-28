@@ -67,6 +67,12 @@ final class FakeMagicWorld: MagicWorld {
         residents
     }
 
+    var drawnWeapons: Set<ReferenceKey> = []
+
+    func weaponsDrawn(of key: ReferenceKey) -> Bool {
+        drawnWeapons.contains(key)
+    }
+
     func actorName(_ holder: ActorValueHolder) -> String {
         holder.key.description
     }

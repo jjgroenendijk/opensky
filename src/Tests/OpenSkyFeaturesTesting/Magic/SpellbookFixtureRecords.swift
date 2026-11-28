@@ -113,9 +113,11 @@ extension SpellbookFixture {
         resistanceValue: Int32 = ActorValueIdentity.noneIndex,
         projectile: UInt32 = 0,
         magicSkill: Int32 = ActorValueIdentity.noneIndex,
-        skillUsageMultiplier: Float = 0
+        skillUsageMultiplier: Float = 0,
+        equipAbility: UInt32 = 0
     ) -> Data {
         var words = [UInt32](repeating: 0, count: 38)
+        words[32] = equipAbility
         words[0] = flags.rawValue
         words[1] = baseCost.bitPattern
         // 0x0C magic skill and 0x68 skill usage multiplier: the two fields

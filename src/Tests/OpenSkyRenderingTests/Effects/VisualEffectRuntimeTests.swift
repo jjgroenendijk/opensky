@@ -123,8 +123,13 @@ struct VisualEffectRuntimeTests {
             Self.glow, to: .node(Self.actor, "NPC L MagicNode [LMag]"), cause: .casting,
             duration: nil
         )
+        runtime.attach(Self.glow, to: .weapon(Self.actor), cause: .enchantment, duration: nil)
+        runtime.attach(Self.glow, to: .weapon(.player), cause: .enchantment, duration: nil)
         runtime.detachAll(from: .actor(Self.actor))
-        #expect(runtime.instances.isEmpty)
+        #expect(
+            runtime.instances.map(\.anchor) == [.weapon(.player)],
+            "a weapon goes with its actor"
+        )
     }
 
     @Test func theAlphaEnvelopeFadesInHoldsAndSettles() {

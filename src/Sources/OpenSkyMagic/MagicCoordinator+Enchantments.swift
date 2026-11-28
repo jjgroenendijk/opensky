@@ -143,6 +143,7 @@ extension MagicCoordinator.WeaponEnchantments {
         }
         if let values = coordinator.world.actorValueHolder(for: holder.key) {
             coordinator.weaponArchetypes.endWeaponEnhancement(on: values)
+            reconcileEquipAbilities(on: values)
         }
         return refreshWornEnchantments(on: holder)
     }

@@ -95,6 +95,7 @@ nonisolated extension PlayerSettingsCatalog {
         ),
         row(("rendering.impactEffects", .opensky), .toggle, "Impact effects", 1, applied: true),
         row(("rendering.screenBlood", .opensky), .toggle, "Screen blood", 1, applied: true),
+        row(("rendering.gore", .opensky), .toggle, "Gory spell effects", 1, applied: true),
         row(("rendering.lowHealthPulse", .opensky), .toggle, "Low-health pulse", 1, applied: true),
         row(
             ("rendering.generatedTerrainLOD", .opensky),

@@ -63,6 +63,8 @@ public final class EffectsCoordinator {
     public internal(set) var skinDecals = SkinDecalRuntime()
     /// Impact models (dust, sparks, blood spray) show where a hit or step lands.
     public var impactModelsEnabled = true
+    /// Off, an effect marked Gory Visuals starts no hit shader or art.
+    public var goreEnabled = true
     public internal(set) var impactCount = 0
     /// The last impact shown, so the readout can show it again.
     public internal(set) var lastImpact: (impact: Impact, decal: ImpactDecal?)?
@@ -244,13 +246,13 @@ public final class EffectsCoordinator {
         try drawing.draw((effectModels, extraModels), seconds: seconds, renderer: renderer)
         try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
-            guard case let .actor(key) = anchor else { return nil }
-            return world?.membraneTarget(of: key)
+            Self.membraneTarget(of: anchor, world: world)
         })
         renderer.setBloodyWeapons(weaponBlood.strengths)
     }
 
     private func attachHitEffects(_ link: SpellHitEffectLinks, to targets: [ReferenceKey]) -> Int {
+        guard goreEnabled || !link.isGory else { return 0 }
         var attached = 0
         for effect in [link.hitShader, link.hitEffectArt] {
             guard
@@ -293,9 +295,27 @@ public final class EffectsCoordinator {
         world?.detonateEffectExplosion(explosion, onActor: struck.key, from: hit.payload.caster)
     }
 
+    /// An actor's membrane covers its body; a weapon's only the unskinned meshes it holds.
+    static func membraneTarget(
+        of anchor: EffectAnchor, world: (any EffectsWorld)?
+    ) -> MembraneTarget? {
+        switch anchor {
+        case let .actor(key): return world?.membraneTarget(of: key)
+        case let .weapon(key):
+            if key == .player {
+                return .playerWeapon
+            }
+            guard case let .actor(owner) = world?.membraneTarget(of: key) else { return nil }
+            return .actorWeapon(owner)
+        default: return nil
+        }
+    }
+
     static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {
         switch anchor {
         case let .actor(key): world?.effectTransform(of: key)
+        case let .weapon(key): world?.effectBones(of: key)[EffectAnchor.weaponNode] ?? world?
+            .effectTransform(of: key)
         case let .node(key, node): world?.effectBones(of: key)[node] ?? world?
             .effectTransform(of: key)
         case let .point(position): translation(position)
