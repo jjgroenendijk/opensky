@@ -23,8 +23,6 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
     public var severedNode: String?
     /// Where the cut head came to rest, in world space, or nil while it still falls.
     public var severedHeadRest: ReferenceTransformOverride?
-    /// True when `severedNode` was blown off, so no piece of it is drawn.
-    public var partExploded = false
 
     /// The value an actor takes the moment it dies, before anything has settled.
     public static let justDied = ActorDeathState(isDead: true)

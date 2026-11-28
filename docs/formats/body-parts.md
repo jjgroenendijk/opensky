@@ -224,6 +224,5 @@ above.
   and a crippled limb has no effect yet.
 - The blood spray uses the session's static collision for its ray, and skips the camera distance
   check.
-- On a killing blow, OpenSky still explodes or cuts off the struck part as the roll gives
-  ([exploding body parts](../engine/explosion-effects.md#exploding-body-parts)). The game marks the
-  hit and does nothing more.
+- Like the game, a killing blow neither explodes nor cuts off the struck part. OpenSky skips the
+  roll, because nothing reads its mark.

@@ -26,7 +26,6 @@ extension CombatShared {
             attacker: ReferenceKey?,
             kind: CombatHitKind = .other,
             canSever: Bool = false,
-            weaponOnHit: UInt32 = 0,
             at point: SIMD3<Float>? = nil
         ) -> Bool {
             guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
@@ -50,7 +49,6 @@ extension CombatShared {
                 var hit = CombatHitRecord(
                     damage: scaled, kind: kind, attacker: attacker, canSever: canSever
                 )
-                hit.weaponOnHit = weaponOnHit
                 hit.struckPart = part
                 shared.world.recordHealthHit(hit, on: target)
                 if let part {

@@ -68,10 +68,6 @@ struct CombatRecordsTests {
             .showDismemberment(of: Self.actor, node: "NPC Head", at: .zero)
         #expect(host.fakeEffects.showDefaultBloodCalls.isEmpty)
         #expect(host.fakeEffects.showDismemberParticleCalls.count == 1)
-        let remains = RagdollWorldAdapter(game: host)
-        #expect(remains.explodablePart(of: Self.actor) == nil)
-        remains.showPartExplosion(of: Self.actor, node: "NPC Head", at: .zero)
-        #expect(host.fakeEffectsWorld.detonateEffectExplosionCalls.isEmpty)
     }
 
     @Test func aMeleeImpactOnAnActorShowsOnThatActor() throws {

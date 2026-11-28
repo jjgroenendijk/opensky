@@ -42,8 +42,6 @@ extension RagdollRemainsAdapter {
     public static let headPartType: UInt8 = 1
     /// `BPND` flag 0x01: the part can be severed.
     public static let severableFlag: UInt8 = 0x01
-    static let explodableFlag: UInt8 = 0x08
-    static let absoluteChanceFlag: UInt8 = 0x40
 
     /// The head part of the race's `BPTD`: part type 1, or a part marked severable.
     public func severableNode(of key: ReferenceKey) -> String? {
@@ -51,34 +49,6 @@ extension RagdollRemainsAdapter {
         let head = parts.first { $0.nodeData?.partType == Self.headPartType }
             ?? parts.first { ($0.nodeData?.flags ?? 0) & Self.severableFlag != 0 }
         return head?.nodeName
-    }
-
-    /// The first part of the race's `BPTD` marked explodable.
-    public func explodablePart(of key: ReferenceKey) -> ExplodablePart? {
-        guard
-            let part = bodyParts(of: key)?.record.parts.first(where: {
-                ($0.nodeData?.flags ?? 0) & Self.explodableFlag != 0
-            }),
-            let node = part.nodeName, let data = part.nodeData
-        else { return nil }
-        return ExplodablePart(
-            node: node,
-            chance: Int(data.explosionChance),
-            isChanceAbsolute: data.flags & Self.absoluteChanceFlag != 0
-        )
-    }
-
-    /// The part's explodable explosion, unless the race has no blood spray.
-    public func showPartExplosion(of key: ReferenceKey, node: String, at position: SIMD3<Float>) {
-        guard
-            race(of: key)?.flags.contains(.noBloodSpray) != true,
-            let resolved = bodyParts(of: key),
-            let part = resolved.record.part(onNode: node)?.nodeData,
-            let explosion = game.effects.records.resolve(
-                part.explodableExplosion, fromPlugin: resolved.sourcePlugin
-            )
-        else { return }
-        game.effectsWorld.detonateEffectExplosion(explosion, at: position)
     }
 
     /// The race's own cut: the part's severable explosion, the race's decapitation

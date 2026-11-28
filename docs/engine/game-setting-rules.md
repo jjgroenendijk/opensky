@@ -168,6 +168,9 @@ explodable chance, used only when the part has the Explodable flag.
 With `iCombatExplodePartChance` 75 and E 40, a roll of 0 to 29 explodes the part and 30 to 49
 cuts it off. With E 100, a roll of 0 to 74 explodes it and no roll cuts it off.
 
+The game only marks the hit with this result, and no step acts on the mark
+([exploding body parts](explosion-effects.md#exploding-body-parts)).
+
 ## Single texts and names
 
 | Setting | Rule |

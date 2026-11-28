@@ -96,13 +96,9 @@ struct CombatBodyPartsTests {
         #expect(head.damageMultiplier == 2)
         #expect(head.healthPercent == 10)
         #expect(head.actorValue == 25)
-        #expect(head.explodable == ExplodablePart(
-            node: "NPC Head", chance: 40, isChanceAbsolute: true
-        ))
         let torso = combat.struckBodyPart(of: Self.actor, at: SIMD3(0, 0, 70), from: nil)
         #expect(torso?.partType == 0)
         #expect(torso?.actorValue == nil)
-        #expect(torso?.explodable == nil)
         #expect(combat.struckBodyPart(of: Self.actor, at: SIMD3(0, -40, 40), from: nil) == nil)
     }
 

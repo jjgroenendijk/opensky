@@ -60,6 +60,9 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Impact particle models the game loads once at start and never places, as OpenSky
     /// observed. Nothing on screen comes from them.
     case preloadOnly
+    /// The chance of a killing blow to mark an explodable part. The game rolls it, but no
+    /// step acts on the mark, so nothing explodes (docs/formats/body-parts.md).
+    case unusedMark
 }
 
 nonisolated public enum GameSettingsUnused: Sendable {
@@ -116,7 +119,8 @@ nonisolated public enum GameSettingsUnused: Sendable {
             "sRetryText"
         ],
         .favourPoints: ["iFavorPointsRestore"],
-        .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"]
+        .preloadOnly: ["sImpactParticleMetalDefault", "sImpactParticleWoodDefault"],
+        .unusedMark: ["iCombatExplodePartChance"]
     ]
 }
 

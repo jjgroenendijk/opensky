@@ -37,8 +37,6 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
     public var dropWeaponChance = 100
     /// `iCombatDismemberPartChance`, in percent.
     public var dismemberChance = 50
-    /// `iCombatExplodePartChance`: scales an explodable part's chance, in percent.
-    public var explodePartChance = 75
     /// `iRemoveExcessDeadCount`: more dead than this, and the oldest go.
     public var excessDeadCount = 15
     /// `fRemoveExcessDeadTime`: seconds a body must be dead before it can go.
@@ -89,7 +87,6 @@ nonisolated public struct DeathSettings: Equatable, Sendable {
         }
         store.read("iDeathDropWeaponChance", into: &settings, \.dropWeaponChance)
         store.read("iCombatDismemberPartChance", into: &settings, \.dismemberChance)
-        store.read("iCombatExplodePartChance", into: &settings, \.explodePartChance)
         store.read("iRemoveExcessDeadCount", into: &settings, \.excessDeadCount)
         return settings
     }

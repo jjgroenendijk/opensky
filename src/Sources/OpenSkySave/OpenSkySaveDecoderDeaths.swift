@@ -40,14 +40,13 @@ nonisolated enum OpenSkySaveDeathDecoder: Sendable {
         let wasLooted = try reader.uint8("DETH wasLooted") != 0
         let transform = try decodeRestingTransform(&reader)
         let cut = try reader.uint8("DETH cut")
-        guard cut <= 2 else { throw OpenSkySaveError.invalidValue(context: "DETH cut \(cut)") }
+        guard cut <= 1 else { throw OpenSkySaveError.invalidValue(context: "DETH cut \(cut)") }
         let node = cut == 0 ? nil : try reader.string("DETH severed node")
         let headRest = try decodeRestingTransform(&reader)
-        var state = ActorDeathState(
+        let state = ActorDeathState(
             isDead: isDead, restingTransform: transform, wasLooted: wasLooted,
             severedNode: node, severedHeadRest: headRest
         )
-        state.partExploded = cut == 2
         return SaveDeathEntry(key: key, cell: cell, state: state)
     }
 

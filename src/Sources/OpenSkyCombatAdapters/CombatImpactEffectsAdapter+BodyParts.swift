@@ -9,9 +9,6 @@ import OpenSkySessionInterface
 import simd
 
 extension CombatImpactEffectsAdapter {
-    /// `BPND` flags: 0x08 explodable, 0x40 absolute to-hit chance.
-    static let explodableFlag: UInt8 = 0x08
-    static let absoluteChanceFlag: UInt8 = 0x40
     /// The part a hit at `point` struck. With no point the line from the attacker's torso
     /// decides: the part nearest that torso.
     public func struckBodyPart(
@@ -35,10 +32,6 @@ extension CombatImpactEffectsAdapter {
             partType: data.partType, node: node, position: hit.position,
             damageMultiplier: data.damageMultiplier, healthPercent: data.healthPercent,
             actorValue: data.actorValue < 0 ? nil : Int32(data.actorValue),
-            explodable: data.flags & Self.explodableFlag == 0 ? nil : ExplodablePart(
-                node: node, chance: Int(data.explosionChance),
-                isChanceAbsolute: data.flags & Self.absoluteChanceFlag != 0
-            ),
             bloodImpactDataSet: bloodSet
         )
     }
