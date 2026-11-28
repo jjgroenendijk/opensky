@@ -73,39 +73,105 @@ chance of `lerp(0.2, 0, 0.75) = 0.15`.
 
 The circle angle is then drawn at random between `fCombatCircleAngleMin` and the lerped value.
 Against the player it is multiplied by `fCombatCircleAnglePlayerMult` (0.75). It is never less
-than the angle, in degrees, of `radius * fCombatCircleMinDistanceRadiusMult (3) / distance`.
+than `radius * fCombatCircleMinDistanceRadiusMult (3) / distance` radians, turned into degrees,
+where `radius` is the actor's own. An angle above `fCombatCircleAngleMax` (90) cancels the circle.
 
 ### Close-range movement
 
-The AI chooses its movement near a target by where the target is:
+A movement loop chooses one branch at a time and runs it until it succeeds or fails. It checks
+the branches in this order: out of range, out of position, in range.
 
-| Where | Choices, by weight |
+| Where | Choices |
 | --- | --- |
-| In range | Back off (fixed weight 0.25); circle or fall back, weighted by the circle and fallback chances above; stay |
-| Out of position | Reposition, surround, or distant circle, weighted by the distant circle chance |
 | Out of range | Advance; fall back to a ranged weapon, only when the actor's range is beyond `fCombatRangedDistance` (1024) |
+| Out of position | Reposition, surround, or distant circle, weighted by the distant circle chance |
+| In range | Circle, fall back, back off, or stay, as below |
 
-Out of range means the distance predicted half a second ahead is above the actor's reach. The
-fallback distance is at least the actor's radius times a fixed factor. A strafe goes a random
-distance between 96 units and the strafe maximum, and at least three times the actor's radius.
+Out of range means the distance predicted half a second ahead is above the actor's reach. A
+strafe goes a random distance between 96 units and the strafe maximum, and at least three times
+the actor's radius.
 
-Example: circle 0.2 and fallback 0.2. In range, circle weighs 0.15 and fallback 0.1 against the
-backoff's 0.25.
+```mermaid
+flowchart TD
+    A["In range"] --> B["Roll the circle chance and the fallback chance, each on its own"]
+    B --> C{"Any passed?"}
+    C -- yes --> D["Try one that passed, at even odds; if it cannot start, try the other"]
+    D --> E{"Started?"}
+    E -- yes --> F["Run the move"]
+    C -- no --> G{"Roll 0.25 for back off"}
+    E -- no --> G
+    G -- passes and starts --> F
+    G -- no --> H["Stay 0.25 s"]
+    F --> A
+    H --> A
+```
+
+A move starts only while the actor is not attacking and faces the target within 30 degrees. It
+asks for a navmesh path to its point, and a point no path reaches fails the move. A running move
+is checked every 0.1 s, fails when its path fails, and succeeds when its path ends. In the rules
+below, `reach` is the actor's melee reach as the [approach](/engine/combat-approach.md) uses it.
+
+Back off:
+
+- starts only while the target is not moving away, and only when the distance is below
+  0.75 times `D = reach + inner advance radius`
+  ([advance radii](/engine/combat-approach.md#advance-radii));
+- walks straight back from the target to distance `D`, with a 64-unit navmesh tolerance;
+- also succeeds as soon as the actor moves toward the target.
+
+Circle:
+
+- takes the vector from the target to the actor, at least `reach` long, and turns it about the
+  target by the circle angle, with the height kept;
+- picks the left or right side at even odds, and tries the other side once if the first fails;
+- a side fails when its point is more than 75 degrees off the target's facing, or when no path
+  reaches it within `max(radius, 64)` units;
+- succeeds early when the target's distance half a second ahead is above 1024 units plus a
+  per-fighter distance, or when the current path point is within `0.5 * reach` of the target.
+
+Fall back:
+
+- starts only while the target faces the actor within 60 degrees and is not moving away;
+- goes straight away from the target, to `reach + F` from it, with
+  `F = max(fallback distance, 2 * radius)`; that must be more than the current distance;
+- uses a navmesh tolerance of `max(radius, 64)` units;
+- is first checked 0.5 s in, then every 0.1 s. It is cancelled, once the actor is more than
+  1.5 radii from its path point, when the target's distance half a second ahead is above 256
+  units plus the per-fighter distance, when the actor moves toward the target, or when the
+  path point lies within 20 degrees of the direction to the target or 90 to 160 degrees off it;
+- ends with a wait of the fallback wait, or 0.75 s after a cancelled retreat.
+
+Example: circle 0.2 and fallback 0.2 give a circle chance of 0.15 and a fallback chance of 0.1.
+Both pass together 1.5 % of the time. When neither passes, which is 76.5 % of the time, back off
+rolls its 0.25.
 
 ### Attack and bash chances
+
+An actor in reach rolls its attack chance in a loop. A pass first rolls the special attack chance;
+when that starts a special attack, the pass ends. Otherwise it rolls the attack chance, and on a
+pass it tries the [attack pick](/engine/attack-data.md#the-ais-pick). When no attack starts, the
+actor waits 0.25 s and rolls again, so a waiting actor rolls about four times a second. A started
+attack holds the loop until the attack state is back to none or reaches the combo window.
 
 The attack chance starts at `lerp(offensive, fCombatAttackChanceMin 0.05,
 fCombatAttackChanceMax 1)`. Then:
 
 - a staggered target multiplies it by the larger of the attack staggered and power attack
-  staggered values;
-- a target in mid-swing multiplies it by `fCombatAttackChanceBlockingSwingMult` (0);
-- a target that is not attacking multiplies it by a value that falls from
-  `fCombatAttackChanceBlockingMultMax` (0.67) at defensive 0 to
+  staggered values, and the two blocking terms below are skipped;
+- otherwise, only while the attacker itself blocks: a target that draws or swings an attack
+  multiplies it by `fCombatAttackChanceBlockingSwingMult` (0), and any other target by a value
+  that falls from `fCombatAttackChanceBlockingMultMax` (0.67) at defensive 0 to
   `fCombatAttackChanceBlockingMultMin` (0.2) at defensive 1;
-- the time since the actor's last attack raises it, from 1 times to
-  `fCombatAttackChanceLastAttackBonus` (1.5) times over `fCombatAttackChanceLastAttackBonusTime`
-  (5 s).
+- the time since the actor's last melee hit frame or projectile release raises it, from 1 times
+  to `fCombatAttackChanceLastAttackBonus` (1.5) times over
+  `fCombatAttackChanceLastAttackBonusTime` (5 s). Before the first hit frame there is no bonus.
+
+Example: offensive 0.5 gives `0.05 + 0.95 * 0.5 = 0.525`. Two seconds after its last hit frame
+the actor rolls `0.525 * 1.2 = 0.63`.
+
+A separate block loop makes the defensive choices. Each pass tries, in order: the block attack
+chance, and on a pass the bash chance to bash; the offensive bash chance; the block chance, and
+while blocking the bash chance to bash. When none passes it waits 0.25 s.
 
 The bash chance is `lerp(defensive, fCombatBashChanceMin 0.025, fCombatBashChanceMax 0.2)` and
 the offensive bash chance `lerp(offensive, fCombatOffensiveBashChanceMin 0,
