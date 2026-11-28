@@ -107,6 +107,14 @@ extension CombatCoordinator {
                         )
                     }
                 }
+                readout.closeMoves = loop.behaviors.keys.sorted().compactMap { key in
+                    loop.behaviors[key].flatMap { machine in
+                        machine.settings.closeRange == nil ? nil : .init(
+                            actor: key, current: machine.closeMoveKind,
+                            started: machine.closeMoveCount
+                        )
+                    }
+                }
                 readout.watches = loop.dangerWatches
                 readout.threats = loopWorld.combatDangerThreats()
             }

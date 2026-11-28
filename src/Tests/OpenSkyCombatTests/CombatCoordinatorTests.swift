@@ -72,6 +72,16 @@ struct CombatCoordinatorTests {
         let coordinator = Self.coordinator(world)
         #expect(coordinator.loopWorld.combatStyle(of: Self.guardKey) == style)
         #expect(coordinator.loopWorld.combatStyle(of: .player) == nil)
+        let loop = coordinator.shared.loop
+        let inputs = CombatBehaviorInputs(
+            actorPosition: SIMD3(100, 0, 0), targetPosition: .zero
+        )
+        _ = loop?.stepBehavior(of: Self.guardKey, inputs: inputs)
+        let moves = coordinator.assistReadout.closeMoves
+        #expect(moves.map(\.actor) == [Self.guardKey])
+        #expect(moves.first?.current == nil)
+        let other = loop?.refuseCloseMove(of: Self.guardKey)
+        #expect(other == nil)
     }
 
     /// The HUD names the actor the player last hurt while it lives and stays

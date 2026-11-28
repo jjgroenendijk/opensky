@@ -59,6 +59,8 @@ nonisolated public struct CombatAISettings: Equatable, Sendable {
     /// `fCombatBlockChanceWeaponMult`: the block chance of an actor with no shield, as a
     /// share of the chance with one.
     public var blockChanceWeaponMult: Float = 0.25
+    /// The circle and fallback settings the close-range moves lerp between.
+    public var closeRange = CombatCloseRangeRanges()
 
     public static let vanilla = Self()
 
@@ -167,7 +169,19 @@ nonisolated extension CombatAISettings {
             ("fCombatHoverTimeMin", \.hoverTimeMin),
             ("fCombatPerchAttackTimeMin", \.perchAttackTimeMin),
             ("fCombatGroundAttackTimeMin", \.groundAttackTimeMin),
-            ("fCombatGroundAttackTimeMax", \.groundAttackTimeMax)
+            ("fCombatGroundAttackTimeMax", \.groundAttackTimeMax),
+            ("fCombatCircleChanceMin", \.closeRange.circleChance.min),
+            ("fCombatCircleChanceMax", \.closeRange.circleChance.max),
+            ("fCombatFallbackChanceMin", \.closeRange.fallbackChance.min),
+            ("fCombatFallbackChanceMax", \.closeRange.fallbackChance.max),
+            ("fCombatFallbackDistanceMin", \.closeRange.fallbackDistance.min),
+            ("fCombatFallbackDistanceMax", \.closeRange.fallbackDistance.max),
+            ("fCombatFallbackWaitTimeMin", \.closeRange.fallbackWaitSeconds.min),
+            ("fCombatFallbackWaitTimeMax", \.closeRange.fallbackWaitSeconds.max),
+            ("fCombatCircleAngleMin", \.closeRange.circleAngle.min),
+            ("fCombatCircleAngleMax", \.closeRange.circleAngle.max),
+            ("fCombatCircleAnglePlayerMult", \.closeRange.circleAnglePlayerMult),
+            ("fCombatCircleMinDistanceRadiusMult", \.closeRange.circleMinDistanceRadiusMult)
         ]
         for (editorID, keyPath) in ranges {
             store.read(editorID, into: &self, keyPath)

@@ -57,6 +57,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var drawHold: Float = 0
     /// Seconds into the spacing phase at which the next attack roll is due.
     var nextAttackRoll: Float = 0
+    /// The back off, circle, and fall back moves while spacing.
+    var closeMoves = CombatCloseMoveLoop()
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -205,15 +207,22 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     }
 
     private mutating func advanceSpacing(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard inputs.distance <= inputs.holdDistance(settings: settings) else {
+        guard
+            inputs.distance <= inputs.holdDistance(settings: settings)
+            || closeMoves.holdsPosition(now: phaseSeconds)
+        else {
             enter(.approaching)
             return approach(inputs)
         }
         if let archer = advanceArcherSpacing(inputs) {
             return archer
         }
-        guard inputs.weaponOut, rollsAttack(inputs) else { return unchanged() }
-        return startAttackOrCast(inputs)
+        let move = advanceCloseMoves(inputs)
+        guard
+            inputs.distance <= inputs.holdDistance(settings: settings), inputs.weaponOut,
+            rollsAttack(inputs) else { return move }
+        let wasMoving = closeMoves.move != nil
+        return leaveCloseMoves(startAttackOrCast(inputs), wasMoving: wasMoving)
     }
 
     private mutating func advanceBlocking(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
@@ -262,15 +271,6 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         var step = unchanged()
         step.reachedContact = true
         return step
-    }
-
-    private mutating func advanceStaggered() -> CombatBehaviorStep {
-        guard phaseSeconds >= settings.staggerSeconds else { return unchanged() }
-        // Straight to spacing rather than to a fresh gap: the distance check at
-        // the top of `advanceSpacing` sends it back to approaching if the target
-        // used the stagger to walk away.
-        enter(.spacing)
-        return unchanged()
     }
 
     mutating func startAttack() -> CombatBehaviorStep {
@@ -384,6 +384,9 @@ nonisolated extension CombatBehaviorMachine {
         }
         if ![.windup, .contact, .recovery].contains(next) {
             comboSwings = 0
+        }
+        if next != phase {
+            closeMoves = CombatCloseMoveLoop(startedCount: closeMoves.startedCount)
         }
         phase = next
         phaseSeconds = 0
