@@ -43,6 +43,7 @@ extension CombatLoopRuntime.BehaviorDrive {
             reach: (weapon: reachWeapon, shoots: shoots), world: world
         )
         let step = owner.stepBehavior(of: actor.key, inputs: inputs)
+        bookPlace(step.booksPlace, of: inputs.place, by: actor.key, around: target.key)
         let bashing = owner.behaviors[actor.key]?.isBashing == true
         let swing = bashing ? NPCSwing(hand: .right, weapons: [right], shoots: false)
             : swing(of: actor.key, started: step.startedAttack, right: right, left: left)
@@ -163,9 +164,11 @@ extension CombatLoopRuntime.BehaviorDrive {
             world.stopCombatMovement(of: actor)
             return
         }
-        guard
-            !world.moveCombatActor(actor, to: destination, pace: pace),
-            case .reposition = command else { return }
+        let moved = world.moveCombatActor(actor, to: destination, pace: pace)
+        if case .approach = command {
+            owner.noteAdvance(of: actor, reached: moved)
+        }
+        guard !moved, case .reposition = command else { return }
         if let other = owner.refuseCloseMove(of: actor) {
             world.moveCombatActor(actor, to: other, pace: pace)
         }

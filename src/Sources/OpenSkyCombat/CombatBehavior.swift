@@ -167,6 +167,8 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     /// The item in the hand can block; it can bash, and the attack list has a bash.
     var canBlock = false
     var canBash = false
+    /// The fighter's place around its target. Nil for a fighter that books none.
+    var place: CombatPlaceInputs?
 
     init(
         actorPosition: SIMD3<Float>,
@@ -266,4 +268,6 @@ nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     var command: CombatMovementCommand?
     /// The pace of the command's approach; nil lets the mover pick its gait.
     var pace: CombatPace?
+    /// The bearing from the target, in radians, of the place the actor books this step.
+    var booksPlace: Float?
 }

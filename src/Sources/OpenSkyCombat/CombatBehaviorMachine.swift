@@ -61,6 +61,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var closeMoves = CombatCloseMoveLoop()
     /// The block, block attack, and bash rolls of a styled actor.
     var blockLoop = CombatBlockLoop()
+    /// The surround, distant circle, and strafe moves of a styled actor.
+    var paths = CombatPathMoves()
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -91,6 +93,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         secondsSinceShot += seconds
         shoutCooldown = max(0, shoutCooldown - seconds)
         blockLoop.tick(seconds)
+        paths.tick(seconds)
         advanceFlight(seconds: seconds, inputs: inputs)
         var step = advance(inputs)
         // A released cast cleared `pendingCast` itself, so what is left here is
@@ -204,6 +207,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         }
         if let option = inputs.castableSpell(settings: settings), castsFromRange(inputs) {
             return backOff(inputs) ?? startCast(option)
+        }
+        if let outOfRange = advanceOutOfRange(inputs) {
+            return outOfRange
         }
         guard secondsSinceCommand >= settings.commandIntervalSeconds else { return unchanged() }
         return approach(inputs)
@@ -365,6 +371,7 @@ nonisolated extension CombatBehaviorMachine {
         }
         if next != phase {
             closeMoves = CombatCloseMoveLoop(startedCount: closeMoves.startedCount)
+            paths.entering(next)
         }
         keepBlockLoop(entering: next)
         phase = next

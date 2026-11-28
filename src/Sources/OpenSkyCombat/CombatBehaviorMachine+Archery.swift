@@ -16,6 +16,13 @@ nonisolated extension CombatBehaviorMachine {
             step.command = command(.flee(inputs.retreatPoint(to: range.minimum)))
             return step
         }
+        let strafe = strafeCommand(inputs)
+        return merging(strafe, into: shot(inputs, range: range))
+    }
+
+    private mutating func shot(
+        _ inputs: CombatBehaviorInputs, range: NPCArcheryRange
+    ) -> CombatBehaviorStep {
         guard phaseSeconds >= settings.attackIntervalSeconds, inputs.weaponOut
         else { return unchanged() }
         let roll = Float(random.percent()) / 100

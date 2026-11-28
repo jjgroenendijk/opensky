@@ -174,7 +174,27 @@ movement or starts to flee or search.
 
 ## In OpenSky
 
-OpenSky builds only the in-range moves of the close loop
-([combat style](/formats/combat-style.md#where-opensky-differs)). An NPC out of reach advances
-straight at its target ([combat approach](/engine/combat-approach.md)), and no NPC books a place,
-surrounds, strafes, or flanks.
+A melee NPC with a combat style runs these parts of the close loop:
+
+- the in-range moves ([close-range movement](/formats/combat-style.md#close-range-movement));
+- the advance to a free place, and the reposition when it stands out of its place;
+- the surround and the distant circle once its advance path has failed for more than 1 s, then the
+  0.25 s wait.
+
+A styled archer rolls the strafe every 0.25 s and strafes while it draws. It tries no cover, no
+attack location, and no circle.
+
+OpenSky differs in these ways:
+
+- A place lies just inside the NPC's striking distance, 8 units in from its reach less the reach
+  slack, so an NPC that arrives there is in reach. The game's goal is `reach + inner`.
+- The arc's width is worked out at the NPC's reach, not at its distance. The NPC's radius is its
+  capsule radius, and its width is twice that.
+- The out-of-range case is the machine's own: the NPC advances while it is further than its
+  striking distance. The distance predicted 0.5 s ahead and the in-place exception are not used.
+- Each move has arrived within 32 units of its point and fails after 5 s, as the in-range moves do.
+- No move checks a combat area, the navmesh tolerance, or an animation-driven movement. A path the
+  mover refuses counts as a failed move.
+- An NPC without a combat style advances straight at its target and books no place.
+- Falling back to a ranged weapon and flanking are not built
+  ([combat style](/formats/combat-style.md#where-opensky-differs)).

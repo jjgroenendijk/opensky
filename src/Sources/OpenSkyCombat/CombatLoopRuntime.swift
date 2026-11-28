@@ -114,6 +114,8 @@ public final class CombatLoopRuntime: CombatControlling {
     public internal(set) var killMoveSeekers: [ReferenceKey: ReferenceKey] = [:]
     /// The attack each NPC's pick chose for its swing in progress.
     public internal(set) var pickedAttacks: [ReferenceKey: NPCAttack] = [:]
+    /// The places booked around each target, keyed by target.
+    var places: [ReferenceKey: CombatPlaceBook] = [:]
     /// When each NPC last started each attack event, lowercased, on the step clock.
     var attackUses: [ReferenceKey: [String: Double]] = [:]
     /// The NPCs that keep facing their target through a melee attack.
@@ -330,6 +332,11 @@ public final class CombatLoopRuntime: CombatControlling {
     /// No path reaches `key`'s close-range move. Returns the circle's other side to try.
     func refuseCloseMove(of key: ReferenceKey) -> SIMD3<Float>? {
         behaviors[key]?.refuseCloseMove()
+    }
+
+    /// The mover took or refused `key`'s advance path.
+    func noteAdvance(of key: ReferenceKey, reached: Bool) {
+        behaviors[key]?.noteAdvance(reached: reached)
     }
 
     /// The bash pick found nothing for `key`'s machine.

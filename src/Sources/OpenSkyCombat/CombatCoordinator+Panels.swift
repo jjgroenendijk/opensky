@@ -109,10 +109,12 @@ extension CombatCoordinator {
                 }
                 readout.closeMoves = loop.behaviors.keys.sorted().compactMap { key in
                     loop.behaviors[key].flatMap { machine in
-                        machine.settings.closeRange == nil ? nil : .init(
-                            actor: key, current: machine.closeMoveKind,
-                            started: machine.closeMoveCount
-                        )
+                        machine.settings.closeRange == nil && machine.settings.strafe == nil
+                            ? nil : .init(
+                                actor: key, current: machine.closeMoveKind,
+                                started: machine.closeMoveCount,
+                                placeDegrees: loop.placeDegrees(of: key)
+                            )
                     }
                 }
                 readout.guards = loop.behaviors.keys.sorted().compactMap { key in

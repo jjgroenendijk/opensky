@@ -298,6 +298,9 @@ extension CombatLoopRuntime {
             inputs.targetYaw = inputs.targetIsPlayer ? player.facing
                 : world.combatActor(key: target.key)?.yaw
             fillBlockInputs(&inputs, of: fight, reach: reach, world: world)
+            if !reach.shoots {
+                fillPlaceInputs(&inputs, of: fight)
+            }
             return inputs
         }
     }
