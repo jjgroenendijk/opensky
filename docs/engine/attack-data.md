@@ -142,7 +142,10 @@ The second roll makes a weight below 1 a plain chance as well. Example: two atta
 and 0.5. The second is drawn a third of the time, then passes its own roll half of those times.
 
 The general attack pick leaves out bash (`0x2`) and left-hand (`0x8`) attacks, and can be held to
-power attacks only. With no target, every weight there is 10.
+power attacks only. With no target, every weight there is 10. A weapon in the left hand runs its
+own attack loop, whose pick takes only left-hand attacks that are not bashes. The bash pick takes
+only bash attacks that are not left-hand ones
+([combat blocking](/engine/combat-blocking.md#bash)).
 
 ## Stamina
 
@@ -203,7 +206,9 @@ Example: a knockdown of 40 on an actor that cannot ragdoll. It slides at 240 uni
 ## Bash
 
 The combat AI decides to bash in its block loop, from its combat style's bash chances
-([combat style](/formats/combat-style.md#attack-and-bash-chances)). A bash runs the same weighted
+([combat style](/formats/combat-style.md#attack-and-bash-chances)). A bash starts only while the
+actor's own attack state is none and its item can bash
+([combat blocking](/engine/combat-blocking.md#bash)). A bash runs the same weighted
 pick as a swing, over the attacks with flag `0x2`, so the attack chances choose between a bash
 and a power bash. Vanilla `NordRace` gives `bashStart` a chance of 0.5 and `bashPowerStart` 0.33.
 The bash says the Bash combat topic and lasts until the attack state is back to none. While the
