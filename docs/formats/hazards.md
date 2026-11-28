@@ -52,6 +52,10 @@ Both use the placed-reference layout of [placed references](placed-references.md
 `VMAD`. `NAME` names a `HAZD` for `PHZD` and a `PROJ` for `PGRE`. The install holds 394
 `PHZD` and 44 `PGRE` records; 369 `PHZD` carry an `XESP` enable parent.
 
+The game stores `XSCL` as a whole number of hundredths, rounded: 1.234 becomes 1.23. A hazard
+takes the `HAZD` radius as it is, not times the scale. `XOWN` gives ownership as on any
+reference. Nothing reads the `HAZD` image-space radius at offset 12.
+
 ## Links
 
 The hazard store resolves the `DATA` spell, light, impact data set, and sound, and the

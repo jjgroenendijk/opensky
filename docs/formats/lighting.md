@@ -93,7 +93,13 @@ from the inventory. A negative time never runs out.
 
 The game sets flag `0x001` itself when the light's model is set up, from the model's nodes,
 so the record's value does not matter. Flag `0x020` makes a light that no actor holds skip
-creation. Nothing reads flag `0x2000`.
+creation. Flag `0x2000` is passed to the renderer's shadow-light setup when the light is made;
+UESP names it "portal strict", which is not confirmed. With flag `0x004` (negative), each
+colour channel is multiplied by -1/255 instead of 1/255. A radius of 0 or less becomes 0.1.
+The shadow flags set the light's cone: `0x400` uses the reference's field of view in degrees
+times π/180, `0x800` uses π, and `0x1000` uses 2π. Attenuation comes from the INI settings
+`fLinearValue`, `fQuadraticValue`, `uLinearMethod`, and `uQuadraticMethod`, not from a flag.
+Nothing reads flag `0x200` (spot light).
 
 Flag `0x002` marks a light that can be carried, such as a torch. OpenSky lists it as an
 inventory item with its `FULL` name, value, and weight.

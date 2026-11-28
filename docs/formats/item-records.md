@@ -107,10 +107,14 @@ both flags, OpenSky reads a spell.
 How the game uses the flags:
 
 - `0x01`: reading the book raises the skill (actor values 6 to 23) by 1, through perk entry
-  point 5, while the skill is below 200. Then the game clears `0x01` and `0x04`, so the book
-  teaches once.
-- `0x04`: reading the book teaches the spell.
-- `0x08`: set while the game runs, once the book has been read.
+  point 5, while the skill is below 200. Then the game clears `0x01` and `0x04` and marks the
+  book changed, so the book teaches once and the save keeps it. At load, a skill outside 6 to
+  24 clears `0x01` and sets the skill to -1.
+- `0x04`: reading the book teaches the spell. The item card text and the "learned" or "already
+  known" message depend on whether the player knows the spell.
+- `0x08`: set by the first read. That read also sends a "book read" event, which says whether
+  the book taught a skill, and marks the book changed, so the save keeps it.
+- Nothing reads `0x10` or a higher bit.
 - `0x02`: activating the book reads it but does not take it, and an NPC that loots skips it.
 
 ## ALCH
@@ -174,7 +178,21 @@ the node a projectile launches from. Otherwise the game uses `ProjectileNode`, t
 combat weapon, so the AI never picks it for normal combat.
 
 Flags-2 is the uint32 at `0x28`, and the game keeps its low 16 bits. Bit `0x01` (player only)
-keeps the weapon out of every NPC weapon choice. Bit `0x2000` marks a bound weapon.
+keeps the weapon out of every NPC weapon choice. Bit `0x2000` marks a bound weapon:
+
+- the condition `HasBoundWeaponEquipped` is 1 when the left hand (parameter 0) or the right
+  hand (parameter 1) holds one;
+- an NPC's weapon score adds `fCombatBoundWeaponDPSBonus` (100000), so an NPC always picks a
+  bound weapon it carries; bit `0x40` still gives a score of 0 first;
+- unequipping one removes one of it from the actor's inventory;
+- a bulk unequip of an actor's items skips it, and when an item moves between the player and
+  another actor, that actor is equipped again with its armour and its other weapons, not its
+  bound weapons.
+
+xEdit names a `DNAM` byte "Embedded Weapon AV" (offset `0x1B`, not confirmed). The game reads
+it as actor value 46 plus the byte, at most 52: the body-part condition values. An actor that
+holds an embedded weapon reads that actor value (100 without one) and works out value × 0.1,
+less 1 when that is above 1. What this number drives is not known.
 
 `WNAM` names a `STAT`. The player's weapon shows that static's model, in first and in third
 person. An NPC's weapon shows the weapon's own `MODL`.
@@ -271,9 +289,12 @@ xEdit: `wbCOED` line 2305, `wbCNTO` 2315, `wbCOCT` 2329, `wbRecord(CONT, ...)` 4
 when the owner is an NPC_, and a faction rank when it is a FACT. The `DATA` float is
 documented as a misplaced weight that is always 0.
 
-Only the `DATA` flags byte is read. A container with an open animation plays its `SNAM` open
-sound and its `QNAM` close sound only when flag `0x01` is set. A container without an animation
-always plays them. No game code reads flag `0x04` (show owner).
+Only the `DATA` flags byte is read. The `SNAM` open sound plays at the container when an actor
+activates it and the lock lets it in. The `QNAM` close sound plays when the container menu
+closes. Neither waits for an animation event. A container whose model has a
+`NiControllerManager` with a sequence plays them only when flag `0x01` is set; any other
+container always plays them. With flag `0x04` (show owner), the activate prompt puts the
+owner's name and "'s" in front of the container's name.
 
 ## ARMO inventory fields
 

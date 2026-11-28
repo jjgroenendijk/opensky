@@ -72,7 +72,9 @@ The game's own rules, and where OpenSky differs from them, are on the
    image-space radius `r`, measured to the camera.
 5. Casts the `EITM` enchantment on every actor it reached, from the shooter
    ([explosions in the game](../engine/explosions.md#damage)).
-6. Places the placed object: a `HAZD` spawns a hazard, a `DEBR` throws debris.
+6. Places the placed object at the center, with the explosion's rotation: a `HAZD` spawns a
+   hazard, a `DEBR` throws debris. In the game a `PROJ` placed object is launched as one
+   projectile along that rotation, with no shooter.
 7. Lights the blast with the `DATA` light for the same 2 s, fading out linearly.
 8. Plays the `DATA` impact data set at the center, as an impact on the ground with no
    material: its model, decal, and sound.
@@ -84,7 +86,9 @@ proximity distance. Such a projectile leaves no stuck arrow.
 Simplifications:
 
 - Force does not push actors or loose objects. It only sets the debris launch speed.
-- The spawn projectile is not used.
+- The spawn projectile is not used. The game resolves its FormID at load and never reads it
+  again, so it changes nothing there either.
+- A `PROJ` placed object is not launched.
 - A `DATA` too short to hold the flags word keeps its radii in game units.
 - The light's 2 s and its fade, and the impact on no material, are OpenSky's choices.
 - On the install, an `EXPL` placed object is a `HAZD` 4 times, an `ACTI` 11 times, an `EXPL`
