@@ -137,6 +137,18 @@ nonisolated extension CombatBehaviorMachine {
     /// How far inside the striking distance a place lies, so the NPC arriving there is in
     /// reach. Ours.
     static let placeSlack: Float = 8
+    /// Within this distance of its place's ring, the advance walks straight at the target. A
+    /// large creature cannot stand at a place inside the distance where the two bodies meet,
+    /// so it closes on the target instead. Ours.
+    static let placeApproachMargin: Float = 256
+
+    /// Where the advance walks: the free place while far off, else the target.
+    func advancePoint(_ inputs: CombatBehaviorInputs) -> SIMD3<Float> {
+        guard let goal = placeGoal(inputs) else { return inputs.targetPosition }
+        let ring = max(0, inputs.strikingDistance(settings: settings) - Self.placeSlack)
+        return inputs.distance > ring + Self.placeApproachMargin ? goal.point : inputs
+            .targetPosition
+    }
 
     /// The mover took or refused the advance's path.
     public mutating func noteAdvance(reached: Bool) {

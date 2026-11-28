@@ -11,7 +11,7 @@ nonisolated extension CombatBehaviorMachine {
         let rules = CombatFlankLoop.Rules(
             settings: flank, strikingDistance: inputs.strikingDistance(settings: settings),
             isAttacking: phase.isMeleeAttack, goal: placeGoal(inputs),
-            approachPace: approachPace(inputs)
+            chasePoint: advancePoint(inputs), approachPace: approachPace(inputs)
         )
         var step = unchanged()
         if let order = flankLoop.advance(inputs, rules: rules) {

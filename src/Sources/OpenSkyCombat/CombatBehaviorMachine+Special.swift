@@ -27,12 +27,8 @@ nonisolated extension CombatBehaviorMachine {
     /// A step that closes on the target, at the pace of its distance band.
     mutating func approach(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         var step = unchanged()
-        if let goal = placeGoal(inputs) {
-            step.command = command(.approach(goal.point))
-            step.booksPlace = goal.bearing
-        } else {
-            step.command = command(.approach(inputs.targetPosition))
-        }
+        step.command = command(.approach(advancePoint(inputs)))
+        step.booksPlace = placeGoal(inputs)?.bearing
         step.pace = approachPace(inputs)
         return step
     }

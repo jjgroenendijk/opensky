@@ -191,6 +191,9 @@ OpenSky differs in these ways:
 
 - A place lies just inside the NPC's striking distance, 8 units in from its reach less the reach
   slack, so an NPC that arrives there is in reach. The game's goal is `reach + inner`.
+- Within 256 units of that distance, the advance and the chase walk straight at the target, and
+  the place stays booked. A large creature such as a sabre cat cannot stand at a place that lies
+  inside the distance where the two bodies meet, so it closes on the target instead.
 - The arc's width is worked out at the NPC's reach, not at its distance. The NPC's radius is its
   capsule radius, and its width is twice that.
 - The out-of-range case is the machine's own: the NPC advances while it is further than its

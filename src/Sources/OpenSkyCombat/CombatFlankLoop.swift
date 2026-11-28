@@ -35,6 +35,8 @@ nonisolated struct CombatFlankLoop: Equatable, Sendable {
         var isAttacking: Bool
         /// The free place at the NPC's reach, and the approach pace.
         var goal: (point: SIMD3<Float>, bearing: Float)?
+        /// Where the chase walks: the advance's point.
+        var chasePoint: SIMD3<Float>
         var approachPace: CombatPace
     }
 
@@ -105,7 +107,7 @@ nonisolated struct CombatFlankLoop: Equatable, Sendable {
                 booksPlace: goal.bearing
             )
         case .chase:
-            let point = rules.goal?.point ?? inputs.targetPosition
+            let point = rules.chasePoint
             _ = begin(.chase, destination: point)
             return Order(
                 command: .approach(point), pace: rules.approachPace,
