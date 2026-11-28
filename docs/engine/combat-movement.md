@@ -181,6 +181,9 @@ A melee NPC with a combat style runs these parts of the close loop:
 - the surround and the distant circle once its advance path has failed for more than 1 s, then the
   0.25 s wait.
 
+A melee NPC whose style has the flanking flag runs the flanking loop in place of the advance and
+the close moves.
+
 A styled archer rolls the strafe every 0.25 s and strafes while it draws. It tries no cover, no
 attack location, and no circle.
 
@@ -196,5 +199,14 @@ OpenSky differs in these ways:
 - No move checks a combat area, the navmesh tolerance, or an animation-driven movement. A path the
   mover refuses counts as a failed move.
 - An NPC without a combat style advances straight at its target and books no place.
-- Falling back to a ranged weapon and flanking are not built
+- The flank goal is the free place nearest the NPC's own bearing. Its angle is measured between
+  that place and the NPC's bearing, and the distance in the angle rule is the distance beyond the
+  reach. The path has no extra cost near the target; the mover picks its own path.
+- A stalk that leaves its band jogs at fast walk to the band's middle, `reach + 128`. It jogs only
+  from beyond the band, never out from inside the reach, so the NPC stays where it can attack.
+- The chase ends once the NPC is within its striking distance, or after 5 s. A flank that ends
+  with the NPC out of its striking distance goes on with a chase, so the NPC closes to attack.
+- Flank distant walks to the point at the flank distance on the NPC's own bearing.
+- The flanking loop runs only between attacks. A move under way goes on through an attack.
+- Falling back to a ranged weapon is not built
   ([combat style](/formats/combat-style.md#where-opensky-differs)).

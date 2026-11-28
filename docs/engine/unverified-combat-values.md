@@ -69,3 +69,5 @@ apply: each row names the value, OpenSky's choice, and the page with the detail.
 | `CSLR` default | A style without a strafe value reads as 0.2 | [combat movement](/engine/combat-movement.md#in-opensky) |
 | NPC bash clip | `1hm_blockbash.hkx`, or `shd_blockbash.hkx` with a shield | [combat blocking](/engine/combat-blocking.md#in-opensky) |
 | Per-hand roll order | The right hand rolls first; the left rolls only when it fails | [combat blocking](/engine/combat-blocking.md#in-opensky) |
+| `CSCR` flank defaults | A style without a flank distance or stalk time reads 0.2 for each | [combat movement](/engine/combat-movement.md#in-opensky) |
+| Flank goal | The free place nearest the NPC's bearing; the stalk jogs to `reach + 128` | [combat movement](/engine/combat-movement.md#in-opensky) |

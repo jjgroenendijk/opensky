@@ -132,6 +132,8 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// strafe of a styled archer. Nil advances straight at the target and never strafes.
     public var movement: CombatMovementSettings?
     public var strafe: CombatStrafeSettings?
+    /// The flanking loop, for a style with the flanking flag. Nil runs the close loop.
+    public var flank: CombatFlankSettings?
 
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()
