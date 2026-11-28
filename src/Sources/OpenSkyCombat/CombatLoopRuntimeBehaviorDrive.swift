@@ -38,15 +38,16 @@ extension CombatLoopRuntime.BehaviorDrive {
         let left = shoots ? nil : world.combatLeftWeapon(of: actor.key)
         let reachWeapon = owner.strikes[actor.key]?.weapon(right: right, left: left) ?? right
         track(target)
-        let inputs = behaviorInputs(
+        var inputs = behaviorInputs(
             of: (actor, target), influence: influence,
             reach: (weapon: reachWeapon, shoots: shoots), world: world
         )
+        inputs.holdsTwoWeapons = left != nil && right.handType.isOneHandedMelee
         let step = owner.stepBehavior(of: actor.key, inputs: inputs)
         bookPlace(step.booksPlace, of: inputs.place, by: actor.key, around: target.key)
         let bashing = owner.behaviors[actor.key]?.isBashing == true
         let swing = bashing ? NPCSwing(hand: .right, weapons: [right], shoots: false)
-            : swing(of: actor.key, started: step.startedAttack, right: right, left: left)
+            : swing(of: actor.key, started: step, right: right, left: left)
         if owner.behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
@@ -221,13 +222,14 @@ extension CombatLoopRuntime.BehaviorDrive {
     /// Which hand a swing that starts now uses, and with which weapons. A bow always
     /// shoots with the right hand.
     func swing(
-        of key: ReferenceKey, started: Bool, right: MeleeWeaponProfile,
+        of key: ReferenceKey, started step: CombatBehaviorStep, right: MeleeWeaponProfile,
         left: MeleeWeaponProfile?
     ) -> NPCSwing {
         let shoots = right.handType == .bow
-        if started, !shoots {
-            owner.strikes[key, default: NPCStrikes()]
-                .start(dual: left != nil && right.handType.isOneHandedMelee)
+        if step.startedAttack, !shoots {
+            owner.strikes[key, default: NPCStrikes()].start(
+                dual: left != nil && right.handType.isOneHandedMelee, hand: step.attackHand
+            )
         }
         let hand = shoots ? .right : owner.strikes[key]?.hand ?? .right
         return NPCSwing(

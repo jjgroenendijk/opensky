@@ -48,7 +48,11 @@ extension CombatLoopRuntime.BehaviorDrive {
             return false
         }
         world.sayCombatBash(by: actor.key, to: target.key)
-        world.playCombatClip(.attack, on: actor.key)
+        let clip: CombatActorClip = world.combatShieldRating(of: actor.key) == nil ? .bash
+            : .shieldBash
+        if !world.playCombatClip(clip, on: actor.key) {
+            world.playCombatClip(.attack, on: actor.key)
+        }
         return true
     }
 

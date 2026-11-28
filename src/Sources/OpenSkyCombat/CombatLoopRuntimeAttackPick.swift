@@ -29,6 +29,7 @@ extension CombatLoopRuntime.BehaviorDrive {
         situation.secondsSinceUse = (owner.attackUses[actor.key] ?? [:])
             .mapValues { Float(now - $0) }
         situation.weights = world.combatStyle(of: actor.key)?.attackWeights ?? NPCAttackWeights()
+        situation.holdsTwoWeapons = world.combatLeftWeapon(of: actor.key) != nil
         let direction = owner.facing(from: actor.feet, toward: target.feet, fallback: actor.yaw)
         guard
             let attack = NPCAttackPick.choose(
@@ -36,6 +37,9 @@ extension CombatLoopRuntime.BehaviorDrive {
             )
         else { return nil }
         owner.pickedAttacks[actor.key] = attack
+        if attack.isDualWield, swing.hand == .right {
+            owner.strikes[actor.key]?.swingBoth()
+        }
         owner.attackUses[actor.key, default: [:]][attack.event.lowercased()] = now
         return attack
     }

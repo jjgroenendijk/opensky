@@ -25,6 +25,11 @@ nonisolated public struct NPCAttack: Equatable, Sendable {
     public var isLeftHand: Bool {
         data.flags.contains(.leftHand)
     }
+
+    /// A dual-wield attack, which swings both weapons. Its event names it; no flag does.
+    public var isDualWield: Bool {
+        event.lowercased().contains("dualwield")
+    }
 }
 
 /// What the pick reads about the fight at the moment of the choice.
@@ -48,6 +53,8 @@ nonisolated public struct NPCAttackSituation: Equatable, Sendable {
     public var secondsSinceUse: [String: Float] = [:]
     /// The attacker's combat style multipliers.
     public var weights = NPCAttackWeights()
+    /// The attacker holds a melee weapon in each hand, so a dual-wield attack may start.
+    public var holdsTwoWeapons = false
 
     public init() {}
 }
@@ -79,7 +86,9 @@ nonisolated public enum NPCAttackPick {
         return list.compactMap { entry -> (NPCAttack, Float)? in
             guard let event = entry.event, let data = entry.properties else { return nil }
             let attack = NPCAttack(event: event, data: data)
-            guard inPool(attack, situation.pool) else { return nil }
+            guard
+                inPool(attack, situation.pool),
+                !attack.isDualWield || situation.holdsTwoWeapons else { return nil }
             if
                 let since = situation.secondsSinceUse[event.lowercased()],
                 since < data.recoveryTime

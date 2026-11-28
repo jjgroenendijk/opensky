@@ -152,8 +152,15 @@ differ:
 - Bare hands neither block nor bash; they block only with a shield. A bow runs no block loop.
 - The per-fighter distance in the block attack rule is taken as both actors' radii.
 - A missing `CSME` bash value reads as 1.
-- A bash plays the NPC's plain attack clip.
-- Each hand does not run its own attack loop.
+- A bash with a weapon plays `1hm_blockbash.hkx`, and a bash with a shield plays
+  `shd_blockbash.hkx`, whatever the weapon type and the power flag. A rig without the clip plays
+  the plain attack clip.
+- Each hand rolls its attack chance in the same 0.25 s pass, the right hand first. The first hand
+  to pass attacks, so the left hand rolls only when the right hand's roll fails. Both hands share
+  the time of the last attack.
+- The behaviour graph's dual-wield state is not read. A dual-wield attack, named by its event,
+  may start only while the NPC holds a one-handed melee weapon in each hand, and then lands both
+  weapons.
 
 These values are OpenSky's ([unverified combat values](/engine/unverified-combat-values.md)).
 `openskycli game state assist` lists each styled fighter's guard and bashes under `guards`.
