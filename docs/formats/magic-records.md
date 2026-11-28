@@ -248,5 +248,3 @@ Measured on this machine's active load order:
   which moves it onto the blood geometry, is not read.
 - The weapon enchantment look covers every unskinned mesh the actor holds, and its art hangs from
   the right hand's weapon node.
-- The script AI score is read but not used: NPCs pick the costliest spell they can cast, because
-  OpenSky has no spell rating yet. The script AI delay is applied.

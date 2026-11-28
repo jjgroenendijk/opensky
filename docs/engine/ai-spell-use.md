@@ -159,8 +159,10 @@ both item scores double, and the Ice Spike wins.
   with what magicka limits through `CSTY` and game settings. OpenSky uses one probability and one
   choice rule ([combat behavior settings](combat-behavior.md#settings)). Decoding the style
   is the next step if the simple rule looks wrong in play.
-- The strongest affordable spell wins. Cost stands in for strength, because OpenSky does not
-  rate spells as the game does ([magic records](../formats/magic-records.md#mgef-data)).
+- The best rated affordable spell in range wins, by the rating above, then the costliest. The
+  target's resistances, the Magicka and Stamina damage target check, the range and readied
+  adjustments, and the concentration cost rule are not applied. The combat style's magic score
+  multiplier is left out, because it is the same for every spell of one caster.
 - After an NPC casts a spell with a Script effect, it casts no such spell for the largest script
   AI delay of that spell's effects. Its other spells stay open.
 - No shouts, summons, reanimation, or healing itself mid-fight. An NPC only casts a hostile spell at

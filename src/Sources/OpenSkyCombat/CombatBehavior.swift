@@ -61,6 +61,8 @@ nonisolated public struct CombatSpellOption: Equatable, Sendable {
     /// For a spell with a Script effect, the seconds its caster then waits before any such
     /// spell again: the largest `MGEF` script AI delay. Nil for every other spell.
     public var scriptDelay: Float?
+    /// The game's rating of the spell, with the ranged bonus (`NPCSpellRating`).
+    public var score: Float = 0
 
     public init(
         spell: ReferenceKey,
