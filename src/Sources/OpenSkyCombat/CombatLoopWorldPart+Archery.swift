@@ -71,6 +71,31 @@ extension CombatLoopWorldPart {
             )
         }
 
+        /// The aim line before the spread: toward the noisy, led aim point along its arc,
+        /// or straight at the target when the `PROJ` turns combat aim correction off.
+        static func launch(
+            _ line: (from: SIMD3<Float>, to: SIMD3<Float>), velocity: SIMD3<Float>,
+            profile: ProjectileProfile, random: inout ConditionRandom
+        ) -> SIMD3<Float> {
+            let (origin, centre) = line
+            guard profile.correctsCombatAim else {
+                return NPCArcheryAim.ballistic(from: origin, to: centre, speed: 0, gravity: 0)
+            }
+            let aimed = NPCArcheryAim.noisy(
+                NPCArcheryAim.lead(
+                    from: origin,
+                    to: centre,
+                    velocity: velocity,
+                    speed: profile.speed
+                ),
+                random: &random
+            )
+            return NPCArcheryAim.ballistic(
+                from: origin, to: aimed, speed: profile.speed,
+                gravity: ProjectileFlight.worldGravity * profile.aimGravityFactor
+            )
+        }
+
         func fireCombatArrow(_ shot: CombatArrowShot) -> Bool {
             let key = shot.shooter.key
             let gear = owner.shared.world.gearReads
@@ -87,23 +112,14 @@ extension CombatLoopWorldPart {
                 + SIMD3(0, 0, shot.shooter.capsule.eyeHeight * shot.shooter.scale)
             let centre = shot.target.feet + SIMD3(0, 0, shot.target.capsule.height / 2)
             var random = owner.shared.archeryRandom
-            let aimed = NPCArcheryAim.noisy(
-                NPCArcheryAim.lead(
-                    from: origin, to: centre, velocity: shot.targetVelocity,
-                    speed: arrow.profile.speed
-                ),
-                random: &random
+            let launch = Self.launch(
+                (origin, centre), velocity: shot.targetVelocity,
+                profile: arrow.profile, random: &random
             )
-            let gravity = ProjectileFlight.worldGravity * arrow.profile.gravityFactor
             let maximum = NPCArcheryAim.maximumSpread(
                 skill: owner.archerySkill(of: key), coneDegrees: archery.settings.npcSpreadDegrees
             )
-            let direction = NPCArcheryAim.spread(
-                NPCArcheryAim.ballistic(
-                    from: origin, to: aimed, speed: arrow.profile.speed, gravity: gravity
-                ),
-                maximum: maximum, random: &random
-            )
+            let direction = NPCArcheryAim.spread(launch, maximum: maximum, random: &random)
             owner.shared.archeryRandom = random
             var payload = ArrowPayload(
                 damage: ArcheryDamage.resolve(

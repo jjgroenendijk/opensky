@@ -68,11 +68,13 @@ The game's own rules, and where OpenSky differs from them, are on the
    ([impulses](../engine/impulses.md#explosions)).
 2. Plays sound 1 and sound 2 at the center.
 3. Shows the `MODL` model at the center for 2 s.
-4. Starts the `MNAM` image-space modifier. Its strength falls linearly from 1 at the center
-   to 0 at the image-space radius, measured to the camera.
-5. Places the placed object: a `HAZD` spawns a hazard, a `DEBR` throws debris.
-6. Lights the blast with the `DATA` light for the same 2 s, fading out linearly.
-7. Plays the `DATA` impact data set at the center, as an impact on the ground with no
+4. Starts the `MNAM` image-space modifier. Its strength is `1 - (d / r)^2`, 0 at the
+   image-space radius `r`, measured to the camera.
+5. Casts the `EITM` enchantment on every actor it reached, from the shooter
+   ([explosions in the game](../engine/explosions.md#damage)).
+6. Places the placed object: a `HAZD` spawns a hazard, a `DEBR` throws debris.
+7. Lights the blast with the `DATA` light for the same 2 s, fading out linearly.
+8. Plays the `DATA` impact data set at the center, as an impact on the ground with no
    material: its model, decal, and sound.
 
 A projectile with the alternate-trigger flag also detonates in the air: when its flight time
@@ -82,9 +84,9 @@ proximity distance. Such a projectile leaves no stuck arrow.
 Simplifications:
 
 - Force does not push actors or loose objects. It only sets the debris launch speed.
-- The spawn projectile and the vertical offset are not used.
+- The spawn projectile is not used.
+- A `DATA` too short to hold the flags word keeps its radii in game units.
 - The light's 2 s and its fade, and the impact on no material, are OpenSky's choices.
-- Damage has no line-of-sight check and ignores the "ignore line of sight" flag.
 - On the install, an `EXPL` placed object is a `HAZD` 4 times, an `ACTI` 11 times, an `EXPL`
   once, and another type 23 times. None is a `DEBR`. Placed objects of other types are
   counted and skipped.

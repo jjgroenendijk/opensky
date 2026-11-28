@@ -78,6 +78,7 @@ struct AgentDestructionReadout {
             "name": .string(report.name), "cause": .string("\(report.cause)"),
             "position": .init(report.position), "damaged": keyed(report.damaged),
             "shielded": .array(report.shielded.map { .string($0.description) }),
+            "enchanted": .array(report.enchanted.map { .string($0.description) }),
             "objectsDamaged": keyed(report.objectsDamaged),
             "objectPlaced": .bool(report.objectPlaced), "debrisThrown": .init(report.debrisThrown)
         ]

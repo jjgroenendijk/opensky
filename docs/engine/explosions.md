@@ -184,6 +184,9 @@ What the spawn projectile does was not found. 7 `Skyrim.esm` explosions name one
 
 ## Where OpenSky differs
 
+- An `EXPL` enchantment with no shooter is cast by each actor it reaches on itself, so nobody is
+  blamed for it.
+
 - The placed object faces along the projectile's flight, or has no rotation for an explosion
   with no direction. Its owner is the crime owner of the explosion's source.
 - A spell hit sets off the main effect's explosion at the struck actor. OpenSky does not choose

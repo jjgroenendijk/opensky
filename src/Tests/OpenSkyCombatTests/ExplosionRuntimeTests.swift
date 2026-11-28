@@ -26,6 +26,24 @@ final class FakeExplosionWorld: ExplosionWorld {
     private(set) var lights: [ReferenceKey] = []
     private(set) var impacts: [ReferenceKey] = []
     private(set) var detectionEvents: [ReferenceKey] = []
+    struct EnchantmentCast {
+        let enchantment: ReferenceKey
+        let shooter: ReferenceKey?
+        let targets: [ReferenceKey]
+    }
+
+    private(set) var enchantments: [EnchantmentCast] = []
+
+    func castExplosionEnchantment(
+        _ enchantment: ReferenceKey, from shooter: ReferenceKey?, on targets: [ReferenceKey]
+    ) -> [ReferenceKey] {
+        enchantments.append(EnchantmentCast(
+            enchantment: enchantment,
+            shooter: shooter,
+            targets: targets
+        ))
+        return targets
+    }
 
     func explosionTargets() -> [MeleeTarget] {
         targets
@@ -114,6 +132,15 @@ struct ExplosionRuntimeTests {
         let file = try Fixture.plugin(records: [
             explosion(0x900, placed: 0x901, sound: 0x902, light: 0x903, impacts: 0x904),
             explosion(0x910, placed: 0x911),
+            Fixture.recordBytes("EXPL", formID: 0x920, fields: [
+                ("EDID", Fixture.zstring("TestFeetBlast")),
+                ("EITM", Fixture.u32(0x921)),
+                (
+                    "DATA",
+                    Fixture.u32(0, 0, 0, 0, 0, 0) + Fixture.f32(0, 0, 10, 5, 0)
+                        + Fixture.u32(0)
+                )
+            ]),
             Fixture.recordBytes("HAZD", formID: 0x901, fields: [("EDID", Fixture.zstring("Fire"))]),
             Fixture.recordBytes("DEBR", formID: 0x911, fields: [
                 ("DATA", Fixture.u8(70) + Fixture.zstring("rock01.nif") + Fixture.u8(1)),
@@ -161,6 +188,30 @@ struct ExplosionRuntimeTests {
         #expect(report.hazardPlaced)
         #expect(!report.swapApplied)
         #expect(runtime.detonationTotal == 1)
+    }
+
+    @Test func aBlastInFeetCastsItsEnchantmentOnEveryActorItReaches() throws {
+        let world = FakeExplosionWorld()
+        let shooter = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x701)
+        world.targets = [
+            MeleeTarget(key: shooter, feet: SIMD3(50, 0, 0)),
+            MeleeTarget(key: Self.npc, feet: SIMD3(200, 0, 0)),
+            MeleeTarget(key: .player, feet: SIMD3(300, 0, 0))
+        ]
+        let runtime = try Self.runtime(world: world)
+        let spec = try #require(runtime.spec(for: Self.key(0x920)))
+        #expect(spec.radius == 220)
+        #expect(spec.imageSpaceRadius == 110)
+        #expect(spec.enchantment == Self.key(0x921))
+        let report = runtime.detonate(
+            spec, at: SIMD3(0, 0, 60), cause: .debug, origin: ExplosionOrigin(shooter: shooter)
+        )
+        #expect(world.enchantments.count == 1)
+        #expect(world.enchantments.first?.enchantment == Self.key(0x921))
+        #expect(world.enchantments.first?.shooter == shooter)
+        #expect(world.enchantments.first?.targets == [shooter, Self.npc])
+        #expect(report.enchanted == [shooter, Self.npc])
+        #expect(world.damage.isEmpty)
     }
 
     @Test func aCloseBlastSwapsInTheFixedModifierAtFullStrength() throws {

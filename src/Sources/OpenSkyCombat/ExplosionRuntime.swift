@@ -19,6 +19,10 @@ public final class ExplosionRuntime {
     static let ignoreLineOfSightFlag: UInt32 = 0x10
     /// `EXPL` `DATA` flag Chain.
     static let chainFlag: UInt32 = 0x80
+    /// `EXPL` `DATA` flag 0x01: both radii are in game units; clear, they are in feet.
+    static let unitsFlag: UInt32 = 0x01
+    /// `fBSUnitsPerFoot`.
+    static let unitsPerFoot: Float = 22
 
     public weak let world: (any ExplosionWorld)?
     /// The load-order effect records. Empty without game data.
@@ -65,7 +69,14 @@ public final class ExplosionRuntime {
     ) -> ExplosionReport {
         detonationTotal += 1
         let radius = spec.radius
-        let (damaged, shielded) = damage(spec, at: position, origin: origin)
+        let (reached, shielded) = reach(spec, at: position, origin: origin)
+        let damaged = damage(spec, reached: reached, at: position, origin: origin)
+        var enchanted: [ReferenceKey] = []
+        if let enchantment = spec.enchantment, !reached.isEmpty {
+            enchanted = world?.castExplosionEnchantment(
+                enchantment, from: origin.shooter, on: reached.map(\.key)
+            ) ?? []
+        }
         let broken = damageObjects(spec, at: position, origin: origin)
         for sound in spec.sounds {
             world?.playExplosionSound(sound, at: position)
@@ -98,6 +109,7 @@ public final class ExplosionRuntime {
         report.shielded = shielded
         report.objectsDamaged = broken
         report.objectPlaced = objectPlaced
+        report.enchanted = enchanted
         reports.append(report)
         if reports.count > Self.reportLimit {
             reports.removeFirst(reports.count - Self.reportLimit)
@@ -124,40 +136,6 @@ public final class ExplosionRuntime {
     public func advance(_ seconds: Float) {
         guard !debris.isEmpty else { return }
         debris = DebrisSelection.step(debris, seconds: seconds)
-    }
-
-    /// Health off each actor in reach, scaled by the shooter's skill. The shooter takes
-    /// none, and an actor behind a wall none unless the blast ignores line of sight.
-    private func damage(
-        _ spec: ExplosionSpec, at position: SIMD3<Float>, origin: ExplosionOrigin
-    ) -> (damaged: [ReferenceKey: Float], shielded: [ReferenceKey]) {
-        guard spec.damage > 0, let world else { return ([:], []) }
-        let scale = ExplosionSkill.scale(skill: origin.skill, isPlayer: origin.shooter == .player)
-        let start = ExplosionSight.start(center: position, direction: origin.direction)
-        var damaged: [ReferenceKey: Float] = [:]
-        var shielded: [ReferenceKey] = []
-        for target in world.explosionTargets() where target.key != origin.shooter {
-            let amount = ExplosionFalloff.damage(
-                spec.damage, radius: spec.radius, distance: Self.distance(position, target)
-            ) * scale
-            guard amount > 0 else { continue }
-            if !spec.ignoresLineOfSight {
-                let centre = target.feet + SIMD3(0, 0, target.capsule.height / 2)
-                let end = target.key == .player ? world.explosionViewer() ?? centre : centre
-                let hit = world.explosionObstruction(from: start, to: end)
-                if ExplosionSight.blocks(hitDistance: hit, direction: origin.direction) {
-                    shielded.append(target.key)
-                    continue
-                }
-            }
-            if world.applyExplosionDamage(amount, to: target.key) {
-                damaged[target.key] = amount
-                if let owner = origin.shooter {
-                    world.noteExplosionSound(owner: owner, level: spec.soundLevel, at: target.feet)
-                }
-            }
-        }
-        return (damaged, shielded)
     }
 
     /// Destruction damage on each destructible object in the radius: the blast's damage
@@ -262,12 +240,14 @@ public final class ExplosionRuntime {
             default: ExplosionPlacement.other(placed, type: type)
             }
         }
+        // A short `DATA` with no flags word keeps game units.
+        let units = data?.flags.map { $0 & Self.unitsFlag == 0 ? Self.unitsPerFoot : 1 } ?? 1
         var spec = ExplosionSpec(
             name: explosion.editorID ?? "\(key)",
             damage: Self.clean(data?.damage),
-            radius: Self.clean(data?.radius),
+            radius: Self.clean(data?.radius) * units,
             force: Self.clean(data?.force),
-            imageSpaceRadius: Self.clean(data?.imageSpaceRadius),
+            imageSpaceRadius: Self.clean(data?.imageSpaceRadius) * units,
             sounds: sounds,
             imageSpaceModifier: records.resolve(explosion.imageSpaceModifier, from: resolved),
             placement: placement,
@@ -281,6 +261,7 @@ public final class ExplosionRuntime {
         spec.ignoresLineOfSight = (data?.flags ?? 0) & Self.ignoreLineOfSightFlag != 0
         spec.verticalOffset = Self.clean(data?.verticalOffsetMultiplier)
         spec.isChain = (data?.flags ?? 0) & Self.chainFlag != 0
+        spec.enchantment = records.resolve(explosion.enchantment, from: resolved)
         return spec
     }
 

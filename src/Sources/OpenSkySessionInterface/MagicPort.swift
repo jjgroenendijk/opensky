@@ -33,6 +33,7 @@ public protocol MagicPort: AnyObject {
     associatedtype CasterRuntime: CasterRuntimePort
     @discardableResult func applySpellHit(_ hit: SpellHit) -> SpellHitReport
     var caster: CasterRuntime? { get }
+    var enchantmentStore: EnchantmentStore? { get }
     var commanded: [CommandedActor] { get }
     /// The runes waiting on the ground.
     var runeMarkers: [RuneMarker] { get }

@@ -38,6 +38,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var visuals = ProjectileVisuals()
     /// What the explosion's radius is multiplied by: above 1 for a dual cast.
     public var explosionScale: Float = 1
+    /// `DATA` flag 0x400 clear: an NPC's shot turns toward its combat aim point.
+    public var correctsCombatAim = true
 
     public init(
         projectile: FormID? = nil,
@@ -68,6 +70,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         impactForce = Self.clean(record.impactForce)
         isCone = record.kind == .flame || record.kind == .cone
         kind = record.kind
+        correctsCombatAim = !record.flags.contains(.disableCombatAimCorrection)
         visuals = ProjectileVisuals(record: record)
         // A trap dart names `FireBallExp01` but leaves the explosion flag off.
         explosion = record.flags.contains(.explosion) ? record.explosion : nil
@@ -75,6 +78,11 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
             explosionProximity = Self.clean(record.explosionProximity)
             explosionTimer = Self.clean(record.explosionTimer)
         }
+    }
+
+    /// The gravity factor an NPC's aim plans with: a lobber plans for full world gravity.
+    public var aimGravityFactor: Float {
+        kind == .lobber ? 1 : gravityFactor
     }
 
     /// Whether this profile describes something the flight model can integrate.
@@ -118,7 +126,7 @@ nonisolated public struct ProjectileVisuals: Equatable, Sendable {
 
     /// Whether launching shows anything at the muzzle.
     public var hasMuzzleFlash: Bool {
-        muzzleFlashDuration > 0 && (muzzleFlashModel != nil || muzzleFlashLight != nil)
+        muzzleFlashDuration > 0 && muzzleFlashModel != nil
     }
 
     private static func path(_ path: String?) -> String? {
