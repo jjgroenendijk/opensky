@@ -231,3 +231,16 @@ choice is not confirmed against the running game.
 
 In `Skyrim.esm`, 3,787 of the 5,118 `NPC_` records reach a combat style, directly or
 through their templates.
+
+## Where OpenSky differs
+
+OpenSky rolls the attack chance every 0.25 s in reach, with the staggered-target and last-attack
+terms. These parts are not built yet:
+
+- An actor without a combat style waits a fixed attack interval instead of rolling. In the game
+  such an actor uses the default style.
+- The blocking terms of the attack chance: an NPC holds its guard for a fixed time, then attacks.
+- The block loop: OpenSky rolls the block chance once per gap between attacks.
+- The close-range moves: back off, circle, fall back, distant circle, and strafe.
+- Bashes and their chances.
+- The flanking flag and the dual-wield flag.

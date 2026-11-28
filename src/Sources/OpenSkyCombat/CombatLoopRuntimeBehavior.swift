@@ -290,6 +290,7 @@ extension CombatLoopRuntime {
             inputs.canChain = reach.weapon.handType.isOneHandedMelee
             inputs.weaponOut = owner.drawState(of: actor.key) == .drawn
                 && world.combatGraphIsAttackReady(actor.key) ?? true
+            inputs.targetIsStaggered = owner.behaviors[target.key]?.phase == .staggered
             return inputs
         }
     }

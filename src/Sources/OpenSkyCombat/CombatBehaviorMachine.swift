@@ -55,6 +55,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var secondsSinceShot: Float = .infinity
     /// How long the current bow attack holds its full draw.
     var drawHold: Float = 0
+    /// Seconds into the spacing phase at which the next attack roll is due.
+    var nextAttackRoll: Float = 0
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -210,8 +212,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         if let archer = advanceArcherSpacing(inputs) {
             return archer
         }
-        guard phaseSeconds >= settings.attackIntervalSeconds, inputs.weaponOut
-        else { return unchanged() }
+        guard inputs.weaponOut, rollsAttack(inputs) else { return unchanged() }
         return startAttackOrCast(inputs)
     }
 
@@ -386,6 +387,7 @@ nonisolated extension CombatBehaviorMachine {
         }
         phase = next
         phaseSeconds = 0
+        nextAttackRoll = 0
     }
 
     /// Records that a command was issued this step and returns it, so the

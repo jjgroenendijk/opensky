@@ -99,7 +99,7 @@ So they are chosen in the open, with a reason each. An actor's
 
 | Setting | Value | Why this value |
 | --- | --- | --- |
-| Attack interval | 1.6 s | Slow enough to block, draw a bow, and see what happened between blows |
+| Attack interval | 1.6 s | Slow enough to block, draw a bow, and see what happened between blows. Only an actor without a combat style, and an archer, waits it; a styled actor rolls its [attack chance](/formats/combat-style.md#attack-and-bash-chances) |
 | Windup | 0.45 s | About where the vanilla one-handed attack clip puts its `HitFrame` |
 | Recovery | 0.35 s | Follow-through with no new attack |
 | Stagger | 0.7 s | How long a hit holds the attack away |
@@ -130,7 +130,8 @@ multipliers to 0.24, so an actor on it attacks less often and blocks less than t
 
 | Setting | Scaled by | Rule | Clamp |
 | --- | --- | --- | --- |
-| Attack interval | Offensive multiplier | Base times 0.5 / offensive: twice the offense, half the wait | 0.5 to 2 times the base |
+| Attack chance | Offensive multiplier | `lerp(offensive, 0.05, 1)`, rolled every 0.25 s in reach, as the game does | None |
+| Attack interval | Offensive multiplier | Base times 0.5 / offensive: twice the offense, half the wait. An archer's wait | 0.5 to 2 times the base |
 | Block time | Offensive multiplier | The same scale as the attack interval, so a block still replaces one gap | 0.5 to 2 times the base |
 | Block chance | Defensive multiplier | Base times defensive / 0.5 | 0 to 0.9 |
 | Cast chance | Melee and magic equipment score multipliers | Base times 2 times magic / (magic + melee); equal scores give the base | 0 to 0.9 |
