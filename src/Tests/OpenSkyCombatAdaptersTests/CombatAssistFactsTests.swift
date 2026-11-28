@@ -23,6 +23,12 @@ struct CombatAssistFactsTests {
         #expect(call?.subtype == "TRES" && call?.speaker == Self.foe && call?.lookAt == .player)
     }
 
+    @Test func aBashSaysTheBashLineToItsTarget() {
+        adapter.sayBash(by: Self.foe, to: .player)
+        let call = host.fakeStoryWorld.sayTopicCalls.first
+        #expect(call?.subtype == "BASH" && call?.speaker == Self.foe && call?.lookAt == .player)
+    }
+
     @Test func withoutASessionOrRecordsTheHelperFactsAreEmpty() {
         #expect(adapter.aggroRadius(of: Self.foe) == nil)
         #expect(adapter.playerViewFOVYRadians == nil)

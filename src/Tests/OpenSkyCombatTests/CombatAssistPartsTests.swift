@@ -87,6 +87,18 @@ struct CombatAssistPartsTests {
         #expect(world.warnings == [[Self.foe, .player]])
     }
 
+    /// A world without gear or player melee gives no shield and no swing, and a bash line
+    /// with nothing to say is dropped.
+    @Test func aBareWorldHasNoShieldNoPlayerSwingAndNoBashLine() {
+        let world = FakeCoordinatorWorld()
+        let loop = Self.coordinator(world).loopWorld
+        #expect(loop.combatShieldRating(of: Self.foe) == nil)
+        loop.sayCombatBash(by: Self.foe, to: .player)
+        #expect(world.warnings.isEmpty)
+        let melee = loop.combatPlayerMelee()
+        #expect(melee == nil || melee?.phase == .idle)
+    }
+
     /// A threat from the actor itself does not count, so its score stays 0.
     @Test func anActorIgnoresItsOwnThreat() {
         let (runtime, world) = CombatLoopFixture.session()

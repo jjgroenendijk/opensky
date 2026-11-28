@@ -17,6 +17,16 @@ extension NoCasterCombatWorld {
         nil
     }
 
+    public func combatShieldRating(of _: ReferenceKey) -> Float? {
+        nil
+    }
+
+    public func combatPlayerMelee() -> CombatPlayerMelee? {
+        nil
+    }
+
+    public func sayCombatBash(by _: ReferenceKey, to _: ReferenceKey) {}
+
     public func knockDownCombatTarget(
         _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float, staggerMult _: Float
     ) {}

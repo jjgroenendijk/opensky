@@ -226,6 +226,8 @@ public protocol CombatWorld: AnyObject {
     func aggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.
     func sayWarning(by key: ReferenceKey, to target: ReferenceKey)
+    /// `key` says its Bash combat line to `target`, when it has one to say now.
+    func sayBash(by key: ReferenceKey, to target: ReferenceKey)
     /// False for an actor zero health does not kill: essential, or protected from all
     /// but the player.
     func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool
@@ -347,6 +349,8 @@ extension CombatWorld {
     public func isPlayerTeammate(_: ReferenceKey) -> Bool {
         false
     }
+
+    public func sayBash(by _: ReferenceKey, to _: ReferenceKey) {}
 
     public func crimeStanding(
         of _: ReferenceKey, judgedBy _: ReferenceKey

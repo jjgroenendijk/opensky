@@ -21,6 +21,8 @@ struct CombatNPCBlowLanding {
     let settings: CombatSettings
     let skillUses: MeleeSkillUseSettings
     let staggers: StaggerSettings
+    /// The bash damage ranges.
+    var powerAttacks = PowerAttackSettings.vanilla
 
     /// What a blow on the player leaves for the runtime to note.
     struct PlayerReaction {
@@ -112,11 +114,19 @@ struct CombatNPCBlowLanding {
             attacker: actor,
             weapon: weapon.weapon,
             handType: weapon.handType,
-            kind: attack?.isPowerAttack == true ? .power : .normal,
+            kind: kind(of: attack),
             baseDamage: weapon.damage
         )
         blow.attackEvent = attack?.event
         return blow
+    }
+
+    static func kind(of attack: NPCAttack?) -> MeleeStrikeKind {
+        guard let attack else { return .normal }
+        if attack.isBash {
+            return attack.isPowerAttack ? .powerBash : .bash
+        }
+        return attack.isPowerAttack ? .power : .normal
     }
 
     // MARK: - Private
@@ -137,14 +147,30 @@ struct CombatNPCBlowLanding {
     private func damage(
         of blow: CombatBlow, weapon: MeleeWeaponProfile, on target: ReferenceKey
     ) -> MeleeDamageResult {
-        MeleeDamage.resolve(
-            weapon: weapon,
+        let strike = world.combatStrike(blow, on: target)
+        return MeleeDamage.resolve(
+            weapon: blow.kind.isBash ? bashing(weapon, blow: blow, strike: strike) : weapon,
             block: world.combatBlock(of: target),
             settings: settings,
             blockSkill: world.combatBlockSkill(of: target),
             bonusMultiplier: world.combatBlockMultiplier(of: target),
-            strike: world.combatStrike(blow, on: target)
+            strike: strike
         )
+    }
+
+    /// A bash deals the bash damage of the attacker's shield, or else its weapon, instead
+    /// of the weapon's own (docs/engine/combat-blocking.md#bash).
+    private func bashing(
+        _ weapon: MeleeWeaponProfile, blow: CombatBlow, strike: WeaponStrike
+    ) -> MeleeWeaponProfile {
+        let source = BashSource(
+            weaponDamage: weapon.damage,
+            shieldRating: world.combatShieldRating(of: blow.attacker),
+            blockSkill: world.combatBlockSkill(of: blow.attacker)
+        )
+        return weapon.dealing(damage: strike.bashMultiplier * MeleeBash.damage(
+            source, isPlayer: false, isPower: blow.kind == .powerBash, settings: powerAttacks
+        ))
     }
 
     /// The reverse of the player's own swing report. NPC blows are plain swings, and

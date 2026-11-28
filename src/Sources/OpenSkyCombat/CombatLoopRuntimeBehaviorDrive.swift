@@ -340,10 +340,12 @@ extension CombatLoopRuntime.BehaviorDrive {
 
     func landing(_ world: any CombatLoopWorld) -> CombatNPCBlowLanding {
         let settings = owner.settings
-        return CombatNPCBlowLanding(
+        var landing = CombatNPCBlowLanding(
             world: world, settings: settings, skillUses: owner.skillUses,
             staggers: owner.staggers
         )
+        landing.powerAttacks = owner.powerAttacks
+        return landing
     }
 
     /// Radians from where `actor` faces to `point`, in -pi...pi.

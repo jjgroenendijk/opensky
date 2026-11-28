@@ -160,6 +160,10 @@ extension CombatWorldAdapter {
         reports.sayWarning(by: key, to: target)
     }
 
+    public func sayBash(by key: ReferenceKey, to target: ReferenceKey) {
+        reports.sayBash(by: key, to: target)
+    }
+
     @discardableResult
     public func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         actorFacts.setHostility(hostility, on: key)

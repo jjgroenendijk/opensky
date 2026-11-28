@@ -51,6 +51,8 @@ public final class CombatLoopRuntime: CombatControlling {
     private(set) var stepSeconds: Double = 0
     /// Flee distances and the ally follow radius.
     public var combatAI = CombatAISettings.vanilla
+    /// The bash reach and bash damage ranges an NPC's bash uses.
+    var powerAttacks = PowerAttackSettings.vanilla
     /// Whether the advance, range, healing, shout, and flight settings reach the machines.
     /// Off keeps OpenSky's own numbers, which the older behaviour tests pin.
     public var applyingGameSettings = false
