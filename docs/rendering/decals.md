@@ -33,7 +33,9 @@ carry, so the model stands upright.
 ## Decals
 
 The decal texture is the `TXST` `TX00` diffuse. Its size and color come from `DODT`. The
-`IPCT` `DODT` wins over the `TXST` one. `IPCT` `DATA` flag bit 0 means "no decal".
+`IPCT` `DODT` wins over the `TXST` one. `IPCT` `DATA` flag bit 0 means "no decal data": the
+`IPCT` holds no `DODT`, so the `TXST` one applies. In `Skyrim.esm` the blood spray, the frost
+blasts, the rune marks, and the dragon landing set it, and all of them leave a decal.
 
 | Step | What OpenSky does |
 | --- | --- |

@@ -169,7 +169,6 @@ nonisolated public final class FootstepStore {
     /// diffuse, or no decal data. The IPCT's own `DODT` wins over the TXST's.
     public func decal(of impact: Impact) -> ImpactDecal? {
         guard
-            impact.effect?.flags.map({ $0 & 1 == 0 }) ?? true,
             let id = impact.textureSet,
             let textureSet = textureSets[id.rawValue],
             let diffuse = textureSet.diffusePath,

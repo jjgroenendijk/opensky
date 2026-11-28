@@ -81,7 +81,8 @@ struct FootstepStoreTests {
         #expect(parents.chain(from: nil).isEmpty)
     }
 
-    /// The IPCT's own DODT wins over the TXST's, and the "no decal" flag hides it.
+    /// The IPCT's own DODT wins over the TXST's. "No decal data" (`DATA` bit 0) only says
+    /// the IPCT holds none, so the TXST's still applies, as blood spray and runes need.
     @Test func anImpactsDecalComesFromItsTextureSet() {
         let store = Self.store()
         let impactDecal = DecalData(width: 10 ... 20, height: 5 ... 8)
@@ -93,6 +94,9 @@ struct FootstepStoreTests {
         #expect(store.decal(of: Self.impact(0x304, sound: 0x403, textureSet: 0x600))?.decal
             == Self.textureSetDecal)
         #expect(store.decal(of: Self.impact(0x305, sound: 0x403, textureSet: 0x601)) == nil)
+        let spray = Self.impact(0x306, sound: 0x403, textureSet: 0x600, noDecalData: true)
+        #expect(spray.effect?.flags == 1)
+        #expect(store.decal(of: spray)?.decal == Self.textureSetDecal)
         #expect(store.decal(of: Self.impact(0x300, sound: 0x400)) == nil)
     }
 
@@ -214,10 +218,14 @@ struct FootstepStoreTests {
         _ id: UInt32,
         sound: UInt32,
         textureSet: UInt32? = nil,
-        decal: DecalData? = nil
+        decal: DecalData? = nil,
+        noDecalData: Bool = false
     ) -> Impact {
         decode("IPCT") {
             ESMFixture.field("SNAM", uint32(sound))
+                +
+                (noDecalData ? ESMFixture
+                    .field("DATA", Data(count: 20) + Data([1, 0, 0, 0])) : Data())
                 + (textureSet.map { ESMFixture.field("DNAM", uint32($0)) } ?? Data())
                 + (decal.map { ESMFixture.field("DODT", dodt($0)) } ?? Data())
         } build: { try Impact(record: $0) } id: { id }
