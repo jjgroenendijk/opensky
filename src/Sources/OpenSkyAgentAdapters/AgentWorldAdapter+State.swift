@@ -64,7 +64,8 @@ extension AgentWorldAdapter {
         case let .packages(reference): try behaviour.packagesState(reference: reference)
         case let .furniture(reference): try behaviour.furnitureState(reference: reference)
         case let .objects(reference): try objects.objectsState(reference: reference)
-        case let .effects(reference): try objects.effectsState(reference: reference)
+        case let .effects(reference):
+            try objects.effectsState(reference: reference, visuals: render.visualEffectsState())
         case let .nodes(reference): try objects.nodesState(reference: reference)
         case let .changes(limit): events.changesState(limit: limit)
         case let .flight(reference): try motion.flightState(reference: reference)

@@ -233,6 +233,10 @@ extension AgentRenderAdapter {
         stateReads.skinDecalBones(of: actor)
     }
 
+    public func visualEffectsState() -> [String: AgentJSON] {
+        stateReads.visualEffectsState()
+    }
+
     public func treeWindState() -> AgentJSON {
         stateReads.treeWindState()
     }

@@ -194,6 +194,31 @@ struct AgentRenderStateReads {
             .map { skin.bones[$0] ?? "feet" }
     }
 
+    /// Each live visual effect, and the count of decals placed in the world.
+    func visualEffectsState() -> [String: AgentJSON] {
+        [
+            "visuals": .array(game.effects.visualEffects.instances.map(Self.visualFields)),
+            "worldDecals": .init(game.effects.decals.decals.count)
+        ]
+    }
+
+    private static func visualFields(_ instance: VisualEffectInstance) -> AgentJSON {
+        let name = { (key: ReferenceKey) in key == .player ? "player" : "\(key)" }
+        let anchor = switch instance.anchor {
+        case let .actor(key): "actor \(name(key))"
+        case let .node(key, node): "node \(node) of \(name(key))"
+        case .point, .surface, .facing: "point"
+        case let .weapon(key): "weapon of \(name(key))"
+        }
+        return [
+            "name": .string(instance.spec.name),
+            "anchor": .string(anchor),
+            "cause": .string(instance.cause.rawValue),
+            "secondsLeft": instance.duration
+                .map { AgentJSON(max(0, $0 - instance.elapsed)) } ?? .null
+        ]
+    }
+
     func treeWindState() -> AgentJSON {
         guard let session = game.gameSession else { return .null }
         let wind = session.renderer.frameInput.wind

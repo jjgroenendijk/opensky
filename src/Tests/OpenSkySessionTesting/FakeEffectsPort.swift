@@ -28,6 +28,7 @@ nonisolated public final class FakeEffectsPort: EffectsPort {
     public var placeImpactDecalCalls: [PlaceImpactDecalCall] = []
     public var placeImpactDecalResult = false
     public var skinDecalsValue: SkinDecalRuntime?
+    public var decalsValue: DecalRuntime?
     public var splatterScreenDamageCalls: [Float] = []
     public var splatterScreenDamageResult = 0
     public var splatterScreenCountCalls: [Int] = []
@@ -324,6 +325,14 @@ nonisolated extension FakeEffectsPort {
             return skinDecalsValue
         }
         set { skinDecalsValue = newValue }
+    }
+
+    public var decals: DecalRuntime {
+        get {
+            guard let decalsValue else { preconditionFailure("FakeEffectsPort.decals is unset") }
+            return decalsValue
+        }
+        set { decalsValue = newValue }
     }
 
     @discardableResult

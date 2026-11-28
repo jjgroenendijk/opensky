@@ -11,6 +11,7 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
@@ -34,6 +35,8 @@ struct AgentSweepTests {
         host.fakeMounts.phase = .none
         host.fakeMounts.settings = .vanilla
         host.fakeRagdoll.deathSettings = .vanilla
+        host.fakeEffects.visualEffects = VisualEffectRuntime()
+        host.fakeEffects.decals = DecalRuntime()
         let idles = FakeIdlePort()
         idles.idleSnapshotResult = .unavailable
         host.fakeIdleWorld.idles = idles
