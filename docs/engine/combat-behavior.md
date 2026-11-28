@@ -85,8 +85,10 @@ it waits, `GetAttackState` reads 4 (next attack). A chain holds at most `maximum
 A target that stepped out of striking distance ends the chain, and the actor goes to spacing. A
 two-handed weapon, a bow, or bare hands never chains.
 
-The game decides a chain in its combat AI code; no record states it. Both values are OpenSky's.
-The combat style's Offensive Mult does not change the chance.
+The game has no separate chain roll: its next swing comes from the same attack loop as any other,
+once the attack state reaches the combo window
+([attack chances](/formats/combat-style.md#attack-and-bash-chances)). Both values here are
+OpenSky's. The combat style's Offensive Mult does not change the chance.
 
 ## Settings
 
@@ -149,6 +151,10 @@ same damage formula.
 
 The block roll happens once per attack cycle, when the actor enters the gap, not once per step. So
 the block chance means what it says: per attack, not per sixtieth of a second.
+
+The game has no fixed block time. Its block loop rolls block attack, offensive bash, and block on
+every pass, and waits 0.25 s when none passes
+([bash chances](/formats/combat-style.md#attack-and-bash-chances)).
 
 ## Game settings
 
@@ -300,8 +306,9 @@ moved on during the fight, and the package the schedule names now is the right o
 
 `recoilStart`, `recoilStop`, `recoilLargeStart`, `IsRecoiling`, and `recoilMagnitude` all come from
 the behavior census of the install: the third-person `0_master.hkx` declares all five.
-`recoilLargeStart` is never raised. No open source states which magnitude chooses the heavier
-reaction.
+In the game, the large recoil comes from a bash that lands while the target draws or swings an
+attack ([attack data](/engine/attack-data.md#stagger)). A melee weapon hit staggers an NPC only on
+a 50 % roll. A blocked blow that is not a bash can make the attacker play the normal recoil.
 
 The HUD damage flash is a value, not a drawn effect: 1 on the step a blow lands, falling to 0 over
 0.35 s. That time is OpenSky's.

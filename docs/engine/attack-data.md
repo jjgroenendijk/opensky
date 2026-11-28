@@ -63,7 +63,7 @@ Flags:
 | `0x1` | Ignore weapon. No reader is known |
 | `0x2` | Bash: pays the bash stamina cost. The general attack pick leaves it out |
 | `0x4` | Power attack: pays the power attack cost, marks the hit as a power attack, applies the power attack damage entry point, and is the only kind picked in power-only mode |
-| `0x8` | Left hand: the general attack pick leaves it out |
+| `0x8` | Left hand: the general attack pick leaves it out. At the hit frame it picks the hitting hand when the hand the hit event names holds no weapon, and it sets the hand of the object cast |
 | `0x10` | Rotating: the hit test does not add the attack angle |
 | `0x80000000` | Override data. No reader is known |
 
@@ -84,13 +84,31 @@ to plus or minus 180 degrees.
 Example: a 35 degree strike angle hits a living target up to 35 degrees off the heading. The AI
 starts that attack only within `35 * 0.67`, about 23 degrees.
 
+At the hit frame the attack first pays its stamina, then finds what it hits:
+
+- An NPC can hit only its current combat target. The target must be in the cone, with
+  `mult` 1, and within reach. An attack without attack data uses a 35 degree strike angle.
+- Reach is the weapon's reach times the actor's scale, or `fCombatBashReach` (141) during a bash.
+  The distance runs from centre to centre, less both actors' radii. It is measured flat when the
+  two overlap in height, else in 3D.
+- An attacker with no combat target, normally the player, hits the loaded actor in reach and
+  cone with the smallest angle off its heading. Only the player can hit a dead actor this way.
+- When the attack finds no actor, a physics cast runs along the swing: 150 units for a
+  one-handed weapon, 112 for a two-handed sword or axe, and 64 bare-handed. It can strike
+  objects. An actor the cast finds counts for an NPC only when it is that NPC's combat target.
+- An attack hits one actor. With the Set Sweep Attack perk entry point, it also hits every other
+  loaded actor within reach and within twice the cone.
+
+The hit frame also sets the time of the actor's last attack, which the
+[attack chance](/formats/combat-style.md#attack-and-bash-chances) reads.
+
 ## The AI's pick
 
 ```mermaid
 flowchart TD
-    A["Attack step"] --> B{"Last try under 1.5 s ago and still animating?"}
+    A["Attack step"] --> B{"Last attack ended under 1.5 s ago and still animating?"}
     B -- yes --> Z["No attack"]
-    B -- no --> C{"Predicted distance below reach + weapon reach + 512?"}
+    B -- no --> C{"Predicted distance below reach + attack travel + 512?"}
     C -- no --> Z
     C -- yes --> D["Candidates with weights"]
     D --> E{"Any left?"}
@@ -103,6 +121,10 @@ flowchart TD
     H -- yes --> S["Start it, note the time"]
     R --> E
 ```
+
+The time a previous attack ended is noted when its attack state went back to none or reached the
+combo window. The attack travel is the longest forward travel of the actor's attack clips plus a
+per-fighter distance.
 
 An attack is a candidate only when all of these hold:
 
@@ -131,7 +153,9 @@ power attacks only. With no target, every weight there is 10.
 | Power bash | `fStaminaPowerBashBase` (55) times the stamina multiplier |
 | Power attack | `(weight * fStaminaAttackWeaponMult + fStaminaAttackWeaponBase) * fPowerAttackStaminaPenalty`, then the power attack stamina entry point, then times the stamina multiplier |
 
-`weight` is the weapon's weight, or 1 unarmed. The entry point uses the right-hand weapon.
+`weight` is the weapon's weight, or 1 unarmed. The entry point uses the right-hand weapon. Every
+cost is paid at the hit frame, not when the swing starts. Stamina at 0 or below after the payment
+delays stamina regeneration.
 Example: a power attack with a 10-weight sword costs `(10 * 1 + 20) * 2 = 60` before perks.
 
 ## Stagger
@@ -148,6 +172,11 @@ recoiling target by `fStaggerRecoilingMult` (1.5), a running target by `fStagger
 (1.5), and a blocking target by `fStaggerBlockingMult` (0 in `Skyrim.esm`). The weapon factor is
 `fStaggerShieldMult` (1) with a shield, `fStagger2WeapMult` (0.5) for a two-handed weapon, bow, or
 crossbow, and `fStagger1WeapMult` (0.2) otherwise. The result is at least `fStaggerMin` (0).
+
+A melee weapon or unarmed hit with a stagger above 0 staggers an NPC only on an
+`iStaggerAttackChance` roll (50 %). A bash, a bow, crossbow, or staff hit always staggers, and
+the player is always staggered. A bash that lands while the target draws or swings an attack
+makes the target play its large recoil instead of a stagger.
 
 ## Knockdown
 
@@ -173,15 +202,32 @@ Example: a knockdown of 40 on an actor that cannot ragdoll. It slides at 240 uni
 
 ## Bash
 
-A matched attack with flag `0x2` puts the attacker in its bash state. Every hit it lands in that
-state is a bash: its damage comes from `fShieldBashMin` and `fShieldBashMax` with a shield, or
-`fWeaponBashMin` and `fWeaponBashMax` without one, by skill. The player uses the `PC` variants.
-The Mod Bashing Damage perk entry point applies, and the hit counts as a bash for skill use.
+The combat AI decides to bash in its block loop, from its combat style's bash chances
+([combat style](/formats/combat-style.md#attack-and-bash-chances)). A bash runs the same weighted
+pick as a swing, over the attacks with flag `0x2`, so the attack chances choose between a bash
+and a power bash. Vanilla `NordRace` gives `bashStart` a chance of 0.5 and `bashPowerStart` 0.33.
+The bash says the Bash combat topic and lasts until the attack state is back to none. While the
+actor bashes, its melee reach is `fCombatBashReach` (141).
 
-The combat AI decides to bash from its combat style's bash chances
-([combat style](/formats/combat-style.md#attack-and-bash-chances)) and then sends a bash event.
-The `0x2` flag of the attack that event matches marks it as a bash; it does not choose it. A power
-attack (`0x4`) speaks the power attack combat topic instead of the attack topic.
+Every hit landed in the bash state is a bash, with the Block skill:
+
+| Attacker | Damage before perks |
+| --- | --- |
+| With a shield | Shield armour rating times `lerp(Block / 100, fShieldBashMin 0.05, fShieldBashMax 0.25)` |
+| Without a shield | Weapon base damage, 1 unarmed, times `lerp(Block / 100, 0.1, fWeaponBashMax 0.25)` |
+
+The player uses 0.1 to 0.25 with a shield and 0.1 to 0.5 without one. The damage is then changed,
+in order, by the Mod Bashing Damage entry point, the attack's damage multiplier (`bashStart` 0.5,
+`bashPowerStart` 1.5), a per-reference scale, the Mod Power Attack Damage entry point for a power
+bash, and the Calculate Weapon Damage entry point. A bash has a knockdown of 0, so it pushes
+nothing.
+
+Example: an NPC with Block 50 bashes with a shield of armour rating 20. It deals
+`20 * 0.15 * 0.5 = 1.5` before perks with `bashStart`, or 4.5 with `bashPowerStart`.
+
+A power bash differs from a bash only by its attack data: the power flag, damage 1.5 instead of
+0.5, stagger 1.5 instead of 0.5, and the power bash stamina cost. A power attack (`0x4`) speaks
+the power attack combat topic instead of the attack topic.
 
 ## Where OpenSky differs
 
