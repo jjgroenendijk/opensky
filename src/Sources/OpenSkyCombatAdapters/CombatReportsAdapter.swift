@@ -89,6 +89,11 @@ extension CombatReportsAdapter {
         game.storyWorld.sayTopic("TRES", speaker: key, lookAt: target)
     }
 
+    /// The `BASH` combat line an NPC says when its bash starts.
+    public func sayBash(by key: ReferenceKey, to target: ReferenceKey) {
+        game.storyWorld.sayTopic("BASH", speaker: key, lookAt: target)
+    }
+
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
         game.progression.reportSkillUse(use)

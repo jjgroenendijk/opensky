@@ -155,7 +155,7 @@ nonisolated public enum NPCAttackPick {
         switch pool {
         case .general: !attack.isBash && !attack.isLeftHand
         case .powerOnly: attack.isPowerAttack && !attack.isBash && !attack.isLeftHand
-        case .bash: attack.isBash
+        case .bash: attack.isBash && !attack.isLeftHand
         case .leftHand: attack.isLeftHand && !attack.isBash
         }
     }

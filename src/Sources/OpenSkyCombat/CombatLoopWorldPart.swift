@@ -96,6 +96,17 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
         shared.strikes.shieldRating(of: key) != nil
     }
 
+    func combatShieldRating(of key: ReferenceKey) -> Float? {
+        shared.strikes.shieldRating(of: key)
+    }
+
+    func combatPlayerMelee() -> CombatPlayerMelee? {
+        guard let melee = shared.melee else { return nil }
+        return CombatPlayerMelee(
+            phase: melee.state.attackPhase, kind: melee.strikeKind, weapon: melee.weapon
+        )
+    }
+
     /// The same blocker's term the player's swing resolves, so both directions
     /// reduce a blow through one implementation.
     func combatBlockMultiplier(of key: ReferenceKey) -> Float {
@@ -339,6 +350,10 @@ extension CombatLoopWorldPart {
         shared.world.sayWarning(by: key, to: target)
     }
 
+    func sayCombatBash(by key: ReferenceKey, to target: ReferenceKey) {
+        shared.world.sayBash(by: key, to: target)
+    }
+
     func makeRuntime(_ data: CombatSessionData) -> CombatLoopRuntime {
         CombatSteps(owner: self).makeRuntime(data)
     }
@@ -553,6 +568,7 @@ extension CombatLoopWorldPart {
             runtime.danger = data.danger
             runtime.friendlyFire = CombatLoopRuntime.FriendlyFire(settings: data.friendlyFire)
             runtime.combatAI = data.combatAI
+            runtime.powerAttacks = data.powerAttacks
             runtime.applyingGameSettings = shared.appliesCombatGameSettings
             return runtime
         }

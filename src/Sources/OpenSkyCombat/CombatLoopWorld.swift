@@ -84,6 +84,10 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatBlockSkill(of key: ReferenceKey) -> Float
     /// Whether `key` wears a shield; without one it blocks less often.
     func combatWearsShield(_ key: ReferenceKey) -> Bool
+    /// The base rating of `key`'s worn shield, or nil without one; a bash deals damage by it.
+    func combatShieldRating(of key: ReferenceKey) -> Float?
+    /// What the player's melee does now, or nil in a world without it.
+    func combatPlayerMelee() -> CombatPlayerMelee?
 
     /// The skill, sneak-attack, armour, and perk terms of `blow` on `target`.
     func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
@@ -288,6 +292,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatAggroRadius(of key: ReferenceKey) -> AggroRadius?
     /// `key` says its aggro radius warning line to `target`, when it has one to say now.
     func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey)
+    /// `key` says its Bash combat line to `target`.
+    func sayCombatBash(by key: ReferenceKey, to target: ReferenceKey)
     /// Looses an NPC's arrow. False when it has no arrow or nothing can fly.
     @discardableResult
     func fireCombatArrow(_ shot: CombatArrowShot) -> Bool
@@ -423,5 +429,18 @@ nonisolated extension CombatLoopWorld {
 
     public func combatAggroRadius(of _: ReferenceKey) -> AggroRadius? {
         nil
+    }
+}
+
+/// The player's swing and weapon, which an NPC's block loop reads.
+nonisolated public struct CombatPlayerMelee: Equatable, Sendable {
+    public var phase: MeleeAttackPhase
+    public var kind: MeleeStrikeKind
+    public var weapon: MeleeWeaponProfile
+
+    public init(phase: MeleeAttackPhase, kind: MeleeStrikeKind, weapon: MeleeWeaponProfile) {
+        self.phase = phase
+        self.kind = kind
+        self.weapon = weapon
     }
 }

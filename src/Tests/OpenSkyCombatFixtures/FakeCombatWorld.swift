@@ -23,6 +23,12 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
     /// Actors with no shield; every other actor wears one.
     public var shieldless: Set<ReferenceKey> = []
+    /// The base rating of each actor's worn shield; a missing actor wears none.
+    public var shieldRatings: [ReferenceKey: Float] = [:]
+    /// What the player's melee does, for the block loop.
+    public var playerMelee: CombatPlayerMelee?
+    /// Each Bash line said, as speaker and target.
+    public var bashLines: [[ReferenceKey]] = []
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     /// One observer's awareness of one target, read before `awareness`.
     public var pairAwareness: [CombatFoePair: CombatAwareness] = [:]
@@ -218,6 +224,14 @@ public final class FakeCombatWorld: CombatLoopWorld {
         !shieldless.contains(key)
     }
 
+    public func combatShieldRating(of key: ReferenceKey) -> Float? {
+        shieldRatings[key]
+    }
+
+    public func combatPlayerMelee() -> CombatPlayerMelee? {
+        playerMelee
+    }
+
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {
         blocks[key]
     }
@@ -348,6 +362,10 @@ extension FakeCombatWorld {
 extension FakeCombatWorld {
     public func sayCombatWarning(by key: ReferenceKey, to target: ReferenceKey) {
         warningLines.append([key, target])
+    }
+
+    public func sayCombatBash(by key: ReferenceKey, to target: ReferenceKey) {
+        bashLines.append([key, target])
     }
 
     public func lookCombatActor(_ key: ReferenceKey, at target: ReferenceKey?, seconds: Float?) {
