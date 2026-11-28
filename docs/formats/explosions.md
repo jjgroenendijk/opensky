@@ -45,9 +45,13 @@ install with a field census.
 | 44 | uint32 | Flags (48 bytes and up) |
 | 48 | uint32 | Sound level: 0 loud, 1 normal, 2 silent, 3 very loud (52 bytes) |
 
-Flags: 0x02 world orientation, 0x04 always knock down, 0x08 knock down by formula, 0x10
-ignore line of sight, 0x20 push source only, 0x40 ignore image-space swap, 0x80 chain,
+Flags: 0x01 radius units, 0x02 world orientation, 0x04 always knock down, 0x08 knock down by
+formula, 0x10 ignore line of sight, 0x20 push source only, 0x40 ignore image-space swap, 0x80 chain,
 0x100 no controller vibration. The install has all four sizes over 277 records.
+
+With flag 0x01 the radius and the image-space radius are in game units. Without it, both are in feet,
+and the game multiplies them by `fBSUnitsPerFoot` (22). 136 of the 137 `Skyrim.esm` records with a
+flags word set it. Example: a radius of 10 without the flag reaches 220 units.
 
 ## DEBR
 

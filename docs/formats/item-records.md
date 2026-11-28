@@ -240,6 +240,13 @@ Another bashing item uses the default object's impact set
 
 Vanilla SSE gives every arrow weight 0.1, but the game treats arrows as weightless.
 
+What the game does with the flags:
+
+- `0x01`: no reader was found in the game program, so the flag seems to change nothing.
+- `0x02`: an arrow that hits an actor never joins its inventory.
+- `0x04`: picks how deep the arrow sticks. A bolt sticks `fCombatBoltStickDepth` (5) units deep,
+  other ammunition `fCombatMissileStickDepth` (10 in the program, 20 in `Skyrim.esm`).
+
 ## CONT contents
 
 A container has the placeable fields ([world records](world-records.md)) plus its

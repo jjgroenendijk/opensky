@@ -56,6 +56,18 @@ impact (`IPCT`) sound, with the shooter as the noise maker, when the shooter is 
 No reader of `VNAM` itself was found. A cast spell makes a noise at the caster at the casting
 sound level of its costliest effect.
 
+What the game does with the flags:
+
+- Muzzle flash (`0x08`): the flash shows only when the `NAM1` model path is not empty too.
+- Can be disabled (`0x20`) and can be picked up (`0x40`): what activating the projectile does
+  ([projectiles](../engine/projectiles.md#pick-up-bounce-and-stick-in-the-game)).
+- No combat aim correction (`0x400`): an NPC's shot keeps its own aim
+  ([NPC archers](../engine/archery.md#npc-archers)).
+- Supersonic (`0x80`) and passes through small transparent (`0x200`): no reader was found in the
+  game program.
+
+The combat aim treats a lobber as having gravity 1, whatever this field says.
+
 No source gives a unit for gravity. On the 20 arrow projectiles in `Skyrim.esm` it is at
 most 1 while speed reaches the thousands, so it is a scale factor
 ([archery](../engine/archery.md)).

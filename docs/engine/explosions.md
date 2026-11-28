@@ -119,8 +119,13 @@ NPC:    1 + 2 x skill / 100
   actor's centre, or at the camera for the player. When the explosion points almost straight
   down, a hit closer than 3 units to the start does not block the line.
 - The shooter never takes the explosion's damage.
-- The `EXPL` enchantment is cast from the shooter. It reaches the shooter only when it is not
-  hostile.
+- An explosion from a spell effect that is not hostile deals no damage at all.
+- The `EXPL` enchantment is cast on every actor the explosion reaches, at full effectiveness. The
+  falloff does not scale it. The shooter casts it, so its effects count as the shooter's. When the
+  source is not an actor, the explosion casts it itself. It reaches the shooter only when it has no
+  hostile effect.
+- The radius is the `EXPL` radius times the launch scale. For a spell effect with an area above 0,
+  it is the area times 22 times the scale instead.
 
 Example: damage 50, radius 200, an object 100 units away. The falloff is `1 - 0.25 = 0.75`, so a
 barrel there takes 37.5 destruction damage.
