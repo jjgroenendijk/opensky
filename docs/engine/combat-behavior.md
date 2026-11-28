@@ -150,13 +150,12 @@ The block query answers for everyone. The player's comes from the melee runtime'
 other actor's comes from its machine's `blocking` phase. A blocked hit in either direction uses the
 same damage formula.
 
-The block roll happens once per attack cycle, when the actor enters the gap, not once per step. So
-the block chance means what it says: per attack, not per sixtieth of a second.
-
-The game's block loop rolls block attack, offensive bash, and block on every pass, and waits 0.25 s
-when none passes. A block does not need the target to attack. It holds for the style's block time
-unless the target walks out of the stop distance, and never drops during a swing at the blocker
+An actor with a combat style runs the game's block loop: block attack, offensive bash, and block
+on every pass, a 0.25 s wait when none passes, and bashes from a held guard
 ([combat blocking](/engine/combat-blocking.md)).
+
+An actor without a style rolls the block chance once per attack cycle, when it enters the gap, not
+once per step. So the block chance means what it says: per attack, not per sixtieth of a second.
 
 ## Game settings
 

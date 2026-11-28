@@ -131,7 +131,17 @@ draws `bashStart` `0.5 / 0.83`, about 60 % of the time, before each attack's own
 
 ## In OpenSky
 
-OpenSky does not build these loops yet. An NPC rolls its block chance once per gap between attacks,
-holds its guard for a fixed time, and never bashes. Each hand does not run its own loop. The
-differences are listed on the [combat style](/formats/combat-style.md#where-opensky-differs) and
-[attack data](/engine/attack-data.md#where-opensky-differs) pages.
+An actor with a combat style runs the block loop and bashes as described above. These parts
+differ:
+
+- An actor without a combat style rolls its block chance once per gap between attacks, holds its
+  guard for a fixed time, and never bashes. In the game such an actor uses the default style.
+- A blocking NPC holds still. Its close-range moves wait until the guard drops.
+- Bare hands neither block nor bash; they block only with a shield. A bow runs no block loop.
+- The per-fighter distance in the block attack rule is taken as both actors' radii.
+- A missing `CSME` bash value reads as 1.
+- A bash plays the NPC's plain attack clip.
+- Each hand does not run its own attack loop.
+
+These values are OpenSky's ([unverified combat values](/engine/unverified-combat-values.md)).
+`openskycli game state assist` lists each styled fighter's guard and bashes under `guards`.

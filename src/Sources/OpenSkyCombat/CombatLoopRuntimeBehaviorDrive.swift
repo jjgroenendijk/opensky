@@ -43,7 +43,9 @@ extension CombatLoopRuntime.BehaviorDrive {
             reach: (weapon: reachWeapon, shoots: shoots), world: world
         )
         let step = owner.stepBehavior(of: actor.key, inputs: inputs)
-        let swing = swing(of: actor.key, started: step.startedAttack, right: right, left: left)
+        let bashing = owner.behaviors[actor.key]?.isBashing == true
+        let swing = bashing ? NPCSwing(hand: .right, weapons: [right], shoots: false)
+            : swing(of: actor.key, started: step.startedAttack, right: right, left: left)
         if owner.behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
@@ -51,11 +53,16 @@ extension CombatLoopRuntime.BehaviorDrive {
             by: actor, at: target,
             attack: (step.startedAttack && !shoots, inputs.reach), world: world
         )
-        if step.startedAttack, startSwing(swing, by: actor, at: target, world: world) {
+        if step.startedBash {
+            startBash(by: actor, at: target, world: world)
+        } else if step.startedAttack, startSwing(swing, by: actor, at: target, world: world) {
             owner.parkBehavior(of: actor.key)
             return
         }
-        if !step.startedAttack, closesInToKill(swing, by: actor, at: target, world: world) {
+        if
+            !step.startedAttack, !bashing,
+            closesInToKill(swing, by: actor, at: target, world: world)
+        {
             owner.parkBehavior(of: actor.key)
             return
         }
@@ -308,10 +315,11 @@ extension CombatLoopRuntime.BehaviorDrive {
             feet: actor.feet,
             capsule: actor.capsule,
             facing: direction,
-            reach: MeleeSwing.reach(
-                weapon: weapon, settings: settings, actorScale: actor.scale,
-                unarmedReach: actor.unarmedReach
-            )
+            reach: owner.behaviors[actor.key]?.isBashing == true ? bashReach(of: actor)
+                : MeleeSwing.reach(
+                    weapon: weapon, settings: settings, actorScale: actor.scale,
+                    unarmedReach: actor.unarmedReach
+                )
         )
         return !MeleeHitDetector.hits(swing: volume, targets: [target], attacker: actor.key)
             .isEmpty

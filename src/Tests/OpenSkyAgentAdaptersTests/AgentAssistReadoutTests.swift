@@ -31,6 +31,7 @@ struct AgentAssistReadoutTests {
             )
         ]
         readout.closeMoves = [.init(actor: .generated(1), current: "circle", started: 3)]
+        readout.guards = [.init(actor: .generated(1), current: "block", raised: 2, bashes: 1)]
         var watch = CombatDangerWatch()
         watch.score = 0.5
         watch.dodgeCount = 2
@@ -50,6 +51,9 @@ struct AgentAssistReadoutTests {
         #expect(reply.value(atPath: "attackPicks.0.knockdown") == .init(Float(30)))
         #expect(reply.value(atPath: "closeMoves.0.current") == .string("circle"))
         #expect(reply.value(atPath: "closeMoves.0.started") == .init(3))
+        #expect(reply.value(atPath: "guards.0.current") == .string("block"))
+        #expect(reply.value(atPath: "guards.0.raised") == .init(2))
+        #expect(reply.value(atPath: "guards.0.bashes") == .init(1))
         #expect(reply.value(atPath: "danger.watches.0.dodges") == .init(2))
         #expect(reply.value(atPath: "danger.threats") == .array([]))
         #expect(reply.value(atPath: "autoAim") == .null)

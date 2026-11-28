@@ -254,10 +254,10 @@ with their chances, angles, distances, and waits. These parts are not built yet:
 - A move has arrived within 32 units of its point, and fails after 5 s; a target moves away above
   1 unit a second. These values are OpenSky's
   ([unverified combat values](/engine/unverified-combat-values.md)).
-- The blocking terms of the attack chance: an NPC holds its guard for a fixed time, then attacks.
-- The block loop ([combat blocking](/engine/combat-blocking.md)): OpenSky rolls the block chance
-  once per gap between attacks.
-- Bashes and their chances.
+- An actor without a combat style rolls its block chance once per gap between attacks and never
+  bashes. A styled actor runs the block loop and bashes
+  ([combat blocking](/engine/combat-blocking.md#in-opensky)).
 - The flanking flag ([flanking](/engine/combat-movement.md#flanking)) and the dual-wield flag.
 
-`openskycli game state assist` lists each styled fighter's move under `closeMoves`.
+`openskycli game state assist` lists each styled fighter's move under `closeMoves`, and its guard
+and bashes under `guards`.

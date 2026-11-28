@@ -32,6 +32,8 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     /// `CSCR` circle and fallback multipliers, 0 to 1.
     public var circleMultiplier: Float = 0.2
     public var fallbackMultiplier: Float = 0.2
+    /// The `CSME` bash values.
+    public var bash = CombatBashTargetMults()
     /// The style's editor ID, for the readout.
     public var name: String?
 
@@ -82,6 +84,10 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         attackWeights = NPCAttackWeights(style: style)
         circleMultiplier = style.value(.circleMultiplier) ?? circleMultiplier
         fallbackMultiplier = style.value(.fallbackMultiplier) ?? fallbackMultiplier
+        bash.bash = style.value(.bashMultiplier) ?? bash.bash
+        bash.recoil = style.value(.bashRecoilMultiplier) ?? bash.recoil
+        bash.attack = style.value(.bashAttackMultiplier) ?? bash.attack
+        bash.powerAttack = style.value(.bashPowerAttackMultiplier) ?? bash.powerAttack
         flight.hoverTime = style.value(.hoverTime) ?? flight.hoverTime
         flight.groundAttackTime = style.value(.groundAttackTime) ?? flight.groundAttackTime
         flight.perchAttackChance = style.value(.perchAttackChance) ?? flight.perchAttackChance
@@ -159,6 +165,10 @@ nonisolated extension CombatBehaviorSettings {
         )
         settings.closeRange = CombatCloseRangeRanges().settings(
             circle: tuning.circleMultiplier, fallback: tuning.fallbackMultiplier
+        )
+        settings.blockLoop = CombatBlockLoopSettings(
+            offensive: tuning.offensiveMultiplier, defensive: tuning.defensiveMultiplier,
+            bash: tuning.bash
         )
         return settings
     }
