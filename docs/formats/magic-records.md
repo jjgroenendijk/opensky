@@ -95,7 +95,13 @@ When the enchant visuals (`0x7C`, an `RFCT`) are set, their shader and art repla
 enchant shader (`0x24`) and the enchant art (`0x74`). A weapon enchantment shows them on the weapon
 in the hand that casts it, when that hand's caster starts or readies. The item must be an
 enchantment that is not a constant effect, and a charged item must hold at least one use. The
-shader goes on the weapon only when its own flags have bit 24 set. The costliest effect decides.
+costliest effect decides.
+
+The look covers the weapon model only. It sits on the right-hand weapon node, or on the left-hand
+node for a bow or an off-hand weapon. In first person the player's first-person skeleton holds it.
+With `EFSH` flag `0x01000000` clear, as in every vanilla shader, the shader covers the whole
+weapon model. With the flag set, it covers only the weapon's blood geometry, shown at full
+strength, or the weapon node when the model has none.
 
 The equip ability (`0x80`) follows the casting slots: left hand, right hand, voice, and instant.
 When a slot gets a spell, scroll, staff, or other casting item, the ability of each of its effects
@@ -238,6 +244,8 @@ Measured on this machine's active load order:
   off, a gory effect starts no hit shader or hit art.
 - Equip abilities follow the spells in both hands and every equipped item with a cast
   enchantment. The voice and instant slots are not read.
+- A weapon enchantment's shader always covers the whole weapon model. `EFSH` flag `0x01000000`,
+  which moves it onto the blood geometry, is not read.
 - The weapon enchantment look covers every unskinned mesh the actor holds, and its art hangs from
   the right hand's weapon node.
 - The script AI score is read but not used: NPCs pick the costliest spell they can cast, because
