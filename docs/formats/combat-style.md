@@ -87,10 +87,11 @@ the branches in this order: out of range, out of position, in range.
 | Out of position | Reposition, surround, or stay |
 | In range | Circle, fall back, back off, or stay, as below |
 
-Out of range means the distance predicted half a second ahead is above the actor's reach plus its
-inner advance radius. Out of position means the actor holds no place around its target, or has
-moved out of it. The [combat movement](/engine/combat-movement.md) page gives those two branches,
-and the strafe, which only the ranged movement loop uses.
+Out of range means the distance predicted half a second ahead is above the actor's maximum range,
+the largest attack range of its equipment, plus its inner advance radius. Out of position means
+the actor holds no place around its target, or has moved out of it. The
+[combat movement](/engine/combat-movement.md) page gives those two branches, and the strafe, which
+only the ranged movement loop uses.
 
 ```mermaid
 flowchart TD
@@ -187,12 +188,13 @@ The attack staggered, power attack staggered, and power attack blocking values a
 choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
 
 With flanking, the flank distance is added to the actor's reach to give the distance a flanking
-path may swing out to. A stalk starts only within `reach + 256` and keeps the actor between its
-reach and `reach + 256`. Within `reach + 384` the flank goal may lie at any angle
+path may swing out to. A stalk starts only within the maximum range plus 256 and keeps the actor
+between its reach and `reach + 256`. Within `reach + 384` the flank goal may lie at any angle
 ([flanking](/engine/combat-movement.md#flanking)).
 
-`DATA` 0x04, together with race `DATA` flag 0x40000000, lets a weapon that only fits the right
-hand go in either hand ([dual wielding](/engine/combat-blocking.md#loops-that-run-together)).
+`DATA` 0x04, together with race `DATA` flag 0x40000000, lets a melee weapon that only fits the
+right hand go in either hand ([dual wielding](/engine/combat-blocking.md#loops-that-run-together)).
+It changes nothing else in a fight.
 `DATA` 0x02 makes the actor always use flanking movement; without it the actor never flanks. No
 reader of the dueling, charging, or retarget bits is known.
 

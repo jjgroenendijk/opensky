@@ -24,17 +24,29 @@ shield attacks with its right hand and blocks with its left hand at the same tim
 A blocking NPC keeps circling, backing off, and advancing as its movement loop decides.
 
 Each hand has its own attack loop. A weapon in the left hand picks only attacks with the left-hand
-flag `0x8` ([attack data](/engine/attack-data.md#the-ais-pick)), and its timing uses the
-left-hand weapon speed. A weapon in any other slot picks attacks with neither the bash nor the
-left-hand flag. So the AI does not alternate hands or roll for a hand: each hand rolls its own
-attack chance about four times a second.
+flag `0x8` ([attack data](/engine/attack-data.md#the-ais-pick)). A weapon in any other slot picks
+attacks with neither the bash nor the left-hand flag. So the AI does not alternate hands or roll
+for a hand: each hand rolls its own attack chance about four times a second, and keeps its own
+recovery times and its own time of its last attack.
+
+- A hand's weapon speed divides the strike time of each of its attacks. That time only predicts
+  where both actors stand at the strike, for the reach check. It does not change how often the
+  loop rolls.
+- There is no lock between the hands. Both loops may try to start an attack in the same step, and
+  the behaviour graph decides.
+- A started attack holds its loop until the actor's attack state is back to none or reaches the
+  combo window. The actor has one attack state, so an attack in one hand also holds the other
+  hand's loop while that loop waits on its own attack.
+- A dual-wield attack has neither flag, so it is in the right hand's pool. The pick sends the
+  attack's event to the behaviour graph. A graph that refuses it drops that attack, and the pick
+  draws again. So a dual-wield attack starts only while the graph is in its dual-wield state.
 
 An item in the left hand scores 0.01 less in the AI's equipment choice, so a one-handed weapon
-goes to the right hand first. A weapon that only fits the right hand counts as fitting either hand
-when the actor's race has `DATA` flag 0x40000000 and its combat style has `DATA` flag 0x04. Both
-flags are needed. The style flag changes only where a weapon can go, not which attack is picked.
-The attack pick takes only attacks whose event the current behaviour graph times, so a dual-wield
-attack can only be picked while the graph is in its dual-wield state.
+goes to the right hand first. A melee weapon that only fits the right hand counts as fitting
+either hand when the actor's race has `DATA` flag 0x40000000 and its combat style has `DATA` flag
+0x04. Both flags are needed for a melee weapon. A staff, and a weapon picked for its enchantment
+or spell, need only the race flag. The style flag changes only where a weapon can go, not which
+attack is picked.
 
 ## The block loop
 

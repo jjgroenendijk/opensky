@@ -12,8 +12,9 @@ A fighter that walks toward its target changes its speed with the distance. Far 
 Near the target it slows down, so it does not run past. The game works this out from two advance
 radii and three distance bands.
 
-Behaviour described from a clean-room read of the game program (1.6.1170) on 2026-11-22. The
-values are the ones that apply in play: `Skyrim.esm` where it overrides the program's default.
+The values are the ones that apply in play: `Skyrim.esm` where it overrides the program's default.
+The advance and the reposition of [combat movement](/engine/combat-movement.md#out-of-range) walk
+at these speeds.
 
 ## Advance radii
 

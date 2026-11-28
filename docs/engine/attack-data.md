@@ -126,6 +126,11 @@ The time a previous attack ended is noted when its attack state went back to non
 combo window. The attack travel is the longest forward travel of the actor's attack clips plus a
 per-fighter distance.
 
+The strike time of each attack is divided by the swinging hand's weapon speed. The reach check
+uses it to predict where both actors stand at the strike. The bash pick uses `fCombatBashReach`
+(141) as its reach. A started attack's event goes to the behaviour graph; when the graph refuses
+it, the attack is removed and the pick draws again.
+
 An attack is a candidate only when all of these hold:
 
 - the actor's current behaviour graph has timing data for its `ATKE` event;
