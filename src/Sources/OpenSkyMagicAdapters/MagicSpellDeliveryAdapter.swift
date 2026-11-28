@@ -93,7 +93,12 @@ extension MagicSpellDeliveryAdapter {
     ) -> ProjectileShooter {
         guard shooter.key != .player, let projectiles = game.combat.archery?.projectiles
         else { return shooter }
-        let target = castTarget(of: shooter.key)
+        let blast = game.combat.explosions.spec(itemLink: launchProfile(of: payload)?.explosion)
+        let atFeet = game.combat.archery?.settings.aimsAtFeet(
+            explosionRadius: blast?.radius ?? 0,
+            spellArea: payload.entries.map(\.area).max() ?? 0
+        ) ?? false
+        let target = castTarget(of: shooter.key, atFeet: atFeet)
         let aimed = projectiles.npcSpellAim(at: target, concentration: payload.isConcentration)
         return ProjectileShooter(
             key: shooter.key, origin: shooter.origin,
@@ -130,14 +135,19 @@ extension MagicSpellDeliveryAdapter {
     /// The middle of the target's capsule, so a miss means the target moved,
     /// not that the caster aimed at the floor.
     public func castTarget(of caster: ReferenceKey) -> SIMD3<Float> {
+        castTarget(of: caster, atFeet: false)
+    }
+
+    /// The middle of the target's capsule, or its feet for a large blast.
+    func castTarget(of caster: ReferenceKey, atFeet: Bool) -> SIMD3<Float> {
         if
             let key = game.combat.loop?.combatTarget(of: caster), key != .player,
             let target = game.combat.combatActor(key: key)
         {
-            return target.feet + SIMD3(0, 0, target.capsule.centreHeight)
+            return target.feet + SIMD3(0, 0, atFeet ? 0 : target.capsule.centreHeight)
         }
         let player = game.combat.meleeAttacker
-        return player.feet + SIMD3(0, 0, player.capsule.centreHeight)
+        return player.feet + SIMD3(0, 0, atFeet ? 0 : player.capsule.centreHeight)
     }
 
     public func keyword(editorID: String) -> ReferenceKey? {

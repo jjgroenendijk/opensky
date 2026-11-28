@@ -110,7 +110,13 @@ extension CombatLoopWorldPart {
             else { return false }
             let origin = shot.shooter.feet
                 + SIMD3(0, 0, shot.shooter.capsule.eyeHeight * shot.shooter.scale)
-            let centre = shot.target.feet + SIMD3(0, 0, shot.target.capsule.height / 2)
+            let atFeet = archery.settings.aimsAtFeet(
+                explosionRadius: owner.shared.explosions.spec(itemLink: arrow.profile.explosion)?
+                    .radius ?? 0,
+                spellArea: 0
+            )
+            let centre = shot.target.feet
+                + SIMD3(0, 0, atFeet ? 0 : shot.target.capsule.height / 2)
             var random = owner.shared.archeryRandom
             let launch = Self.launch(
                 (origin, centre), velocity: shot.targetVelocity,

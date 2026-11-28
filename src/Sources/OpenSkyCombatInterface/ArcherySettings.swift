@@ -31,6 +31,9 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// `fBowNPCSpreadAngle`: the widest an unskilled NPC's arrow leaves its aim line, in
     /// degrees. The program default is 5; `Skyrim.esm` sets 4.
     public var npcSpreadDegrees: Float = 5
+    /// `fCombatAimProjectileGroundMinRadius`: past this blast radius an NPC aims at the
+    /// target's feet.
+    public var groundAimMinimumRadius: Float = 128
 
     /// Values for synthetic scenes and tests: the documented defaults, stated
     /// explicitly so a test never depends on an install being present.
@@ -64,7 +67,18 @@ nonisolated public struct ArcherySettings: Equatable, Sendable {
         )
         store.read("fBowZoomStaminaDrainMult", into: &settings, \.bowZoomStaminaDrain)
         store.read("fBowNPCSpreadAngle", into: &settings, \.npcSpreadDegrees)
+        store.read(
+            "fCombatAimProjectileGroundMinRadius", into: &settings, \.groundAimMinimumRadius
+        )
         return settings
+    }
+
+    /// Whether an NPC aims a shot at the target's feet instead of the middle of its
+    /// capsule. The blast is the larger of the explosion radius and the largest spell
+    /// area times 22. Example: a spell area of 10 gives 220, past the vanilla 128.
+    public func aimsAtFeet(explosionRadius: Float, spellArea: UInt32) -> Bool {
+        let radius = max(explosionRadius.isFinite ? explosionRadius : 0, Float(spellArea) * 22)
+        return radius > groundAimMinimumRadius
     }
 
     /// Every setting paired with its editor ID, for the CLI report and the
