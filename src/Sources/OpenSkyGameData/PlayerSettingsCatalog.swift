@@ -228,6 +228,9 @@ nonisolated extension PlayerSettingID {
     public static let impactEffects = Self("rendering.impactEffects")
     /// A hit on the player splashes blood on the screen.
     public static let screenBlood = Self("rendering.screenBlood")
+    /// Effects marked Gory Visuals show their hit shader and art, as the game's
+    /// `bDisableAllGore` off.
+    public static let gore = Self("rendering.gore")
     /// The screen pulses while the player's health is low, as the game's `bLowHealthIModEnabled`.
     public static let lowHealthPulse = Self("rendering.lowHealthPulse")
     /// Distant land is built from the load order's `LAND` records, not the vanilla LOD files.

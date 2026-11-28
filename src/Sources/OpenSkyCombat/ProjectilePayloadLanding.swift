@@ -134,12 +134,14 @@ struct ProjectilePayloadLanding {
             // `ReferenceKey`, which is a load-order identity a raw FormID
             // cannot round-trip. The PROJ is named, which is what tells a
             // handler this was a spell rather than a blade.
-            world.reportScriptHit(ScriptHitEvent(
+            var event = ScriptHitEvent(
                 target: struck,
                 aggressor: projectile.shooter,
                 source: nil,
                 projectile: projectile.profile.projectile
-            ))
+            )
+            event.causesPain = payload.causesPain
+            world.reportScriptHit(event)
         }
         return world.applySpellHit(SpellHit(
             payload: payload, targets: targets, impact: impact.position

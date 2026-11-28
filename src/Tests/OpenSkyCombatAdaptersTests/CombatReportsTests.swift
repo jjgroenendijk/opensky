@@ -42,6 +42,18 @@ struct CombatReportsTests {
         #expect(host.fakeDialogue.combatLineCalls.map(\.speaker) == [Self.foe, Self.foe])
     }
 
+    @Test func aPainlessSpellHitLeavesTheTargetSilent() {
+        var spell = ScriptHitEvent(
+            target: Self.foe, aggressor: .player, projectile: FormID(0x50)
+        )
+        spell.causesPain = false
+        adapter.reporter.reportScriptHit(spell)
+        #expect(host.fakeDialogue.combatLineCalls.isEmpty)
+        spell.causesPain = true
+        adapter.reporter.reportScriptHit(spell)
+        #expect(host.fakeDialogue.combatLineCalls.map(\.speaker) == [Self.foe])
+    }
+
     @Test func skillUsesAndWeaponMagicGoToTheirPorts() {
         host.fakeProgression.reportSkillUseResult = 2
         #expect(adapter.reporter.reportSkillUse(SkillUseEvent(

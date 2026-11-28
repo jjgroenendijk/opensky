@@ -22,7 +22,7 @@ nonisolated public struct MagicEffectFlags: OptionSet, Equatable, Sendable {
     public static let noMagnitude = Self(rawValue: 1 << 10)
     public static let noArea = Self(rawValue: 1 << 11)
     public static let effectsPersist = Self(rawValue: 1 << 12)
-    static let goryVisuals = Self(rawValue: 1 << 14)
+    public static let goryVisuals = Self(rawValue: 1 << 14)
     public static let hideInUI = Self(rawValue: 1 << 15)
     public static let noRecast = Self(rawValue: 1 << 17)
     public static let powerAffectsMagnitude = Self(rawValue: 1 << 21)
@@ -63,7 +63,7 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let castingLight: FormID?
     public let taperWeight: Float
     public let hitShader: FormID?
-    let enchantShader: FormID?
+    public let enchantShader: FormID?
     /// The skill level the magic menu shows a spell of this effect at.
     public let minimumSkillLevel: UInt32
     let spellmakingArea: UInt32
@@ -88,13 +88,14 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let dualCastScale: Float
     public let enchantArt: FormID?
     let hitVisuals: FormID?
-    let enchantVisuals: FormID?
-    let equipAbility: FormID?
+    public let enchantVisuals: FormID?
+    public let equipAbility: FormID?
     public let imageSpaceModifier: FormID?
     public let perkToApply: FormID?
     public let castingSoundLevel: UInt32
     let scriptAIScore: Float
-    let scriptAIDelay: Float
+    /// After an NPC casts a spell with a Script effect, it waits this long before another.
+    public let scriptAIDelay: Float
 
     var unknownEnumCount: Int {
         var count = 0

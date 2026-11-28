@@ -33,6 +33,8 @@ final class CombatShared {
     var allowsActorCasting = true
     var appliesCombatGameSettings = false
     var actorCastCount = 0
+    /// Seconds each caster still waits before it casts a spell with a Script effect.
+    var scriptSpellWaits: [ReferenceKey: Float] = [:]
     /// The last hits and their reactions, oldest first, for the readout.
     var hitReactions: [HitReactionReport] = []
 

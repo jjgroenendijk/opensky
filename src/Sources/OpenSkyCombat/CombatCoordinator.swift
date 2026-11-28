@@ -106,6 +106,9 @@ public final class CombatCoordinator {
     /// Steps the loop after melee, archery and the ragdolls, because it reads
     /// what they did this frame.
     public func advanceLoop(by delta: Float) -> [CombatCommand] {
+        shared.scriptSpellWaits = shared.scriptSpellWaits.compactMapValues {
+            $0 > delta ? $0 - delta : nil
+        }
         shared.loop?.advance(by: delta)
         return takeCommands()
     }

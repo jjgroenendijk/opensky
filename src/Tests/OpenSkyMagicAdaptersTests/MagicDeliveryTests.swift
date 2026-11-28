@@ -1,8 +1,10 @@
 // The delivery and effect parts aim spells, pick targets, and run the coordinator's commands.
 
+import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyMagicAdapters
 @testable import OpenSkyMagicInterface
@@ -189,6 +191,35 @@ struct MagicDeliveryTests {
         let art = try #require(effects.showCastingArtCalls.first)
         #expect(art.anchor == .node(Self.foe, "NPC L MagicNode [LMag]"))
         #expect(art.shown)
+    }
+
+    private static func shader(_ id: UInt32, flags: UInt32) throws -> Data {
+        let index = try #require(EffectShaderMember.allCases.firstIndex(of: .flags))
+        var words = [UInt32](repeating: 0, count: index + 1)
+        words[index] = flags
+        return ESMFixture.record(
+            "EFSH", formID: id,
+            data: ESMFixture.field("EDID", ESMFixture.zstring("Shader\(id)"))
+                + ESMFixture.field("DATA", ESMFixture.words(words))
+        )
+    }
+
+    @Test func aWeaponEnchantmentShowsItsShaderAndArtOnTheWeapon() throws {
+        let file = try ESMFixture.plugin(records: [
+            Self.shader(0x80, flags: 0x4E),
+            ESMFixture.record(
+                "ARTO", formID: 0x82, data: ESMFixture.field("EDID", ESMFixture.zstring("Art"))
+            )
+        ])
+        let effects = FakeEffectsPort()
+        effects.recordsValue = EffectRecordStore(plugins: [("Base.esm", file)])
+        host.fakeEffectsWorld.effects = effects
+        let look = WeaponEnchantVisual(plugin: "Base.esm", shader: FormID(0x80), art: FormID(0x82))
+        adapter.archetypeEffects.run([.weaponEnchantVisual(look, actor: Self.foe, shown: true)])
+        #expect(effects.attachCalls.map(\.anchor) == [.weapon(Self.foe), .weapon(Self.foe)])
+        #expect(effects.attachCalls.allSatisfy { $0.cause == .enchantment })
+        adapter.archetypeEffects.run([.weaponEnchantVisual(look, actor: Self.foe, shown: false)])
+        #expect(effects.detachCalls.map(\.anchor) == [.weapon(Self.foe), .weapon(Self.foe)])
     }
 
     @Test func aHitFromOutsideRunsItsCommandsAtOnce() {

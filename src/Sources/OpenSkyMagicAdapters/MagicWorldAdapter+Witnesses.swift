@@ -230,6 +230,10 @@ extension MagicWorldAdapter {
         worldFacts.residentActorKeys()
     }
 
+    public func weaponsDrawn(of key: ReferenceKey) -> Bool {
+        worldFacts.weaponsDrawn(of: key)
+    }
+
     public func actorName(_ holder: ActorValueHolder) -> String {
         worldFacts.actorName(holder)
     }

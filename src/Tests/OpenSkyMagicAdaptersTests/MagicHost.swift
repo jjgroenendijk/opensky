@@ -1,5 +1,6 @@
 // One host for every Magic adapter part, each port a generated fake.
 
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicAdapters
 import OpenSkyRendering
@@ -103,6 +104,12 @@ final class MagicHost: MagicWorldHost, MagicArchetypeEffectsHost, MagicSpellDeli
 
     var messages: any MessageCoordinatorPort {
         fakeMessages
+    }
+
+    var playbacks: [ReferenceKey: any ActorAnimationPlaybackPort] = [:]
+
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)? {
+        playbacks[key]
     }
 
     var mountWorld: any MountWorldPort {

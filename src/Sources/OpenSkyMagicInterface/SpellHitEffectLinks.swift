@@ -25,6 +25,8 @@ nonisolated public struct SpellHitEffectLinks: Equatable, Sendable {
     public var isAbsorb = false
     /// The spell's main effect, the only one whose explosion goes off.
     public var isMain = false
+    /// `MGEF` Gory Visuals: with gore off, the hit shader and art do not start.
+    public var isGory = false
 
     public init(
         plugin: String,
@@ -84,6 +86,7 @@ nonisolated extension MagicEffectStore {
             )
             links.isAbsorb = effect.archetype == .absorb
             links.isMain = index == main
+            links.isGory = effect.flags.contains(.goryVisuals)
             links.hitSound = resolved.effect.sounds.first { $0.kind == Self.onHitSoundKind }
                 .flatMap(\.descriptor)
                 .flatMap { resolvedID($0, fromPlugin: resolved.sourcePlugin) }

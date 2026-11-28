@@ -27,6 +27,10 @@ extension MagicCoordinator {
         var wasWeaponsDrawn: Bool?
         /// The spell whose art each hand shows now.
         var handArt: [CastSlot: ReferenceKey] = [:]
+        /// The casting-slot effects each actor's equip abilities were last matched to.
+        var equipSlots: [ReferenceKey: [ReferenceKey]] = [:]
+        /// The enchantment look each actor's held weapon shows now.
+        var weaponEnchantVisuals: [ReferenceKey: WeaponEnchantVisual] = [:]
         var castingCueCount = 0
         var lastCastingCue: String?
         /// An index into the player's known spells. Clamped on read.

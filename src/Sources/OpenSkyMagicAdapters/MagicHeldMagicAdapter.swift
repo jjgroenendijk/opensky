@@ -156,6 +156,25 @@ extension MagicHeldMagicAdapter {
         }
     }
 
+    /// A readied enchanted weapon's look. An enchant shader shows only with its own
+    /// flag bit 24 set; the `RFCT` that replaces both is shown whole.
+    func showWeaponEnchant(_ visual: WeaponEnchantVisual, on actor: ReferenceKey, shown: Bool) {
+        let effects = game.effectsWorld.effects
+        let records = effects.records
+        let links = [
+            records.resolve(visual.shader, fromPlugin: visual.plugin),
+            records.resolve(visual.art, fromPlugin: visual.plugin),
+            records.resolve(visual.visuals, fromPlugin: visual.plugin)
+        ].compactMap(\.self)
+        for key in links {
+            if shown {
+                effects.attach(key, to: .weapon(actor), cause: .enchantment, duration: nil)
+            } else {
+                effects.detach(key, from: .weapon(actor))
+            }
+        }
+    }
+
     /// Hands the renderer this frame's spell lights: a self-cast light floats beside its
     /// actor, an aimed one stays where it landed. A casting light floats at the same
     /// place while its caster readies the spell. Projectile and flash lights follow.

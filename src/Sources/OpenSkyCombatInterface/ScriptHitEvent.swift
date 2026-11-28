@@ -33,6 +33,8 @@ nonisolated public struct ScriptHitEvent: Equatable, Sendable {
     /// Health damage the blow did, for the engine's own readers such as the death push
     /// and the hit line threshold. Scripts never see it; 0 where the path does not know.
     public let damage: Float
+    /// False for a spell that causes no pain, so the target says no Hit line.
+    public var causesPain = true
 
     public init(
         target: ReferenceKey,

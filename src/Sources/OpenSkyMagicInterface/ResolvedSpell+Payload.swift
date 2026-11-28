@@ -48,6 +48,8 @@ nonisolated extension ResolvedSpell {
         payload.dualCastArt = launching?.dualCastArt
         let flags = effects.compactMap { $0.effect?.effect.data?.flags }
         payload.sendsHitEvent = flags.isEmpty || flags.contains { !$0.contains(.noHitEvent) }
+        payload.causesPain = spellType != .ability
+            && flags.contains { $0.contains(.hostile) && !$0.contains(.painless) }
         return payload
     }
 }

@@ -141,14 +141,17 @@ extension CombatSpellCastsAdapter {
             runtime: any CasterRuntimePort
         ) -> CombatSpellCandidate {
             let delivery = spell.data?.delivery ?? .selfTarget
+            var option = CombatSpellOption(
+                spell: spell.key,
+                cost: Float(spell.cost.cost),
+                range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
+                chargeSeconds: spell.chargeSeconds,
+                isConcentration: spell.data?.castingType == .concentration
+            )
+            option.scriptDelay = spell.effects.compactMap(\.effect?.effect.data)
+                .filter { $0.archetype == .script }.map(\.scriptAIDelay).max()
             return CombatSpellCandidate(
-                option: CombatSpellOption(
-                    spell: spell.key,
-                    cost: Float(spell.cost.cost),
-                    range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
-                    chargeSeconds: spell.chargeSeconds,
-                    isConcentration: spell.data?.castingType == .concentration
-                ),
+                option: option,
                 isSpell: spell.spellType == .spell,
                 targetsSelf: delivery == .selfTarget,
                 isDeliverable: SpellDelivery.isImplemented(

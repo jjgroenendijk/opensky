@@ -60,6 +60,9 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     public var sendsHitEvent = true
     /// A chain explosion carried it: only the struck actor is reached, with no area search.
     public var skipsAreaSearch = false
+    /// The target reacts with pain: the spell is no ability and has a hostile entry that
+    /// is not painless (docs/formats/magic-records.md#mgef-data).
+    public var causesPain = true
 
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
@@ -85,6 +88,7 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
         payload.dualCastArt = dualCastArt
         payload.sendsHitEvent = sendsHitEvent
         payload.skipsAreaSearch = skipsAreaSearch
+        payload.causesPain = causesPain
         return payload
     }
 

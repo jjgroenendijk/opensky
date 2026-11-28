@@ -76,7 +76,9 @@ for the minimum because their button is still held. An NPC has no button.
   with what magicka limits through `CSTY` and game settings. OpenSky uses one probability and one
   choice rule ([combat behavior settings](combat-behavior.md#settings)). Decoding the style
   is the next step if the simple rule looks wrong in play.
-- The strongest affordable spell wins. Cost stands in for strength, because no record ranks a
-  caster's spells.
+- The strongest affordable spell wins. Cost stands in for strength, because OpenSky does not
+  rate spells as the game does ([magic records](../formats/magic-records.md#mgef-data)).
+- After an NPC casts a spell with a Script effect, it casts no such spell for the largest script
+  AI delay of that spell's effects. Its other spells stay open.
 - No shouts, summons, reanimation, or healing itself mid-fight. An NPC only casts a hostile spell at
   its target. The buffs and heals in its list are known and never chosen.

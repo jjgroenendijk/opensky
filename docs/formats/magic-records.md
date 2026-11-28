@@ -231,9 +231,14 @@ Measured on this machine's active load order:
 
 ## Where OpenSky differs
 
-These `MGEF` and `ENCH` values are read but change nothing yet:
-
-- Painless: a spell hit plays no hit reaction in OpenSky, so the flag has nothing to stop.
-- Gory Visuals: OpenSky has no gore setting.
-- The enchant shader and the equip ability of an enchanted item.
-- The menu display object, the spellmaking area, and the script AI score and delay.
+- Pain: only a spell that lands from a projectile makes the target speak, and OpenSky's own Hit
+  line timer stands in for the 1.5 s wait. A pain reaction on the player adds no hit effect or
+  rumble.
+- Gory Visuals: the launcher setting "Gory spell effects" stands in for `bDisableAllGore`. Turned
+  off, a gory effect starts no hit shader or hit art.
+- Equip abilities follow the spells in both hands and every equipped item with a cast
+  enchantment. The voice and instant slots are not read.
+- The weapon enchantment look covers every unskinned mesh the actor holds, and its art hangs from
+  the right hand's weapon node.
+- The script AI score is read but not used: NPCs pick the costliest spell they can cast, because
+  OpenSky has no spell rating yet. The script AI delay is applied.

@@ -50,6 +50,14 @@ struct MagicWorldFactsTests {
         #expect(adapter.displayName(of: .player) == nil)
     }
 
+    @Test func aWeaponIsDrawnWhenTheActorsAnimationSaysSo() {
+        let playback = FakeActorAnimationPlaybackPort()
+        playback.weaponsDrawn = true
+        host.playbacks[Self.actor] = playback
+        #expect(adapter.weaponsDrawn(of: Self.actor))
+        #expect(!adapter.weaponsDrawn(of: .player))
+    }
+
     @Test func itemsAndNoticesReachTheirPorts() {
         host.fakeInventory.nameResult = "Wheat"
         host.fakeInventory.alchemyLab.learnEatenIngredientResult = AlchemyActionOutcome.idle

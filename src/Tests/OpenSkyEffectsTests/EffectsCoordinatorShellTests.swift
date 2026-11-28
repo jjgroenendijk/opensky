@@ -58,7 +58,9 @@ struct EffectsCoordinatorShellTests {
         store.set(.skinDecals, to: 0)
         store.set(.decalLimit, to: 40)
         store.set(.decalsPerFrame, to: .infinity)
+        store.set(.gore, to: 0)
         effects.applyGraphicsSettings(store)
+        #expect(!effects.goreEnabled)
         #expect(!effects.impactModelsEnabled)
         #expect(effects.decalsEnabled)
         #expect(!effects.skinDecalsEnabled)
@@ -121,6 +123,27 @@ struct EffectsCoordinatorShellTests {
         #expect(surface?.columns.3 == SIMD4(0, 0, 0, 1))
         let facing = EffectsCoordinator.locate(.facing(.one, forward: SIMD3(0, 1, 0)), world: nil)
         #expect(facing?.columns.3 == SIMD4(1, 1, 1, 1))
+        let weapon = EffectsCoordinator.locate(.weapon(.player), world: world)
+        #expect(weapon?.columns.3 == SIMD4(1, 2, 3, 1), "with no weapon bone, the actor")
+    }
+
+    @Test func aWeaponMembraneCoversOnlyTheHeldWeapon() {
+        let world = PointWorld()
+        #expect(EffectsCoordinator
+            .membraneTarget(of: .weapon(.player), world: world) == .playerWeapon)
+        #expect(EffectsCoordinator.membraneTarget(of: .weapon(Self.target), world: world) == nil)
+        #expect(EffectsCoordinator.membraneTarget(of: .actor(Self.target), world: world) == nil)
+        #expect(EffectsCoordinator.membraneTarget(of: .point(.zero), world: world) == nil)
+    }
+
+    @Test func goreOffStartsNoGoryHitEffect() {
+        let effects = EffectsCoordinator(world: PointWorld())
+        effects.goreEnabled = false
+        var imageSpace = ImageSpaceState()
+        var link = SpellHitEffectLinks(plugin: "Skyrim.esm", hitShader: FormID(0x51))
+        link.isGory = true
+        effects.handleSpellHit(Self.hit(links: [link]), imageSpace: &imageSpace)
+        #expect(effects.visualEffects.instances.isEmpty)
     }
 
     @Test func recordsThatNameNothingDrawNothing() {

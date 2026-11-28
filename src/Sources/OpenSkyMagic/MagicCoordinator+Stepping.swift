@@ -139,6 +139,7 @@ extension MagicCoordinator.FrameStep {
         coordinator.runePlacement.advanceRunes(delta: intent.deltaTime)
         coordinator.summonCommands.advanceCommanded(delta: intent.deltaTime)
         coordinator.castingCues.advanceCastingCues(weaponsDrawn: weaponsDrawn)
+        coordinator.weaponEnchantments.advanceEquipSlots(playerWeaponsDrawn: weaponsDrawn)
         return takeCommands()
     }
 

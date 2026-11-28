@@ -58,6 +58,9 @@ nonisolated public struct CombatSpellOption: Equatable, Sendable {
     public var purpose: CombatSpellPurpose
     /// For a shout, the word's recovery time before the actor shouts again.
     public let cooldownSeconds: Float
+    /// For a spell with a Script effect, the seconds its caster then waits before any such
+    /// spell again: the largest `MGEF` script AI delay. Nil for every other spell.
+    public var scriptDelay: Float?
 
     public init(
         spell: ReferenceKey,
