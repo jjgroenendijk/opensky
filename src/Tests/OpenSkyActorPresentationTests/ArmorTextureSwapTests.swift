@@ -83,4 +83,43 @@ struct ArmorTextureSwapTests {
         #expect(feet?.specular == NIFShaderTextureSet.vfsKey(for: "skin\\113_s.dds"))
         #expect(feet?.normal == nil)
     }
+
+    /// A skin swap list's entry is `trunc(weight * 0.0099 * count)`; a female wearer reads
+    /// the male list when hers is empty. A one-entry list keeps `NAM0`.
+    @Test func theWearersWeightPicksTheSkinSwapListEntry() throws {
+        func formID(_ value: UInt32) -> Data {
+            var data = Data()
+            data.appendUInt32(value)
+            return data
+        }
+        let armature = try ArmorAddon(record: ESMFixture.record("ARMA", formID: 0x50, fields: [
+            ("RNAM", formID(0x100)),
+            ("DNAM", InventoryFixture.armorAddonDNAM(male: 0, female: 0)),
+            ("NAM0", formID(0x72)),
+            ("NAM2", formID(0x80))
+        ]))
+        let list = try FormList(record: ESMFixture.record("FLST", formID: 0x80, fields: [
+            ("LNAM", formID(0x70)), ("LNAM", formID(0x71))
+        ]))
+        let single = try FormList(record: ESMFixture.record("FLST", formID: 0x81, fields: [
+            ("LNAM", formID(0x70))
+        ]))
+        let sets = try [0x70, 0x71, 0x72].map { id in
+            try TextureSet(record: ESMFixture.record("TXST", formID: UInt32(id), fields: [
+                ("TX00", ESMFixture.zstring("skin\\\(id)_d.dds"))
+            ]))
+        }
+        func diffuse(weight: Float, female: Bool, lists: [UInt32: FormList]? = nil) -> String? {
+            let reads = ActorSkinTextureReads(
+                armorAddons: [0x50: armature],
+                textureSets: [0x70: sets[0], 0x71: sets[1], 0x72: sets[2]],
+                formLists: lists ?? [0x80: list], weight: weight
+            )
+            return reads.ownSkinTextures(of: FormID(0x50), female: female)?.diffuse
+        }
+        let key = { (id: Int) in NIFShaderTextureSet.vfsKey(for: "skin\\\(id)_d.dds") }
+        #expect(diffuse(weight: 0, female: false) == key(112))
+        #expect(diffuse(weight: 100, female: true) == key(113))
+        #expect(diffuse(weight: 100, female: false, lists: [0x80: single]) == key(114))
+    }
 }

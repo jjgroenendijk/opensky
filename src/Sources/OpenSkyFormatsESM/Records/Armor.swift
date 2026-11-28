@@ -12,21 +12,21 @@ nonisolated public struct Armor: Sendable {
     /// FULL — display name; localized plugins store a string-table ID.
     public let name: LString?
     /// RNAM — race the piece fits / filters against (0x19 DefaultRace usually).
-    public let race: FormID?
+    public internal(set) var race: FormID?
     /// BOD2/BODT biped slots + armor type; nil when absent.
-    public let bodyTemplate: BodyTemplate?
+    public internal(set) var bodyTemplate: BodyTemplate?
     /// MODL armature list: ARMA FormIDs that supply the worn geometry.
-    public let armatures: [FormID]
+    public internal(set) var armatures: [FormID]
     /// DATA — gold value and carry weight.
-    public let itemValue: ItemValue
+    public internal(set) var itemValue: ItemValue
     /// KSIZ/KWDA keyword array (material, vendor and set keywords).
-    public let keywords: KeywordList
+    public internal(set) var keywords: KeywordList
     /// DNAM — base armor rating * 100; only the low 16 bits are meaningful.
-    public let armorRating: UInt32
+    public internal(set) var armorRating: UInt32
     /// EITM — ENCH applied while the piece is worn; nil when unenchanted.
     public let enchantment: FormID?
     /// The fields no game system reads yet: models, sounds, links, scripts.
-    public let details: ArmorDetails
+    public internal(set) var details: ArmorDetails
     public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
@@ -109,28 +109,28 @@ nonisolated public struct Armor: Sendable {
 nonisolated public struct ArmorDetails: Equatable, Sendable {
     public let bounds: ObjectBounds?
     /// DESC — inventory description.
-    public let description: LString?
+    public internal(set) var description: LString?
     /// MOD2 group with ICON/MICO — the male ground model and its icons.
-    public let maleWorldModel: ModelData?
-    let maleIconPath: String?
-    let maleMessageIconPath: String?
+    public internal(set) var maleWorldModel: ModelData?
+    var maleIconPath: String?
+    var maleMessageIconPath: String?
     /// MOD4 group with ICO2/MIC2 — the female ground model and its icons.
-    public let femaleWorldModel: ModelData?
-    let femaleIconPath: String?
-    let femaleMessageIconPath: String?
+    public internal(set) var femaleWorldModel: ModelData?
+    var femaleIconPath: String?
+    var femaleMessageIconPath: String?
     /// TNAM — the ARMO this one copies its look and stats from.
-    let template: FormID?
+    public let template: FormID?
     /// YNAM/ZNAM — pickup and drop sounds.
-    public let pickupSound: FormID?
-    public let dropSound: FormID?
+    public internal(set) var pickupSound: FormID?
+    public internal(set) var dropSound: FormID?
     /// BMCT — ragdoll constraint template path.
     let ragdollConstraintTemplate: String?
-    public let equipType: FormID?
+    public internal(set) var equipType: FormID?
     /// BIDS — the IPDS a shield bash plays.
-    let bashImpactDataSet: FormID?
+    var bashImpactDataSet: FormID?
     /// BAMT — the MATT a block hits instead of the armor's own.
-    let alternateBlockMaterial: FormID?
-    let destructible: Destructible?
+    var alternateBlockMaterial: FormID?
+    var destructible: Destructible?
     public let scriptData: ScriptData
 
     init(_ fields: inout RecordFields) {
@@ -151,5 +151,40 @@ nonisolated public struct ArmorDetails: Equatable, Sendable {
         alternateBlockMaterial = fields.formID("BAMT")
         destructible = fields.destructible()
         scriptData = fields.scriptData()
+    }
+}
+
+nonisolated extension Armor {
+    /// This armour after its `TNAM` template overwrites it, as the game does at load. The
+    /// name, value, and enchantment stay this armour's own
+    /// (docs/formats/armor.md#armo-templates).
+    public func inheriting(from template: Armor) -> Armor {
+        var armor = self
+        armor.race = template.race
+        armor.bodyTemplate = template.bodyTemplate
+        armor.armatures = template.armatures
+        armor.itemValue = ItemValue(value: itemValue.value, weight: template.itemValue.weight)
+        armor.keywords = template.keywords
+        armor.armorRating = template.armorRating
+        armor.details.inherit(from: template.details)
+        return armor
+    }
+}
+
+nonisolated extension ArmorDetails {
+    mutating func inherit(from template: ArmorDetails) {
+        description = template.description
+        maleWorldModel = template.maleWorldModel
+        maleIconPath = template.maleIconPath
+        maleMessageIconPath = template.maleMessageIconPath
+        femaleWorldModel = template.femaleWorldModel
+        femaleIconPath = template.femaleIconPath
+        femaleMessageIconPath = template.femaleMessageIconPath
+        pickupSound = template.pickupSound
+        dropSound = template.dropSound
+        equipType = template.equipType
+        bashImpactDataSet = template.bashImpactDataSet
+        alternateBlockMaterial = template.alternateBlockMaterial
+        destructible = template.destructible
     }
 }

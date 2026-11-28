@@ -88,6 +88,23 @@ struct WeaponRecordTests {
         #expect(weapon.criticalData == nil)
     }
 
+    /// The second flags word keeps its low 16 bits, as the game does.
+    @Test func decodesTheSecondFlagsWord() throws {
+        let fields = ESMFixture.field(
+            "DATA", InventoryFixture.weaponData(value: 1, weight: 1, damage: 1)
+        ) + ESMFixture.field(
+            "DNAM",
+            InventoryFixture.weaponDNAM(
+                animation: 1, speed: 1, reach: 1, flags: 0, moreFlags: 0x0001_2041
+            )
+        )
+        let weapon = try Weapon(
+            record: InventoryFixture.record(ESMFixture.record("WEAP", data: fields)),
+            localized: false
+        )
+        #expect(weapon.moreFlags == [.playerOnly, .notUsedInNormalCombat, .boundWeapon])
+    }
+
     /// The DNAM flag bits docs/formats/item-records.md lists.
     @Test func flagBitsMatchTheDocumentedList() {
         let documented: [(Weapon.Flags, UInt16)] = [

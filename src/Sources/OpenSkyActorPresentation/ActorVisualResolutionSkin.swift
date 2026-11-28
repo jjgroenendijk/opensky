@@ -7,13 +7,19 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyWorldInterface
 
 /// The part of `ActorVisualResolver` that reads skin and texture swaps from ARMA and
 /// TXST records.
 nonisolated struct ActorSkinTextureReads: Sendable {
+    /// An entry of a skin swap list is `trunc(weight * swapListScale * count)`.
+    static let swapListScale: Float = 0.0099
+
     let armorAddons: [UInt32: ArmorAddon]
     let textureSets: [UInt32: TextureSet]
+    let formLists: [UInt32: FormList]
+    let weight: Float
 
     private struct SkinArmature {
         let armature: FormID
@@ -54,15 +60,17 @@ nonisolated struct ActorSkinTextureReads: Sendable {
         }
     }
 
-    /// The armature's own skin texture set (`NAM0`/`NAM1`), or nil when it names none.
+    /// The armature's own skin texture set, or nil when it names none: the entry of its
+    /// swap list (`NAM2`/`NAM3`) the wearer's weight picks, else `NAM0`/`NAM1`
+    /// (docs/formats/armor.md#skin-texture).
     func ownSkinTextures(
         of armatureID: FormID, female: Bool
     ) -> ModelSurfaceOverride.SkinTextures? {
         guard
             let armature = armorAddons[armatureID.rawValue],
-            let setID = female
-            ? armature.femaleSkinTexture ?? armature.maleSkinTexture
-            : armature.maleSkinTexture ?? armature.femaleSkinTexture,
+            let setID = swapListEntry(of: armature, female: female) ?? (female
+                ? armature.femaleSkinTexture ?? armature.maleSkinTexture
+                : armature.maleSkinTexture ?? armature.femaleSkinTexture),
             let set = textureSets[setID.rawValue]
         else { return nil }
         let key = { (slot: Int) in
@@ -72,6 +80,18 @@ nonisolated struct ActorSkinTextureReads: Sendable {
         return ModelSurfaceOverride.SkinTextures(
             diffuse: key(0), normal: key(1), lightMask: key(3), specular: key(7)
         )
+    }
+
+    /// A female wearer reads the male list when hers is empty. A list of one entry swaps
+    /// nothing: vanilla female Argonians keep their own scales over a human body list.
+    func swapListEntry(of armature: ArmorAddon, female: Bool) -> FormID? {
+        let listID = female
+            ? armature.femaleSkinTextureSwapList ?? armature.maleSkinTextureSwapList
+            : armature.maleSkinTextureSwapList
+        guard let listID, let entries = formLists[listID.rawValue]?.entries, entries.count > 1
+        else { return nil }
+        let scaled = min(max(weight, 0), 100) * Self.swapListScale * Float(entries.count)
+        return entries[min(Int(scaled), entries.count - 1)]
     }
 
     /// The swaps of the model `female` wears, with the same cross-gender

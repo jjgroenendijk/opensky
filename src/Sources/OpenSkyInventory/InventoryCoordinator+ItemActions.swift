@@ -116,7 +116,7 @@ extension InventoryCoordinator.ItemActions {
     }
 
     /// A dead actor's drawn weapon falls to `placement`, out of its inventory. A weapon
-    /// flagged `Can't Drop` stays with the body.
+    /// flagged `Can't Drop` or embedded stays with the body.
     /// - Returns: the item dropped, or nil when the actor holds no weapon that can drop.
     @discardableResult
     public func dropWeapon(of holder: InventoryHolder, at placement: DropPlacement) -> FormID? {
@@ -126,7 +126,8 @@ extension InventoryCoordinator.ItemActions {
                 equipment.catalog.item(item)?.animationType != nil
                     && equipment.catalog.item(item)?.occupancy.hands.contains(.rightHand) == true
             }),
-            runtime.inventory.baselines.items.weapon(weapon)?.flags.contains(.cannotDrop) != true,
+            runtime.inventory.baselines.items.weapon(weapon)?.flags
+                .isDisjoint(with: [.cannotDrop, .embeddedWeapon]) != false,
             attempt({ try runtime.drop(weapon, count: 1, from: holder, at: placement) }) != nil
         else { return nil }
         coordinator.storyEvents?.reportStoryEvent(.removeItem(

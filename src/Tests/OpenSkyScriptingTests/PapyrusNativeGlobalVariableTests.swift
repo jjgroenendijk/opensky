@@ -14,6 +14,7 @@ import Testing
 struct PapyrusNativeGlobalVariableTests {
     private static let shortID = FormID(0x0000_0201)
     private static let longID = FormID(0x0000_0202)
+    private static let constantID = FormID(0x0000_0204)
     private static let floatID = FormID(0x0000_0203)
     private static let undefinedID = FormID(0x0000_0299)
 
@@ -33,6 +34,11 @@ struct PapyrusNativeGlobalVariableTests {
                 Global(
                     formID: longID,
                     editorID: "OpenSkyProbeLong",
+                    value: GlobalValue(type: .long, rawValue: 100)
+                ),
+                Global(
+                    formID: constantID,
+                    editorID: "OpenSkyProbeConstant",
                     value: GlobalValue(type: .long, rawValue: 100),
                     isConstant: true
                 ),
@@ -135,19 +141,16 @@ struct PapyrusNativeGlobalVariableTests {
         ) == .returned(.float(3.7)))
     }
 
-    /// `Global.isConstant` is decoded and deliberately not enforced: the
-    /// Creation Kit's rule is about editing authored data, and no open
-    /// documentation says the engine refuses a scripted write. The long global
-    /// in this fixture is constant and the write lands.
-    @Test func setValueDoesNotRefuseAConstantGlobal() throws {
+    /// A constant global: the call returns and the value stays.
+    @Test func setValueLeavesAConstantGlobal() throws {
         let fixture = try fixture()
-        let longHandle = try handle(fixture, Self.longID)
+        let longHandle = try handle(fixture, Self.constantID)
         #expect(call(
             "SetValue", fixture, receiver: longHandle, arguments: [.float(7)]
         ) == .returned(.none))
         #expect(call(
             "GetValue", fixture, receiver: longHandle, returnType: .float
-        ) == .returned(.float(7)))
+        ) == .returned(.float(100)))
     }
 
     @Test func integerAccessorsTruncateTowardZero() throws {

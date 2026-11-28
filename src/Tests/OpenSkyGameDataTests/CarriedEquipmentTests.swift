@@ -53,6 +53,25 @@ struct CarriedEquipmentTests {
             == [Self.sword])
     }
 
+    /// A player-only weapon is never picked; one not used in normal combat comes last.
+    @Test func theSecondFlagsWordKeepsAWeaponFromAnNPC() {
+        var playerOnly = Self.weapon(.bothHands, .twoHandSword, damage: 40)
+        playerOnly.weaponFlags = [.playerOnly]
+        var ceremonial = Self.weapon(.bothHands, .twoHandAxe, damage: 30)
+        ceremonial.weaponFlags = [.notUsedInNormalCombat]
+        var items = Self.catalog.items
+        items[0x50] = playerOnly
+        items[0x51] = ceremonial
+        let catalog = EquipmentCatalog(items: items)
+        let carried = [FormID(0x50), FormID(0x51), Self.sword]
+        let warrior = WeaponPreference(melee: 1, ranged: 0.3, staff: 1)
+        #expect(catalog.carriedPicks(worn: [], carried: carried) == [Self.sword])
+        #expect(catalog.carriedPicks(worn: [], carried: carried, preference: warrior)
+            == [Self.sword])
+        #expect(catalog.carriedPicks(worn: [], carried: [FormID(0x50), FormID(0x51)])
+            == [FormID(0x51)])
+    }
+
     @Test func aBowIsHeldWithItsBestArrows() {
         let picks = Self.catalog.carriedPicks(
             worn: [], carried: [Self.bolt, Self.ironArrow, Self.bow, Self.steelArrow]

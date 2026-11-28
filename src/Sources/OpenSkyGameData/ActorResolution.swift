@@ -50,6 +50,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     /// reads as 50, which is an assumption: no source gives the default.
     public var weight: Float = defaultWeight
     public static let defaultWeight: Float = 50
+    /// SOFT, an OTFT, inherited with the inventory. Its items are carried, not worn.
+    public var sleepOutfit: FormID?
     /// NAM6, the height as a share of the race's height. A Traits-tab field.
     public var height: Float = 1
     /// QNAM, the skin colour of the body's skin-tint shapes. A Traits-tab field.
@@ -219,7 +221,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
 
     public func resolve(base: FormID) throws -> ResolvedActorAppearance {
         let (npcs, chain) = try resolveChain(base: base)
-        return ResolvedActorAppearance(
+        var appearance = ResolvedActorAppearance(
             base: base,
             chain: chain,
             isFemale: resolveField(in: npcs, flag: .useTraits) {
@@ -270,6 +272,10 @@ nonisolated public struct ActorTemplateResolver: Sendable {
                 )
             }.value
         )
+        appearance.sleepOutfit = resolveField(in: npcs, flag: .useInventory) {
+            ActorSourcedField(value: $0.details.sleepingOutfit, source: $0.formID)
+        }.value
+        return appearance
     }
 
     /// The same chain walk as `resolve(base:)`, resolving the stat fields instead of
@@ -358,23 +364,6 @@ nonisolated public struct ActorTemplateResolver: Sendable {
                 ActorSourcedField(value: $0.crimeFaction, source: $0.formID)
             }
         )
-    }
-
-    /// ZNAM after template inheritance. xEdit ties ZNAM to no template flag; the Creation
-    /// Kit shows it on the AI Data tab, so it follows `useAIData`.
-    public func resolveCombatStyle(base: FormID) throws -> ActorSourcedField<FormID?> {
-        let (npcs, _) = try resolveChain(base: base)
-        return resolveField(in: npcs, flag: .useAIData) {
-            ActorSourcedField(value: $0.details.combatStyle, source: $0.formID)
-        }
-    }
-
-    /// FULL after template inheritance. xEdit lists FULL under `useBaseData`.
-    public func resolveName(base: FormID) throws -> ActorSourcedField<LString?> {
-        let (npcs, _) = try resolveChain(base: base)
-        return resolveField(in: npcs, flag: .useBaseData) {
-            ActorSourcedField(value: $0.name, source: $0.formID)
-        }
     }
 
     /// The `NPC_` the last leveled hop chose, or `base` when the chain has no leveled
@@ -566,5 +555,24 @@ nonisolated extension PlayerAppearanceOverride {
         tints.insert(
             PlayerAppearanceTint(maskIndex: index, color: rgba, strength: preset.strength), at: 0
         )
+    }
+}
+
+nonisolated extension ActorTemplateResolver {
+    /// ZNAM after template inheritance. xEdit ties ZNAM to no template flag; the Creation
+    /// Kit shows it on the AI Data tab, so it follows `useAIData`.
+    public func resolveCombatStyle(base: FormID) throws -> ActorSourcedField<FormID?> {
+        let (npcs, _) = try resolveChain(base: base)
+        return resolveField(in: npcs, flag: .useAIData) {
+            ActorSourcedField(value: $0.details.combatStyle, source: $0.formID)
+        }
+    }
+
+    /// FULL after template inheritance. xEdit lists FULL under `useBaseData`.
+    public func resolveName(base: FormID) throws -> ActorSourcedField<LString?> {
+        let (npcs, _) = try resolveChain(base: base)
+        return resolveField(in: npcs, flag: .useBaseData) {
+            ActorSourcedField(value: $0.name, source: $0.formID)
+        }
     }
 }
