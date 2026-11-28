@@ -217,7 +217,6 @@ nonisolated private let firearmsSettings = [
     "fAutoAimMaxDegrees3rdPerson",
     "fAutoAimMaxDistance",
     "fAutoAimScreenPercentage",
-    "fCombatPlayerLimbDamageMult",
     "fDamageGunWeapCondBase",
     "fDamageGunWeapCondMult",
     "fDamageMeleeWeapCondBase",

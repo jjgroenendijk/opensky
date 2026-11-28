@@ -57,6 +57,20 @@ extension EffectsCoordinator {
         }
     }
 
+    /// `decal` alone on a world surface, as blood sprayed around a hit leaves it.
+    @discardableResult
+    public func placeImpactDecal(
+        _ decal: ImpactDecal, at position: SIMD3<Float>, normal: SIMD3<Float>
+    ) -> Bool {
+        guard
+            let look = decal.look,
+            decals.place(look, at: position, normal: surfaceNormal(.surface(normal: normal)))
+            != nil
+        else { return false }
+        decalsChanged = true
+        return true
+    }
+
     /// The last impact at the player's feet, on the ground. False before the first one.
     @discardableResult
     func repeatLastImpact() -> Bool {

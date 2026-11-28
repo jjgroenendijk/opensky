@@ -97,6 +97,9 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     ///   counted as a hit that did nothing.
     @discardableResult
     func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool
+    /// The same at the contact point, which picks the body part struck.
+    @discardableResult
+    func applyMeleeDamage(_ amount: Float, to target: ReferenceKey, at point: SIMD3<Float>) -> Bool
 
     /// Plays one resolved impact at the contact point.
     func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
@@ -226,5 +229,13 @@ extension ImpactMaterialReading {
     /// No material: the impact data set's default entry plays.
     public func impactMaterial(of _: ReferenceKey) -> FormID? {
         nil
+    }
+}
+
+/// A world without body parts lands a hit the same at any point.
+extension MeleeCombatWorld {
+    @discardableResult
+    func applyMeleeDamage(_ amount: Float, to target: ReferenceKey, at _: SIMD3<Float>) -> Bool {
+        applyMeleeDamage(amount, to: target)
     }
 }

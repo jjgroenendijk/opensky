@@ -12,6 +12,7 @@ import OpenSkyConditions
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 @testable import OpenSkyWorldState
 import simd
 
@@ -267,8 +268,37 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         nil
     }
 
-    func sweep(_: ShapeSweepQuery) -> ShapeSweepHit? {
-        nil
+    var sweepHit: ShapeSweepHit?
+    private(set) var sweeps: [ShapeSweepQuery] = []
+
+    func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
+        sweeps.append(query)
+        return sweepHit
+    }
+
+    var groundHitResult: TerrainRayHit?
+
+    func groundHit(
+        from _: SIMD3<Float>, along _: SIMD3<Float>, within _: Float
+    ) -> TerrainRayHit? {
+        groundHitResult
+    }
+
+    var struckParts: [ReferenceKey: StruckBodyPart] = [:]
+    private(set) var limbDamage: [LimbDamageCall] = []
+
+    func struckBodyPart(
+        of target: ReferenceKey, at _: SIMD3<Float>?, from _: ReferenceKey?
+    ) -> StruckBodyPart? {
+        struckParts[target]
+    }
+
+    func baseActorValue(at index: Int32, of key: ReferenceKey) -> Float? {
+        values[key]?[index]
+    }
+
+    func damageActorValue(at index: Int32, by amount: Float, of key: ReferenceKey) {
+        limbDamage.append(LimbDamageCall(key: key, index: index, amount: amount))
     }
 
     func residentCells() -> Set<CellSceneLocation> {
@@ -300,4 +330,10 @@ final class FakeCoordinatorWorld: CombatWorld, CombatReporting, CombatPerkReads,
         skillUses.append(use)
         return use.amount
     }
+}
+
+struct LimbDamageCall {
+    let key: ReferenceKey
+    let index: Int32
+    let amount: Float
 }

@@ -87,6 +87,15 @@ struct EffectsCoordinatorImpactTests {
         #expect(effects.lastImpact?.decal == Self.decal)
     }
 
+    @Test func sprayedBloodLeavesItsDecalAloneOnTheSurface() {
+        let effects = EffectsCoordinator()
+        #expect(effects.placeImpactDecal(Self.decal, at: SIMD3(1, 2, 3), normal: SIMD3(0, 0, 1)))
+        #expect(effects.decals.decals.count == 1)
+        #expect(effects.visualEffects.instances.isEmpty)
+        effects.decalsEnabled = false
+        #expect(!effects.placeImpactDecal(Self.decal, at: .zero, normal: SIMD3(0, 0, 1)))
+    }
+
     @Test func theSwitchesTurnModelsAndDecalsOff() throws {
         let effects = EffectsCoordinator()
         effects.impactModelsEnabled = false

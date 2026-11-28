@@ -53,7 +53,7 @@ struct ProjectilePayloadLanding {
         // Read before the damage: the hit itself makes the target aware.
         let sneak = world.projectileIsSneakAttack(by: projectile.shooter, on: target)
         guard world.applyProjectileDamage(
-            arrow.damage.applied, to: target, from: projectile.shooter
+            arrow.damage.applied, to: target, from: projectile.shooter, at: impact.position
         ) else { return (0, nil) }
         // After the damage, as the melee path does. `akProjectile` is filled in; vanilla
         // leaves it `None` for an actor target, which handlers already tolerate.

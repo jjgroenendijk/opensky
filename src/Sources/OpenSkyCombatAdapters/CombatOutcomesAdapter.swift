@@ -72,7 +72,8 @@ extension CombatOutcomesAdapter {
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             case let .playerAttackedOutsideCombat(use):
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
-            case .drewBlood, .showDefaultBlood, .muzzleFlash: showImpact(command)
+            case .drewBlood, .showDefaultBlood, .muzzleFlash, .placeBloodDecal:
+                showImpact(command)
             case .incrementStat, .playerUsedWeapon: countStat(command)
             case .weaponFired, .rangedKillCam, .playerBowShot: runShot(command)
             }
@@ -112,6 +113,8 @@ extension CombatOutcomesAdapter {
         case let .drewBlood(hit, target): impactEffects.drewBlood(hit, target: target)
         case let .showDefaultBlood(target, position, melee):
             impactEffects.showDefaultBlood(on: target, at: position, melee: melee)
+        case let .placeBloodDecal(impact, position, normal):
+            impactEffects.placeBloodDecal(impact, at: position, normal: normal)
         case let .muzzleFlash(visuals, position, direction):
             game.effectsWorld.showMuzzleFlash(visuals, at: position, along: direction)
         default: return

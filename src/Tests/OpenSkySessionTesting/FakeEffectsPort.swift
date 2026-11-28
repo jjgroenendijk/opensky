@@ -25,6 +25,8 @@ nonisolated public final class FakeEffectsPort: EffectsPort {
     public var showDefaultBloodCalls: [ShowDefaultBloodCall] = []
     public var showDismemberParticleCalls: [SIMD3<Float>] = []
     public var showImpactCalls: [ShowImpactCall] = []
+    public var placeImpactDecalCalls: [PlaceImpactDecalCall] = []
+    public var placeImpactDecalResult = false
     public var skinDecalsValue: SkinDecalRuntime?
     public var splatterScreenDamageCalls: [Float] = []
     public var splatterScreenDamageResult = 0
@@ -97,6 +99,20 @@ extension FakeEffectsPort {
                 "decal: " + String(describing: decal),
                 "position: " + String(describing: position),
                 "surface: " + String(describing: surface)
+            ].joined(separator: ", ")
+        }
+    }
+
+    nonisolated public struct PlaceImpactDecalCall: CustomStringConvertible {
+        public let decal: ImpactDecal
+        public let position: SIMD3<Float>
+        public let normal: SIMD3<Float>
+
+        public var description: String {
+            [
+                "decal: " + String(describing: decal),
+                "position: " + String(describing: position),
+                "normal: " + String(describing: normal)
             ].joined(separator: ", ")
         }
     }
@@ -287,6 +303,18 @@ nonisolated extension FakeEffectsPort {
             position: position,
             surface: surface
         ))
+    }
+
+    @discardableResult
+    public func placeImpactDecal(
+        _ decal: ImpactDecal, at position: SIMD3<Float>, normal: SIMD3<Float>
+    ) -> Bool {
+        placeImpactDecalCalls.append(PlaceImpactDecalCall(
+            decal: decal,
+            position: position,
+            normal: normal
+        ))
+        return placeImpactDecalResult
     }
 
     public var skinDecals: SkinDecalRuntime {

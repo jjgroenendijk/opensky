@@ -20,7 +20,7 @@ import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
@@ -142,6 +142,15 @@ extension CombatMotionAdapter {
             query: query,
             shapes: streamer.staticCollisionCandidates(overlapping: query.bounds)
         )
+    }
+
+    public func groundHit(
+        from point: SIMD3<Float>, along direction: SIMD3<Float>, within reach: Float
+    ) -> TerrainRayHit? {
+        let collision = game.streamer.collision
+        return TerrainRayMarch.firstHit(from: point, along: direction, within: reach) {
+            collision.sampleTerrain(at: $0)
+        }
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

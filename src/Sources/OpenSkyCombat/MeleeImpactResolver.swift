@@ -45,12 +45,18 @@ nonisolated public struct MeleeImpactResolver: Sendable {
 
     /// The impact one IPDS plays on `material`, as Papyrus `PlayImpactEffect` asks.
     public func resolve(dataSet dataSetID: FormID, material: FormID?) -> ResolvedMeleeImpact? {
-        guard
-            let dataSet = impactDataSets[dataSetID.rawValue],
-            let impactID = dataSet.impact(forFirstOf: materialParents.chain(from: material)),
-            let impact = impacts[impactID.rawValue],
-            let sound = impact.sound
+        guard let impact = impact(dataSet: dataSetID, material: material), let sound = impact.sound
         else { return nil }
         return ResolvedMeleeImpact(sound: sound, impact: impact)
+    }
+
+    /// The impact one IPDS gives `material`, with or without a sound. The blood spray
+    /// impact has none and still leaves its decal.
+    public func impact(dataSet dataSetID: FormID, material: FormID?) -> Impact? {
+        guard
+            let dataSet = impactDataSets[dataSetID.rawValue],
+            let impactID = dataSet.impact(forFirstOf: materialParents.chain(from: material))
+        else { return nil }
+        return impacts[impactID.rawValue]
     }
 }

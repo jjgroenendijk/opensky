@@ -72,3 +72,6 @@ apply: each row names the value, OpenSky's choice, and the page with the detail.
 | `CSCR` flank defaults | A style without a flank distance or stalk time reads 0.2 for each | [combat movement](combat-movement.md#in-opensky) |
 | Flank goal | The free place nearest the NPC's bearing; the stalk jogs to `reach + 128` | [combat movement](combat-movement.md#in-opensky) |
 | Final advance | Within 256 units of the place distance, the advance walks at the target | [combat movement](combat-movement.md#in-opensky) |
+| Struck part | The part whose node lies nearest the hit point; an NPC blow uses the attacker's torso | [body parts](../formats/body-parts.md#where-opensky-differs) |
+| Attacker torso | With no torso part, the middle of the attacker's posed bones | [body parts](../formats/body-parts.md#where-opensky-differs) |
+| Blood spray ray | A sphere of radius 1 swept against static collision; the hit direction is flat | [body parts](../formats/body-parts.md#where-opensky-differs) |

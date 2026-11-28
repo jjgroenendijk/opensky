@@ -17,6 +17,7 @@ import simd
 public protocol CombatImpactEffectsHost: AnyObject, SendableMetatype {
     var cinematicCamera: any CinematicCameraPort { get }
     var effects: any EffectsPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
     var idleWorld: any IdleWorldPort { get }
     var menuWorld: any MenuWorldPort { get }
     var ragdollWorld: any RagdollWorldPort { get }
@@ -90,6 +91,12 @@ extension CombatImpactEffectsAdapter {
             raceFlags(of: target)?.contains(.noWeaponBlood) != true
         else { return }
         game.effects.bloodyWeapon(of: attacker)
+    }
+
+    /// The decal of blood sprayed around a hit, on a world surface.
+    public func placeBloodDecal(_ impact: Impact, at position: SIMD3<Float>, normal: SIMD3<Float>) {
+        guard let decal = game.combatRecords?.footstepStore?.decal(of: impact) else { return }
+        game.effects.placeImpactDecal(decal, at: position, normal: normal)
     }
 
     /// The race flags keep a bloodless body, such as a skeleton's, clean.

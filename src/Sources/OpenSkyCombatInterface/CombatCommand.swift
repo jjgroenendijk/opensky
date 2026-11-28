@@ -19,6 +19,8 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case playerAttackedOutsideCombat(CombatWeaponUse)
     /// An attack drew blood: screen blood on a struck player, blood on a melee weapon.
     case drewBlood(CombatHitRecord, target: ReferenceKey)
+    /// Blood sprayed around a hit: the impact's decal alone, on a world surface.
+    case placeBloodDecal(Impact, at: SIMD3<Float>, normal: SIMD3<Float>)
     /// A hit on an actor with no impact data of its own: the default blood effects.
     case showDefaultBlood(on: ReferenceKey, at: SIMD3<Float>, melee: Bool)
     /// A projectile left with a muzzle flash: its `NAM1` model and light at the launch.

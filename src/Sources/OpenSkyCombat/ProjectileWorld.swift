@@ -119,6 +119,12 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     func applyProjectileDamage(
         _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey
     ) -> Bool
+    /// The same at the contact point, which picks the body part struck.
+    @discardableResult
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey,
+        at point: SIMD3<Float>
+    ) -> Bool
 
     /// A projectile left its shooter; the session shows its muzzle flash.
     func projectileLaunched(_ projectile: LiveProjectile)
@@ -228,5 +234,16 @@ extension ProjectileWorld {
     /// A world that knows no hostile actors aims nothing.
     public func projectileAutoAim(from _: ProjectileShooter) -> ProjectileAimPick? {
         nil
+    }
+}
+
+/// A world without body parts lands an arrow the same at any point.
+extension ProjectileWorld {
+    @discardableResult
+    func applyProjectileDamage(
+        _ amount: Float, to target: ReferenceKey, from shooter: ReferenceKey,
+        at _: SIMD3<Float>
+    ) -> Bool {
+        applyProjectileDamage(amount, to: target, from: shooter)
     }
 }
