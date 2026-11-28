@@ -1282,7 +1282,7 @@ targets += composition(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyMenusInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyQuestsInterface",
-        "OpenSkyRenderCore",
+        "OpenSkyRenderCore", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]

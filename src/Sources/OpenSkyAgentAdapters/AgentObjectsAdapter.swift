@@ -252,7 +252,9 @@ extension AgentObjectsAdapter {
 
     /// Every running effect graph, or those on one actor (docs/engine/effect-graphs.md),
     /// and every effect model drawn as its own posed copy.
-    public func effectsState(reference: String?) throws(AgentFailure) -> AgentJSON {
+    public func effectsState(
+        reference: String?, visuals: [String: AgentJSON] = [:]
+    ) throws(AgentFailure) -> AgentJSON {
         var rows = game.effectGraphs.rows
         if let reference {
             let target = try hub.resolveReference(reference)
@@ -265,7 +267,10 @@ extension AgentObjectsAdapter {
                 "bones": .array(row.bones.map { .string($0) })
             ]
         }
-        return ["posed": .array(posed), "effects": .array(rows.map(Self.subGraphFields))]
+        let fields: [String: AgentJSON] = [
+            "posed": .array(posed), "effects": .array(rows.map(Self.subGraphFields))
+        ]
+        return .object(fields.merging(visuals) { $1 })
     }
 
     private static func subGraphFields(_ row: EffectGraphRow) -> AgentJSON {

@@ -34,6 +34,8 @@ public protocol EffectsPort: AnyObject {
         _ decal: ImpactDecal, at position: SIMD3<Float>, normal: SIMD3<Float>
     ) -> Bool
     var skinDecals: SkinDecalRuntime { get }
+    /// The decals placed in the world, such as blood on the ground.
+    var decals: DecalRuntime { get }
     @discardableResult func splatterScreen(damage: Float) -> Int
     @discardableResult func splatterScreen(count: Int) -> Int
     @discardableResult func startModifier(
