@@ -164,9 +164,10 @@ public func appearance(
     headParts: [UInt32] = [0x2000],
     headSource: UInt32 = 0x1000,
     hairColor: UInt32? = nil,
-    outfit: UInt32? = nil
+    outfit: UInt32? = nil,
+    base: UInt32 = 0x1000
 ) -> ResolvedActorAppearance {
-    let base = FormID(0x1000)
+    let base = FormID(base)
     return ResolvedActorAppearance(
         base: base,
         chain: [.npc(base)],

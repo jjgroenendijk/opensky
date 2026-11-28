@@ -62,7 +62,7 @@ nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     public var combatOverride: FormID?
     public var defaultPackageList: FormID?
     /// SOFT, an OTFT.
-    var sleepingOutfit: FormID?
+    public internal(set) var sleepingOutfit: FormID?
     /// CSCR, an NPC_ whose sounds this one uses.
     public var inheritsSoundsFrom: FormID?
     public var soundTypes: [ActorSoundType] = []

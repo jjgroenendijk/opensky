@@ -101,7 +101,15 @@ nonisolated public struct ActorVisualResolver: Sendable {
     }
 
     var skinTextures: ActorSkinTextureReads {
-        ActorSkinTextureReads(armorAddons: armorAddons, textureSets: textureSets)
+        skinTextures(weight: ResolvedActorAppearance.defaultWeight)
+    }
+
+    /// The skin reads for a wearer of `weight` (0 to 100), which picks a swap list entry.
+    func skinTextures(weight: Float) -> ActorSkinTextureReads {
+        ActorSkinTextureReads(
+            armorAddons: armorAddons, textureSets: textureSets, formLists: formLists,
+            weight: weight
+        )
     }
 
     public init(
@@ -293,9 +301,11 @@ extension ActorVisualResolver {
                 races: loadOrder.indexRecordsInParallel(of: "RACE", skipped: &skipped) {
                     try Race(record: $0, localized: $1)
                 },
-                armors: loadOrder.indexRecordsInParallel(of: "ARMO", skipped: &skipped) {
-                    try Armor(record: $0, localized: $1)
-                },
+                armors: ItemDefinitionStore.inheritingTemplates(
+                    loadOrder.indexRecordsInParallel(of: "ARMO", skipped: &skipped) {
+                        try Armor(record: $0, localized: $1)
+                    }
+                ),
                 armorAddons: loadOrder.indexRecordsInParallel(of: "ARMA", skipped: &skipped) {
                     try ArmorAddon(record: $0)
                 },
@@ -448,7 +458,7 @@ extension ActorVisualResolver {
             }
 
             let worn = try equipped
-                .map { owner.outfitter.wornEquipment($0, leftHand, skips: &skips) }
+                .map { owner.outfitter.wornEquipment($0, leftHand, of: appearance, skips: &skips) }
                 ?? owner.outfitter.defaultEquipment(
                     of: appearance, roll: roll, carried: carried, skips: &skips
                 )
@@ -473,7 +483,7 @@ extension ActorVisualResolver {
             parts += owner.bodyParts(
                 of: skin, selection: skinSelection, seen: &seenArmatures, skips: &skips
             ).map(\.part)
-            parts = owner.skinTextures.withSkinTextures(
+            parts = owner.skinTextures(weight: appearance.weight).withSkinTextures(
                 parts,
                 skin: skin,
                 race: raceID,

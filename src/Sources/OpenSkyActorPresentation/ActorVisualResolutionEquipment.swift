@@ -143,6 +143,27 @@ nonisolated struct ActorOutfitResolver: Sendable {
         _ leftHand: LeftHandHold? = nil,
         skips: inout [AppearanceSkip]
     ) -> WornEquipment {
+        wornEquipment(equipped, leftHand, isPlayer: false, skips: &skips)
+    }
+
+    func wornEquipment(
+        _ equipped: [FormID],
+        _ leftHand: LeftHandHold?,
+        of appearance: ResolvedActorAppearance,
+        skips: inout [AppearanceSkip]
+    ) -> WornEquipment {
+        let isPlayer = appearance.base == MenuRecordData.playerBase
+        return wornEquipment(equipped, leftHand, isPlayer: isPlayer, skips: &skips)
+    }
+
+    /// The player's weapon shows its `WNAM` static's model instead of `MODL`, in both views
+    /// (docs/formats/item-records.md#weap).
+    func wornEquipment(
+        _ equipped: [FormID],
+        _ leftHand: LeftHandHold?,
+        isPlayer: Bool,
+        skips: inout [AppearanceSkip]
+    ) -> WornEquipment {
         var armors: [Armor] = []
         var attachments: [ResolvedAttachment] = []
         var rightHandTaken = false
@@ -165,7 +186,7 @@ nonisolated struct ActorOutfitResolver: Sendable {
             guard
                 let entry = equipment.item(item),
                 !entry.occupancy.hands.isEmpty,
-                let modelPath = entry.modelPath
+                let modelPath = (isPlayer ? entry.playerModelPath : nil) ?? entry.modelPath
             else {
                 skips.append(AppearanceSkip(subject: item, reason: .unrenderableEquipment))
                 continue

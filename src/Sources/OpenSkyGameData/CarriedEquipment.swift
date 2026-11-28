@@ -101,18 +101,34 @@ nonisolated extension EquipmentCatalog {
     ) -> Candidate? {
         let weapons = candidates.filter {
             $0.item.isWeapon && $0.item.animationType != .other
+                && !$0.item.weaponFlags.contains(.playerOnly)
         }
         guard let preference else {
-            return weapons.first { !isSecondary($0.item.animationType) } ?? weapons.first
+            let usual = weapons.filter { !isOutOfCombat($0.item) }
+            return usual.first { !isSecondary($0.item.animationType) } ?? usual.first
+                ?? weapons.first
         }
         var best: Candidate?
         for weapon in weapons {
-            if let current = best, preference.score(weapon.item) <= preference.score(current.item) {
+            if let current = best, score(weapon.item, preference) <= score(
+                current.item,
+                preference
+            ) {
                 continue
             }
             best = weapon
         }
         return best
+    }
+
+    /// A weapon flagged as not used in normal combat scores 0
+    /// (docs/formats/item-records.md#weap).
+    private static func score(_ item: EquippableItem, _ preference: WeaponPreference) -> Float {
+        isOutOfCombat(item) ? 0 : preference.score(item)
+    }
+
+    private static func isOutOfCombat(_ item: EquippableItem) -> Bool {
+        item.weaponFlags.contains(.notUsedInNormalCombat)
     }
 
     /// The best carried arrows for a bow, or bolts for a crossbow.

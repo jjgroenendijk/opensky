@@ -105,6 +105,15 @@ struct InventoryBaselineTests {
         #expect(baseline.equipped == [Fixture.cuirass, Fixture.helmet])
     }
 
+    /// The sleep outfit's items are carried, and none of them is worn.
+    @Test func theSleepOutfitIsCarriedNotWorn() throws {
+        let resolver = try Fixture.resolver()
+        let baseline = resolver.baseline(for: .actor(base: Fixture.sleeperActor))
+        #expect(baseline.count(of: Fixture.cuirass) == 2)
+        #expect(baseline.count(of: Fixture.helmet) == 2)
+        #expect(baseline.equipped.isEmpty)
+    }
+
     /// `useInventory` on a record with a template delegates the outfit upward,
     /// so the child's own DOFT is ignored and the parent's outfit is used.
     @Test func templatedActorInheritsItsParentsOutfit() throws {

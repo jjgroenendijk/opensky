@@ -41,6 +41,8 @@ public enum InventoryBaselineFixture {
     public static let lootedActor = FormID(0x0000_3030)
     /// Wears the guard outfit and carries the sword and the greatsword.
     public static let armedActor = FormID(0x0000_3040)
+    /// Has the guard outfit as its sleep outfit (`SOFT`) and no default outfit.
+    public static let sleeperActor = FormID(0x0000_3050)
 
     public static let chest = FormID(0x0000_4000)
     public static let leveledChest = FormID(0x0000_4010)
@@ -263,7 +265,11 @@ public enum InventoryBaselineFixture {
         let armed = actor(
             formID: armedActor.rawValue, defaultOutfit: guardOutfit.rawValue, extra: weapons
         )
-        return records + looted + armed
+        let sleeper = actor(
+            formID: sleeperActor.rawValue, defaultOutfit: nil,
+            extra: InventoryFixture.formIDField("SOFT", guardOutfit.rawValue)
+        )
+        return records + looted + armed + sleeper
     }
 
     private static func actor(

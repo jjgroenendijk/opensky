@@ -31,9 +31,25 @@ nonisolated public struct Weapon: Sendable {
 
         /// The weapon cannot be disarmed and stays with its owner at death.
         public static let cannotDrop = Flags(rawValue: 0x0008)
-        static let embeddedWeapon = Flags(rawValue: 0x0020)
+        /// The weapon is part of its owner's body, such as a turret's gun: it stays at death.
+        public static let embeddedWeapon = Flags(rawValue: 0x0020)
         /// The player cannot see or use the weapon.
         public static let nonPlayable = Flags(rawValue: 0x0080)
+    }
+
+    /// `DNAM` flags at `0x28`; the game keeps the low 16 bits.
+    public struct MoreFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
+
+        public init(rawValue: UInt16) {
+            self.rawValue = rawValue
+        }
+
+        /// No NPC picks the weapon for itself.
+        public static let playerOnly = MoreFlags(rawValue: 0x0001)
+        /// An NPC picking a combat weapon gives it a score of 0.
+        public static let notUsedInNormalCombat = MoreFlags(rawValue: 0x0040)
+        public static let boundWeapon = MoreFlags(rawValue: 0x2000)
     }
 
     /// CRDT — critical-hit numbers plus the SPEL applied on a critical.
@@ -68,6 +84,7 @@ nonisolated public struct Weapon: Sendable {
     public internal(set) var stagger: Float
     /// DNAM 0x24 On Hit: 0 rolls as usual, 1 dismember only, 2 explode only, 3 neither.
     public internal(set) var onHit: UInt32 = 0
+    public internal(set) var moreFlags = MoreFlags()
     /// DNAM 0x34-0x3C: the Rumble tab's left and right motor strength and seconds.
     public internal(set) var rumble: Rumble
     public internal(set) var criticalData: CriticalData?
@@ -112,6 +129,7 @@ nonisolated public struct Weapon: Sendable {
         skill = payload.skill
         stagger = payload.stagger
         onHit = payload.onHit
+        moreFlags = payload.moreFlags
         rumble = payload.rumble
         criticalData = payload.criticalData
         enchantment = payload.enchantment
@@ -136,6 +154,7 @@ nonisolated public struct Weapon: Sendable {
         var skill: Int32?
         var stagger: Float = 0
         var onHit: UInt32 = 0
+        var moreFlags = MoreFlags()
         var rumble = Rumble(left: 0, right: 0, seconds: 0)
         var criticalData: CriticalData?
         var enchantment: FormID?
@@ -190,7 +209,7 @@ nonisolated public struct Weapon: Sendable {
             damage = try reader.readUInt16()
         }
 
-        /// DNAM: 100 bytes; the engine reads offsets 0x00 to 0x0C, 0x24, 0x34 to 0x3C,
+        /// DNAM: 100 bytes; the engine reads offsets 0x00 to 0x0C, 0x24, 0x28, 0x34 to 0x3C,
         /// 0x4C and 0x60 and skips the rest.
         private mutating func decodeWeaponData(_ field: ESMField) throws {
             guard field.data.count >= 0x64 else {
@@ -206,6 +225,7 @@ nonisolated public struct Weapon: Sendable {
             flags = try Flags(rawValue: reader.readUInt16())
             reader.seek(to: 0x24)
             onHit = try reader.readUInt32()
+            moreFlags = try MoreFlags(rawValue: UInt16(truncatingIfNeeded: reader.readUInt32()))
             reader.seek(to: 0x34)
             rumble = try Rumble(
                 left: reader.readFloat32(), right: reader.readFloat32(),
@@ -251,8 +271,8 @@ nonisolated public struct WeaponDetails: Equatable, Sendable {
     let scopeEffect: FormID?
     /// NNAM — the node an embedded weapon attaches to.
     let embeddedWeaponNode: String?
-    /// WNAM — the STAT drawn in first person.
-    var firstPersonModel: FormID?
+    /// WNAM — the STAT whose model the player's weapon shows, in both views.
+    public internal(set) var firstPersonModel: FormID?
     /// BAMT — the MATT a block hits instead of the weapon's own.
     var alternateBlockMaterial: FormID?
     /// SNAM — plays when the weapon launches its projectile.
@@ -332,6 +352,7 @@ nonisolated extension Weapon {
         weapon.skill = template.skill
         weapon.stagger = template.stagger
         weapon.onHit = template.onHit
+        weapon.moreFlags = template.moreFlags
         weapon.rumble = template.rumble
         weapon.criticalData = template.criticalData
         weapon.details.inherit(from: template.details)

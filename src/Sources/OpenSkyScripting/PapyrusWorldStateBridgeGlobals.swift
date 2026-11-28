@@ -1,6 +1,7 @@
 // Global variables: the GLOB defaults with this session's overrides.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
@@ -8,6 +9,11 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge.Globals {
+    private static let logger = EngineLogger(
+        subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",
+        category: "PapyrusGlobals"
+    )
+
     public func globalValue(for key: ReferenceKey) -> GlobalValue? {
         guard let globals = bridge.stores.globals, let id = globalFormID(for: key) else {
             return bridge.worldState.globalValue(for: key)
@@ -21,9 +27,15 @@ extension PapyrusWorldStateBridge.Globals {
     /// the loaded plugins do not define — keeps whatever type an existing
     /// override declared and otherwise treats the value as a float, rather
     /// than inventing a `short`/`long` rounding rule the plugin never stated.
+    /// A script cannot change a constant global (`GLOB` record flag `0x40`): the value stays,
+    /// and the game logs the refusal (docs/engine/papyrus-activation.md).
     @discardableResult
     public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
         if let globals = bridge.stores.globals, let id = globalFormID(for: key) {
+            if globals.global(id)?.isConstant == true {
+                Self.logger.info("Cannot set the value of a constant GlobalVariable")
+                return false
+            }
             return bridge.worldState.setGlobal(raw, formID: id, defaults: globals)
         }
         let type = bridge.worldState.globalValue(for: key)?.type ?? .float

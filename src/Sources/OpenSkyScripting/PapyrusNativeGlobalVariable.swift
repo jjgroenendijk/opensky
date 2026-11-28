@@ -1,8 +1,7 @@
 // `GlobalVariable` natives. A GLOB arrives as a VMAD object property and
 // resolves like a reference. Writes go through `WorldStateStore.setGlobal`, which
 // applies `Global.ValueType.coerce`: 3.7 into a short global stores 4.
-// `Global.isConstant` is not enforced, because no open source says the game
-// refuses a scripted write (docs/engine/papyrus-activation.md).
+// A constant global keeps its value (docs/engine/papyrus-activation.md).
 
 import Foundation
 import OpenSkyFormatsESM

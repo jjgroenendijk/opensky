@@ -150,7 +150,7 @@ nonisolated public final class ItemDefinitionStore {
     public static let vanillaGoldFormID = FormID(0x0000_000F)
 
     /// Carryable item definitions, keyed by raw FormID.
-    public private(set) var definitions: [UInt32: ItemDefinition]
+    public internal(set) var definitions: [UInt32: ItemDefinition]
     /// CONT decodes, keyed by raw FormID.
     public let containers: [UInt32: Container]
     /// WEAP decodes, keyed by raw FormID. Kept beside the unified view, because melee
@@ -251,9 +251,9 @@ nonisolated public final class ItemDefinitionStore {
         skippedRecords = skipped
         // The family loop above already counted these decoders' failures.
         var repeated = SkippedRecords()
-        armor = Self.decodeAll("ARMO", in: loadOrder, skipped: &repeated) {
+        armor = Self.inheritingTemplates(Self.decodeAll("ARMO", in: loadOrder, skipped: &repeated) {
             try Armor(record: $0, localized: $1)
-        }
+        })
         let ownWeapons = Self.decodeAll("WEAP", in: loadOrder, skipped: &repeated) {
             try Weapon(record: $0, localized: $1)
         }
@@ -280,6 +280,7 @@ nonisolated public final class ItemDefinitionStore {
             try Scroll(record: $0, localized: $1)
         }
         soundDefaults = ItemSoundDefaults(loadOrder: loadOrder)
+        applyTemplatedViews(ownWeapons: ownWeapons, strings: strings)
     }
 
     /// The armour type of a worn piece — heavy, light or clothing — or nil when
@@ -427,7 +428,7 @@ nonisolated enum ItemDefinitionViews {
         }
     }
 
-    fileprivate static func view(
+    static func view(
         _ armor: Armor,
         _ enchantments: ItemEnchantmentResolver?
     ) -> ItemDefinition {
@@ -520,7 +521,7 @@ nonisolated enum ItemDefinitionViews {
         view(scroll.formID, .scroll, scroll.header.fields, scroll.itemValue)
     }
 
-    fileprivate static func view(
+    static func view(
         _ weapon: Weapon,
         _ enchantments: ItemEnchantmentResolver?
     ) -> ItemDefinition {

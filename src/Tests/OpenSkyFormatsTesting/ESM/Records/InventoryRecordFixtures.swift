@@ -99,7 +99,7 @@ public enum InventoryFixture: Sendable {
 
     public static func weaponDNAM(
         animation: UInt8, speed: Float, reach: Float, flags: UInt16, skill: Int32 = -1,
-        onHit: UInt32 = 0
+        onHit: UInt32 = 0, moreFlags: UInt32 = 0
     ) -> Data {
         var data = Data([animation, 0, 0, 0])
         data.appendUInt32(speed.bitPattern)
@@ -107,7 +107,8 @@ public enum InventoryFixture: Sendable {
         data.appendUInt16(flags)
         data.append(Data(count: 0x24 - 0x0E))
         data.appendUInt32(onHit)
-        data.append(Data(count: 0x4C - 0x28))
+        data.appendUInt32(moreFlags)
+        data.append(Data(count: 0x4C - 0x2C))
         data.appendUInt32(UInt32(bitPattern: skill))
         data.append(Data(count: 0x60 - 0x50))
         data.appendUInt32(Float(0.75).bitPattern)

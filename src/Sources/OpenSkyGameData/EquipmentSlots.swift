@@ -77,6 +77,10 @@ nonisolated public struct EquippableItem: Equatable, Sendable {
     public let rating: Float
     /// WEAP DNAM speed, which scales a weapon's score when an NPC picks one; 1 otherwise.
     public var speed: Float = 1
+    /// The WEAP `DNAM` flags at `0x28` that decide whether an NPC picks the weapon.
+    public var weaponFlags = Weapon.MoreFlags()
+    /// The model of the WEAP `WNAM` static, which the player's weapon shows in both views.
+    public var playerModelPath: String?
 
     public init(
         occupancy: EquipmentOccupancy,
@@ -141,11 +145,15 @@ nonisolated public struct EquipmentCatalog: Sendable {
         let equipSlots = EquipSlotTable(loadOrder: loadOrder)
         var unresolved = 0
         var skipped = SkippedRecords()
-        var items = loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
-            let armor = try Armor(record: $0, localized: $1)
-            // A shield's ETYP names the left hand, so it conflicts with a two-handed
-            // weapon. Other vanilla armour carries no ETYP.
-            return EquippableItem(
+        let armors = ItemDefinitionStore.inheritingTemplates(
+            loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
+                try Armor(record: $0, localized: $1)
+            }
+        )
+        // A shield's ETYP names the left hand, so it conflicts with a two-handed
+        // weapon. Other vanilla armour carries no ETYP.
+        var items = armors.mapValues { armor in
+            EquippableItem(
                 occupancy: EquipmentOccupancy(
                     slots: armor.bodyTemplate?.slots ?? BodySlots(),
                     hands: equipSlots.hands(of: armor.details.equipType) ?? HandSlots()
@@ -154,9 +162,12 @@ nonisolated public struct EquipmentCatalog: Sendable {
                 rating: Float(armor.armorRating & 0xFFFF) / 100
             )
         }
-        let weapons = loadOrder.indexRecords(of: "WEAP", skipped: &skipped) {
-            try Weapon(record: $0, localized: $1)
-        }
+        let weapons = ItemDefinitionStore.inheritingTemplates(
+            loadOrder.indexRecords(of: "WEAP", skipped: &skipped) {
+                try Weapon(record: $0, localized: $1)
+            }
+        )
+        let staticModels = staticModelPaths(in: loadOrder)
         for (id, weapon) in weapons {
             let resolved = equipSlots.hands(of: weapon.equipType)
             if resolved == nil {
@@ -169,6 +180,9 @@ nonisolated public struct EquipmentCatalog: Sendable {
                 rating: Float(weapon.damage)
             )
             entry.speed = weapon.speed.isFinite && weapon.speed > 0 ? weapon.speed : 1
+            entry.weaponFlags = weapon.moreFlags
+            entry.playerModelPath = weapon.details.firstPersonModel
+                .flatMap { staticModels[$0.rawValue] }
             items[id] = entry
         }
         let ammunition = loadOrder.indexRecords(of: "AMMO", skipped: &skipped) {
@@ -188,6 +202,15 @@ nonisolated public struct EquipmentCatalog: Sendable {
             unresolvedEquipTypes: unresolved,
             skippedRecords: skipped
         )
+    }
+
+    /// Each `STAT` model path, for the `WNAM` model of the player's weapon. A static that
+    /// fails to decode has none.
+    private static func staticModelPaths(in loadOrder: LoadOrderPlugins) -> [UInt32: String] {
+        var statics = SkippedRecords()
+        return loadOrder.indexRecords(of: "STAT", skipped: &statics) { record, _ in
+            try StaticObject(record: record).model?.path
+        }
     }
 
     /// `item`'s entry, or nil when no loaded plugin describes it as equippable.

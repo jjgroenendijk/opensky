@@ -173,8 +173,8 @@ nonisolated public struct InventoryBaselineResolver {
         return ReferenceInventoryState(stacks: stacks)
     }
 
-    /// An actor's carried `CNTO` items plus its default outfit. The baseline equipped
-    /// set is the outfit plus the best carried weapon, so an NPC does not start
+    /// An actor's carried `CNTO` items plus its default and sleep outfits. The baseline
+    /// equipped set is the default outfit plus the best carried weapon, so an NPC does not start
     /// empty-handed; only a teammate wears carried armour. A broken template chain yields an empty
     /// baseline; the appearance path already reports it.
     private func actorBaseline(
@@ -183,6 +183,7 @@ nonisolated public struct InventoryBaselineResolver {
         guard let resolved = attempt({ try templates.resolve(base: base) }) else { return .empty }
         let roll = templates.roll(for: base)
         let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, roll: roll) } ?? []
+        let sleepwear = resolved.sleepOutfit.flatMap { outfitStacks($0, roll: roll) } ?? []
         var carriedStacks: [InventoryStack] = []
         let carried = attempt { try templates.resolveCarriedItems(base: base).value } ?? []
         for entry in carried {
@@ -196,7 +197,9 @@ nonisolated public struct InventoryBaselineResolver {
             preference: style.flatMap { combatStyles[$0.rawValue] }
                 .map(WeaponPreference.init(style:))
         )
-        return ReferenceInventoryState(stacks: worn + carriedStacks, equipped: outfit + picks)
+        return ReferenceInventoryState(
+            stacks: worn + sleepwear + carriedStacks, equipped: outfit + picks
+        )
     }
 
     /// One of each `OTFT` item, leveled entries rolled by `roll`, as

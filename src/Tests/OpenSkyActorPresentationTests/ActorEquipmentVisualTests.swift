@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyRendering
 import OpenSkyWorldInterface
 import OpenSkyWorldTesting
@@ -187,6 +188,28 @@ struct ActorEquipmentResolutionTests {
         // A weapon is not a body part and contributes no biped slots.
         #expect(visual.equippedSlots.isEmpty)
         #expect(visual.parts.map(\.modelPath) == ["torso_m.nif", "feet_m.nif"])
+    }
+
+    /// The player's weapon shows the `WNAM` static's model; an NPC's keeps `MODL`.
+    @Test func thePlayerHoldsTheFirstPersonModel() throws {
+        let base = makeResolver()
+        var sword = try #require(base.equipment.item(FormID(0x600)))
+        sword.playerModelPath = "1stpersonsword.nif"
+        let resolver = ActorVisualResolver(
+            races: base.races,
+            armors: base.armors,
+            armorAddons: base.armorAddons,
+            outfits: base.outfits,
+            leveledItems: base.leveledItems,
+            formIDResolver: base.formIDResolver,
+            equipment: makeEquipmentCatalog(extra: [0x600: sword])
+        )
+        let player = try resolver.resolve(
+            appearance: appearance(base: 0x7), equipped: [FormID(0x600)]
+        )
+        let npc = try resolver.resolve(appearance: appearance(), equipped: [FormID(0x600)])
+        #expect(player.attachments.map(\.modelPath) == ["1stpersonsword.nif"])
+        #expect(npc.attachments.map(\.modelPath) == ["sword.nif"])
     }
 
     @Test func weaponWithNoModelIsAReasonTaggedSkip() throws {
