@@ -234,7 +234,10 @@ the power attack combat topic instead of the attack topic.
 OpenSky builds the AI's pick, the attack's stamina and stagger, and the knockdown push. These parts
 are not built yet:
 
-- A blow lands on a target in reach without the hit cone test.
+- The hit cone at contact holds only for an attack the pick chose. A plain swing, by an actor
+  with no attack data or no attack that may start, lands on any target in reach.
+- Reach at contact is OpenSky's swing volume, not the edge-to-edge distance. There is no physics
+  cast after a miss, and no sweep.
 - The left-hand pool is chosen only for a left-hand swing. The left-hand flag does not limit which
   hand the AI swings.
 - The bash state and its damage are not built. An attack with the bash flag is left out of the
