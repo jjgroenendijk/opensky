@@ -27,13 +27,22 @@ nonisolated extension CombatBehaviorMachine {
     /// A step that closes on the target, at the pace of its distance band.
     mutating func approach(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         var step = unchanged()
-        step.command = command(.approach(inputs.targetPosition))
-        step.pace = CombatApproachRule.pace(
+        if let goal = placeGoal(inputs) {
+            step.command = command(.approach(goal.point))
+            step.booksPlace = goal.bearing
+        } else {
+            step.command = command(.approach(inputs.targetPosition))
+        }
+        step.pace = approachPace(inputs)
+        return step
+    }
+
+    func approachPace(_ inputs: CombatBehaviorInputs) -> CombatPace {
+        CombatApproachRule.pace(
             distance: inputs.distance, inner: settings.backOffRadius + inputs.reach,
             outer: settings.walkRadius + inputs.reach,
             slowdownDistance: settings.slowdownDistance
         )
-        return step
     }
 
     /// A heal when hurt below the threshold, else a shout when one is ready and reaches.

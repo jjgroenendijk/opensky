@@ -9,7 +9,7 @@ import simd
 
 nonisolated struct CombatCloseMoveLoop: Equatable, Sendable {
     enum Kind: String, Equatable, Sendable {
-        case backOff, circle, fallBack
+        case backOff, circle, fallBack, reposition
     }
 
     struct Move: Equatable, Sendable {
@@ -97,6 +97,19 @@ nonisolated struct CombatCloseMoveLoop: Equatable, Sendable {
         return .reposition(alternate)
     }
 
+    /// Starts a walk to a free place around the target, which ends on arrival.
+    mutating func startReposition(
+        to point: SIMD3<Float>, now: Float, inputs: CombatBehaviorInputs,
+        settings: CombatCloseRangeSettings
+    ) -> CombatMovementCommand {
+        move = Move(
+            kind: .reposition, destination: point, alternate: nil, startedAt: now,
+            nextCheck: now + settings.checkSeconds, lastDistance: inputs.distance
+        )
+        startedCount += 1
+        return .reposition(point)
+    }
+
     /// The circle and fallback rolls, each on its own, in a random order when both pass.
     /// Back off comes last, with its own roll when it is tried.
     private func pass(
@@ -147,6 +160,8 @@ nonisolated extension CombatCloseMoveLoop {
             return circlePoints(inputs, settings: settings, random: &random)
         case .fallBack:
             return fallBackPoint(inputs, settings: settings).map { [$0] } ?? []
+        case .reposition:
+            return []
         }
     }
 
@@ -261,6 +276,10 @@ nonisolated extension CombatCloseMoveLoop {
             }
         case .circle:
             if arrived || aheadDistance > rules.settings.circleBreakDistance {
+                return .succeeded
+            }
+        case .reposition:
+            if arrived {
                 return .succeeded
             }
         case .fallBack:

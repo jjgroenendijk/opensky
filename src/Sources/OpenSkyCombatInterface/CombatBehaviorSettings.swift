@@ -128,6 +128,10 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     public var closeRange: CombatCloseRangeSettings?
     /// The block loop. A combat style sets it; nil rolls the block chance once per gap.
     public var blockLoop: CombatBlockLoopSettings?
+    /// The surround, distant circle, and place moves of a styled melee NPC, and the
+    /// strafe of a styled archer. Nil advances straight at the target and never strafes.
+    public var movement: CombatMovementSettings?
+    public var strafe: CombatStrafeSettings?
 
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()

@@ -44,14 +44,20 @@ nonisolated public struct CombatAssistReadout: Equatable, Sendable {
     /// One fighter's back off, circle, or fall back moves.
     nonisolated public struct CloseMoves: Equatable, Sendable {
         public var actor: ReferenceKey
-        /// `backOff`, `circle`, or `fallBack`; nil between moves.
+        /// `backOff`, `circle`, `fallBack`, `reposition`, `surround`, `distantCircle`, or
+        /// `strafe`; nil between moves.
         public var current: String?
         public var started: Int
+        /// The bearing from the target of the place the fighter holds, in degrees.
+        public var placeDegrees: Float?
 
-        public init(actor: ReferenceKey, current: String?, started: Int) {
+        public init(
+            actor: ReferenceKey, current: String?, started: Int, placeDegrees: Float? = nil
+        ) {
             self.actor = actor
             self.current = current
             self.started = started
+            self.placeDegrees = placeDegrees
         }
     }
 

@@ -10,6 +10,9 @@ nonisolated extension CombatBehaviorMachine {
     mutating func advanceCloseMoves(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         var step = unchanged()
         guard let close = settings.closeRange, inputs.archery == nil else { return step }
+        if let place = reposition(inputs) {
+            return place
+        }
         let rules = CombatCloseMoveLoop.Rules(
             settings: close, backOffDistance: inputs.reach + settings.backOffRadius
         )
@@ -36,6 +39,13 @@ nonisolated extension CombatBehaviorMachine {
     /// No path reaches the point of the move just asked for. Returns the command for the
     /// circle's other side, when it has one.
     public mutating func refuseCloseMove() -> SIMD3<Float>? {
+        if paths.move != nil {
+            let other = paths.refused()
+            if other != nil {
+                secondsSinceCommand = 0
+            }
+            return other
+        }
         guard case let .reposition(point)? = closeMoves.refused(now: phaseSeconds) else {
             return nil
         }
@@ -45,11 +55,11 @@ nonisolated extension CombatBehaviorMachine {
 
     /// The close-range move under way, for the readout.
     public var closeMoveKind: String? {
-        closeMoves.move?.kind.rawValue
+        pathMoveKind ?? closeMoves.move?.kind.rawValue
     }
 
     /// Close-range moves started since construction.
     public var closeMoveCount: Int {
-        closeMoves.startedCount
+        closeMoves.startedCount + pathMoveCount
     }
 }

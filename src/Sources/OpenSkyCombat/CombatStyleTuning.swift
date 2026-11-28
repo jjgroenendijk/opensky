@@ -32,6 +32,8 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     /// `CSCR` circle and fallback multipliers, 0 to 1.
     public var circleMultiplier: Float = 0.2
     public var fallbackMultiplier: Float = 0.2
+    /// `CSLR`, the strafe multiplier, 0 to 1.
+    public var strafeMultiplier: Float = 0.2
     /// The `CSME` bash values.
     public var bash = CombatBashTargetMults()
     /// The style's editor ID, for the readout.
@@ -84,6 +86,7 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         attackWeights = NPCAttackWeights(style: style)
         circleMultiplier = style.value(.circleMultiplier) ?? circleMultiplier
         fallbackMultiplier = style.value(.fallbackMultiplier) ?? fallbackMultiplier
+        strafeMultiplier = style.strafeMultiplier ?? strafeMultiplier
         bash.bash = style.value(.bashMultiplier) ?? bash.bash
         bash.recoil = style.value(.bashRecoilMultiplier) ?? bash.recoil
         bash.attack = style.value(.bashAttackMultiplier) ?? bash.attack
@@ -170,6 +173,8 @@ nonisolated extension CombatBehaviorSettings {
             offensive: tuning.offensiveMultiplier, defensive: tuning.defensiveMultiplier,
             bash: tuning.bash
         )
+        settings.movement = CombatMovementSettings(circle: tuning.circleMultiplier)
+        settings.strafe = CombatStrafeSettings(strafe: tuning.strafeMultiplier)
         return settings
     }
 }

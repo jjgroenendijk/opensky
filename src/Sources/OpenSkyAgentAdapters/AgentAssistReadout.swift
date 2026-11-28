@@ -27,12 +27,6 @@ struct AgentAssistReadout {
                 "power": .bool(pick.isPowerAttack), "knockdown": .init(pick.knockdown)
             ]
         }
-        let moves = readout.closeMoves.map { moves -> AgentJSON in
-            [
-                "actor": key(moves.actor), "current": moves.current.map(AgentJSON.string) ?? .null,
-                "started": .init(moves.started)
-            ]
-        }
         let guards = readout.guards.map { guards -> AgentJSON in
             [
                 "actor": key(guards.actor),
@@ -59,7 +53,7 @@ struct AgentAssistReadout {
         return [
             "attackTracks": .array(tracks),
             "attackPicks": .array(picks),
-            "closeMoves": .array(moves),
+            "closeMoves": .array(readout.closeMoves.map(Self.closeMovesJSON)),
             "guards": .array(guards),
             "autoAim": readout.autoAim.map {
                 ["target": key($0.target.key), "rightHandIsFree": .bool($0.rightHandIsFree)]
@@ -70,6 +64,15 @@ struct AgentAssistReadout {
             "processLevels": .object(
                 hub.hosts.packages.processReadout.mapValues { AgentJSON.number($0) }
             )
+        ]
+    }
+
+    private static func closeMovesJSON(_ moves: CombatAssistReadout.CloseMoves) -> AgentJSON {
+        [
+            "actor": .string(moves.actor.description),
+            "current": moves.current.map(AgentJSON.string) ?? .null,
+            "started": .init(moves.started),
+            "place": moves.placeDegrees.map { AgentJSON($0) } ?? .null
         ]
     }
 

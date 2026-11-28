@@ -247,9 +247,8 @@ with their chances, angles, distances, and waits. These parts are not built yet:
 
 - An actor without a combat style waits a fixed attack interval and makes no close-range moves.
   In the game such an actor uses the default style.
-- The out-of-range and out-of-position choices: distant circle, surround, reposition, and
-  falling back to a ranged weapon. No actor books a place around its target, and the ranged loop
-  does not strafe.
+- Falling back to a ranged weapon. The surround, distant circle, places, reposition, and strafe
+  are built ([combat movement](/engine/combat-movement.md#in-opensky)).
 - Some move checks: a circle ending once its path point is within half the reach of the target,
   a fallback cancelled 1.5 radii off its path point or by the angle bands, and the 64-unit navmesh
   tolerance. The per-fighter distance is taken as 0.

@@ -64,3 +64,6 @@ apply: each row names the value, OpenSky's choice, and the page with the detail.
 | Bare-hand block | Bare hands block only with a shield, and never bash | [combat blocking](/engine/combat-blocking.md#in-opensky) |
 | Block attack distance | The per-fighter distance is both actors' radii | [combat blocking](/engine/combat-blocking.md#in-opensky) |
 | `CSME` bash defaults | A missing bash value reads as 1 | [combat blocking](/engine/combat-blocking.md#in-opensky) |
+| Place distance | A place lies 8 units inside the striking distance | [combat movement](/engine/combat-movement.md#in-opensky) |
+| Place arc distance | The arc's width is worked out at the NPC's reach | [combat movement](/engine/combat-movement.md#in-opensky) |
+| `CSLR` default | A style without a strafe value reads as 0.2 | [combat movement](/engine/combat-movement.md#in-opensky) |
