@@ -292,10 +292,19 @@ extension CombatLoopRuntime.BehaviorDrive {
         actor: CombatActorObservation, weapon: MeleeWeaponProfile, target: MeleeTarget
     ) -> Bool {
         let settings = owner.settings
+        let direction = owner.facing(from: actor.feet, toward: target.feet, fallback: actor.yaw)
+        if
+            let attack = owner.pickedAttacks[actor.key],
+            !NPCAttackPick.isInCone(
+                attack.data, heading: actor.yaw, directionToTarget: direction, mult: 1
+            )
+        {
+            return false
+        }
         let volume = MeleeSwing.volume(
             feet: actor.feet,
             capsule: actor.capsule,
-            facing: owner.facing(from: actor.feet, toward: target.feet, fallback: actor.yaw),
+            facing: direction,
             reach: MeleeSwing.reach(
                 weapon: weapon, settings: settings, actorScale: actor.scale,
                 unarmedReach: actor.unarmedReach
