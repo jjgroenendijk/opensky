@@ -10,9 +10,9 @@ tags: [format, plugin, records, quests]
 
 A QUST holds a quest's journal stages, its objectives, and the aliases that point at world
 objects. The stage scripts are not here. They are in the QUST part of `VMAD`
-([VMAD](/formats/vmad.md)). Quest state at runtime is on
-[runtime state](/engine/runtime-state.md). Shared decode rules are on
-[record decoders](/formats/records.md).
+([VMAD](vmad.md)). Quest state at runtime is on
+[runtime state](../engine/runtime-state.md). Shared decode rules are on
+[record decoders](records.md).
 
 Sources: UESP [`/QUST`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/QUST), and xEdit
 `dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(QUST, 'Quest', ...)` at line 8759: `DNAM`
@@ -58,7 +58,7 @@ After `ANAM`, it is a plain zstring with the quest description. `QSTA` after `AN
 record-level target whose word is a reference FormID, not an alias ID. `Skyrim.esm` has none.
 
 The journal text tables: quest `FULL` and objective `NNAM` come from `.strings`, and the
-stage `CNAM` text comes from `.dlstrings` ([strings](/formats/strings.md)).
+stage `CNAM` text comes from `.dlstrings` ([strings](strings.md)).
 
 ## Alias fill types
 

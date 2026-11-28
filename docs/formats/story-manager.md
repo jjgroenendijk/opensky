@@ -9,7 +9,7 @@ tags: [format, plugin, quest]
 
 The story manager starts quests when game events happen. Its nodes form a tree: event nodes
 (`SMEN`) name an event, branch nodes (`SMBN`) group children, and quest nodes (`SMQN`) list
-the quests to start. The runtime is on the [story manager](/engine/story-manager.md) page.
+the quests to start. The runtime is on the [story manager](../engine/story-manager.md) page.
 
 Source: xEdit `dev-4.1.6`, commit `9fb0168`,
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)

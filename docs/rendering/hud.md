@@ -10,8 +10,8 @@ tags: [rendering, ui, swf, hud]
 # Gameplay HUD
 
 The gameplay HUD is the vanilla `Interface\hudmenu.swf`, loaded through the
-[virtual file system](/formats/vfs.md) and run by the [AS2 runtime](/engine/as2-runtime.md) on the
-[SWF layer](/rendering/swf-layer.md). Before it publishes any state, the engine checks that the
+[virtual file system](../formats/vfs.md) and run by the [AS2 runtime](../engine/as2-runtime.md) on the
+[SWF layer](swf-layer.md). Before it publishes any state, the engine checks that the
 functions it needs exist on `/HUDMovieBaseInstance`. Missing game data, a missing function, or a
 renderer failure leaves the HUD off and logs the reason. It never stops the 3D world from starting.
 
@@ -31,8 +31,8 @@ observed by probing the installed movie. It starts with 203 display nodes and no
 
 The marker field order comes from the movie's own reader of `CompassTargetDataA`. Alpha and scale
 use Flash's 0 to 100 property units. The meters are fed from the
-[actor value store](/engine/actor-value-store.md#hud-bars), and the prompt and marker from
-[interaction](/engine/interaction.md).
+[actor value store](../engine/actor-value-store.md#hud-bars), and the prompt and marker from
+[interaction](../engine/interaction.md).
 
 Heading zero is north (world +Y), and east (+X) is 90. OpenSky keeps headings in 0 up to 360. The
 player and compass angles get the same camera yaw. A local visual check confirmed that heading zero
@@ -63,7 +63,7 @@ with the item info until OpenSky publishes item info.
 
 The subtitle holder is also used for real. Writing a line sets
 `/HUDMovieBaseInstance/SubtitleTextHolder/textField` and shows the holder. Clearing the line hides the
-holder, so no empty box is left ([dialogue menu](/engine/dialogue-menu.md)).
+holder, so no empty box is left ([dialogue menu](../engine/dialogue-menu.md)).
 
 The meters are the clips `/HUDMovieBaseInstance/Health`, `Magica`, and `Stamina`, as spelled in the
 movie. Hiding a meter hides its clip. Crosshair and compass visibility use the movie's own setters.
@@ -200,12 +200,12 @@ hint such as `Use [Look] to look around.` shows the key bound to `Look` in place
 ## The HUD layer
 
 The HUD draws on its own SWF layer, under the menu layer
-([SWF layer](/rendering/swf-layer.md#layers)). A menu movie takes the menu layer and leaves the HUD
+([SWF layer](swf-layer.md#layers)). A menu movie takes the menu layer and leaves the HUD
 running under it. The HUD Opacity setting and a loading screen's cover reach only the HUD layer.
 
 OpenSky puts the menu modes on in the order the menus opened, above the modes that follow the
 player. `Favor` is on while the player chooses a target in
-[follower command mode](/engine/follower-commands.md), and goes below the other player modes, in
+[follower command mode](../engine/follower-commands.md), and goes below the other player modes, in
 the order of the reset above. `Favor` hides the three meters. The menu modes hide every part
 OpenSky also switches: the meters, the enemy health bar, and the item info. Which parts each menu
 mode shows comes from the movie's element list:

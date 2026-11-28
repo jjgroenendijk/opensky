@@ -8,7 +8,7 @@ tags: [format, audio, wave, riff, pcm]
 
 # RIFF/WAVE container (.wav)
 
-Music and voice ship as [`.xwm`](/formats/xwm.md), which holds compressed WMA audio. Every
+Music and voice ship as [`.xwm`](xwm.md), which holds compressed WMA audio. Every
 sound effect (footsteps, doors, hits, creatures) ships as a plain RIFF/WAVE file with
 uncompressed linear PCM. There is no codec. OpenSky only turns stored integers into floats.
 
@@ -57,7 +57,7 @@ by their size plus the even-byte pad. Mod tools write such chunks.
 
 For sound at a position in the world, OpenSky mixes all channels to mono.
 `AVAudioEnvironmentNode` places only mono sounds in 3D. It plays stereo flat. Streamed
-`.xwm` sources follow the same rule (see [audio](/engine/audio.md)).
+`.xwm` sources follow the same rule (see [audio](../engine/audio.md)).
 
 ## Which formats OpenSky reads
 

@@ -9,7 +9,7 @@ tags: [format, swf, ui, actionscript, scaleform]
 # SWF actions
 
 SWF movies carry ActionScript 1 and 2 bytecode. This page covers how the bytecode is stored.
-The [AS2 runtime](/engine/as2-runtime.md) runs it. The container is on [SWF](/formats/swf.md).
+The [AS2 runtime](../engine/as2-runtime.md) runs it. The container is on [SWF](swf.md).
 
 Reference: Adobe SWF File Format Specification v19, chapter 5 "Actions": "DoAction" and
 "ACTIONRECORD" (p. 63), "DoInitAction" (p. 108), and the action tables for SWF 3
@@ -110,7 +110,7 @@ stream. `ActionWith` and `ActionTry` size their bodies the same way.
 `FinallyBlockFlag`, `CatchBlockFlag`), then `TrySize`, `CatchSize`, and `FinallySize` as
 UI16 (always all three), then `CatchName` STRING or `CatchRegister` UI8.
 
-STRINGs decode leniently ([string decoding](/decisions/string-decoding.md)).
+STRINGs decode leniently ([string decoding](../decisions/string-decoding.md)).
 
 ## CLIPACTIONS
 

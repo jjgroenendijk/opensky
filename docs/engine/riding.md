@@ -9,8 +9,8 @@ tags: [engine, player, animation]
 
 The player mounts a horse or a tamed dragon with the use key. While mounted, the movement keys
 drive the horse, and the use key dismounts. A dragon flies, and the rider gives it orders instead
-([dragon flight](/engine/dragon-flight.md#riding)). A cart rider, which the player does not
-steer, is in [vehicles](/engine/vehicles.md).
+([dragon flight](dragon-flight.md#riding)). A cart rider, which the player does not
+steer, is in [vehicles](vehicles.md).
 
 ## Who can be mounted
 
@@ -20,10 +20,10 @@ An actor can be mounted when all of these pass:
   game reads a race flag; OpenSky reads the skeleton, because every vanilla mount race has the bone.
 - It is alive, and no other actor rides it.
 - A dragon (keyword `ActorTypeDragon`) passes the perk entry point Allow Mount Actor (91), with the
-  dragon as the target ([perk entry points](/engine/perk-entry-points.md#activation)).
+  dragon as the target ([perk entry points](perk-entry-points.md#activation)).
 
 Mounting a horse somebody else owns is a theft worth `iCrimeGoldStealHorse` (100), with the owner
-as the victim ([crime](/engine/crime.md)). No question comes first, so `sStealHorse` ("Do you
+as the victim ([crime](crime.md)). No question comes first, so `sStealHorse` ("Do you
 want to steal this horse?") never shows. The stolen horse does not become the player's last
 ridden horse. The crosshair prompt on a mountable actor reads `sRide`.
 
@@ -43,7 +43,7 @@ Sources: <https://ck.uesp.net/wiki/Settings>, the game settings read on the inst
 ## Mounting and dismounting
 
 Both graphs play one paired clip. A paired clip holds the tracks of both characters; the horse's
-tracks carry the prefix `2_` ([behavior clips](/engine/behavior-clips.md)).
+tracks carry the prefix `2_` ([behavior clips](behavior-clips.md)).
 
 | Step | Rider graph (`0_master.hkx`) | Mount graph |
 | --- | --- | --- |
@@ -78,21 +78,21 @@ graph only follows: it reads the mount's speed, turn, and sprint.
 - The rider keeps melee weapons, bows, and crossbows. Sneak, block, shouts, and attacks with
   anything else (fists, staves, spells) are dropped. Source: UESP "Skyrim:Combat", Horse-Mounted
   Combat. A dragon rider keeps shouts and readied spells instead, and no weapon. Drawing a
-  weapon writes `iCombatStance` on the mount ([actor state graph](/engine/actor-state-graph.md)).
+  weapon writes `iCombatStance` on the mount ([actor state graph](actor-state-graph.md)).
 - A door is refused with `sNotAllowedToUseAutoDoorsWhileonHorse`
-  ([interaction](/engine/interaction.md)).
+  ([interaction](interaction.md)).
 
 ## Sprint and stamina
 
 A ridden horse sprints on its own stamina, not the rider's (UESP "Skyrim:Horses"). Each second
 of sprinting costs the same as the player's sprint at no worn weight: `fSprintStaminaDrainMult`
 times `fSprintStaminaWeightBase`, 7 stamina on the install
-([actor values](/engine/actor-value-store.md)). When the stamina reaches 0, the sprint becomes a
+([actor values](actor-value-store.md)). When the stamina reaches 0, the sprint becomes a
 run. The horse regenerates like any actor, and it may sprint again as soon as its stamina is
 above 0. The rider's stamina is not spent.
 
 While the player rides a horse, the HUD is in `HorseMode`, and its stamina meter shows the
-horse's stamina ([HUD](/rendering/hud.md)).
+horse's stamina ([HUD](../rendering/hud.md)).
 
 [INFO] The drain rule for a horse and the meter swap are OpenSky's reading; no source states
 them. Both settings `iHorseTurnDegrees*` are not in the install's plugins, so their values are
@@ -110,7 +110,7 @@ the dismount. A mount that dies or unloads drops the rider at once.
 
 `IsRidingMount`, `IsBeingRidden`, and `IsPlayersLastRiddenMount` answer for the player too.
 `IsOnFlyingMount` is 1 while the ridden dragon flies
-([world condition functions](/engine/condition-functions-world.md)).
+([world condition functions](condition-functions-world.md)).
 `Actor.Dismount()` starts the dismount clips and returns true when it did.
 
 ## Where OpenSky differs
@@ -118,7 +118,7 @@ the dismount. A mount that dies or unloads drops the rider at once.
 - [INFO] The ridden mount's capsule (radius 40, height 160) is OpenSky's value.
 - [INFO] The camera eye sits the player's standing eye height above the saddle.
 - [INFO] A dragon rider locks the nearest actor within 7500 units
-  ([combat assist](/engine/combat-assist.md#flying-mount-lock)); Switch Target looks 60 degrees
+  ([combat assist](combat-assist.md#flying-mount-lock)); Switch Target looks 60 degrees
   off the view centre. A driven actor slower than 0.5 units per second
   stands. A race without mount data dismounts 50 units left of the saddle and 65 up. All
   are OpenSky's values.

@@ -10,7 +10,7 @@ tags: [rendering, effects, combat, audio]
 
 An impact is what a contact shows: dust under a step, sparks off stone, blood spray from a
 hit. A decal is the flat mark it can leave, such as a blood splat. Both come from the same
-`IPCT` record that picks the impact sound ([footstep records](/formats/footstep.md)).
+`IPCT` record that picks the impact sound ([footstep records](../formats/footstep.md)).
 
 ## Data flow
 
@@ -21,11 +21,11 @@ projectile: PROJ / WEAP -> IPDS -> IPCT for the surface or body material
 IPCT -> sound, MODL impact model, DNAM TXST + DODT decal
 ```
 
-The material lookup follows the `MATT` `PNAM` parent chain ([material types](/formats/material-type.md)).
+The material lookup follows the `MATT` `PNAM` parent chain ([material types](../formats/material-type.md)).
 An actor's body material is its race's `RACE` `NAM4` impact material.
 
 The impact model plays as a short effect at the contact point. It lives 2 s, like other
-instant effect art ([visual effects](/rendering/visual-effects.md)), and its NIF particle
+instant effect art ([visual effects](visual-effects.md)), and its NIF particle
 systems run while it lives. With `IPCT` `DATA` orientation 0 the model's up turns to the
 surface normal; any other orientation follows the projectile, which a contact point does not
 carry, so the model stands upright.
@@ -48,7 +48,7 @@ fog. The random values come from a fixed seed, so a run places the same decals e
 
 `[Display] uMaxDecals` limits the live decals; the oldest goes first. `[Display]
 iMaxDecalsPerFrame` limits the decals placed in one frame; later ones that frame are dropped.
-`[Decals] bDecals` turns decals off ([graphics options](/engine/graphics-options.md)).
+`[Decals] bDecals` turns decals off ([graphics options](../engine/graphics-options.md)).
 
 ## Skin decals
 
@@ -67,7 +67,7 @@ the ground:
   inside the box, so the mark wraps around an arm or a head. The box reaches as far in front
   of and behind the decal as its widest half side.
 - A frame with skin decals copies the scene depth, as the water does
-  ([water](/rendering/water.md)). The boxes draw right after the copy. A frame with no copy,
+  ([water](water.md)). The boxes draw right after the copy. A frame with no copy,
   such as one with a non-perspective camera, draws them as flat quads.
 - The box marks only skinned meshes, as the game does. Each skinned mesh that writes depth
   sets one stencil bit (the top bit of the 8-bit stencil) where it draws, and the box draws

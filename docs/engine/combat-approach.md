@@ -13,7 +13,7 @@ Near the target it slows down, so it does not run past. The game works this out 
 radii and three distance bands.
 
 The values are the ones that apply in play: `Skyrim.esm` where it overrides the program's default.
-The advance and the reposition of [combat movement](/engine/combat-movement.md#out-of-range) walk
+The advance and the reposition of [combat movement](combat-movement.md#out-of-range) walk
 at these speeds.
 
 ## Advance radii
@@ -21,7 +21,7 @@ at these speeds.
 The game works out an inner and an outer advance radius for each fighter.
 
 1. x = D − O.
-   - D is the Defensive Mult of the [combat style](/engine/combat-behavior.md#combat-style).
+   - D is the Defensive Mult of the [combat style](combat-behavior.md#combat-style).
      Against a staggered target D is multiplied by `fCombatAdvanceRadiusStaggerMult`, which is
      0. So every fighter is fully offensive against a staggered target.
    - O is the style's Offensive Mult. When the style's Group Offensive Mult is below 1 and the
@@ -75,10 +75,10 @@ flowchart TD
   2. Outside it the race's acceleration, deceleration, and angular acceleration are multiplied
   by `fCombatPathingAccelerationMult`, `fCombatPathingDecelerationMult`, and
   `fCombatPathingRotationAccelerationMult`, 2 each, and the turn speed is at least 2.25 on the
-  [normalized scale](/formats/movement-types.md#normalized-speed)
-  ([RACE DATA](/formats/actors.md#race-data-in-the-game)).
+  [normalized scale](../formats/movement-types.md#normalized-speed)
+  ([RACE DATA](../formats/actors.md#race-data-in-the-game)).
   How fighters circle, fall back, flank, and strafe comes from their
-  [combat style](/formats/combat-style.md#what-the-values-change).
+  [combat style](../formats/combat-style.md#what-the-values-change).
 
 ## Sprint
 

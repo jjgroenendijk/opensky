@@ -60,7 +60,7 @@ A roll from 0 to 100 below the chance succeeds:
 - The item moves to the player and is marked stolen.
 - Pickpocket gains skill use of `max(1, stack value) ^ fPickpocketSkillUsesCurve` (0.8). The
   stack value is the item's value times the count, or the coins taken. For example, 100 gold
-  gives 39.8 ([skill advancement](/engine/skill-advancement.md)).
+  gives 39.8 ([skill advancement](skill-advancement.md)).
 - The story manager hears an add-item event with the pickpocket method.
 - The misc stat "Items Pickpocketed" goes up by one. "Pockets Picked" goes up by one at the first
   success after the pockets open. The wiki lists both stats without saying what they count, so this
@@ -68,7 +68,7 @@ A roll from 0 to 100 below the chance succeeds:
 
 A failed roll moves nothing. The target noticed, so the pockets close, the HUD shows
 `sPickpocketFail` ("You've been caught pickpocketing."), and the
-[crime](/engine/crime.md) system charges a pickpocket crime. The target is the witness. It
+[crime](crime.md) system charges a pickpocket crime. The target is the witness. It
 costs the faction's flat `CRVA` pickpocket price (25 in vanilla), not a share of the item's value.
 
 The target then refuses another try for two game days. Activating it while sneaking shows its
@@ -80,7 +80,7 @@ UESP gives two ways to end the refusal early:
 
 - A guard comes for the crime and the player makes it "go away quietly": a bribe, a Thane's status,
   or paying as "part of the Guild". This forgets every catch charged to that guard's faction (see
-  [guard response](/engine/guard-response.md)). A paid fine or a jail sentence only unlinks the
+  [guard response](guard-response.md)). A paid fine or a jail sentence only unlinks the
   catches, so a later bribe for another crime does not forget them.
 - "Casting Harmony will cause all affected targets to 'forget' if they have been pickpocketed
   recently. This does not work with other Pacify spells." No field marks Harmony. In the data,
@@ -111,7 +111,7 @@ flowchart TD
 - The HUD shows the failure message in every case.
 - The crime costs the faction's pickpocket price, 25 gold when the faction sets none.
 - The thief also gets the recent theft mark, so a victim who comes to take items back attacks
-  instead ([crime reports](/engine/crime-reports.md#the-alarm-package)).
+  instead ([crime reports](crime-reports.md#the-alarm-package)).
 - A guard target does not attack at once unless the player is already an enemy of its faction.
 
 ## Where OpenSky differs

@@ -108,7 +108,7 @@ radius set by the source's weapon. A higher level replaces a lower one, never th
 | None | unchanged | unchanged |
 
 What the onlooker then does is in
-[random conversations](/engine/random-conversations.md#what-a-watcher-does): it head-tracks the
+[random conversations](random-conversations.md#what-a-watcher-does): it head-tracks the
 fight, says the ObserveCombat line, and steps away.
 
 ## In OpenSky

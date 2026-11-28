@@ -9,7 +9,7 @@ tags: [engine, streaming, lod, terrain, tree, rendering]
 # Distant LOD streaming
 
 Distant LOD (level of detail) draws the land and objects beyond the loaded cells. The files are
-on the [LOD](/formats/lod.md) page. The distance settings come from the [INI](/formats/ini.md)
+on the [LOD](../formats/lod.md) page. The distance settings come from the [INI](../formats/ini.md)
 files.
 
 ## Rings
@@ -29,7 +29,7 @@ limit (`2 * level1`, capped at the maximum) is OpenSky's own choice. It keeps ea
 than the last, with no gaps between them.
 
 A worldspace's `NAMA` multiplies the squared `fBlockLevel0Distance` and
-`fBlockLevel1Distance` thresholds ([world records](/formats/world-records.md)). So the distances
+`fBlockLevel1Distance` thresholds ([world records](../formats/world-records.md)). So the distances
 grow by the square root of `NAMA`. Vanilla worldspaces use 1 or 0.25; 0.25 halves both
 distances. OpenSky scales its level 16 split the same way.
 
@@ -72,14 +72,14 @@ LOD scenes are built on the same serial queue as cells, except the first ring:
 1. At the session start, the first ring is built beside the near grid, in a `@concurrent`
    function with its own mesh and texture libraries, so it never touches the build queue's
    caches. It hides the whole desired near grid. The loading screen stays up until the near
-   grid has finished and this ring is in ([loading screens](/engine/loading-screens.md)).
+   grid has finished and this ring is in ([loading screens](loading-screens.md)).
 2. The second ring waits for the near grid to finish (every cell loaded, empty, or failed),
    so a LOD build cannot hold up near cells.
 3. Each ring leaves out exactly the full cells that draw with it. A new cell that the ring on
    screen covers waits off screen.
 4. When the next ring is ready, it swaps in with the cells it leaves out. There is no moment
    with a hole, and no moment with old LOD over new cells. The rules for when a ring is
-   requested are on the [cell streaming](/engine/cell-streaming.md#distant-lod-and-coverage)
+   requested are on the [cell streaming](cell-streaming.md#distant-lod-and-coverage)
    page.
 5. Old LOD assets stay loaded while cells or the new LOD still use them.
 
@@ -115,7 +115,7 @@ Each ring build, on the build queue:
 1. Object LOD blocks merge their large references into separate shapes. On the real install,
    `tamriel.4.4.-8.bto` holds `obj-LargeRef`, `objsnow-LargeRef`, `objHD-LargeRef`, and
    `objsnowHD-LargeRef`, each with a `BSDistantObjectLargeRefExtraData` block. Each shape
-   holds one segment per cell ([LOD format](/formats/lod.md#large-references)). A block that
+   holds one segment per cell ([LOD format](../formats/lod.md#large-references)). A block that
    reaches into the ring drops the segments of the cells inside the large radius, and keeps
    the rest.
 2. The ring's cells are every cell inside the large radius, minus the cells the ring leaves
@@ -127,7 +127,7 @@ Each ring build, on the build queue:
 3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
    their full model, as the cell build places them. A listed reference stays only while it is
    still large: its size must be strictly above `fLargeRefMinSize` (1,024 by default). The size
-   is the 3D [bounds radius](/formats/records.md#object-bounds) of its base times the
+   is the 3D [bounds radius](../formats/records.md#object-bounds) of its base times the
    reference's scale. A reference with its own `XPRM` primitive uses the length of the
    primitive's half-extents instead, without the scale. Only a `STAT` base, or an `MSTT` with
    `DATA` flag `0x4`, can pass; any other base, and a zero box, fails. So a plugin that raises
@@ -222,12 +222,12 @@ the switch is off.
 - The normal map is 256 x 256 and holds the `VNML` normals in model space, x in red, z in
   green, and y in blue, as vanilla's `_n` maps do.
 - The generated block keeps the land textures' own brightness, so a ring with generated
-  blocks draws with no [brightness curve](/rendering/surface-shading.md).
+  blocks draws with no [brightness curve](../rendering/surface-shading.md).
 
 The blocks are built on the cell build queue when a ring first needs them, and the mesh cache keeps
 them like a file's model. The build thread reads the land and the land textures; the mesh, the two
 maps, and their DDS bytes are then made on every core, a few dozen blocks at a time
-([concurrency](/decisions/concurrency.md)). The quick first ring of a session still draws the
+([concurrency](../decisions/concurrency.md)). The quick first ring of a session still draws the
 vanilla files, because its builder cannot read the plugins; the second build of the same center
 swaps the generated blocks in after the loading screen lifts. `openskycli game state frame` reports
 `generatedTerrainBlocks`, and `openskycli render` prints the count with the LOD line.

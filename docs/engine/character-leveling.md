@@ -9,12 +9,12 @@ tags: [engine, progression, leveling, perks, actor-values, conditions, papyrus]
 
 # Character leveling
 
-Skills rise by use ([skill advancement](/engine/skill-advancement.md)). Each skill point adds
+Skills rise by use ([skill advancement](skill-advancement.md)). Each skill point adds
 character experience. Enough experience raises the character level, which gives one attribute
 pick and one perk point. This page covers that second half.
 
-The record side is [perks](/formats/perks.md) for `PERK`, and
-[actor value information](/formats/actor-value-information.md) for the `AVIF` perk tree that
+The record side is [perks](../formats/perks.md) for `PERK`, and
+[actor value information](../formats/actor-value-information.md) for the `AVIF` perk tree that
 every spend is checked against.
 
 ## The curve
@@ -52,7 +52,7 @@ prefixes:
 `Skyrim.esm` sets all four, and the fallback values agree with it. They are still read, not
 assumed.
 
-[Actor values](/engine/actor-values.md) also reads `iAVDhmsLevelUp`, as the points an NPC's
+[Actor values](actor-values.md) also reads `iAVDhmsLevelUp`, as the points an NPC's
 class spreads over the three attributes.
 
 ## Where progress is saved
@@ -61,7 +61,7 @@ A player progress component holds the level, the experience toward the next leve
 perk points, the owed attribute picks, the picks already made, and a count of skill points
 gained. It is saved in the `PLVL` chunk. How often each skill was made legendary rides in a
 `PLGD` chunk beside it. A session that never leveled writes no chunk
-([save chunks](/formats/opensky-save.md#chunks)).
+([save chunks](../formats/opensky-save.md#chunks)).
 
 Skill progress is not here. It lives in the `Skill Advance` actor values, because the vanilla
 table already has one slot per skill for exactly that. Nothing in that table holds a character
@@ -114,7 +114,7 @@ value.
 
 One validator enforces the tree, the rank order, and the skill requirement. The perk runtime
 stays a plain grant layer, because quests, scripts, and races also give perks that no tree
-limits ([perks](/engine/perks.md)).
+limits ([perks](perks.md)).
 
 | Rule | Refusal | Source |
 | --- | --- | --- |
@@ -161,7 +161,7 @@ Indices are the stored numbers. The Creation Kit adds 4096.
 | 277 | `GetBaseActorValue` | The base value, never with modifiers |
 
 `GetBaseActorValue` reads the base on purpose. A fortified skill is not a trained one, so a
-potion cannot buy a perk requirement ([condition evaluation](/engine/conditions.md)).
+potion cannot buy a perk requirement ([condition evaluation](conditions.md)).
 
 ## Papyrus
 
@@ -174,13 +174,13 @@ potion cannot buy a perk requirement ([condition evaluation](/engine/conditions.
 | `Game.SetPerkPoints(int)` | SKSE | Sets the pool; a negative value gives 255 |
 
 `GetPerkPoints` and `ModPerkPoints` are not vanilla Papyrus. The Creation Kit wiki lists them as SKSE
-additions to the `Game` script ([Papyrus VM](/engine/papyrus-vm.md)). The negative-value rules come
+additions to the `Game` script ([Papyrus VM](papyrus-vm.md)). The negative-value rules come
 from [AddPerkPoints - Game](https://ck.uesp.net/wiki/AddPerkPoints_-_Game) and
 [SetPerkPoints - Game](https://ck.uesp.net/wiki/SetPerkPoints_-_Game). A session with no leveling
 refuses all of them, instead of answering 0, which would look like a player who spent everything.
 
 ## Menus, legendary skills, and the altar
 
-The [skills menu](/engine/skills-menu.md) spends the pick and the points, and covers legendary
+The [skills menu](skills-menu.md) spends the pick and the points, and covers legendary
 skills and the Dragonborn altar. Experience multipliers are a perk entry point
-([skill advancement](/engine/skill-advancement.md#experience-multipliers)).
+([skill advancement](skill-advancement.md#experience-multipliers)).

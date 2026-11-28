@@ -13,7 +13,7 @@ header, conditions for when it can be taken, and a list of effects. An effect ca
 quest stage, give an ability spell, or hook an entry point. An entry point is a named place
 in a game formula, for example "Mod Attack Damage", where the engine asks: "does anything
 change this value?". Entry points connect perks to every other system. See
-[perks at runtime](/engine/perks.md).
+[perks at runtime](../engine/perks.md).
 
 ## Sources
 
@@ -31,11 +31,11 @@ sorts them by name and misses the last few. Both agree on every ID they both lis
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
-| `VMAD` | struct | Scripts and fragments. See [VMAD](/formats/vmad.md) |
+| `VMAD` | struct | Scripts and fragments. See [VMAD](vmad.md) |
 | `FULL` | lstring | Name |
 | `DESC` | lstring | Description |
 | `ICON` | zstring | Image path for the editor |
-| `CTDA` | struct | Conditions to take the perk. See [conditions](/formats/conditions.md) |
+| `CTDA` | struct | Conditions to take the perk. See [conditions](conditions.md) |
 | `DATA` | 5 x uint8 | Header, below |
 | `NNAM` | FormID | Next rank of this perk. Null on the last rank |
 | effects | sections | Repeated `PRKE` ... `PRKF` sections, below |
@@ -100,7 +100,7 @@ the attacker, the weapon, or the spell. The UESP "Perk Effect Types" table lists
 Before the first `PRKE`, `DATA` is the 5-byte header and `CTDA` is a condition to take the
 perk. Inside a section, `DATA` is the section data and `CTDA` belongs to a condition tab.
 Only the position tells them apart, so the decoder tracks the open section. The quest
-decoder does the same (see [records](/formats/quest-records.md)).
+decoder does the same (see [records](quest-records.md)).
 
 ## Functions
 
@@ -189,4 +189,4 @@ The ten most used entry points cover more than half of all uses:
 | Mod Buy Prices | 8 | 15 |
 
 The perk tree layout comes from `AVIF`, not from `PERK`. See
-[actor value information](/formats/actor-value-information.md).
+[actor value information](actor-value-information.md).

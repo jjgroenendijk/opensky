@@ -10,7 +10,7 @@ tags: [engine, ui, streaming]
 
 A door to another cell replaces the whole scene. While the new cell builds, the game shows a
 loading screen: a slowly turning object on a dark background, with a tip below it. The record
-and how a screen is picked are on the [loading screen records](/formats/loading-screens.md)
+and how a screen is picked are on the [loading screen records](../formats/loading-screens.md)
 page.
 
 ## Timeline
@@ -59,7 +59,7 @@ player's own cell in full detail.
 
 A session that starts in the world, not at the title screen, also starts behind a loading
 screen. It is picked at once and holds until the near grid and the first ring of
-[distant LOD](/engine/distant-lod.md) are in, or for at most 60 seconds. So the world never opens
+[distant LOD](distant-lod.md) are in, or for at most 60 seconds. So the world never opens
 with bare sky past the grid edge. Then the same minimum and fade apply.
 
 In the game, the screen holds as long as the load takes. OpenSky builds a cell much faster,

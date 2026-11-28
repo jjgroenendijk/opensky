@@ -11,11 +11,11 @@ tags: [decision, swf, as2, ui, scaleform]
 OpenSky renders the player's own vanilla `Interface/*.swf` movies instead of a native UI. The
 objection to that route was that reimplementing ActionScript is a second virtual machine of unbounded
 size, next to the Papyrus VM. This page answers that objection with a measurement. The numbers are on
-the [AS2 census](/decisions/swf-as2-census.md) page.
+the [AS2 census](swf-as2-census.md) page.
 
 ## Context
 
-The movies decode and render ([SWF container](/formats/swf.md), [SWF layer](/rendering/swf-layer.md)).
+The movies decode and render ([SWF container](../formats/swf.md), [SWF layer](../rendering/swf-layer.md)).
 But many draws resolve to alpha 0 through their `CXFORM`, and some movies change no pixels at all on
 frame 1. Those menus are blank because their ActionScript has not run, not because decoding failed.
 
@@ -78,9 +78,9 @@ Enough of the `gfx` library for a real menu: `EventDispatcher`, `addEventListene
 
 Deferred on purpose. `InventoryDefines`, `_CategoriesList`, `EntriesA`, and `iSelectedIndex` are data
 contracts that mean nothing before the engine has the data to fill them. Each lands with the work
-that owns its data: the [inventory menu](/engine/inventory-menu.md), the
-[journal](/engine/journal.md), the [dialogue menu](/engine/dialogue-menu.md), and the
-[system menu](/engine/system-menu.md), which fills `startmenu.swf`'s `EntriesA` through
+that owns its data: the [inventory menu](../engine/inventory-menu.md), the
+[journal](../engine/journal.md), the [dialogue menu](../engine/dialogue-menu.md), and the
+[system menu](../engine/system-menu.md), which fills `startmenu.swf`'s `EntriesA` through
 `sendMenuProperties`. `modmanager.swf` has no owner yet. Until an owner lands, each API is a logged
 no-op with a tally entry.
 
@@ -105,7 +105,7 @@ so none is a good first target.
 disproved. Its entries are not fixed in the movie: the engine pushes all of them through
 `sendMenuProperties`. And it is the title screen, not the in-game system menu, so it has no Settings
 row. `tweenmenu.swf` was the first interactive menu instead. The
-[system menu](/engine/system-menu.md) page covers `startmenu.swf`.
+[system menu](../engine/system-menu.md) page covers `startmenu.swf`.
 
 ## Budget and safety
 
@@ -115,7 +115,7 @@ are a goal, and a script that loops forever must not take the engine with it.
 - Bounded execution: an action budget and call and re-entry depth limits.
   Going past one aborts that block with a logged diagnostic, and the frame goes on. The largest
   vanilla block has 5,886 records, so a budget far above that still catches a runaway fast. The
-  values are on the [AS2 runtime](/engine/as2-runtime.md) page.
+  values are on the [AS2 runtime](../engine/as2-runtime.md) page.
 - Bad bytecode never crashes. The parser turns a malformed action stream into a warning and stops that
   stream, like the display list parser does with a bad control tag. A type error, a missing member,
   or a jump to a bad offset is a logged diagnostic and a no-op.
@@ -138,7 +138,7 @@ are a goal, and a script that loops forever must not take the engine with it.
 - A menu can run with no missing op and still be wrong. Pixel and UI-state evidence stays the check.
 
 The `_global` scope and constant-pool lifetime questions are settled on the
-[AS2 runtime](/engine/as2-runtime.md) page: one machine per movie, and a function keeps the pool it
+[AS2 runtime](../engine/as2-runtime.md) page: one machine per movie, and a function keeps the pool it
 was defined under.
 
 ## Legal position
@@ -154,6 +154,6 @@ from the user's install at run time.
 - Adobe SWF File Format Specification, version 19: chapter 5 "Actions" (`DoAction` and
   `ACTIONRECORD` p. 63, `DoInitAction` p. 108, per-action tables pp. 64-116), and chapter 3 "The
   display list" (`CLIPACTIONS` pp. 36-37, `ClipEventFlags` pp. 48-49).
-- [AS2 census](/decisions/swf-as2-census.md): the measurement.
-- [SWF container](/formats/swf.md): tag coverage and the action tags.
-- [CLI](/tools/cli.md): `openskycli swf action-sweep`.
+- [AS2 census](swf-as2-census.md): the measurement.
+- [SWF container](../formats/swf.md): tag coverage and the action tags.
+- [CLI](../tools/cli.md): `openskycli swf action-sweep`.

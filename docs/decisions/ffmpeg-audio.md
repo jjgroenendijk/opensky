@@ -10,7 +10,7 @@ tags: [decision, audio, dependency, licensing, ffmpeg]
 # ffmpeg for audio and movie decode
 
 Skyrim ships its sound and music as `.xwm` files: an xWMA container holding Windows Media Audio 2
-packets, and its movies as [Bink](/formats/bink.md) files. Nothing in Apple's frameworks decodes
+packets, and its movies as [Bink](../formats/bink.md) files. Nothing in Apple's frameworks decodes
 either codec. This page covers which ffmpeg, how it is
 linked, and what happens when it is missing.
 

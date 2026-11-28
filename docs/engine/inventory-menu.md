@@ -11,16 +11,16 @@ tags: [engine, ui, menu, swf, inventory, scaleform]
 
 The inventory menu lists what the player carries, filters it by category, and equips, unequips,
 drops, or uses the selected row. It can show itself through the vanilla `Interface\inventorymenu.swf`
-movie. It is a [menu mode](/engine/menu-mode.md) consumer. Like the [system menu](/engine/system-menu.md),
+movie. It is a [menu mode](menu-mode.md) consumer. Like the [system menu](system-menu.md),
 it works with no install, renderer, or movie. Only the movie layer needs them.
 
-This menu fills the inventory list data that the [ActionScript scope](/decisions/swf-as2-scope.md)
+This menu fills the inventory list data that the [ActionScript scope](../decisions/swf-as2-scope.md)
 decision left for later: `_CategoriesList`, `EntriesA`, and `iSelectedIndex`.
 
 ## Row list
 
 The row list is built from the player's inventory state and the item index (see
-[runtime state](/engine/runtime-state.md)). A row has the item's FormID, name, count, weight, value,
+[runtime state](runtime-state.md)). A row has the item's FormID, name, count, weight, value,
 equipped flag, and record type.
 
 Three rules are choices, not results:
@@ -54,7 +54,7 @@ that sets one, the tab keeps OpenSky's English name.
 
 `inventorymenu.swf` places `ItemCard_mc`, `InventoryLists_mc`, and `BottomBar_mc`, but defines none
 of them. They come from three movies under `Inventory components/`. Without merging those movies in,
-the menu has no list at all. See [SWF display list imports](/formats/swf-display-list.md#importassets-57-and-importassets2-71).
+the menu has no list at all. See [SWF display list imports](../formats/swf-display-list.md#importassets-57-and-importassets2-71).
 
 ## List data
 
@@ -88,7 +88,7 @@ The numbers of `equipState` are the `ES_` constants of `InventoryDefines`: `ES_N
 `ES_EQUIPPED` 1, `ES_LEFT_EQUIPPED` 2, `ES_RIGHT_EQUIPPED` 3, and `ES_BOTH_EQUIPPED` 4. OpenSky
 sends 2 for the item in the left hand, 4 when a second copy is in the right hand, 3 for any other
 worn weapon, 1 for anything else worn, and 0 for the rest. A two-handed weapon gets 3; which icon
-the game shows for it is not confirmed ([unverified values](/engine/unverified-values.md)).
+the game shows for it is not confirmed ([unverified values](unverified-values.md)).
 The magic menu sends a readied spell's hands the same way, and `negativeEffect` for a harmful
 effect on the player. `soulLVL`, `bestInClass`, and `isStealing` are not sent.
 
@@ -176,7 +176,7 @@ container movies have only the plain value and weight fields.
 
 The movie owns the focus, as in the game. It opens on the category list alone, in the
 `ONE_PANEL` state of `InventoryLists_mc`. Every arrow key goes to the movie through the engine's
-`InputDelegate` step ([AS2 input](/engine/as2-input.md#focus-and-menu-navigation)):
+`InputDelegate` step ([AS2 input](as2-input.md#focus-and-menu-navigation)):
 
 | State | Key | What the movie does |
 | --- | --- | --- |
@@ -209,10 +209,10 @@ category in the engine, and up and down move the row.
 
 - Activate equips a row, or unequips it if it is equipped. This is the vanilla toggle.
 - The right mouse button is `LeftEquip`: it puts a one-handed weapon into the left hand, or
-  takes the left-hand weapon off ([the left hand](/engine/inventory-state.md#the-left-hand)).
+  takes the left-hand weapon off ([the left hand](inventory-state.md#the-left-hand)).
   On any other row it acts as Activate.
 - Eating an ingredient also teaches its first effect, and using a poison puts it on the drawn weapon
-  ([alchemy](/engine/alchemy.md)). Any other row says so and changes nothing.
+  ([alchemy](alchemy.md)). Any other row says so and changes nothing.
 - R drops the row. A stack of more than five opens the quantity slider first; a smaller one drops
   one copy. The limit is `QUANTITY_MENU_COUNT_LIMIT` in the movie's `InventoryDefines`
   ([quantity](#quantity)).
@@ -265,7 +265,7 @@ aliases, so the item is free again. A quest item:
   `sDropQuestItemWarning`, or `sNoEatQuestItem` for eating.
 - stays when a script calls `RemoveAllItems` with `abRemoveQuestItems` false
   ([RemoveAllItems](https://ck.uesp.net/wiki/RemoveAllItems_-_ObjectReference)).
-- keeps the inventory of the container that holds it through a [cell reset](/engine/cell-reset.md).
+- keeps the inventory of the container that holds it through a [cell reset](cell-reset.md).
 - reads `[quest]` on its row and "quest item" on its item card in `openskycli game state`. The
   vanilla `inventorylists.swf`, `itemcard.swf`, and `inventorymenu.swf` read no quest field, so
   the movie shows no marker.
@@ -306,15 +306,15 @@ change the count by 1, and down and up by 10, which is OpenSky's own step. Accep
 many, and cancel drops none. A movie that ignores `DropItem` also falls back to this prompt.
 
 The container and barter movies use the same slider and the same keys
-([barter](/engine/barter.md#quantity-and-selling-for-less)).
+([barter](barter.md#quantity-and-selling-for-less)).
 
 ## Favourites and hotkeys
 
 A favourite is saved per player in the `FAVS` chunk
-([actor chunks](/formats/opensky-save-actor-chunks.md#favs-favourites)). A favourite can be bound
+([actor chunks](../formats/opensky-save-actor-chunks.md#favs-favourites)). A favourite can be bound
 to one of the hotkeys 1 to 8. Binding a key takes it from the item that held it, and unmarking a
 favourite frees its key. In play, the number keys 1 to 8 are the input actions `Hotkey1` to
-`Hotkey8` ([control map](/formats/controlmap.md)). A hotkey equips its item, or unequips it when
+`Hotkey8` ([control map](../formats/controlmap.md)). A hotkey equips its item, or unequips it when
 it is equipped. A potion, food, or ingredient is used, and a poison goes on the weapon. A key with
 no item, or an item no longer carried, shows a notice and does nothing.
 
@@ -357,7 +357,7 @@ calls `GameDelegate` `ShowSoulGemList`. OpenSky then sends a card of type `ICT_L
 `listItems`: one object per filled soul gem the player carries, with `text`, such as
 "Grand Soul Gem (Petty)", and `chargeAdded` in percent. A press on a row calls
 `ItemCardListCallback` with its index, and that gem recharges the weapon as described in
-[item enchantments](/engine/item-enchantments.md#recharging). With no filled gem, the HUD shows
+[item enchantments](item-enchantments.md#recharging). With no filled gem, the HUD shows
 `sNoChargeItems` ("No items to charge enchantment") instead. A worn piece has no charge, so
 only weapons and staves offer it. Where the game puts the title is not confirmed.
 
@@ -368,10 +368,10 @@ last `UpdateItem3D` call shows it or hides it. Without a movie, the selected row
 
 The model path is the record's `MODL`, or the male world model for armour. It is drawn unlit with
 its diffuse texture, in front of the world, through the menu scene that the [crafting
-menu](/engine/crafting.md#crafting-menu) uses. It draws into a thin slice of depth near the camera,
+menu](crafting.md#crafting-menu) uses. It draws into a thin slice of depth near the camera,
 so the world cannot cover it. The model turns at 0.6 radians a second; the game's rate is not
 measured. A model with a `BSInvMarker` is first turned by the marker's angles, and its fit size is
-multiplied by the marker's zoom ([NIF extra data](/formats/nif-extra-data.md#inventory-marker)). A
+multiplied by the marker's zoom ([NIF extra data](../formats/nif-extra-data.md#inventory-marker)). A
 model that fails to load logs its reason and draws nothing.
 
 ## Gift menu
@@ -397,4 +397,4 @@ gained. OpenSky's native returns at once, with 0.
   never called. The item turns on its own.
 
 The container and barter menus reuse this row list and list code, one pane per side
-([barter](/engine/barter.md)).
+([barter](barter.md)).

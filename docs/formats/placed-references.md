@@ -9,9 +9,9 @@ tags: [format, plugin, records, reference, trigger]
 # Placed references
 
 A REFR places one base object in a cell. Placed actors (ACHR) have the same shape; see
-[actor records](/formats/actors.md). The base objects are on
-[world records](/formats/world-records.md). Shared decode rules are on
-[record decoders](/formats/records.md).
+[actor records](actors.md). The base objects are on
+[world records](world-records.md). Shared decode rules are on
+[record decoders](records.md).
 
 Sources: UESP [`/REFR`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR) and xEdit
 `dev-4.1.6` `Core/wbDefinitionsTES5.pas`.
@@ -31,7 +31,7 @@ Sources: UESP [`/REFR`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/REFR
 | `XOWN` | FormID | owner, an NPC_ or FACT |
 | `XRNK` | int32 | faction rank needed to use it freely |
 | `XCNT` | int32 | stack size of a placed item; absent means 1 |
-| `VMAD` | struct | scripts ([VMAD](/formats/vmad.md)) |
+| `VMAD` | struct | scripts ([VMAD](vmad.md)) |
 
 `XTEL` is always 32 bytes: destination door REFR FormID, position float32[3], rotation
 float32[3] in radians, and uint32 flags (`0x01` no alarm). Any other size is malformed.
@@ -123,7 +123,7 @@ In `Skyrim.esm` (probed on the vanilla install):
 - A portal box is thin on its local Y axis (half size 1), so it is a doorway-sized plate.
 - Room boxes are often turned about Z, so a room is an oriented box, not an axis-aligned one.
 
-How OpenSky uses them is on the [room and portal culling](/rendering/room-portal-culling.md)
+How OpenSky uses them is on the [room and portal culling](../rendering/room-portal-culling.md)
 page.
 
 ## Locks, enable parents, and map markers
@@ -134,7 +134,7 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbXLOC`
 a `KEYM` FormID, uint8 flags (0x04 leveled), and 11 more bytes. Levels are 1 novice,
 25 apprentice, 50 adept, 75 expert, 100 master, and 255 requires key. The decoder keeps the
 number: the game bands any value by its `iLockLevelMax*` settings, and 310 vanilla locks store
-0, which reads as Novice ([locks](/engine/locks.md#levels)). Shorter fields from 4 bytes up
+0, which reads as Novice ([locks](../engine/locks.md#levels)). Shorter fields from 4 bytes up
 decode what they hold.
 
 `XESP` is a parent reference and uint8 flags (0x01 opposite of parent, 0x02 pop in), then
@@ -147,7 +147,7 @@ type, then 1 unused byte). The marker type names follow xEdit's `wbMapMarkerEnum
 ## PHZD and PGRE
 
 Placed hazards and projectiles share the reference layout above. See
-[hazards](/formats/hazards.md).
+[hazards](hazards.md).
 
 ## Other REFR and ACHR fields
 

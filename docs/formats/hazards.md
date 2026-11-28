@@ -47,7 +47,7 @@ A null FormID reads as no link.
 
 ## PHZD and PGRE
 
-Both use the placed-reference layout of [placed references](/formats/placed-references.md):
+Both use the placed-reference layout of [placed references](placed-references.md):
 `NAME` base, `DATA` position and rotation, `XSCL`, `XESP`, `XOWN`, `XEZN`, `XLKR`, and
 `VMAD`. `NAME` names a `HAZD` for `PHZD` and a `PROJ` for `PGRE`. The install holds 394
 `PHZD` and 44 `PGRE` records; 369 `PHZD` carry an `XESP` enable parent.

@@ -10,7 +10,7 @@ tags: [engine, alchemy, crafting, inventory, perks]
 # Alchemy
 
 An alchemy lab is a crafting station whose workbench data (`WBDT`) has the alchemy bench type.
-It offers no `COBJ` recipes ([crafting](/engine/crafting.md)). Instead the player chooses two or
+It offers no `COBJ` recipes ([crafting](crafting.md)). Instead the player chooses two or
 three carried ingredients, and the lab makes a potion or a poison from the effects they share.
 
 Sources: UESP [Skyrim:Alchemy](https://en.uesp.net/wiki/Skyrim:Alchemy) and
@@ -47,7 +47,7 @@ Physician, Benefactor, and Poisoner perks use it, and so does Fortify Alchemy, t
 skill a second time. While the entry point runs, the EPAlchemy conditions read the brew in
 progress: `EPAlchemyGetMakingPoison` reads whether it is a poison, and
 `EPAlchemyEffectHasKeyword` reads the keywords of the effect being scaled
-([world conditions](/engine/condition-functions-world.md#spells)).
+([world conditions](condition-functions-world.md#spells)).
 
 ## Potion or poison
 
@@ -74,7 +74,7 @@ value before or after perks is not confirmed.
 The name is `sCreatedPotionNamePrefix` or `sCreatedPoisonNamePrefix`, then the name of the
 costliest effect, for example "Potion of Restore Health". Every made item weighs 0.5. No plugin
 holds it, so it gets a FormID in mod index `0xFF` from `0xFF800000` up, and the save keeps it in
-the `CPOT` chunk ([actor chunks](/formats/opensky-save-actor-chunks.md#cpot-created-potions)).
+the `CPOT` chunk ([actor chunks](../formats/opensky-save-actor-chunks.md#cpot-created-potions)).
 Two brews with the same effects make the same item, so they stack. A made item has no world
 model in OpenSky, so dropping one leaves nothing visible.
 
@@ -116,7 +116,7 @@ that copy in `ICPY`.
 
 In the game a poison lasts 1 dose, then Mod Poison Dose Count, rounded down, at least 1.
 Concentrated Poison multiplies by 2. The doses are kept on the weapon copy
-([item copies](/engine/item-copies.md#names-and-poisons-in-the-game)). A dose is used only by a hit
+([item copies](item-copies.md#names-and-poisons-in-the-game)). A dose is used only by a hit
 that lands: the poison is cast on the target, the count drops by 1, and at 0 the poison goes. A miss
 uses nothing. A blocked melee hit still applies the poison and uses a dose; a bash does not. NPCs
 never poison their own weapons. These two rules come from a clean-room read of `SkyrimSE.exe` on

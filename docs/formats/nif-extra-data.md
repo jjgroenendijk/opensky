@@ -9,7 +9,7 @@ tags: [format, mesh]
 # NIF extra data
 
 An extra data block is a named value that a scene object carries. A node lists its extra
-data refs in its shared `NiObjectNET` fields ([NIF](/formats/nif.md#shared-node-fields)).
+data refs in its shared `NiObjectNET` fields ([NIF](nif.md#shared-node-fields)).
 The game reads the root node's extra data when it loads a model, for example the `BSX`
 flags and the `INV` inventory marker.
 
@@ -20,7 +20,7 @@ develop commit `292bb9403cbf4052c58d66e80906b6bde1700779`. Every block below sta
 reports a block whose bytes are not used up exactly.
 
 `NiStringExtraData`, `NiTextKeyExtraData`, `BSBehaviorGraphExtraData`, and
-`BSFurnitureMarkerNode` are on the [NIF](/formats/nif.md) page.
+`BSFurnitureMarkerNode` are on the [NIF](nif.md) page.
 
 ## Layouts
 

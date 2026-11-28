@@ -21,7 +21,7 @@ Reference: Apple, "MetalFX" framework documentation (`MTLFXFrameInterpolatorDesc
 - It is off by default, because it adds input lag (below). The player setting
   `rendering.frameInterpolation` stores the switch.
 - It needs the temporal upscaler at any render scale, 100 percent included
-  ([upscaling](/rendering/upscaling.md)). The interpolator reads the scaler's depth and motion
+  ([upscaling](upscaling.md)). The interpolator reads the scaler's depth and motion
   vectors, so it uses the same jitter and motion conventions. With the render scale off, or with
   the spatial scaler, nothing is built.
 - A GPU without the Metal 4 frame interpolator
@@ -85,4 +85,4 @@ switch. `openskycli game state frame` reports the same numbers
 under `interpolation` (`frameGapMS`, `longestFrameGapMS`, `hitches`), so the lag and the pacing can
 be measured from a script. `make benchmark ARGS='--set rendering.renderScale=100% --set
 rendering.frameInterpolation=on'` measures the GPU time of both frames
-([benchmark](/tools/benchmark.md)).
+([benchmark](../tools/benchmark.md)).

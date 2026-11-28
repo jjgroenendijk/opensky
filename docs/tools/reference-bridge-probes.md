@@ -9,7 +9,7 @@ tags: [tools, reference, bridge]
 # Reference bridge probes
 
 These commands use the bridge plugin in the Windows reference game
-([reference game](/tools/reference-game.md#the-bridge-plugin)). They read or drive one part of
+([reference game](reference-game.md#the-bridge-plugin)). They read or drive one part of
 the game for a comparison with OpenSky.
 
 ## Clicking a menu and playing a movie
@@ -82,4 +82,4 @@ through the game's input device manager did not move the player under Wine (obse
 2026-11-04), so a recording of the player shows it at rest.
 
 The bridge also reports the sky, the music, the player's location, and a map marker it can
-move the player to. [Reference sky and music](/tools/reference-sky-music.md) describes them.
+move the player to. [Reference sky and music](reference-sky-music.md) describes them.

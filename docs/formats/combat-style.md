@@ -90,7 +90,7 @@ the branches in this order: out of range, out of position, in range.
 Out of range means the distance predicted half a second ahead is above the actor's maximum range,
 the largest attack range of its equipment, plus its inner advance radius. Out of position means
 the actor holds no place around its target, or has moved out of it. The
-[combat movement](/engine/combat-movement.md) page gives those two branches, and the strafe, which
+[combat movement](../engine/combat-movement.md) page gives those two branches, and the strafe, which
 only the ranged movement loop uses.
 
 ```mermaid
@@ -111,13 +111,13 @@ flowchart TD
 A move starts only while the actor is not attacking and faces the target within 30 degrees. It
 asks for a navmesh path to its point, and a point no path reaches fails the move. A running move
 is checked every 0.1 s, fails when its path fails, and succeeds when its path ends. In the rules
-below, `reach` is the actor's melee reach as the [approach](/engine/combat-approach.md) uses it.
+below, `reach` is the actor's melee reach as the [approach](../engine/combat-approach.md) uses it.
 
 Back off:
 
 - starts only while the target is not moving away, and only when the distance is below
   0.75 times `D = reach + inner advance radius`
-  ([advance radii](/engine/combat-approach.md#advance-radii));
+  ([advance radii](../engine/combat-approach.md#advance-radii));
 - walks straight back from the target to distance `D`, with a 64-unit navmesh tolerance;
 - also succeeds as soon as the actor moves toward the target.
 
@@ -151,7 +151,7 @@ rolls its 0.25.
 
 An actor in reach rolls its attack chance in a loop. A pass first rolls the special attack chance;
 when that starts a special attack, the pass ends. Otherwise it rolls the attack chance, and on a
-pass it tries the [attack pick](/engine/attack-data.md#the-ais-pick). When no attack starts, the
+pass it tries the [attack pick](../engine/attack-data.md#the-ais-pick). When no attack starts, the
 actor waits 0.25 s and rolls again, so a waiting actor rolls about four times a second. A started
 attack holds the loop until the attack state is back to none or reaches the combo window.
 
@@ -174,7 +174,7 @@ the actor rolls `0.525 * 1.2 = 0.63`.
 A separate block loop makes the defensive choices. Each pass tries, in order: the block attack
 chance, a block raised against a swing in its windup; the offensive bash chance, a bash without a
 block; and the block chance. While either block holds, the actor rolls the bash chance every
-0.25 s. When none passes it waits 0.25 s. The [combat blocking](/engine/combat-blocking.md) page
+0.25 s. When none passes it waits 0.25 s. The [combat blocking](../engine/combat-blocking.md) page
 gives when each starts and ends.
 
 The bash chance is `lerp(defensive, fCombatBashChanceMin 0.025, fCombatBashChanceMax 0.2)` and
@@ -185,15 +185,15 @@ bash attack for an attacking target, or `fCombatBashTargetBlockingMult` (0) for 
 blocks toward the attacker within the 35 degree hit cone.
 
 The attack staggered, power attack staggered, and power attack blocking values also weight the
-choice between attacks ([attack data](/engine/attack-data.md#the-ais-pick)).
+choice between attacks ([attack data](../engine/attack-data.md#the-ais-pick)).
 
 With flanking, the flank distance is added to the actor's reach to give the distance a flanking
 path may swing out to. A stalk starts only within the maximum range plus 256 and keeps the actor
 between its reach and `reach + 256`. Within `reach + 384` the flank goal may lie at any angle
-([flanking](/engine/combat-movement.md#flanking)).
+([flanking](../engine/combat-movement.md#flanking)).
 
 `DATA` 0x04, together with race `DATA` flag 0x40000000, lets a melee weapon that only fits the
-right hand go in either hand ([dual wielding](/engine/combat-blocking.md#loops-that-run-together)).
+right hand go in either hand ([dual wielding](../engine/combat-blocking.md#loops-that-run-together)).
 It changes nothing else in a fight.
 `DATA` 0x02 makes the actor always use flanking movement; without it the actor never flanks. No
 reader of the dueling, charging, or retarget bits is known.
@@ -248,18 +248,18 @@ with their chances, angles, distances, and waits. These parts are not built yet:
 - An actor without a combat style waits a fixed attack interval and makes no close-range moves.
   In the game such an actor uses the default style.
 - Falling back to a ranged weapon. The surround, distant circle, places, reposition, and strafe
-  are built ([combat movement](/engine/combat-movement.md#in-opensky)).
+  are built ([combat movement](../engine/combat-movement.md#in-opensky)).
 - Some move checks: a circle ending once its path point is within half the reach of the target,
   a fallback cancelled 1.5 radii off its path point or by the angle bands, and the 64-unit navmesh
   tolerance. The per-fighter distance is taken as 0.
 - A move has arrived within 32 units of its point, and fails after 5 s; a target moves away above
   1 unit a second. These values are OpenSky's
-  ([unverified combat values](/engine/unverified-combat-values.md)).
+  ([unverified combat values](../engine/unverified-combat-values.md)).
 - An actor without a combat style rolls its block chance once per gap between attacks and never
   bashes. A styled actor runs the block loop and bashes
-  ([combat blocking](/engine/combat-blocking.md#in-opensky)).
+  ([combat blocking](../engine/combat-blocking.md#in-opensky)).
 - The dual-wield flag. It only changes the NPC's equipment choice, which OpenSky does not have
-  yet. The flanking flag runs the [flanking loop](/engine/combat-movement.md#in-opensky).
+  yet. The flanking flag runs the [flanking loop](../engine/combat-movement.md#in-opensky).
 
 `openskycli game state assist` lists each styled fighter's move under `closeMoves`, and its guard
 and bashes under `guards`.

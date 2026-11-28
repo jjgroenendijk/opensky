@@ -11,10 +11,10 @@ tags: [format, havok, hkx, animation, spline]
 Skyrim SE animation clips (`.hkx`) store bone motion as `hkaSplineCompressedAnimation`. An
 `hkaAnimationBinding` links the tracks to bone indices. This page covers both objects, the
 data blocks, the value packing, and how to sample a pose. See
-[HKX container](/formats/hkx-container.md) for the file around them and
-[hkaSkeleton](/formats/hka-skeleton.md) for the bones.
+[HKX container](hkx-container.md) for the file around them and
+[hkaSkeleton](hka-skeleton.md) for the bones.
 
-`openskycli animation <hkx-key>` prints a clip (see [CLI](/tools/cli.md)).
+`openskycli animation <hkx-key>` prints a clip (see [CLI](../tools/cli.md)).
 
 ## References
 
@@ -72,7 +72,7 @@ The object starts at its virtual fixup offset in `__data__`. Pointers are 8 byte
 | 0xAC | 4 | padding | |
 
 The `hkArray` layout is described under
-[hkaSkeleton](/formats/hka-skeleton.md#hkarray-descriptor).
+[hkaSkeleton](hka-skeleton.md#hkarray-descriptor).
 
 ### m_extractedMotion
 
@@ -80,14 +80,14 @@ This pointer can point at an `hkaAnimatedReferenceFrame`: the path the whole cha
 travels in the clip. No vanilla clip has one. OpenSky still reads whether the pointer is
 set, because it is the only reliable way to tell an in-place clip from a root motion clip.
 The root bone of a vanilla clip moves a little between samples, so a speed threshold gets
-some physics steps wrong. See [walk mode](/engine/walk-mode.md).
+some physics steps wrong. See [walk mode](../engine/walk-mode.md).
 
 ### m_annotationTracks
 
 An `hkArray<hkaAnnotationTrack>`. Skyrim keeps its footstep marks here. An annotation is a
 time in the clip plus a short text that becomes an event. For example,
 `mt_walkforward.hkx` has `FootLeft` at 0.2333 s and `FootRight` at 0.8 s. These are the
-tags that the vanilla footstep sets answer to (see [footstep records](/formats/footstep.md)).
+tags that the vanilla footstep sets answer to (see [footstep records](footstep.md)).
 
 `hkaAnnotationTrack`, 24 bytes:
 
@@ -110,7 +110,7 @@ annotations still animates.
 
 This is the only way a Skyrim footstep fires. The walk and run clip generators in
 `mt_behavior.hkx` have empty `m_triggers`. See
-[behavior graph runtime](/engine/behavior-clips.md#clip-triggers-and-annotations).
+[behavior graph runtime](../engine/behavior-clips.md#clip-triggers-and-annotations).
 
 ## Binding layout: 72 bytes
 

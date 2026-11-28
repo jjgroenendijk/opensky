@@ -12,12 +12,12 @@ An inventory counts items by base form ID. Some facts belong to one copy, not to
 
 | Fact | Set by | Read by |
 | --- | --- | --- |
-| Temper level | [Crafting](/engine/crafting.md) at a grindstone or workbench | Weapon damage, armour rating, price |
-| Trapped soul | [Soul trap](/engine/soul-trap.md) | Recharging and enchanting |
-| Enchantment charge | A hit with an enchanted weapon | [Item enchantments](/engine/item-enchantments.md) |
-| Made enchantment | [Enchanting](/engine/enchanting.md) | Item enchantments |
+| Temper level | [Crafting](crafting.md) at a grindstone or workbench | Weapon damage, armour rating, price |
+| Trapped soul | [Soul trap](soul-trap.md) | Recharging and enchanting |
+| Enchantment charge | A hit with an enchanted weapon | [Item enchantments](item-enchantments.md) |
+| Made enchantment | [Enchanting](enchanting.md) | Item enchantments |
 | Custom name | The enchanter's name field | The inventory rows and the item card |
-| Poison and doses | [Alchemy](/engine/alchemy.md#poison-on-a-weapon) | A landed weapon hit |
+| Poison and doses | [Alchemy](alchemy.md#poison-on-a-weapon) | A landed weapon hit |
 | Chosen mark | A menu row action | The order below |
 
 The game keeps these in an extra data list on each copy. OpenSky keeps them per owner in one
@@ -42,7 +42,7 @@ container, a gift, a trade, and a confiscation. A dropped Legendary sword is sti
 when picked up again, and a filled soul gem left in a chest is still filled.
 
 The save keeps the levels in `TMPR` and the whole copy in `ICPY`
-([save chunks](/formats/opensky-save-actor-chunks.md)).
+([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 ## Names and poisons in the game
 

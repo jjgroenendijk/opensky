@@ -11,7 +11,7 @@ tags: [engine, actors, template, armor, facegen, weapon, streaming]
 A placed actor (ACHR) names a base NPC_. Many fields of that NPC_ come from other records:
 templates, the race, the outfit, and leveled lists. This page explains how OpenSky walks
 those links and builds the actor's models. The record layouts are on
-[actor records](/formats/actors.md) and [armor records](/formats/armor.md).
+[actor records](../formats/actors.md) and [armor records](../formats/armor.md).
 
 The steps run in order on the cell build queue: collect the ACHRs, resolve the templates,
 resolve the visual parts, then assemble the models.
@@ -36,16 +36,16 @@ Creation Kit page "Template Data".
   that names a faction it is also a member of. 465 bases resolve to a crime faction.
 - AI data (`0x0010`): the whole `AIDT` struct. Factions and AI data resolve in one walk,
   each on its own flag, because the hostility check reads both
-  ([combat](/engine/combat.md)).
+  ([combat](combat.md)).
 - AI packages (`0x0020`): the whole ordered `PKID` list. An empty local list is the answer
-  when the flag is clear. See [package schedules](/engine/package-schedules.md).
+  when the flag is clear. See [package schedules](package-schedules.md).
 - Base data (`0x0080`): the name, the short name `SHRT`, and the `ACBS` flags `0x2`
   (essential), `0x8` (respawn), `0x40`, `0x800` (protected), `0x2000`, `0x8000`, and
   `0x100000`.
 - Inventory (`0x0100`): the default outfit (`DOFT`), the sleeping outfit (`SOFT`), the
   geared-up weapon count, and carried items, but not the death item.
 - Script (`0x0200`): the `VMAD` scripts. A placed actor runs them as well as the scripts in its
-  own `ACHR` ([Papyrus world](/engine/papyrus-world.md)).
+  own `ACHR` ([Papyrus world](papyrus-world.md)).
 - Default package list (`0x0400`): `DPLT` and the four override lists `SPOR`, `OCOR`,
   `GWOR`, and `ECOR`.
 - Attack data (`0x0800`): the template's attacks, but only when they differ from the
@@ -59,7 +59,7 @@ The walk rules:
 - A record passes a field up only while it has a `TPLT` and that field's flag is set. A set
   flag without a `TPLT` does nothing. The last record in the chain always supplies the field.
 - At an LVLN, roll for the base at its encounter level and difficulty
-  ([leveled lists](/engine/leveled-lists.md)). When the chain ends in an LVLN, the flags
+  ([leveled lists](leveled-lists.md)). When the chain ends in an LVLN, the flags
   that count are the bitwise AND of the flags of every NPC on the chain, and the unique flag
   (`0x20`) is cleared.
 - Every resolved field records which NPC_ supplied it.
@@ -72,7 +72,7 @@ the `RNAM` of the record that supplied the stats, and the starting attributes co
 No source says which race the game uses for the attributes when the two differ. `Skyrim.esm`
 answers it. With the traits race, 61 of 4,297 auto-calc records disagree with the values in
 their own `DNAM`. With the stats race, 26 disagree, and all 26 come from one stale template
-(see [actor values](/engine/actor-values.md)). The records that change are the skeleton,
+(see [actor values](actor-values.md)). The records that change are the skeleton,
 draugr, and creature ones, where traits and stats give different races.
 
 ## Visual parts
@@ -89,14 +89,14 @@ draugr, and creature ones, where traits and stats give different races.
 - First-person model: `MOD4` or `MOD5`, with the same gender fallback. A part without one is
   dropped in first person. It does not fall back to the third-person model, because that
   mesh is skinned to bones the first-person skeleton does not have
-  ([behavior runtime](/engine/behavior-runtime.md)).
+  ([behavior runtime](behavior-runtime.md)).
 
 Slot masking: the slots of all worn ARMOs form one mask. A skin armature whose slots overlap
 the mask is hidden, so no body geometry shows under clothes. An ARMA's own slots decide the
 overlap; without them, the slots of its ARMO decide.
 
 Draw order: all worn parts are sorted by ARMA priority, lowest first. Priority never hides a
-part (see [armor records](/formats/armor.md)). The sort is stable, so ties keep resolution
+part (see [armor records](../formats/armor.md)). The sort is stable, so ties keep resolution
 order. It also reorders the armatures inside one ARMO. For example, Heimskr's
 `ClothesMonkRobesHooded` `00107106` lists `MonkRobesAA` `000BAD04` (priority 15) before
 `MonkHoodAA` `000BAD03` (priority 10). So the hood is drawn first.
@@ -119,7 +119,7 @@ Each equipped FormID becomes one of three things:
 - anything else: a skipped part with the reason `unrenderableEquipment`.
 
 An equipped set never throws. A script can equip a token item, and that is normal. A cell
-rebuild picks up equipment changes ([runtime state](/engine/runtime-state.md)).
+rebuild picks up equipment changes ([runtime state](runtime-state.md)).
 
 ## Carried items
 
@@ -138,7 +138,7 @@ OpenSky reads "best" as the highest WEAP base damage or ARMO armour rating:
 2. A bow brings its best carried arrows, and a crossbow its best bolts (`AMMO` damage). Arrows
    without a bow stay carried.
 3. Carried armour stays in the pack. Only a teammate wears it, after a trade with the player
-   ([what an NPC wears](/engine/inventory-equipment.md#what-an-npc-wears)).
+   ([what an NPC wears](inventory-equipment.md#what-an-npc-wears)).
 
 The inventory baseline equips the same picks, so combat and the inventory menu see the
 weapon that is drawn. Lydia (`HousecarlWhiterun`) carries a `SteelSword`, so she wears it at
@@ -175,7 +175,7 @@ on the sheath node, so a draw or a sheathe needs no rebuild:
 | hand-to-hand, unknown type | `Weapon` | `Weapon` |
 
 A shield model is rigid: it has no skin. Its `Prn` extra data names `SHIELD`, as a sword names
-`WeaponSword` ([NIF](/formats/nif.md#nistringextradata)). So an ARMO whose `ETYP` takes a hand
+`WeaponSword` ([NIF](../formats/nif.md#nistringextradata)). So an ARMO whose `ETYP` takes a hand
 becomes an attachment on `Shield`, not a part skinned to the body. A rigid model drawn as a
 body part sits at the actor's origin, which put the shield at the feet.
 
@@ -193,7 +193,7 @@ the string (`Arrow:0`) beside it. Its `Prn` names `QUIVER`. The quiver draws onl
 The sheath node comes from the WEAP `DNAM` animation type. A weapon whose equip slot is the left
 hand, or a second one-handed weapon, rides `Shield`. The player draws on the
 `BeginWeaponDraw` and `BeginWeaponSheathe` clip annotations
-([melee combat](/engine/melee-combat.md)). An NPC has no graph with a draw state, so it draws
+([melee combat](melee-combat.md)). An NPC has no graph with a draw state, so it draws
 while its combat activity is "fighting".
 
 The vanilla skeleton (`skeleton.nif`, read with `openskycli nif`) has no node for a shield on
@@ -242,7 +242,7 @@ normal moves from thin to heavy by the weight. A shape whose vertex count differ
 two files keeps the heavy vertices, and a missing sibling keeps the heavy model.
 
 The weight blend is the only body morph the game has. Heads add the race and chargen morphs
-([head part assembly](/engine/head-part-assembly.md#shape-colour-and-expressions)). Source: a
+([head part assembly](head-part-assembly.md#shape-colour-and-expressions)). Source: a
 clean-room read of `SkyrimSE.exe` on 2026-11-07.
 
 Where OpenSky differs: the weight rounds to tenths, so the cache holds at most 11 copies of one
@@ -251,7 +251,7 @@ body. An actor with no `NAM7` reads as 50; no source gives the game's default.
 ## Height
 
 An actor's height is its own `NPC_` `NAM6` value times its race's height for its sex, from
-`RACE` `DATA` ([actors format](/formats/actors.md)). `NAM6` is a Traits-tab field, so it follows
+`RACE` `DATA` ([actors format](../formats/actors.md)). `NAM6` is a Traits-tab field, so it follows
 the `useTraits` template link like the face. A missing or zero value counts as 1.
 
 Example: a Nord man with `NAM6` 1.05 and the `NordRace` male height 1.0 has height 1.05. Over a
@@ -261,14 +261,14 @@ The height multiplies three things, on top of the reference scale:
 
 - The drawn model, so the skeleton, the body, the head, and what the actor wears grow together.
 - The walk and run speeds, so a taller actor walks faster by the same factor.
-- The collision shape from the skeleton's bound ([character shapes](/engine/character-shapes.md)).
+- The collision shape from the skeleton's bound ([character shapes](character-shapes.md)).
 
 `openskycli game state actors` reports each actor's `height`.
 
 ## Armour texture swaps
 
 An ARMA model carries alternate textures in `MO2S` (male) and `MO3S` (female), in the same layout
-as a static's `MODS` ([armor](/formats/armor.md)). Each entry names a shape in the mesh and a
+as a static's `MODS` ([armor](../formats/armor.md)). Each entry names a shape in the mesh and a
 `TXST`. The resolver reads the `TXST` diffuse and normal paths, and the mesh loads with those
 textures on that shape. An entry whose `TXST` is missing keeps the shape's own textures, as on a
 static.
@@ -291,8 +291,8 @@ Not done yet: the `NAM0` to `NAM3` skin texture sets, and the `DNAM` weapon adju
 - An actor with at least one body or head model renders. An actor with no model fails with
   `noCoreGeometry`.
 
-The FaceGen head paths are on [actor records](/formats/actors.md). Expression morphs are on
-[face morphs](/engine/face-morphs.md).
+The FaceGen head paths are on [actor records](../formats/actors.md). Expression morphs are on
+[face morphs](face-morphs.md).
 
 ## Streaming and accounting
 
@@ -310,4 +310,4 @@ discovered = rendered + disabled + failed
 `disabled` is an ACHR with the "initially disabled" flag. `failed` is a malformed record, a
 broken chain, or an actor with no geometry. Every failure has a reason string
 (`ACHR <id>: <why>`), and `failed` must equal the number of reasons. The fly-path gate,
-`FlyPathGateRealDataTests`, checks both rules ([benchmark](/tools/benchmark.md), [cell streaming](/engine/cell-streaming.md)).
+`FlyPathGateRealDataTests`, checks both rules ([benchmark](../tools/benchmark.md), [cell streaming](cell-streaming.md)).

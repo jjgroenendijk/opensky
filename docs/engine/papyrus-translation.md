@@ -50,7 +50,7 @@ always hears it.
 A transform write to the world state rebuilds the reference's cell. That is too slow for every
 frame. So the script bridge keeps each running move itself and publishes the drawn poses. The
 renderer turns each pose into a delta from the built placement, the same way it draws carts and
-physics bodies ([dynamic body drawing](/engine/dynamic-body-drawing.md)). The world state gets
+physics bodies ([dynamic body drawing](dynamic-body-drawing.md)). The world state gets
 one transform write, when the move ends or stops.
 
 While a move runs, `GetPositionX`, `GetAngleZ`, `GetDistance`, and the other script reads see the

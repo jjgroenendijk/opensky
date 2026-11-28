@@ -10,7 +10,7 @@ tags: [engine, magic, spells, projectiles, resistances, combat]
 # Spell delivery
 
 A spell that leaves the caster is delivered to something else. Casting itself is on the
-[spellcasting](/engine/spellcasting.md) page.
+[spellcasting](spellcasting.md) page.
 
 ## Which deliveries run
 
@@ -91,7 +91,7 @@ There is one projectile pipeline. An aimed fire-and-forget cast fires its `PROJ`
 runtime an arrow flies through, with the same fixed step, integrator, impact query, and range and
 lifetime limits. The arrow-only parts (spending ammunition, sticking in the surface, the
 draw-scaled speed, and the upward tilt) apply only to an arrow
-([projectiles](/engine/projectiles.md)).
+([projectiles](projectiles.md)).
 
 The `PROJ` is found by the form ID the `MGEF` holds, not through an `AMMO`. A spell whose `MGEF`
 names no `PROJ`, whose `PROJ` the load order lacks, or whose `PROJ` is hitscan or has no speed
@@ -111,12 +111,12 @@ that appears in front of it between two looks. The settings' names give the look
 uses the result is OpenSky's reading. An actor in the way is still hit first.
 
 There is no aim assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the
-camera points, as it does for arrows. The game's rule is in [combat assist](/engine/combat-assist.md).
+camera points, as it does for arrows. The game's rule is in [combat assist](combat-assist.md).
 
 ## What a projectile shows
 
 Every projectile in flight, an arrow or a spell, draws what its `PROJ` names
-([projectile records](/formats/projectiles.md)):
+([projectile records](../formats/projectiles.md)):
 
 - The `MODL` model at the projectile, with its +Y along the velocity. Its particle systems run
   and follow it.
@@ -128,7 +128,7 @@ Every projectile in flight, an arrow or a spell, draws what its `PROJ` names
 When a spell lands, its impact plays from the `MGEF` impact data set of the effect that names the
 projectile, on the material it struck: the model, the decal, and the sound. An arrow keeps the
 ammunition's chain. The `PROJ` explosion then goes off with its own model, light, and impact data
-([explosions](/formats/explosions.md#runtime)).
+([explosions](../formats/explosions.md#runtime)).
 
 The light fades and the use of the velocity for the model's facing are OpenSky's choices. The
 fade duration (0x30) and the decal link (0x54) are read by xEdit but not used.
@@ -201,7 +201,7 @@ can be corrected without changing the rule. Settling it needs the running game: 
 between two actors a known distance apart, and find where the second stops taking damage.
 
 The `PROJ`'s explosion detonates where a projectile, an area spell, or a rune goes off: its damage,
-sounds, model, image-space modifier, and placed object ([explosions](/formats/explosions.md#runtime)).
+sounds, model, image-space modifier, and placed object ([explosions](../formats/explosions.md#runtime)).
 The spell's own effects still reach actors through its `EFIT` area.
 
 ## Resistances on a hit
@@ -211,7 +211,7 @@ damage of any offensive spell by the displayed percentage"
 (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>). The `MGEF` Hostile flag is the record's word for
 "offensive". A restore or a fortify arrives unscaled, so a healing spell is not resisted.
 
-The multiplier is the one on the [actor values](/engine/actor-values.md#resistances) page: Resist
+The multiplier is the one on the [actor values](actor-values.md#resistances) page: Resist
 Magic first, then the `MGEF`'s own resistance value, multiplied, with the 85% cap for the player
 only. A weakness is the same formula with a negative resistance: -30 points multiplies damage by 1.3.
 The `SPEL` flag xEdit calls "Ignore Resistance" skips the whole step.
@@ -257,7 +257,7 @@ Skyrim has no spell reflect. Reflect Damage (actor value 163) reflects melee dam
 
 ## What a hit tells the fight
 
-A landed spell reports to the [combat loop](/engine/combat.md) as an arrow does: the target is
+A landed spell reports to the [combat loop](combat.md) as an arrow does: the target is
 angered, put in the fight, and staggered. Death is unchanged: the effect moves health, and the death
 component answers when it reaches zero.
 

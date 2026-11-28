@@ -14,7 +14,7 @@ system that uses it, so a far actor moves, looks, and smokes at the same reduced
 
 The bands and their rates are OpenSky's choice. The game does not use distance bands for this: it
 switches each actor's package procedures between a full and a cheap version by its
-[process level](/engine/ai-process-levels.md#procedures-by-level).
+[process level](ai-process-levels.md#procedures-by-level).
 
 ## The bands
 
@@ -25,7 +25,7 @@ switches each actor's package procedures between a full and a cheap version by i
 | `reduced` | up to 6,144 units | 15 times a second |
 | `distant` | further | 5 times a second |
 
-The distances are those of the [actor graphs](/engine/actor-graphs.md#stepping). A graph
+The distances are those of the [actor graphs](actor-graphs.md#stepping). A graph
 stops past 6,144 units, where other work keeps the `distant` band.
 
 ## Keeping the time
@@ -55,7 +55,7 @@ When an object comes near, its next frame runs the work at once, with the time i
   time is lost. Turning on the spot and push slides still run every frame.
 - **Perception.** The roster keeps each far observer's last position and facts between its
   refreshes. The detection checks themselves already run a few pairs per step
-  ([detection](/engine/detection.md)).
+  ([detection](detection.md)).
 - **Particles.** A system that follows the camera, such as rain, is always near, so it runs
   every frame.
 
@@ -75,4 +75,4 @@ appears late.
 `openskycli game state actors` shows `bands` for each actor: the band at its camera
 distance, and the band its movement and perception use. `state frame` shows `updateBands`:
 how many particle systems stepped in each band, and how many grass lists were built in the
-last frame ([game commands](/tools/game-commands.md)).
+last frame ([game commands](../tools/game-commands.md)).

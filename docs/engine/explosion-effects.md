@@ -67,7 +67,7 @@ to 99.
 - Otherwise, it explodes when r is below the game's explode percentage (75) × the part's
   chance / 100.
 - A part that does not explode is cut off when r is below the game's dismember chance (50)
-  ([decapitation](/engine/ragdoll.md#decapitation)).
+  ([decapitation](ragdoll.md#decapitation)).
 
 Vanilla data has no explodable part, so a test needs a synthetic record.
 
@@ -90,14 +90,14 @@ flowchart TD
 ## In OpenSky
 
 - The explosion's own image space applies at every blast the viewer is near, also when the player
-  is not one of its targets ([image space triggers](/rendering/image-space.md#triggers)).
+  is not one of its targets ([image space triggers](../rendering/image-space.md#triggers)).
 - The swap modifier is looked up by its fixed FormID in the load order. Like the game, a load
   order without that record shows no swap effect.
 - [WARNING] The swap power uses the `DATA` radius as it is, with no 22 units-per-foot factor and a
   scale of 1, as OpenSky's blast damage does. The viewer is the camera.
 - An exploded part is kept in the death state like a cut head, with a flag. The body is drawn
   without the part, and no piece of it is left to fall. A save keeps it
-  ([save actor chunks](/formats/opensky-save-actor-chunks.md#deth-deaths)).
+  ([save actor chunks](../formats/opensky-save-actor-chunks.md#deth-deaths)).
 - A blown-off part plays the part's explodable explosion. Its debris and decals are not drawn.
 - A part that does not explode is cut off by the same roll, with no perk needed. A body with no
-  explodable part keeps the perk rule of [decapitation](/engine/ragdoll.md#decapitation).
+  explodable part keeps the perk rule of [decapitation](ragdoll.md#decapitation).

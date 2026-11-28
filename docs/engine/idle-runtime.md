@@ -11,7 +11,7 @@ tags: [engine, animation, ai]
 An idle is a short animation an actor plays while it waits: leaning on a wall, praying,
 sweeping. Each idle is an `IDLE` record. An idle marker (`IDLM`) is a placed object that
 lists the idles an actor may play there. The record layouts are in
-[Idle records](/formats/idle.md).
+[Idle records](../formats/idle.md).
 
 The runtime has four parts:
 
@@ -28,7 +28,7 @@ whose procedure name contains `IdleMarker`. A dead actor does not look.
 - The actor takes the nearest marker within 1024 units (about 15 m) that no other actor
   holds. A tie goes to the lower reference. A sandboxing actor looks in its package's place
   instead, a cylinder whose height comes from `fSandboxCylinderBottom` and
-  `fSandboxCylinderTop` ([sandbox](/engine/sandbox.md)).
+  `fSandboxCylinderTop` ([sandbox](sandbox.md)).
 - The actor walks to the marker through the normal move command. A marker it cannot reach
   is skipped for that actor, so it does not retry every frame.
 - The actor has arrived when it stands within `fAIMarkerDestinationRadius` (50 units) of the
@@ -62,7 +62,7 @@ and at least one second later, plus `fAIIdleWaitTime` (0.1 seconds).
 
 ## Package idles
 
-A package can list idles of its own (`IDLF`, `IDLT`, `IDLA`, [packages](/formats/packages.md)).
+A package can list idles of its own (`IDLF`, `IDLT`, `IDLA`, [packages](../formats/packages.md)).
 An actor that has no marker and stands still in that package plays from the list, with the same
 rules as a marker list: flag 0x01 plays in sequence, 0x04 plays each idle once, and the next pick
 waits for the timer. A scene's package action plays its idles this way. When the actor walks off
@@ -71,8 +71,8 @@ or its package changes, the list stops; a playing idle finishes first.
 ## Playback
 
 An `IDLE` names a behavior file (`DNAM`), or takes its nearest ancestor's
-([IDLE](/formats/idle.md#idle)), and an animation event (`ENAM`). An NPC that runs its own
-graph ([actor graphs](/engine/actor-graphs.md)) gets the event, and the graph plays the idle.
+([IDLE](../formats/idle.md#idle)), and an animation event (`ENAM`). An NPC that runs its own
+graph ([actor graphs](actor-graphs.md)) gets the event, and the graph plays the idle.
 For an actor without a running graph, such as one past the graph distance, OpenSky resolves
 the clip statically:
 
@@ -114,7 +114,7 @@ On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through t
 213 have no event because they only group other idles. 10 play through the second name rule.
 15 still name an event that neither the walk nor a name finds, such as `idle_A_pull_pants`,
 `TG05_KnockOut`, and the kill moves. The kill moves still play when a target is given, because
-a paired idle goes straight to both actors' graphs ([paired animations](/engine/paired-animations.md)).
+a paired idle goes straight to both actors' graphs ([paired animations](paired-animations.md)).
 
 The loop count comes from the idle's `DATA`: a random count between the loop minimum and
 maximum. A zero maximum plays the clip once, unless the clip loops.
@@ -149,7 +149,7 @@ goes to ragdoll after the longer of the game setting `fDyingTimer` and that clip
 runs. The kill goes through a queue and lands in the same frame or the next.
 
 `Decapitate` does not kill. It equips the race's decapitation armour for the actor's sex, marks the
-actor as decapitated, and cuts the head ([decapitation](/engine/ragdoll.md#decapitation)). It does
+actor as decapitated, and cuts the head ([decapitation](ragdoll.md#decapitation)). It does
 nothing to an actor already decapitated, or whose race has no such armour.
 
 After an idle stops, the actor holds its idle state for 1 s before another idle starts.
@@ -166,7 +166,7 @@ clip, against the character skeleton, to time the idle's events.
 
 When a package seats an actor on a furniture marker, the actor picks an entry idle from the tree
 under the `ActionActivate` action (`AACT`). The tree's conditions read the seat through these
-functions ([Condition functions](/engine/condition-functions.md#furniture)):
+functions ([Condition functions](condition-functions.md#furniture)):
 
 - `GetSitting` is 2 (getting ready to sit) while the idle is picked, 1 while an NPC's sit idle
   still loads, and 3 once it plays. When the actor gets up it reads 4, the same tree picks the
@@ -207,11 +207,11 @@ A prop is a held object, such as a broom or a tankard. It is an `ANIO` record.
   second kind: it sends `AnimObjDraw` with `AnimObjectExecutionerAxe` on enter.
 - The `ANIO` mesh holds a `NiStringExtraData` named `Prn`. Its value is the bone the prop
   rides on, such as `AnimObjectR` or `NPC R Hand [RHnd]`
-  ([NIF](/formats/nif.md#nistringextradata)). A value without the bone's tag, such as
+  ([NIF](../formats/nif.md#nistringextradata)). A value without the bone's tag, such as
   `NPC R Hand`, takes the skeleton bone whose name starts with it.
 - A clip can name an `ANIO` in its own annotations instead, as `AnimObjDraw.<editor ID>`. The
   object shows when the annotation passes, and leaves at its unload event
-  ([animation objects](/engine/animation-events.md#animation-objects)).
+  ([animation objects](animation-events.md#animation-objects)).
 
 On the install, 48 idles of `0_Master.hkx` show a prop. The lute does not: its prop event is
 outside its target state, so OpenSky shows no lute.
@@ -229,12 +229,12 @@ The game saves each loaded reference's animation part: for each behaviour graph,
 and the graph's state. A reference whose model is not loaded keeps the animation part it had in
 the save. An actor near the player also saves the idle it plays and the idle's target. On load
 the game plays that idle again on the target
-([actor process data](/formats/ess-actor-process.md#high-block)).
+([actor process data](../formats/ess-actor-process.md#high-block)).
 
 The save keeps the furniture an actor uses, with its marker index, and the sit or bed state. On
 load, an actor that sits or lies in bed but has no marker index stands up. The animation part
 ends with the body-slot data, first in third person, then in first person, or a 0 when the two
-are the same ([ESS change forms](/formats/ess-change-forms.md#references)).
+are the same ([ESS change forms](../formats/ess-change-forms.md#references)).
 
 ## Differences from the game
 

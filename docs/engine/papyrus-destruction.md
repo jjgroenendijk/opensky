@@ -17,7 +17,7 @@ Creation Kit wiki page "ObjectReference Script".
 ## Data
 
 The record layout comes from xEdit `wbDefinitionsTES5.pas`
-([shared field groups](/formats/records.md#shared-field-groups)):
+([shared field groups](../formats/records.md#shared-field-groups)):
 
 | Field | Bytes | Meaning |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ percent stage. 40 more reaches the 0 percent stage.
 - `SetDestroyed(true)` jumps to the last stage. `SetDestroyed(false)` and `ClearDestruction`
   make the object whole again.
 
-The state lives in the [script state](/engine/papyrus-script-state.md), so it is saved, and
+The state lives in the [script state](papyrus-script-state.md), so it is saved, and
 the conditions `GetDestroyed` and `GetDestructionStage` read it.
 
 ## In the game
@@ -83,7 +83,7 @@ On a new stage:
 Damage comes from:
 
 - a weapon hit, the same damage as on an actor;
-- an explosion, its damage times its falloff ([explosions](/engine/explosions.md#damage));
+- an explosion, its damage times its falloff ([explosions](explosions.md#damage));
 - a physics impact, such as a thrown object.
 
 Whether a spell without an explosion deals destruction damage was not found.
@@ -92,5 +92,5 @@ Whether a spell without an explosion deals destruction damage was not found.
 
 - Spells without an explosion deal no destruction damage.
 - A fast body damages a destructible object it touches, with the same damage it deals an actor
-  ([impulses](/engine/impulses.md#physics-damage)). The body itself takes no destruction damage
+  ([impulses](impulses.md#physics-damage)). The body itself takes no destruction damage
   from the impact.

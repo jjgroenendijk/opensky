@@ -10,14 +10,14 @@ tags: [format, plugin, esm, esp, records, io, zlib]
 
 A plugin file (`.esm`, `.esp`, or `.esl`) holds game data as records. Records sit inside
 groups (`GRUP`). This page covers only the container: records, groups, fields, and
-compression. [Record decoders](/formats/records.md) covers what the records mean.
+compression. [Record decoders](records.md) covers what the records mean.
 
 Reference: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format). All
 integers are little-endian. A type code is 4 ASCII bytes.
 
 ## File shape
 
-The file starts with one `TES4` record (see [FormID](/formats/formid.md)). Top-level groups
+The file starts with one `TES4` record (see [FormID](formid.md)). Top-level groups
 follow until the end of the file. `Skyrim.esm` has 118 top groups, in the order UESP lists.
 It is not known whether the game depends on this order. A top group holds records of the
 type in its label. Only `CELL`, `WRLD`, and `DIAL` records have child groups after them.
@@ -29,7 +29,7 @@ type in its label. Only `CELL`, `WRLD`, and `DIAL` records have child groups aft
 | 0x00 | char4 | type | For example `WRLD`. `GRUP` means a group |
 | 0x04 | uint32 | dataSize | Data only, without the header |
 | 0x08 | uint32 | flags | Below |
-| 0x0C | uint32 | formID | See [FormID](/formats/formid.md) |
+| 0x0C | uint32 | formID | See [FormID](formid.md) |
 | 0x10 | uint16 | timestamp | Skyrim SE packs `0bYYYYYYYMMMMDDDDD` |
 | 0x12 | uint16 | vcInfo | Creation Kit version-control user IDs |
 | 0x14 | uint16 | version | Form version: 43 original Skyrim, 44 Skyrim SE |
@@ -41,7 +41,7 @@ Flags OpenSky uses: `0x1` master (on `TES4`), `0x20` deleted, `0x80` localized (
 `0x200` light (on `TES4`), `0x1000` ignored, `0x40000` data compressed. Many bits mean
 different things for different record types. See the UESP table.
 
-On `REFR` and `ACHR`, `0x40000000` is "No Respawn": a [cell reset](/engine/cell-reset.md)
+On `REFR` and `ACHR`, `0x40000000` is "No Respawn": a [cell reset](../engine/cell-reset.md)
 leaves the reference as it is. `Skyrim.esm` sets it on 1,798 `REFR` and 2 `ACHR` records.
 
 Compressed data is a uint32 decompressed size, then a zlib stream (RFC 1950) that fills the
@@ -124,7 +124,7 @@ The `loading.pluginReadAhead` setting turns the hint off.
 
 The FormID index of a plugin maps each FormID to the offset of its record header, and to the
 `CELL` and `WRLD` that hold it. OpenSky can save it in the asset cache, so a later session
-skips the walk ([asset cache](/engine/asset-cache.md#saved-formid-indexes)). This is an
+skips the walk ([asset cache](../engine/asset-cache.md#saved-formid-indexes)). This is an
 OpenSky file, not a game format. All numbers are little-endian `UInt32`:
 
 | Offset | Value |

@@ -76,7 +76,7 @@ later updates. It has no retry timer, no give-up time, and no time-out failure o
 
 ## Low process levels
 
-The procedure runs in full at the High and Middle-high [process levels](/engine/ai-process-levels.md).
+The procedure runs in full at the High and Middle-high [process levels](ai-process-levels.md).
 At Middle-low and Low it runs a cheap version with no animation and no wait:
 
 - out of reach, it starts a simple move to the target; when the move cannot start, it takes the
@@ -102,5 +102,5 @@ activates the rail, the Sequence starts again, finds the count spent, and ends t
 
 [WARNING] OpenSky has no reach rule: the walk goes to the target's origin, or to the furniture
 marker. It has no cheap version for the low process levels, because an actor there has no package
-tree in OpenSky ([unloaded actors](/engine/unloaded-actors.md)). It takes 1 from the count, not the
+tree in OpenSky ([unloaded actors](unloaded-actors.md)). It takes 1 from the count, not the
 target's item count.

@@ -10,7 +10,7 @@ tags: [engine, animation, actor, dialogue, scenes, app-ui]
 
 A loaded actor turns its neck and head toward what it looks at. The turn is drawn on top of
 the clip the actor plays, so it works with any idle, walk, or combat clip. It needs each actor to
-have its own skinning palette ([actor animation](/engine/actor-animation.md)).
+have its own skinning palette ([actor animation](actor-animation.md)).
 
 ## What an actor looks at
 
@@ -18,7 +18,7 @@ The first rule that applies wins:
 
 1. A given target. The dialogue menu makes the speaker look at the player for the whole
    conversation. A scene line makes its speaker look at the action's `HTID` alias for the
-   length of the line ([scene records](/formats/scenes.md)). Both count as dialogue.
+   length of the line ([scene records](../formats/scenes.md)). Both count as dialogue.
 2. The default target, below.
 3. Nothing: the head returns to the body's forward axis.
 
@@ -46,12 +46,12 @@ list of nearby actors with full AI wins. There is no nearest-first order. A vali
 - is not, together with the looker, sitting or lying.
 
 A non-player actor that walks along a path and picks a new NPC as its default target may greet
-it in passing ([random conversations](/engine/random-conversations.md#hellos-in-passing-ahel)).
+it in passing ([random conversations](random-conversations.md#hellos-in-passing-ahel)).
 
 In OpenSky the head tracking of an actor takes only the player as default target, within 384
 units and for `fAIHoldDefaultHeadTrackTimer` seconds after the player leaves that distance. The
 social pass adds the rules above for NPC targets
-([random conversations](/engine/random-conversations.md#where-opensky-differs)).
+([random conversations](random-conversations.md#where-opensky-differs)).
 
 ## How the head turns
 
@@ -115,8 +115,8 @@ The neck bone `NPC Neck [Neck]` turns first, about its own position, with every 
 Then `NPC Head [Head]` turns about its new position, with every bone under it, such as the eyes.
 A skeleton without these bones, such as a horse, is left as it is.
 
-A speaking actor's [lip track](/formats/lip.md) adds a small pitch, yaw, and roll on top of
+A speaking actor's [lip track](../formats/lip.md) adds a small pitch, yaw, and roll on top of
 the look, through the same two bones and shares. Roll tilts around the forward axis. The lip
 track's turn has no limit and no speed: it follows the recorded curve.
 
-The eyes move as face morphs, not as bones ([face morphs](/engine/face-morphs.md)).
+The eyes move as face morphs, not as bones ([face morphs](face-morphs.md)).

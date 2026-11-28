@@ -10,20 +10,20 @@ tags: [engine, animation, havok, hkx, behavior, locomotion]
 # Behavior graph runtime
 
 A behavior graph is Havok's animation state machine. The decoded objects are on the
-[HKX behavior graph objects](/formats/hkx-behavior.md) and
-[HKX behavior nodes](/formats/hkx-behavior-nodes.md) pages. The runtime makes them run: variables,
+[HKX behavior graph objects](../formats/hkx-behavior.md) and
+[HKX behavior nodes](../formats/hkx-behavior-nodes.md) pages. The runtime makes them run: variables,
 events, bindings, clips, blends, and state machines, stepped with no renderer and in a fixed order,
 so two runs with the same input give the same result.
 
 Related pages:
 
-- [Behavior state machines](/engine/behavior-state-machines.md): states, transitions, conditions,
+- [Behavior state machines](behavior-state-machines.md): states, transitions, conditions,
   and crossfades.
-- [Behavior clips and blending](/engine/behavior-clips.md): clip time, triggers, synchronization,
+- [Behavior clips and blending](behavior-clips.md): clip time, triggers, synchronization,
   pose blending, and behavior references.
-- [Locomotion graph](/engine/locomotion-graph.md): the variables and events the player's movement
+- [Locomotion graph](locomotion-graph.md): the variables and events the player's movement
   writes.
-- [First person](/engine/first-person.md): the second graph that drives the arms.
+- [First person](first-person.md): the second graph that drives the arms.
 
 The code lives in `src/Sources/OpenSkyBehavior/`, apart from the format parsers in
 `src/Sources/OpenSkyFormatsAnimation/HKX/`. Decoding a file and running a graph are different jobs,
@@ -114,7 +114,7 @@ a graph's own state flags never change.
 
 A binding of type 1 reads a character property instead of a graph variable. The index names
 a property in the graph's own list, and the value comes from the character file by that name
-([character data](/formats/hkx-behavior.md#hkbcharacterdata-and-hkbcharacterstringdata)).
+([character data](../formats/hkx-behavior.md#hkbcharacterdata-and-hkbcharacterstringdata)).
 Most vanilla ones bind a blender child's or a bone switch's bone weights. A referenced graph
 reads the same character's properties.
 
@@ -128,19 +128,19 @@ range, a bit index past 32, or an empty path that binds the whole object.
 
 | Class | What it does |
 | --- | --- |
-| `hkbClipGenerator` | Plays a clip ([clips](/engine/behavior-clips.md)) |
-| `hkbBlenderGenerator` | Weighted or parametric blend of its children, masked per bone and optionally synced ([blending](/engine/behavior-clips.md)) |
+| `hkbClipGenerator` | Plays a clip ([clips](behavior-clips.md)) |
+| `hkbBlenderGenerator` | Weighted or parametric blend of its children, masked per bone and optionally synced ([blending](behavior-clips.md)) |
 | `hkbManualSelectorGenerator` | Runs the child at `selectedGeneratorIndex`. Out of range gives the reference pose |
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
 | `hkbPoseMatchingGenerator` | Its blender, with weights it sets itself ([pose matching](#pose-matching)) |
-| `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
-| `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](/engine/actor-state-graph.md#drunk-actors)) |
+| `hkbStateMachine` | See [state machines](behavior-state-machines.md) |
+| `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](actor-state-graph.md#drunk-actors)) |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
 | `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter. `m_EventToCrossBlend`, only while held or blending, frees it and crossfades from a copy of the held blender, which keeps running at the held parameter, over `m_fTransitionDuration` with `m_eBlendCurve`. A repeat during the crossfade mirrors its progress: elapsed `e` becomes `d - e` |
 | `BSOffsetAnimationGenerator` | Default generator plus the additive offset clip at weight 1. `f` is where `m_fOffsetVariable` sits in the offset range, clamped, and 0 for an empty range. The clip plays at `D/(n-1) + (D - D/(n-1)) f` for duration `D` and `n` frames, and is sampled again only when that time reaches another frame and `f` changed. An offset clip that is not additive adds nothing |
 | `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
-| `hkbBehaviorReferenceGenerator` | Runs another behavior file ([behavior references](/engine/behavior-clips.md)) |
+| `hkbBehaviorReferenceGenerator` | Runs another behavior file ([behavior references](behavior-clips.md)) |
 | Anything else | The reference pose, and the class is named in the tally |
 
 ## Pose matching
@@ -243,7 +243,7 @@ One update returns:
 - `rootMotion`: the root bone's travel this update, as translation and rotation. It is never
   applied to `bones`. A walk clip that bakes travel into the root would walk the whole skeleton
   away from the origin. The character controller decides where the character goes
-  ([walk mode](/engine/walk-mode.md)). A clip that wraps inside an update reports the travel to the
+  ([walk mode](walk-mode.md)). A clip that wraps inside an update reports the travel to the
   window end plus the travel from the window start, not the negative jump of a plain difference.
 - `firedEvents`: every event the update saw, in raise order.
 - `time`: seconds of graph time this instance has run.
@@ -266,11 +266,11 @@ These are guesses, marked as guesses:
 
 - The parametric weights and the shared cycle of a synced blender follow the flag names and the
   runtime members in the class reflection data, not a description of Havok's maths
-  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). That only the
+  ([parametric blend](behavior-clips.md#parametric-blend)). That only the
   leader of a synced blender raises annotations is also a choice; authored triggers still fire
   from every child.
 - Without a reference frame, root motion is the difference of two samples of the root bone, in
-  its own local frame ([walk mode](/engine/walk-mode.md)).
+  its own local frame ([walk mode](walk-mode.md)).
 - The pose matching frame has its heading about up removed, so a ragdoll matches whichever way
   it faces. The source does not say whether Havok removes it. The pelvis speed is the live
   pelvis bone's travel per second, in model space.
@@ -287,14 +287,14 @@ These are guesses, marked as guesses:
   look-at and direct-at modifiers.
 - A state machine writes its current state ID to `m_syncVariableIndex` when the index names a
   variable, so two machines that share it stay in step
-  ([state machines](/engine/behavior-state-machines.md)). No source confirms that Havok writes
+  ([state machines](behavior-state-machines.md)). No source confirms that Havok writes
   it back.
 - Transition effect flag bits other than sync are not used. Local decode notes read bit 0 as
   ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as ignore-to-generator. No
   independent source confirms that, and each one changes how root motion crosses a blend.
 
 The transition order and the crossfade interrupt rule are also choices, explained on the
-[state machines](/engine/behavior-state-machines.md) page.
+[state machines](behavior-state-machines.md) page.
 
 ## Probing the install
 

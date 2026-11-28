@@ -11,10 +11,10 @@ tags: [engine, animation, behavior, player]
 The behavior graphs share more than movement with the engine. The engine tells them what the actor
 does: an attack, a guard, a cast, where the camera looks. The graphs report back what the animation
 allows: whether the actor may turn, equip, or is in a recoil. The movement variables are on the
-[locomotion graph](/engine/locomotion-graph.md) page.
+[locomotion graph](locomotion-graph.md) page.
 
 Every name and direction comes from the install's character graphs, read with the census of
-[HKX behavior graph objects](/formats/hkx-behavior.md). The Creation Kit list of animation variables
+[HKX behavior graph objects](../formats/hkx-behavior.md). The Creation Kit list of animation variables
 (<https://ck.uesp.net/wiki/List_of_Animation_Variables>) names many of them but gives no types.
 
 ## Inputs the engine writes
@@ -30,12 +30,12 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `bSprintOK` | bool | False when the stamina gate refuses a sprint | Sprint transition conditions |
 | `iWantBlock` | int32 | 1 while the block key is held | Block and bow zoom conditions |
 | `bWantCastLeft`, `bWantCastRight` | bool | True while that hand casts | `BSEventOnFalseToTrueModifier` |
-| `bWantCastVoice` | bool | True while the player inhales a shout ([shouts](/engine/shouts.md)) | `BSEventOnFalseToTrueModifier` raising `BeginCastVoice` |
+| `bWantCastVoice` | bool | True while the player inhales a shout ([shouts](shouts.md)) | `BSEventOnFalseToTrueModifier` raising `BeginCastVoice` |
 | `IsInCastState` | real | 1 while either hand casts, else 0 | Cast blends |
 | `iRightHandEquipped`, `iLeftHandEquipped` | int32 | The hand's `iRightHandType` value while drawn, else 0 | Jump, sprint, stagger, and shout selectors |
 | `IsBeastRace` | bool | The race has the `IsBeastRace` keyword | The unarmed attack selector |
 | `iGetUpType` | int32 | 2 while swimming or deep in water, else 1 | The get-up pose matcher |
-| `weapAdj` | real | The player's weight / 100 | The expression that weights the [body-weight layer](/engine/behavior-clips.md#body-weight-layer) |
+| `weapAdj` | real | The player's weight / 100 | The expression that weights the [body-weight layer](behavior-clips.md#body-weight-layer) |
 | `attackPowerStartTime`, `attackIntroLength`, `attackComboStartFraction` | real | 0.3666667, 0, and 0.5 ([attack timing](#attack-timing)) | Attack blends |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
 
@@ -71,7 +71,7 @@ distance of `TargetLocation` is OpenSky's own.
 
 The game gives the player's graphs three fixed values. They do not change with the attack or
 with how long the attack key is held. Read from the reference game through the bridge
-([reference game](/tools/reference-bridge-probes.md#recording-graph-variables)), observed 2026-11-04:
+([reference game](../tools/reference-bridge-probes.md#recording-graph-variables)), observed 2026-11-04:
 
 | Variable | The player | A bandit NPC |
 | --- | --- | --- |
@@ -104,11 +104,11 @@ The state is picked in a fixed order. The first match wins:
    tags it.
 4. A cast in either hand (`iState_NPCMagicCasting`).
 5. Riding: `iState_HorseSprint` while the mount sprints, else `iState_NPCHorse`. `bIsRiding` is
-   true while the player sits on a mount ([riding](/engine/riding.md)).
+   true while the player sits on a mount ([riding](riding.md)).
 6. Drunk (`iState_NPCDrunk`), while the graph tags it (see below).
 7. A sprint or sneak gait.
 8. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
-   spell. The type uses the `iRightHandType` encoding ([combat graph names](/engine/combat-graph-names.md)).
+   spell. The type uses the `iRightHandType` encoding ([combat graph names](combat-graph-names.md)).
 9. Otherwise `iState_NPCDefault`.
 
 [INFO] This order is OpenSky's own. No source states the game's order. Bleedout has no
@@ -140,7 +140,7 @@ openskycli hkx meshes\actors\character\behaviors\0_master.hkx --set iLeftHandTyp
 The Shield Charge perk (`058F6A`) itself is no graph state. It gives the ability
 `shieldChargeSpell`: a cloak of 6 feet and a 10 point Damage Stamina, both only while the player
 sprints, blocks, and does not ride (`IsSprinting`, `IsBlocking`, `IsRidingMount`). See [magic
-archetypes](/engine/magic-archetypes.md#cloak-knock) for the knock it gives.
+archetypes](magic-archetypes.md#cloak-knock) for the knock it gives.
 
 `openskycli game debug perk <editorID> [on|off]` gives or takes a perk. `state player` gives
 `perks`, `cloak`, and `graph.perkState`. The Player & Locomotion panel shows `iState` by its
@@ -181,7 +181,7 @@ OpenSky treats an actor as drunk while its graph's tag equals `iState_NPCDrunk`:
 A clean-room read of `SkyrimSE.exe`, 2026-11-07, found the rule for every actor, the player
 included: each running tagging generator pushes its value with its priority, and the highest
 priority wins. With no tag, `iState` keeps the graph's starting value. The graph's speed sampler
-reads `iState` as its table ([speed data](/formats/speed-data.md)), and the movement type whose name
+reads `iState` as its table ([speed data](../formats/speed-data.md)), and the movement type whose name
 matches the `iState_*` constant sets the actor's speeds. OpenSky does this for an NPC's walk and
 run. The tags, read from the install's behaviour files:
 
@@ -240,7 +240,7 @@ its rider too.
 ## Outputs the graph publishes
 
 The graph writes these through `BSIsActiveModifier`, a state machine's `isActive` or
-`currentStateId`, a sync variable ([behavior state machines](/engine/behavior-state-machines.md)),
+`currentStateId`, a sync variable ([behavior state machines](behavior-state-machines.md)),
 or an expression assignment. Examples: `bAnimationDriven`, `bAllowRotation`, `bEquipOK`,
 `IsRecoiling`, `bIsSynced`, `iSyncIdleLocomotion`. No engine system acts on them yet.
 
@@ -249,7 +249,7 @@ or an expression assignment. Examples: `bAnimationDriven`, `bAllowRotation`, `bE
 Many names on the Creation Kit list are tuning values. The graph file gives them a non-zero
 start value, such as `fMinSpeed`, `TurnMin`, `RotMax`, `SpeedAcc`, `PitchAcc`, `PitchThresh`,
 `iCharacterSelector`, and `iSyncTurnDirection`. No script reads them, so OpenSky keeps the
-graph's own value ([gap report](/tools/gaps.md)).
+graph's own value ([gap report](../tools/gaps.md)).
 
 The game leaves two names from the list at the graph's value, so OpenSky does too. The gap
 report counts them as "left at the graph's value by the game". Observed 2026-11-04:

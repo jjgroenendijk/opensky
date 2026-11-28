@@ -13,7 +13,7 @@ Scaleform menus and the HUD use `$KEY` tokens instead of literal text, for examp
 `Interface/Translations/<name>_<language>.txt`, for example `skyui_se_english.txt`. The file
 can be loose or inside a BSA.
 
-This is not the same as the plugin [string tables](/formats/strings.md). A string table
+This is not the same as the plugin [string tables](strings.md). A string table
 holds record text and is keyed by a number. A translation file holds menu text and is keyed
 by a name that starts with `$`.
 

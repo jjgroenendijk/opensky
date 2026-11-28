@@ -199,7 +199,7 @@ that need a running game. Each result shows as the game window's subtitle.
 ## The bridge plugin
 
 OpenSky does not type into the Windows game's console, because Wine drops and misroutes
-the keys ([the decision](/decisions/reference-bridge.md) lists what was observed). The
+the keys ([the decision](../decisions/reference-bridge.md) lists what was observed). The
 `OpenSkyBridge` SKSE plugin runs inside the game instead: it runs the console commands
 OpenSky sends and reports the player's state. It changes no game rule and draws nothing.
 
@@ -284,7 +284,7 @@ when the save has it on, and the next long fall kills the player and reloads the
 switches the player camera, and `firstPerson` in the state shows the result.
 
 More bridge commands, to click a menu, play a movie, record sound, and record graph
-variables, are in [reference bridge probes](/tools/reference-bridge-probes.md).
+variables, are in [reference bridge probes](reference-bridge-probes.md).
 
 ## Same view, two games
 
@@ -315,7 +315,7 @@ The batch file holds standard console commands:
 
 From the reference game to OpenSky without the bridge: save there, then use Import Newest Save
 on the Reference Game page. It runs the normal Skyrim save import
-([save import](/engine/ess-import.md)) on the newest `.ess` in the prefix's `Saves/` folder,
+([save import](../engine/ess-import.md)) on the newest `.ess` in the prefix's `Saves/` folder,
 which puts OpenSky at the save's position and time. Pointing the Skyrim saves folder setting
 at that folder lists every reference save in the load list.
 

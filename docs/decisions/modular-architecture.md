@@ -13,7 +13,7 @@ OpenSky follows [The Modular Architecture](https://tuist.dev/en/docs/guides/feat
 an optional `FeatureFixtures` (see below). A feature uses another feature only through its
 Interface. The app and `OpenSkyCLI` build the implementations and
 pass them in (dependency injection).
-[Swift modules](/tools/modules.md) describes the layout and the `src/Package.swift` helpers.
+[Swift modules](../tools/modules.md) describes the layout and the `src/Package.swift` helpers.
 
 ## Why TMA
 
@@ -27,14 +27,14 @@ pass them in (dependency injection).
 
 TMA gives each feature its own `FeatureTesting` target. OpenSky keeps the fakes of every feature
 Interface in one library, `OpenSkyFeaturesTesting`, as it keeps one testing library per layer
-([tests](/tools/modules.md#tests)). Every target costs manifest and graph time on each build, and
+([tests](../tools/modules.md#tests)). Every target costs manifest and graph time on each build, and
 a fake depends only on Interfaces, so one shared library builds no feature implementation.
 
 ## Why no Tuist
 
 TMA is a set of rules, not a tool. Tuist generates Xcode projects, and OpenSky already avoids
 project-file edits: target membership follows the folder, and `src/Package.swift` declares every
-module ([build system](/tools/build-system.md)). A second project generator would add a tool
+module ([build system](../tools/build-system.md)). A second project generator would add a tool
 and a second source of truth. So the rules are checked on the package graph instead.
 
 ## Why no Example apps
@@ -129,7 +129,7 @@ The lower modules sit in layers, and the one list of them is `LAYERS` at the top
 A target outside it is an Interface, a world domain, a feature, or a composition module. The
 script tells them apart by name: an Interface ends in `Interface`, a domain is listed in
 `DOMAINS`, and a composition module is listed in `COMPOSITION`
-([world domains](/tools/modules.md#world-domains)). Anything else is a feature, so a new
+([world domains](../tools/modules.md#world-domains)). Anything else is a feature, so a new
 module must bring its full set or an exception.
 
 ## Exceptions

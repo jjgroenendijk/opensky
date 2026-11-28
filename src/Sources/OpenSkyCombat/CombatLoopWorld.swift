@@ -275,7 +275,7 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// What `observer` makes of `target`, another actor.
     func combatReaction(of observer: ReferenceKey, toward target: ReferenceKey) -> ActorReaction?
     /// True when `observer`'s aggression and its reaction to `target` make it attack
-    /// `target` on sight ([hostility](/engine/hostility.md#aggression-draws-the-weapon)).
+    /// `target` on sight (`docs/engine/hostility.md#aggression-draws-the-weapon`).
     func combatIsHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool
     /// Whether `key` is the player's follower.
     func combatIsTeammate(_ key: ReferenceKey) -> Bool

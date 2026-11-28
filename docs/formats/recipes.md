@@ -11,7 +11,7 @@ tags: [format, plugin, records, crafting]
 A `COBJ` constructible object is one crafting recipe. It lists the items it uses, the
 conditions that must pass, the keyword of the station that offers it, and the item it makes.
 A COBJ is not an item: nothing carries it. The stations are `FURN` records with workbench
-data, on [world records](/formats/world-records.md).
+data, on [world records](world-records.md).
 
 Sources: UESP "Skyrim Mod:Mod File Format/COBJ"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/COBJ>) and xEdit `dev-4.1.6`
@@ -26,7 +26,7 @@ little-endian.
 | `EDID` | zstring | editor ID |
 | `COCT` | uint32 | number of `CNTO` fields; advisory only |
 | `CNTO` | FormID + int32 | one component: an item, `FLST`, or `LVLI`, and a count |
-| `CITC`, `CTDA`, `CIS1`, `CIS2` | | condition list, as on [conditions](/formats/conditions.md) |
+| `CITC`, `CTDA`, `CIS1`, `CIS2` | | condition list, as on [conditions](conditions.md) |
 | `CNAM` | FormID | created object |
 | `BNAM` | FormID | workbench keyword, a `KYWD` |
 | `NAM1` | uint16 | created count |
@@ -101,4 +101,4 @@ them:
 | `HasKeyword` | 560 | 1 | yes |
 
 The function names come from the xEdit condition table in the same file. How a session
-evaluates them is on [crafting](/engine/crafting.md).
+evaluates them is on [crafting](../engine/crafting.md).

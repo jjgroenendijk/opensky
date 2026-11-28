@@ -9,8 +9,8 @@ tags: [engine, swf, actionscript, ui, scaleform]
 
 # AS2 display runtime
 
-The display runtime is the mutable clip tree behind the [AS2 runtime](/engine/as2-runtime.md). It
-steps timelines and produces the draw commands the [SWF render layer](/rendering/swf-layer.md) draws.
+The display runtime is the mutable clip tree behind the [AS2 runtime](as2-runtime.md). It
+steps timelines and produces the draw commands the [SWF render layer](../rendering/swf-layer.md) draws.
 
 ## The host seam
 
@@ -138,7 +138,7 @@ A field's runtime text is, in order: an explicit assignment (`field.text = "..."
 value of its `VariableName` binding, then the character's `InitialText`. Writing the field writes the
 bound variable back, so a movie that reads `_root.someVar` later sees the same string. The text
 reaches the renderer as an override on the scene item, and the layout code lays out that run again
-([SWF render layer](/rendering/swf-layer.md)).
+([SWF render layer](../rendering/swf-layer.md)).
 
 A multiline field that wraps shows only the lines that fit its bounds, from `scroll` on. `maxscroll`,
 `bottomScroll`, and the GFx `numLines` come from the same layout, so CLIK's `TextArea` and `ScrollBar`
@@ -152,7 +152,7 @@ one. The dialogue topic rows are another: a row that wraps to two lines pushes t
 When the bottom edge cuts the next line, that line is drawn too, clipped at the edge.
 It does not count for `bottomScroll` or `maxscroll`.
 
-`htmlText` takes its styles from the tags ([HTML text](/formats/swf-text.md#html-text)).
+`htmlText` takes its styles from the tags ([HTML text](../formats/swf-text.md#html-text)).
 `<img src='name' width='w' height='h' vspace='v'>` draws the bitmap the movie exports under
 `name` in the line, `w` by `h` pixels. A size the tag leaves out comes from the bitmap. The
 picture takes its width in the line. Reading `htmlText` back gives the HTML as it was assigned,
@@ -172,7 +172,7 @@ every laid-out line of any field. A `Rectangle` reads `left`, `top`, `right`, an
 `createTextField` makes a field with the given name, depth, position, and size, and the runtime
 keeps its definition under a character id counted down from 65535. As in the game, the field asks
 for `Times New Roman` at 12 points in black, which draws only when a font library maps that name
-([finding a font](/formats/swf-text.md#finding-a-font-in-the-game)). The one vanilla use, the
+([finding a font](../formats/swf-text.md#finding-a-font-in-the-game)). The one vanilla use, the
 journal's `LevelText`, is hidden.
 
 `setTextFormat(format)` and `setNewTextFormat(format)` set the `font`, `size`, and `color` a
@@ -219,14 +219,14 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
   `flash.geom.Point`, and `flash.geom.Rectangle`. These follow ECMA-262 3rd edition section 15, as
   ActionScript does. `Point` and `Rectangle` print their numbers as AS2 does, such as
   `(x=1, y=2.5)`.
-- `Key`, `Mouse`, and the timer functions ([AS2 input](/engine/as2-input.md)), and `ExternalInterface`
-  and `fscommand` ([GameDelegate bridge](/engine/as2-game-delegate.md)).
+- `Key`, `Mouse`, and the timer functions ([AS2 input](as2-input.md)), and `ExternalInterface`
+  and `fscommand` ([GameDelegate bridge](as2-game-delegate.md)).
 
 `Math.random` draws from a seeded xorshift64\* generator owned by the runtime, so a menu that animates
 on random values still draws the same frame twice.
 
 `MovieClipLoader` loads engine images and the interface movies the loading movie names ([loaded
-movies](/formats/swf-display-list.md#loaded-movies)). An image slot is a named blank bitmap that the
+movies](../formats/swf-display-list.md#loaded-movies)). An image slot is a named blank bitmap that the
 engine adds to the movie before it starts, with a rectangle shape filled by it.
 `loadClip("img://name", target)` places that shape in the target at depth 0, then sends
 `onLoadStart`, `onLoadComplete`, and `onLoadInit` on the next tick. The engine paints the slot's

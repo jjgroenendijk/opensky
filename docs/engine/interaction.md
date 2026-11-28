@@ -25,7 +25,7 @@ FormIDs, the position, a name (base `FULL`, then `EDID`, then the FormID), and a
 | `TREE` | Harvest |
 | `FLOR` | Harvest. `RNAM` replaces the word |
 | `TACT` | Talk |
-| `FURN` | Activate. A bench with `WBDT` also opens a [crafting](/engine/crafting.md) session |
+| `FURN` | Activate. A bench with `WBDT` also opens a [crafting](crafting.md) session |
 | `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK`, `KEYM`, `SLGM`, `APPA` | Take |
 
 `FULL` and `RNAM` are lstrings, so a localized plugin reads them from its string table. The
@@ -36,7 +36,7 @@ its worn pieces come through `ARMA`, not one `MODL`. That needs the equipment wo
 
 Not usable: `MSTT`, an `ACTI` with "ignore object interaction", an automatic `DOOR`, and a `FURN`
 whose marker flags turn off activation. The fields are on the
-[world records](/formats/world-records.md) page.
+[world records](../formats/world-records.md) page.
 
 ## Picking a target
 
@@ -127,7 +127,7 @@ hides an activator behind it, also where the game's fuzzy test would find it.
 Actors are not in the collision trees. A second test checks the view ray against actor capsules,
 and an actor becomes a normal target with the action "Talk". The nearest solid hit still blocks
 it: an actor counts only if it is nearer than any geometry on the ray. See
-[dialogue menu](/engine/dialogue-menu.md).
+[dialogue menu](dialogue-menu.md).
 
 ## Activation
 
@@ -146,20 +146,20 @@ never replace it.
 The event carries a FormID, which depends on the load order. The Papyrus listener turns it into a
 session-stable `ReferenceKey` through the loaded cells. An event for a reference no loaded cell knows
 is dropped, not recorded under a guessed identity. See [Papyrus
-activation](/engine/papyrus-activation.md) and [runtime state](/engine/runtime-state.md).
+activation](papyrus-activation.md) and [runtime state](runtime-state.md).
 
 Activating an actor also sends a talk event with the speaker's `ReferenceKey`, because dialogue and
 saves name a speaker that way. It fires after the normal event. So sound and scripts see an actor
 activation exactly like a door activation, before any menu opens. A `TACT` talking activator
 sends the same talk event, with its own reference as the speaker and the base's `VNAM` voice
-type ([world records](/formats/world-records.md)).
+type ([world records](../formats/world-records.md)).
 
 A door with the "Open" action asks for a transition for that exact reference. With an `XTEL` it
-follows the [interior](/engine/interiors.md) path. Without one, it still sends the event, but has
+follows the [interior](interiors.md) path. Without one, it still sends the event, but has
 no open animation yet.
 
 A bed is a `FURN` whose model has a sleep marker (animation type 2). Its prompt reads "Sleep",
-and using it opens the [rest menu](/engine/sleep-wait.md).
+and using it opens the [rest menu](sleep-wait.md).
 
 ### Load doors
 
@@ -197,12 +197,12 @@ open sound of a normal load door starts as it is used and plays over the fade, s
 open animation is hidden by the black. Most automatic doors have no model and so no animation.
 
 The game refuses a door to a rider with `sNotAllowedToUseAutoDoorsWhileonHorse`. OpenSky refuses
-every door while the player sits on a mount, and posts that message ([riding](/engine/riding.md)).
+every door while the player sits on a mount, and posts that message ([riding](riding.md)).
 
 ### Activate parents
 
 A reference with `XAPR` children passes its activation on to them
-([Papyrus activation](/engine/papyrus-activation.md)). Each child has a delay in seconds
+([Papyrus activation](papyrus-activation.md)). Each child has a delay in seconds
 (Creation Kit wiki "Reference", <https://ck.uesp.net/wiki/Reference>). A child with a delay
 above 0 activates once that many seconds of world time have passed, so a menu pause holds it.
 A reference with `XAPD`
@@ -235,7 +235,7 @@ use in combat, are OpenSky's reading of the settings' words.
 A door or container with `XLOC` lock data passes through the lock gate before any listener
 hears the press. A carried key unlocks it and the press goes on. A pickable lock opens the
 lockpicking menu instead; a "requires key" lock refuses. The prompt reads "Unlock" and the
-name gains the difficulty, such as "Chest (Adept)". See [locks](/engine/locks.md).
+name gains the difficulty, such as "Chest (Adept)". See [locks](locks.md).
 
 ## Taking and dropping
 
@@ -276,7 +276,7 @@ Activating a `FLOR` or `TREE` reference adds its `PFIG` produce to the player in
 a harvested component on the reference. A produce that names an `LVLI` gives the list's
 deterministic pick, as container baselines do. A harvested reference shows `Harvested` in place
 of the action word, and activating it does nothing. The component is saved in the `HRVS` and
-`HRVD` chunks ([OpenSky save](/formats/opensky-save.md)).
+`HRVD` chunks ([OpenSky save](../formats/opensky-save.md)).
 
 Each harvest rolls the plant's `PFPC` chance for the season of the game date. The CK wiki says
 the produce is given "depending upon the harvest chance set for that season"
@@ -286,12 +286,12 @@ as harvested. The seasons follow the Tamriel months in
 Seed, summer is Midyear to Last Seed, fall is Hearthfire to Sun's Dusk, and winter is Evening Star
 to Sun's Dawn. Six vanilla plants, such as `ChickenNest`, have 0 in every season. They still give
 produce in the game, so a plant with no chance in any season always yields. Without a game clock
-the roll is skipped. Mod Ingredients Harvested ([perk entry points](/engine/perk-entry-points.md))
+the roll is skipped. Mod Ingredients Harvested ([perk entry points](perk-entry-points.md))
 sets how many times a yield is granted.
 
 ## Grow back
 
-A harvested plant grows back when its cell resets ([cell reset](/engine/cell-reset.md)): the
+A harvested plant grows back when its cell resets ([cell reset](cell-reset.md)): the
 player leaves the cell, stays away for `iHoursToRespawnCell` game hours, and comes back. The
 install has 240 hours, which is 10 game days.
 
@@ -303,7 +303,7 @@ sky does not throw the item behind the player. A camera looking straight up or d
 right below the eye. The object belongs to the interior if one is open, or else to the exterior cell
 at the grid center.
 
-How a spawned object is named, built, and saved is on the [runtime state](/engine/runtime-state.md)
+How a spawned object is named, built, and saved is on the [runtime state](runtime-state.md)
 page.
 
 ## HUD

@@ -10,7 +10,7 @@ tags: [engine, ui, menu, swf, console]
 
 The console is a text prompt over the game. The player types a command, presses Enter, and the
 game runs it. The commands are the ones the reference bridge already sends
-([reference game](/tools/reference-game.md)).
+([reference game](../tools/reference-game.md)).
 
 ## What the player sees
 

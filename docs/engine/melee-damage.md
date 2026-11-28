@@ -8,7 +8,7 @@ tags: [engine, combat, melee, damage, gmst, perks]
 
 # Melee damage and blocking
 
-A landed [melee](/engine/melee-combat.md) or [archery](/engine/archery.md) hit starts from the
+A landed [melee](melee-combat.md) or [archery](archery.md) hit starts from the
 `WEAP` `DATA` base damage. This page covers what blocking and bonuses do to it.
 
 ## The block formula
@@ -61,7 +61,7 @@ Block skill is fixed at 15, the starting value UESP gives.
 
 - The blocker's term multiplies the blocked fraction, where the formula puts it. It comes from the
   Block Modifier and Block Power Modifier actor values, and the `Mod Percent Blocked` perk
-  ([perks](/engine/perks.md)).
+  ([perks](perks.md)).
 - The attacker's term follows UESP "Skyrim:Weapons":
   `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`. It reads the one-handed,
   two-handed, or archery values for the weapon's family. The perks are in the strike terms below.
@@ -71,7 +71,7 @@ the attacker's damage. The attacker's term applies after the blocked fraction, b
 formula scales on the base `WEAP` damage, not the enchanted damage. So a fortified attacker deals
 more through a block, without the block growing to match.
 
-Why the magnitudes are percentage points is on the [magic](/engine/magic.md) page. A hit from an
+Why the magnitudes are percentage points is on the [magic](magic.md) page. A hit from an
 enchanted weapon also casts the enchantment on the target and uses charge.
 
 ## Skill, sneak attacks and armour
@@ -95,7 +95,7 @@ Value Indices" says it scales "all physical damage from weapons, fists, and bash
 default. It applies to the player and to NPCs.
 
 The perk terms are the attacker's and the target's perk entry points
-([perk entry points](/engine/perk-entry-points.md)).
+([perk entry points](perk-entry-points.md)).
 
 Skill. UESP "Skyrim:Weapons" gives the player's damage as `base * (1 + skill / 200)`. This is
 `1 + (fDamagePCSkillMax - 1) * skill / 100` with the install's 1.5. The skill is One-Handed,
@@ -106,7 +106,7 @@ The game builds the weapon term as
 `((base + ammo) * fDamageWeaponMult + tempering) * skill * ATKD damage mult + MeleeDamage`.
 `fDamageWeaponMult` is 1. MeleeDamage is actor value 34; some unarmed hits add UnarmedDamage,
 actor value 35, instead. An unarmed hit is also multiplied by the attack's `ATKD` damage
-multiplier ([attack data](/engine/attack-data.md)).
+multiplier ([attack data](attack-data.md)).
 
 Sneak attacks. UESP "Skyrim:Sneak": a hit on a target that has not detected the attacker
 multiplies by the weapon family's setting.

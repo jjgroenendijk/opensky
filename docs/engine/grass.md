@@ -14,7 +14,7 @@ Grass is not placed by hand in Skyrim. It grows from the land textures:
 LAND BTXT/ATXT coverage -> LTEX GNAM (repeats) -> GRAS MODL + DATA
 ```
 
-The records are on the [grass](/formats/grass.md) page. The original game's placement grid and
+The records are on the [grass](../formats/grass.md) page. The original game's placement grid and
 random number method are not in any open source. OpenSky uses its own method, described below.
 None of its constants are claimed to match the game.
 
@@ -30,7 +30,7 @@ For one `LAND` record:
 3. Seed each point from the cell X and Y, the `LAND` FormID, the `GRAS` FormID, the row, and the
    column. Random numbers come from SplitMix64, which gives the same values on every machine.
    Swift's `Hasher` is never used, because it changes per run.
-4. Sample the [terrain](/engine/terrain.md) triangle under the point for height and normal. A
+4. Sample the [terrain](terrain.md) triangle under the point for height and normal. A
    hidden cell quarter rejects the point.
 5. Rebuild each texture's final coverage the way the terrain shader does. Keep the point with
    chance `clamp(density / 100) * coverage`.

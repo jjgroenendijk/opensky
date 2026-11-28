@@ -24,15 +24,15 @@ resets when the time away is at least:
 | The cell's location is cleared | `iHoursToRespawnCellCleared` | 720 (30 days) |
 
 A location is cleared when a script called `SetCleared` on it (the `cleared` flag of
-[script state](/engine/papyrus-script-state.md)). The location is the cell's `XLCN`. The game
-also clears a location when its bosses die ([cleared locations](/engine/cleared-locations.md)).
+[script state](papyrus-script-state.md)). The location is the cell's `XLCN`. The game
+also clears a location when its bosses die ([cleared locations](cleared-locations.md)).
 
 A cell does not reset when its encounter zone (`CELL XEZN`) has the ECZN "Never Resets" flag
 (`DATA` flags bit 0x01). An exterior cell with no zone of its own uses the worldspace's
 `WRLD XEZN`.
 
 The departures are saved in the `CRST` chunk
-([save chunks](/formats/opensky-save-world-chunks.md#crst-cell-resets)).
+([save chunks](../formats/opensky-save-world-chunks.md#crst-cell-resets)).
 
 ## What resets
 
@@ -40,7 +40,7 @@ For each reference in the cell, OpenSky drops these runtime changes: death, acto
 combat state, inventory, open state, lock, deletion, position, relocation, harvest, and
 tempered copies. So a creature respawns with full health, a container refills, a door shuts
 and locks again, a taken item is back, and a harvested plant grows back
-([interaction](/engine/interaction.md#grow-back)). A refilled container holds plain copies
+([interaction](interaction.md#grow-back)). A refilled container holds plain copies
 again, so the quality of the tempered copies left in it is gone.
 
 These are kept, as the wiki lists:
@@ -51,7 +51,7 @@ These are kept, as the wiki lists:
 - An actor whose base has no ACBS "Respawn" flag (bit 0x08).
 - A container whose base has no CONT "Respawns" flag (`DATA` flags bit 0x02). A plain chest
   keeps what the player put in it.
-- The inventory of a reference that holds a [quest item](/engine/inventory-menu.md#quest-items).
+- The inventory of a reference that holds a [quest item](inventory-menu.md#quest-items).
   The rest of its state still resets. The wiki does not list this case; OpenSky keeps the
   inventory so a quest cannot lose its item.
 

@@ -10,8 +10,8 @@ tags: [format, save, world-state, actors, magic, crime]
 # OpenSky save chunks: actors
 
 These chunks hold actor state in an `.osav` file. The container, the key and cell encodings,
-and the error rules are on [OpenSky save](/formats/opensky-save.md). The rules listed on
-[save chunks: world and scripts](/formats/opensky-save-world-chunks.md) apply here too: a
+and the error rules are on [OpenSky save](opensky-save.md). The rules listed on
+[save chunks: world and scripts](opensky-save-world-chunks.md) apply here too: a
 uint32 entry count first, no chunk when empty, sorted entries, and checked counts.
 
 A common rule: the save stores what the session did, not what the records say. Anything the
@@ -22,7 +22,7 @@ load. So a save made with a different load order follows the new records.
 
 One entry per actor whose health, magicka, or stamina is not full: key, cell, then float32
 health, magicka, and stamina (current values). Maximums are not stored; they come from the
-RACE, CLAS, and NPC_ records ([actor values](/engine/actor-values.md)). A value that is
+RACE, CLAS, and NPC_ records ([actor values](../engine/actor-values.md)). A value that is
 negative or not finite becomes 0. Minimum entry size: 20 bytes.
 
 ## AVDM: imported damage
@@ -30,7 +30,7 @@ negative or not finite becomes 0. Minimum entry size: 20 bytes.
 One entry per actor an imported Skyrim save left damaged: key, cell, then float32 health,
 magicka, and stamina damage, each 0 or more. The actor value runtime takes it off the actor's
 derived maximums until it first writes the actor's values, and then drops it
-([ESS import](/engine/ess-import.md)). A value that is negative or not finite becomes 0.
+([ESS import](../engine/ess-import.md)). A value that is negative or not finite becomes 0.
 Minimum entry size: 20 bytes.
 
 ## AVOV: actor-value overrides
@@ -71,20 +71,20 @@ bytes minimum per entry, 16 per record.
 A corpse that was still falling has no resting transform, so it does not reload in the air.
 The same holds for a cut head. Minimum entry size: 13 bytes.
 Only the root transform is stored, not the bone pose. A reloaded corpse lies in the rest pose
-([ragdoll](/engine/ragdoll.md)).
+([ragdoll](../engine/ragdoll.md)).
 
 ## CBTS: hostility
 
 Key, cell, and a uint8: 0 neutral, 1 hostile. An actor made neutral again is still written,
 or it would reload angry. An unknown byte reads as neutral, so a newer build can add a
 value. Whether the player is in combat is not stored; it follows from which actors are
-hostile and alive ([combat](/engine/combat.md)). Minimum entry size: 9 bytes.
+hostile and alive ([combat](../engine/combat.md)). Minimum entry size: 9 bytes.
 
 ## DLGS: dialogue
 
 One entry per `INFO` that was said: the INFO key and a uint32 said count. No cell, because an
 INFO is a base record. A count of 0 is never written and is dropped on read. The offered
-topics are not stored ([dialogue](/engine/dialogue.md)). Minimum entry size: 11 bytes.
+topics are not stored ([dialogue](../engine/dialogue.md)). Minimum entry size: 11 bytes.
 
 ## DLGT: dialogue reset days
 
@@ -118,7 +118,7 @@ Key, cell, uint32 effect count, then effects:
 
 `elapsed` is stored, not the time left, so a reloaded effect shows the same total duration.
 `applied` is how much of the temporary modifier each effect owns, so the modifier is rebuilt
-from it ([magic](/engine/magic.md)). Instant effects are not stored; their result is already
+from it ([magic](../engine/magic.md)). Instant effects are not stored; their result is already
 in `AVAL` and `AVOV`. An unknown `sourceKind` or `mode` is `invalidValue`. An effect with no
 duration or no values is dropped. Sizes: 12 bytes minimum per entry, 61 per effect, 12 per
 value.
@@ -130,7 +130,7 @@ left), then a uint32 worn count with groups (uint32 item FormID, uint32 sequence
 uint64 `AEFF` sequence numbers). All lists ascend.
 
 The item is its base FormID, as in `INVN`. So two copies of one enchanted weapon share one
-charge ([magic](/engine/item-enchantments.md)). The worn groups say which `AEFF`
+charge ([magic](../engine/item-enchantments.md)). The worn groups say which `AEFF`
 effects each worn item owns, so taking it off removes them. A charge that is negative or not
 finite becomes 0. A sequence that names no effect removes nothing. Sizes: 16 bytes minimum
 per entry, 8 per charge, 8 minimum per worn group, 8 per sequence.
@@ -147,7 +147,7 @@ One entry per actor with a changed spellbook: key, cell, then
 | optional key | rightHand | presence byte, then the readied spell |
 | uint32 + pairs | spentPowers | per pair: the power's key and an int32 game day |
 
-A spent power's day says when it can be used again ([spellcasting](/engine/spellcasting.md)). A
+A spent power's day says when it can be used again ([spellcasting](../engine/spellcasting.md)). A
 cast in progress is frame state and is not saved. Every list is sorted, so an unchanged
 spellbook writes the same bytes. Sizes: 21 bytes minimum per entry, 7 per key, 11 per spent
 power.
@@ -156,7 +156,7 @@ power.
 
 Key, cell, uint32 perk count, then one key per owned perk. Ranks come from the perk's `NNAM`
 chain, and perk abilities are built again on load, so neither is stored
-([perks](/engine/perks.md)). A perk the load order no longer has is kept, so removing a plugin
+([perks](../engine/perks.md)). A perk the load order no longer has is kept, so removing a plugin
 keeps progress. Sizes: 12 bytes minimum per entry, 7 per key.
 
 ## PLVL: player level progress
@@ -165,7 +165,7 @@ One entry per actor past level 1: key, cell, then uint32 level, float32 banked e
 uint32 perk points, uint32 owed attribute picks, uint32 skill increases this level, and a
 uint32 count of int32 attribute picks made. A pick is the actor value index of health,
 magicka, or stamina; any other index is dropped. The points a pick gave live in `AVOV`.
-Every field is clamped on load ([character leveling](/engine/character-leveling.md)). Sizes:
+Every field is clamped on load ([character leveling](../engine/character-leveling.md)). Sizes:
 31 bytes minimum per entry, 4 per pick.
 
 `PLVL` entries have no length, so a new field cannot be appended without breaking older
@@ -175,7 +175,7 @@ the same key. A key with no `PLVL` entry gets a fresh progress that holds only t
 ## PLGD: legendary skills
 
 Key, uint32 row count, then rows of int32 skill index and uint32 count: how often the skill
-was made legendary ([skills menu](/engine/skills-menu.md)). A row whose index is not a skill
+was made legendary ([skills menu](../engine/skills-menu.md)). A row whose index is not a skill
 is dropped. Sizes: 11 bytes minimum per entry, 8 per row.
 
 ## PTRN: training sessions
@@ -189,20 +189,20 @@ Key, cell, uint32 membership count, then memberships: the FACT key and an int8 r
 is signed as the `NPC_` `SNAM` rank is (xEdit `itS8`), and vanilla uses negative ranks. A
 repeated faction keeps its last rank. A faction that the load order no longer has is kept,
 because removing a plugin must not delete progress. Hostility is not stored here
-([combat](/engine/combat.md)). Sizes: 12 bytes minimum per entry, 8 per membership.
+([combat](../engine/combat.md)). Sizes: 12 bytes minimum per entry, 8 per membership.
 
 ## RELS: relationships
 
 Key, cell, uint32 override count, then overrides: the other actor's key and an int8 rank, 4
 down to -4. The rank is the signed `GetRelationshipRank` number, not the `RELA` `DATA` word
-([relationships](/formats/relationships.md)). A rank outside -4 to 4 is kept. Both actors of
+([relationships](relationships.md)). A rank outside -4 to 4 is kept. Both actors of
 a pair store the row. Sizes: 12 bytes minimum per entry, 8 per override.
 
 ## RELF: relationship favour
 
 Key, uint32 row count, then rows: the other actor's key and an int8 rank. The rank is the one
 the pair held when it first reached Friend (1) or higher, which fixes the item allowance
-([crime](/engine/crime.md)). A sibling of `RELS`, because `RELS` overrides have a fixed layout.
+([crime](../engine/crime.md)). A sibling of `RELS`, because `RELS` overrides have a fixed layout.
 A row with no `RELS` override is dropped on load. Sizes: 11 bytes minimum per entry, 8 per row.
 
 ## STOF: stolen origins
@@ -210,7 +210,7 @@ A row with no `RELS` override is dropped on load. Sizes: 11 bytes minimum per en
 Key, cell, uint32 row count, then rows: the owning faction's key, the item FormID (uint32), and
 the count (int32). Each row is what the player stole from that faction and still holds a record
 of. A friend's favour clears the stolen flag on those items and drops the row
-([crime](/engine/crime.md)). Sizes: 12 bytes minimum per entry, 15 per row.
+([crime](../engine/crime.md)). Sizes: 12 bytes minimum per entry, 15 per row.
 
 ## CRIM: crime
 
@@ -224,7 +224,7 @@ Key, cell, uint32 row count, then rows:
 
 The counts are read by position, so a build that adds a crime kind reads it as 0 from an
 older file. Counts are stored beside the gold because a crime nobody saw adds a count but no
-gold ([crime](/engine/crime.md)). A negative value becomes 0. A faction the load order no
+gold ([crime](../engine/crime.md)). A negative value becomes 0. A faction the load order no
 longer has is kept. Sizes: 12 bytes minimum per entry, 39 minimum per row.
 
 ## STOL: stolen goods
@@ -239,13 +239,13 @@ total. Sizes: 11 bytes minimum per entry, 8 per row.
 Key, cell, uint32 item count, then per item: uint32 FormID, uint32 level count, and one
 int32 quality level per improved copy. Items ascend and levels descend. A level of 0 or
 less is dropped. More levels than the owner holds copies is kept; a reader uses only as
-many levels as there are copies ([crafting](/engine/crafting.md)). An older build skips the
+many levels as there are copies ([crafting](../engine/crafting.md)). An older build skips the
 chunk and every copy reads plain. Sizes: 12 bytes minimum per entry, 8 per item, 4 per level.
 
 ## ICPY: item copies
 
 Written only for an owner with a copy that holds more than a level: a soul, a charge, a made
-enchantment, a name, a poison, or the chosen mark ([item copies](/engine/item-copies.md)). Key,
+enchantment, a name, a poison, or the chosen mark ([item copies](../engine/item-copies.md)). Key,
 cell, uint32 item count, then per item: uint32 FormID, uint32 copy count, and per copy an int32
 level, a uint8 soul, and a uint8 flags byte. Flag 1 adds a float32 charge, flag 2 a uint32
 enchantment FormID, flag 4 the name as a string, and flag 8 a uint32 poison FormID and an int32
@@ -270,7 +270,7 @@ Key (the player), cell, uint32 potion count, then per potion: uint32 FormID, the
 effect the uint32 `MGEF` FormID, float32 magnitude, uint32 area, and uint32 duration. Potions
 ascend by FormID. The FormIDs are in mod index `0xFF` from `0xFF800000` up. After a load, each
 potion goes back into the item index, so a carried potion keeps its name and effects
-([alchemy](/engine/alchemy.md)). Sizes: 12 bytes minimum per entry, 15 minimum per potion, 16 per
+([alchemy](../engine/alchemy.md)). Sizes: 12 bytes minimum per entry, 15 minimum per potion, 16 per
 effect.
 
 ## INGK: known ingredient effects
@@ -284,7 +284,7 @@ entry, 5 per row.
 Key (the player), cell, uint32 item count, then uint32 FormIDs in the order they were marked, then
 a uint32 hotkey count with rows of a uint8 slot (1 to 8) and a uint32 FormID. Slots ascend. A
 decoder drops a repeated item, a slot outside 1 to 8, and a hotkey for an item that is not a
-favourite ([inventory menu](/engine/inventory-menu.md#favourites-and-hotkeys)). Sizes: 16 bytes
+favourite ([inventory menu](../engine/inventory-menu.md#favourites-and-hotkeys)). Sizes: 16 bytes
 minimum per entry, 5 per hotkey.
 
 ## ENCK: enchanting
@@ -292,5 +292,5 @@ minimum per entry, 5 per hotkey.
 Key (the player), cell, uint32 known count and that many base enchantment keys, then a uint32 made
 count and per made enchantment: uint32 FormID, the name as a string, float32 capacity, float32 cost
 per use at the maker's skill, uint32 base count, and per base its key and a float32 power. Made
-enchantments ascend by FormID, from `0xFF600000` up ([enchanting](/engine/enchanting.md)). Sizes: 16
-bytes minimum per entry, 18 minimum per made enchantment, 11 minimum per base.
+enchantments ascend by FormID, from `0xFF600000` up ([enchanting](../engine/enchanting.md)). Sizes:
+16 bytes minimum per entry, 18 minimum per made enchantment, 11 minimum per base.

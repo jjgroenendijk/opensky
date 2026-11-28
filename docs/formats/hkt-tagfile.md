@@ -9,7 +9,7 @@ tags: [format, havok, hkt, animation]
 # HKT binary tagfile
 
 A `.hkt` file is a Havok binary tagfile. It is a different container from the
-[HKX packfile](/formats/hkx-container.md): it has no sections and no fixups. It writes its own class
+[HKX packfile](hkx-container.md): it has no sections and no fixups. It writes its own class
 definitions, member names, and member types before the objects, so a reader needs no knowledge of
 any Havok class layout.
 

@@ -10,8 +10,8 @@ tags: [engine, combat, archery, behavior-graph, weapons]
 
 This page covers a bow shot, from the held mouse button to the arrow standing in a wall. It shares
 the attack button, the graph event queue, and the impact chain with
-[melee combat](/engine/melee-combat.md). The arrow's flight is on the
-[projectiles](/engine/projectiles.md) page.
+[melee combat](melee-combat.md). The arrow's flight is on the
+[projectiles](projectiles.md) page.
 
 ## The graph decides
 
@@ -55,7 +55,7 @@ Every name comes from the behavior census over the install. Each is declared by 
 | `bowDrawStart` | The draw clip's own mark, fired back after `bowAttackStart` |
 
 The only variable written is `bBowDrawn`. Archery writes no `iState_NPCBow*` value; the
-[actor state graph](/engine/actor-state-graph.md) page says how `iState` reports a drawn bow.
+[actor state graph](actor-state-graph.md) page says how `iState` reports a drawn bow.
 `bowZoom`, `bowZoomAmt`, and `bAimActive` are not written either: no graph on the install reads
 them.
 
@@ -123,12 +123,12 @@ The skill term is applied once, when the arrow hits, with the shooter's Archery 
 The shot itself carries no skill term. The item and potion terms come from the Marksman Modifier
 and Marksman Power Modifier actor values,
 which Fortify Archery enchantments and Fortify Marksman potions move. The perk term comes from
-`Mod Attack Damage` ([perks](/engine/perks.md)). Smithing improvement is in the bow damage: the
+`Mod Attack Damage` ([perks](perks.md)). Smithing improvement is in the bow damage: the
 bow's profile carries the tempering bonus of the player's best copy, as a melee weapon does
-([crafting](/engine/crafting.md#tempering)). The shot
+([crafting](crafting.md#tempering)). The shot
 keeps the multiplier and the bow's enchantment from the moment it was loosed, so an arrow in the air
 applies what the bow had then. An enchanted bow's arrow casts the enchantment on the actor it hits
-and uses the bow's charge ([magic](/engine/magic.md)).
+and uses the bow's charge ([magic](magic.md)).
 
 UESP "Skyrim:Archery", Draw Time and Damage Dealt, gives the draw curve, with `t` in frames of
 1/60 s:
@@ -169,14 +169,14 @@ more, as well as hitting softer.
 ## Stuck arrows
 
 An arrow that lands stays in what it hit. It uses the spawned object component that a dropped item
-uses ([runtime state](/engine/runtime-state.md)). The base record is the `AMMO`, so a stuck arrow
+uses ([runtime state](runtime-state.md)). The base record is the `AMMO`, so a stuck arrow
 uses the same ground model a spent arrow would be picked up as. The transform is the impact point,
 turned along the flight direction. Roll is zero, because an arrow is round around its shaft.
 
 The limit is UESP's: "Only 15 missed arrows or bolts can be present at once, once a 16th has been
 fired the first one fired will despawn." It counts every stuck arrow, not only misses. An actor
 shows at most 3, and a bolt sits 5 units deep instead of 20
-([projectiles](/engine/projectiles.md#pick-up-bounce-and-stick-in-the-game)). A stuck arrow is a
+([projectiles](projectiles.md#pick-up-bounce-and-stick-in-the-game)). A stuck arrow is a
 placed `AMMO`, so the player takes it back with Take, or Steal where the item rules make it a theft.
 
 - A cell that unloads takes its stuck arrows with it. Once per frame the loaded cells are compared,
@@ -242,7 +242,7 @@ Where OpenSky differs:
 ## NPC archers
 
 An NPC with a bow equipped stands off and shoots instead of closing to melee reach. It keeps the
-combat loop's attack timing ([combat behaviour](/engine/combat-behavior.md)): the attack starts the
+combat loop's attack timing ([combat behaviour](combat-behavior.md)): the attack starts the
 attack clip, and the contact step looses the arrow. The range rules below decide where it stands.
 The arrow is the first `AMMO` it has equipped or carries. A shot needs one, and does not use
 it up.
@@ -305,7 +305,7 @@ what sets it was not found, so OpenSky never sets it.
 
 ## Not done yet
 
-Explosive projectiles ([explosions](/engine/explosions.md)). NPC archers do not drive the bow graph
+Explosive projectiles ([explosions](explosions.md)). NPC archers do not drive the bow graph
 events above: they play the combat loop's attack clip. Their windup is the attack's windup plus the
 hold at full draw.
 

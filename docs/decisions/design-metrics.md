@@ -15,7 +15,7 @@ records each value and its reason.
 ## How a rule lands
 
 Each rule starts at zero, as every check here does
-([code-health automation](/decisions/code-health-automation.md)):
+([code-health automation](code-health-automation.md)):
 
 1. The rule lands as a report, such as `make design-index-report` for the rules that read the
    index store. The report prints each finding and the count per module, and it fails nothing.

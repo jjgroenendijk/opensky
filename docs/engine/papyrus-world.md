@@ -9,11 +9,11 @@ tags: [engine, papyrus, streaming, save]
 
 # Papyrus world runtime
 
-`PapyrusWorldRuntime` puts the [Papyrus VM](/engine/papyrus-vm.md) inside the engine loop. It owns
+`PapyrusWorldRuntime` puts the [Papyrus VM](papyrus-vm.md) inside the engine loop. It owns
 one VM runtime and one scheduler, plus what the world needs and the core has none of: an instance per
 script on each reference, one event queue, and a fixed-step tick run once per drawn frame.
 
-It is confined to the main actor, like the [world state store](/engine/runtime-state.md). Every field
+It is confined to the main actor, like the [world state store](runtime-state.md). Every field
 is read and written on the thread that runs `draw(in:)`, so nothing between a streamed cell and its
 scripts needs a lock.
 
@@ -31,7 +31,7 @@ The frame handler list is ordered and has no removal. The streamer is registered
 so it runs first.
 
 Menu pause reaches the VM as a clock, not a branch. A paused frame delivers a delta of exactly zero
-and the hook still runs ([menu mode](/engine/menu-mode.md)). The world runtime never reads the wall
+and the hook still runs ([menu mode](menu-mode.md)). The world runtime never reads the wall
 clock or a pause flag.
 
 `Utility.Wait` does not count time in a menu, and `Utility.WaitMenuMode` does
@@ -68,7 +68,7 @@ skipped event goes back ahead of the rest of the queue, so the queue never reord
 
 A latent call, such as `Utility.Wait`, releases the instance, so its next event runs while the first
 handler waits. Under game timing every delayed native releases it too
-([native timing](/engine/papyrus-vm.md#native-timing)). So a script that changes its state after
+([native timing](papyrus-vm.md#native-timing)). So a script that changes its state after
 an external call races with its next event, and a `GotoState` before the call guards it, as in the
 game. The game does the same: a thread unlocks its object during a latent call (Creation
 Kit wiki, "Threading Notes (Papyrus)"). Example: `CritterSpawn` waits in a loop in `OnLoad` for as
@@ -79,7 +79,7 @@ ten-script cell in one step, because an attach queues three events per instance,
 carries over instead of stalling a frame.
 
 All scripts share one instruction budget per tick, resumed calls and new events together. The
-[scheduler](/engine/papyrus-vm.md#scheduler) explains how the budget is spent and why its default is
+[scheduler](papyrus-vm.md#scheduler) explains how the budget is spent and why its default is
 4,000 instructions.
 
 `OnInit` fires once ever per instance. The fired set is saved. A pending set covers the gap between
@@ -106,7 +106,7 @@ A repeat `OnInit` is also a counted no-op.
 
 ## Instances over cell streaming
 
-The [cell streamer](/engine/cell-streaming.md) announces a cell attach, with a flag for a first
+The [cell streamer](cell-streaming.md) announces a cell attach, with a flag for a first
 integration, and a cell detach. It does not depend on the VM. A scene with no cell location, such as
 a door target whose `CELL` failed to resolve, is not announced, because the location is the key
 instances are filed under.
@@ -134,7 +134,7 @@ script, the reference's property values override the base's, one property at a t
 reference's flags win, so a removed flag drops the base script. Source: the Creation Kit wiki pages
 "Script" and "Reference". OpenSky reads base scripts from the model-base records, such as `ACTI`,
 `CONT`, and `DOOR`, and from an actor's `NPC_` base after its template chain
-([actor resolution](/engine/actor-resolution.md)).
+([actor resolution](actor-resolution.md)).
 
 Detach queues `OnUnload` then `OnCellDetach` on each instance in sorted order, the reverse of the
 attach order. An instance that handles neither retires at once. One that handles either retires at
@@ -215,7 +215,7 @@ when the cell detaches, so a later drop, equip, or second move sends nothing.
 
 Instance states are sorted by key, and variables by script and name, so an unchanged runtime saves
 the same bytes. A restore makes missing instances from the library, so it works before any cell
-attaches. The bytes are the `PSCR` chunk ([save chunks](/formats/opensky-save-world-chunks.md)).
+attaches. The bytes are the `PSCR` chunk ([save chunks](../formats/opensky-save-world-chunks.md)).
 
 Loading restores Papyrus last, after the world state and the game clock. The world state restore
 only queues rebuilds, and those rebuilds read the fired `OnInit` set. Restoring that set first is
@@ -251,7 +251,7 @@ Decoding every `.pex` in an install costs far more than a session uses. The libr
 for a script the first time an attach needs it. A script loads with its ancestors, so an inherited
 native is found under the script that declares it. Every failure is remembered, so a missing or
 broken script is not decoded again on every attach. The app builds the provider over the
-[virtual file system](/formats/vfs.md) and the same [form ID resolver](/formats/formid.md) the cells
+[virtual file system](../formats/vfs.md) and the same [form ID resolver](../formats/formid.md) the cells
 used. A scene with no file system gets no VM, rather than a VM with an empty library.
 
 ## Stated simplifications

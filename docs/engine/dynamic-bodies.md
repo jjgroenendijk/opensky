@@ -9,17 +9,17 @@ tags: [engine, world, physics, havok, collision, streaming]
 # Dynamic rigid bodies
 
 Movable clutter in loaded cells becomes simulated rigid bodies. They run on the player's 1/120 s
-step, collide with the [static collision world](/engine/collision-world.md) and with each other,
+step, collide with the [static collision world](collision-world.md) and with each other,
 are pushed by the player, and are saved where they come to rest.
 
 Contacts, between two bodies as well, and shape sweeps are on the
-[dynamic body contacts](/engine/dynamic-narrowphase.md) page, and drawing on the
-[drawing moving bodies](/engine/dynamic-body-drawing.md) page. The same step also solves a
-ragdoll's joints ([ragdoll joint solver](/engine/ragdoll-solver.md)).
+[dynamic body contacts](dynamic-narrowphase.md) page, and drawing on the
+[drawing moving bodies](dynamic-body-drawing.md) page. The same step also solves a
+ragdoll's joints ([ragdoll joint solver](ragdoll-solver.md)).
 
 ## Which bodies simulate
 
-The [rigid body census](/formats/nif-rigid-body.md) decided this from real data, not from what
+The [rigid body census](../formats/nif-rigid-body.md) decided this from real data, not from what
 `nif.xml` allows. Vanilla exports most static geometry as `MO_SYS_BOX_STABILIZED` with
 `MO_QUAL_INVALID` and zero mass. So the motion byte alone would make 1027 fixed bodies move. A body
 simulates only with a known simulated motion system and a positive, finite mass. Four motion systems
@@ -215,7 +215,7 @@ keeps its last resting pose, not a pose in the air. A crate should not be found 
 reload.
 
 This write rebuilds no cell. The body already draws at its resting pose through its
-[draw delta](/engine/dynamic-body-drawing.md), so a rebuild would draw the same frame. A body that
+[draw delta](dynamic-body-drawing.md), so a rebuild would draw the same frame. A body that
 falls asleep exactly where its build placed it writes nothing, because there is nothing to save. A
 loaded room full of clutter at rest therefore causes no rebuild at all.
 
@@ -226,4 +226,4 @@ handles worst: it runs about 24 times slower unoptimized. So the 2 ms step budge
 `make test PLAN=Perf`, which builds with optimization. It keeps the Debug configuration, because
 `@testable import` needs `ENABLE_TESTABILITY`, and uses its own derived data folder. A normal
 `make test PLAN=RealData` checks the step against a loose limit, to catch a large regression
-([testing](/testing.md)).
+([testing](../testing.md)).

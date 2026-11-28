@@ -10,19 +10,19 @@ tags: [rendering, precipitation, weather, particles, collision, metal]
 # Precipitation volumes
 
 Rain and snow are two particle playbacks owned by the renderer that follow the camera. They use the
-shared [particle simulation and billboard pass](/rendering/particles.md), with alpha blending, depth
+shared [particle simulation and billboard pass](particles.md), with alpha blending, depth
 testing, and the weather wind. The rain streak mask is generated into a texture when the renderer
 starts. Snow draws the texture its `SPGD` record names, one cell of its grid per flake
-([SPGD](/formats/environment-shading.md#precipitation-mapping)); a weather without one, or a
+([SPGD](../formats/environment-shading.md#precipitation-mapping)); a weather without one, or a
 texture that fails to load, keeps a generated flake.
 
 ## Intensity
 
 A `WTHR` `DATA` field gives a classification, not a precipitation density. So Rainy means rain 1,
 Snow means snow 1, and Pleasant, Cloudy, or no weather means zero. Rain and snow values blend across
-the timed [weather](/engine/weather.md) transition. The transition progress is the intensity, so
+the timed [weather](../engine/weather.md) transition. The transition progress is the intensity, so
 rain can fade into snow without a jump. The active weather's `SPGD` record then scales rain
-and snow speed, size, and density ([SPGD](/formats/environment-shading.md#precipitation-mapping)).
+and snow speed, size, and density ([SPGD](../formats/environment-shading.md#precipitation-mapping)).
 
 The settled intensity drives emission. The shared fallback rate caps the base at 60 births per
 second. Rain multiplies it by 6 and snow by 4 before the capacity clamp. These factors are OpenSky's
@@ -52,7 +52,7 @@ drawing. Going back to clear weather sets the birth rate to zero, and existing p
 ## Roof occlusion
 
 The game's `[Display] bUsePrecipitationOcclusion` turns roof occlusion on
-([graphics options](/engine/graphics-options.md)). While rain or snow falls, the shadow pass draws
+([graphics options](../engine/graphics-options.md)). While rain or snow falls, the shadow pass draws
 one more depth view: it looks along the direction the rain falls on a 4,096-unit square around
 the camera, from 6,000 units above the camera to 4,000 below, at 512 texels a side, so 8 units a
 texel. Its centre moves in steps of 32 units. It keeps the highest caster over each texel, so
@@ -71,14 +71,14 @@ highest surface is under a roof and is discarded. So rain still falls outside a 
 under a roof.
 
 When the GPU cannot make the depth array, one ray goes up from the camera, up to 4,096 units,
-through the loaded [static collision](/engine/collision-world.md). Any hit clears the whole
+through the loaded [static collision](../engine/collision-world.md). Any hit clears the whole
 volume until the ray is open again. When the option is off, rain falls through roofs, as in the
 game.
 
 ## Streaks
 
 Rain draws each drop as a band along its velocity, not as a square
-([ribbons](/rendering/particles.md#ribbons)). The band's length over its width is the rain
+([ribbons](particles.md#ribbons)). The band's length over its width is the rain
 `SPGD` record's particle size Y over X, kept to 1 to 16, so a broken record still draws a
 streak. The band keeps the square's area. Snow stays a square flake. Changing the snow look
 starts the falling flakes over.

@@ -12,7 +12,7 @@ Some events reach a script only after it asks for them. The registration belongs
 script instance that called the native: a quest, an alias, a reference script, or an active
 magic effect. Other scripts on the same form do not hear the event. Registrations of a
 script that no longer runs are dropped. The natives exist on `Form`, `Alias`, and
-`ActiveMagicEffect`, like the update timers ([timers](/engine/papyrus-timers.md)).
+`ActiveMagicEffect`, like the update timers ([timers](papyrus-timers.md)).
 
 ## Line of sight
 

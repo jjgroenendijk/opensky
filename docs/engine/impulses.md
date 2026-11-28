@@ -10,7 +10,7 @@ tags: [engine, combat, physics, water]
 # Impulses, knockback, and splashes
 
 A push moves an actor along the ground on its capsule, or gives a loose object (a dynamic
-body, see [dynamic bodies](/engine/dynamic-bodies.md)) an impulse. An impulse is a sudden
+body, see [dynamic bodies](dynamic-bodies.md)) an impulse. An impulse is a sudden
 change of momentum, in kilogram units per second.
 
 Sources: the setting values come from the install (`openskycli gmst list fKnock`). A setting
@@ -43,7 +43,7 @@ A ranged hit pushes no actor; its knock values push loose bodies only.
 Example: a 20 point swing pushes `(20 * 5 + 50) * 0.6 = 90` units in 0.3 seconds. On an actor
 with 30 of 100 health it knocks down with a chance of `20 * 0.3 / 50 = 0.12`.
 
-A knockdown ragdolls the actor ([knockdown](/engine/ragdoll.md#knockdown)). Each body gains the
+A knockdown ragdolls the actor ([knockdown](ragdoll.md#knockdown)). Each body gains the
 slide speed over 69.99, in Havok metres a second.
 
 ## Explosions
@@ -157,12 +157,12 @@ threshold to full at a loss of 800. After a hit the body stays silent for 15 ste
 or a slide does not rattle.
 
 [WARNING] The threshold, the levels, and the quiet steps are OpenSky's values, in the
-[unverified values](/engine/unverified-values.md).
+[unverified values](unverified-values.md).
 
 ## Water
 
 Water comes from the water boxes of the resident cells: cell water, placed water such as rivers,
-and current planes ([water physics](/engine/water-physics.md)). Nothing splashes in dangerous
+and current planes ([water physics](water-physics.md)). Nothing splashes in dangerous
 water.
 
 - A loose body that crosses the surface, up or down, shows `sSplashParticles` there. A key

@@ -9,7 +9,7 @@ tags: [engine, animation, behavior, ai, app-ui]
 # Actor behaviour graphs
 
 Each loaded NPC and creature runs the Havok behaviour graph its race names, the same kind of
-graph the player runs ([behaviour runtime](/engine/behavior-runtime.md)). The graph poses the
+graph the player runs ([behaviour runtime](behavior-runtime.md)). The graph poses the
 skeleton, fires animation events such as `FootLeft`, and holds the variables that conditions and
 Papyrus read.
 
@@ -18,7 +18,7 @@ Papyrus read.
 The race record names one behaviour graph per sex, a path under `Data\meshes`, for example
 `Actors\Canine\WolfProject.hkx`. A female actor uses the female path when the race has one, else
 the male path. OpenSky resolves the actor's race through its template chain
-([actor records](/engine/actor-resolution.md)).
+([actor records](actor-resolution.md)).
 
 The path is a project file. It names a character file, and the character file names the behaviour
 graph, the rig, and the clips. Some projects list few clips and let the behaviour find the rest
@@ -41,20 +41,20 @@ reaches the graph in the same frame.
 
 Both distances are settings, so a crowded scene can trade distance for frame time. The values
 are OpenSky's; the game does not state its own. Movement, perception, and particles use the
-same distances ([update bands](/engine/update-bands.md)).
+same distances ([update bands](update-bands.md)).
 
 Each step sets the locomotion variables from the actor's movement: `Speed`, `Direction`,
 `TurnDelta`, `IsSprinting`, `IsSneaking`, `IsNPC`, and the player flags set to false. It sets
 the three perspective flags to third person
-([first person](/engine/first-person.md)); unset, a drawn weapon takes the first-person states. It also
+([first person](first-person.md)); unset, a drawn weapon takes the first-person states. It also
 sets `weapAdj` from the NPC's weight
-([body-weight layer](/engine/behavior-clips.md#body-weight-layer)). A change of
+([body-weight layer](behavior-clips.md#body-weight-layer)). A change of
 movement raises `moveStart`, `moveStop`, `SprintStart`, `SprintStop`, `SneakStart`, or
 `SneakStop`.
 
-The [speed data](/formats/speed-data.md) of the actor's project turns `Speed` into the blend
+The [speed data](../formats/speed-data.md) of the actor's project turns `Speed` into the blend
 speed the graph plays, and `TurnDelta` is in degrees per second
-([locomotion graph](/engine/locomotion-graph.md#names)).
+([locomotion graph](locomotion-graph.md#names)).
 
 `Speed` is the actor's measured travel, divided by its scale and smoothed over 0.2 s, so one frame
 without a move does not drop it to zero. The parametric locomotion blender reads it to pick walk or
@@ -89,10 +89,10 @@ A rider on a horse does not run a graph. It plays the rider clip of its mount's 
 ## Events and variables
 
 Every event a graph fires goes where the player's events go: sounds and effects
-([animation events](/engine/animation-events.md)), Papyrus `OnAnimationEvent`, and footsteps.
+([animation events](animation-events.md)), Papyrus `OnAnimationEvent`, and footsteps.
 `FootLeft` and `FootRight` play a footstep at the actor's feet
 (<https://ck.uesp.net/wiki/Animation_Events>). The footstep set comes from the actor's own armour
-addons ([footstep](/formats/footstep.md#arma-sndd)): worn feet pieces first, then every other part
+addons ([footstep](../formats/footstep.md#arma-sndd)): worn feet pieces first, then every other part
 it was drawn with, then the default set. A creature's skin names its set on a part with no feet
 slot. Example: `SkinHorse` lists `NakedHorseAA`, whose set `NPCHorseFootFootstepSet` answers the
 `FootFront` and `FootBack` events of the horse's walk and run clips. The skin also lists

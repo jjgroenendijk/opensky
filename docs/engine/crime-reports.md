@@ -9,7 +9,7 @@ tags: [engine, crime, guards, factions, statistics]
 # Crime reports in the game
 
 This page gives the game's rules for what happens after a crime is seen. OpenSky's own rules are
-in [crime](/engine/crime.md) and [guard response](/engine/guard-response.md). The differences are
+in [crime](crime.md) and [guard response](guard-response.md). The differences are
 listed at the end.
 
 ## Who commits a crime
@@ -194,7 +194,7 @@ stateDiagram-v2
   crime had witnesses, or was an assault, the HUD shows the last-witness-killed notice, the gold
   removed, and the faction's name.
 - When the window is over, the crime is final. Killing the witnesses no longer erases it, and the
-  `ADCR` story event is sent once ([story manager](/engine/story-manager.md)). It carries the
+  `ADCR` story event is sent once ([story manager](story-manager.md)). It carries the
   criminal, the victim, the crime type, the gold, and the faction.
 
 Example: a dog and a farmer see the player pick a pocket. The player kills both within 25 seconds.

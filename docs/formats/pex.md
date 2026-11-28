@@ -10,7 +10,7 @@ tags: [format, papyrus, pex, bytecode]
 
 Skyrim SE stores compiled Papyrus scripts as `.pex` files under `scripts\`. OpenSky reads
 the file into objects, properties, variables, states, functions, and instructions. The
-[Papyrus VM](/engine/papyrus-vm.md) runs them.
+[Papyrus VM](../engine/papyrus-vm.md) runs them.
 
 Source:
 [UESP, Compiled Script File Format](https://en.uesp.net/wiki/Skyrim_Mod:Compiled_Script_File_Format).
@@ -27,7 +27,7 @@ Skyrim fields.
 
 Every integer and float is big-endian. A string is a big-endian uint16 byte count, then the
 bytes. UESP says UTF-8, but a mod's compiler can write anything. So strings follow the
-[string decoding](/decisions/string-decoding.md) policy, and no string can fail the file.
+[string decoding](../decisions/string-decoding.md) policy, and no string can fail the file.
 
 ## Header
 
@@ -143,7 +143,7 @@ more, is an error.
 
 - A bare `NAME` becomes `scripts\name.pex`.
 - `scripts\NAME`, `data\scripts\NAME.pex`, and a leading separator are accepted.
-- Separators and case follow the [VFS](/formats/vfs.md) rules.
+- Separators and case follow the [VFS](vfs.md) rules.
 - A name with a `:` is rejected.
 
 `openskycli pex <script>` prints one script from the install by these rules, with each

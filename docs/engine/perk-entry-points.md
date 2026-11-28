@@ -9,7 +9,7 @@ tags: [engine, perks, combat, magic, barter, stealth, crafting]
 # Perk entry points
 
 A perk entry point is a named place in a game rule where perks may change a value. The
-[perks](/engine/perks.md) page explains how one is evaluated. This page lists which rule reads
+[perks](perks.md) page explains how one is evaluated. This page lists which rule reads
 each one. An entry point that no rule reads changes nothing.
 
 Sources: the Creation Kit wiki page "Perk Entry Point"
@@ -74,15 +74,15 @@ perks. The spell is bound as a base form, and `EPMagic_*` conditions read it.
 | Mod Incoming Spell Magnitude | 41 | each effect's magnitude, target's perk |
 | Mod Spell Cost | 38 | the magicka cost |
 | Can Dual Cast Spell | 75 | whether both hands cast the spell as one dual cast; above 0 allows it |
-| Mod Player Magic Slowdown | 70 | the player's share of normal speed under Slow Time, on a base of 0.7 ([archetypes](/engine/magic-archetypes.md#world)) |
-| Mod Commanded Actor Limit | 68 | how many summoned or reanimated actors a caster commands, on a base of 1 ([archetypes](/engine/magic-archetypes.md#world)) |
+| Mod Player Magic Slowdown | 70 | the player's share of normal speed under Slow Time, on a base of 0.7 ([archetypes](magic-archetypes.md#world)) |
+| Mod Commanded Actor Limit | 68 | how many summoned or reanimated actors a caster commands, on a base of 1 ([archetypes](magic-archetypes.md#world)) |
 | Apply Reanimate Spell | 53 | a spell on the actor a Reanimate effect raised, caster's perk |
 | Mod Ward Magicka Absorption Pct | 71 | the share of a warded spell given back as magicka, ward holder's perk |
 | Mod Soul Gem Recharge | 49 | the charge a soul gem gives back, the recharged weapon bound as the item |
 | Mod Soul Pct Captured to Weapon | 78 | the share of a victim's soul that goes into the killer's weapon, victim as target |
-| Mod Enchantment Power | 77 | the power of a new enchantment, base and item bound ([enchanting](/engine/enchanting.md)) |
+| Mod Enchantment Power | 77 | the power of a new enchantment, base and item bound ([enchanting](enchanting.md)) |
 | Mod # Applied Enchantments Allowed | 80 | how many bases one new enchantment may combine |
-| Mod Shout OK | 82 | whether the player may shout, on a base of 0; above 0 allows it ([shouts](/engine/shouts.md)) |
+| Mod Shout OK | 82 | whether the player may shout, on a base of 0; above 0 allows it ([shouts](shouts.md)) |
 
 The scaling applies to a cast spell or scroll, on a projectile hit and on a self cast. A drunk
 potion takes Mod Spell Magnitude and Mod Spell Duration from the drinker's perks, with the potion
@@ -106,12 +106,12 @@ potion. A worn or weapon enchantment and a perk ability apply as authored.
 | Entry point | Id | Where |
 | --- | --- | --- |
 | Mod Tempering Health | 76 | a factor on the skill above the offset in the best quality level, item bound |
-| Mod Spell Range (Target Loc.) | 88 | a target-location cast's range, spell bound ([runes](/engine/spell-delivery.md#target-location-and-runes)) |
+| Mod Spell Range (Target Loc.) | 88 | a target-location cast's range, spell bound ([runes](spell-delivery.md#target-location-and-runes)) |
 | Mod Ingredients Harvested | 87 | how many times a plant's produce is granted, produce bound as the item |
 
 The entry point starts at 1. The steel and advanced smithing perks multiply it by 2 for their
 material, and Fortify Smithing multiplies it by `1 + Smithing Modifier / 100`. The result is the
-`1 + perk` term of the UESP effective skill (see [crafting](/engine/crafting.md)). UESP gives the
+`1 + perk` term of the UESP effective skill (see [crafting](crafting.md)). UESP gives the
 perk term only; that Fortify Smithing enters the same term is read from `PerkSkillBoosts`.
 
 ## Alchemy
@@ -124,7 +124,7 @@ perk term only; that Fortify Smithing enters the same term is read from `PerkSki
 | Mod Poison Dose Count | 83 | the hits one applied poison lasts, poison bound as the item |
 | Mod Potions Created | 89 | how many items one brew makes, made item bound |
 
-Each starts at 1, except Purify, which starts at 0. The rules are on [alchemy](/engine/alchemy.md).
+Each starts at 1, except Purify, which starts at 0. The rules are on [alchemy](alchemy.md).
 
 ## Animation
 
@@ -170,7 +170,7 @@ changes the cast's sound is not known; OpenSky plays it unchanged.
 | --- | --- | --- |
 | Filter Activation | 74 | the use-key gate, before the lock check, activated reference bound as the target |
 | Set Activate Label | 81 | the prompt label of the crosshair target, target bound |
-| Allow Mount Actor | 91 | above 0, the player may mount a dragon, dragon bound as the target ([riding](/engine/riding.md)) |
+| Allow Mount Actor | 91 | above 0, the player may mount a dragon, dragon bound as the target ([riding](riding.md)) |
 
 A non-zero Filter Activation value blocks the press. No event follows, as for a locked door,
 but no lock notice shows. Vanilla uses it to stop a werewolf opening doors and containers.

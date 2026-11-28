@@ -73,7 +73,7 @@ check each dependency before the package loads:
 A broken rule stops the manifest with a message that names both modules.
 `tools/lint/module-graph.sh` checks the rest on every `make lint`: the layer order, the
 Interface rules, the complete feature sets, and that every `import` names a declared dependency
-([The Modular Architecture](/decisions/modular-architecture.md)).
+([The Modular Architecture](../decisions/modular-architecture.md)).
 
 A third helper, `interface`, declares only `XInterface`. It is for a feature that is split
 later than a module that already needs its interface. Example: crime needs `InventoryAccess`
@@ -213,7 +213,7 @@ OpenSkyCLIArguments       the openskycli command line; only the CLI links it
 
 The eleven adapter modules, such as `OpenSkyMagicAdapters`, answer each feature's world port
 from the session. They are composition modules: they may import feature implementations, and no
-package module imports them ([Ports and adapters](/decisions/ports-and-adapters.md)).
+package module imports them ([Ports and adapters](../decisions/ports-and-adapters.md)).
 
 The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
 rebuilds its family and the modules that import it, not every format. `OpenSkyFormatsMesh` also
@@ -235,19 +235,19 @@ pass draws with. Neither one knows the `Renderer` class or the render scene. A n
 arrays, so it is in `OpenSkyRenderCore`; `RendererTerrainPass` draws them, so it stays above.
 
 `OpenSkyCLIArguments` declares every `openskycli` command and option with swift-argument-parser
-([decision](/decisions/swift-argument-parser.md)). It sits in the lowest layer and imports no
+([decision](../decisions/swift-argument-parser.md)). It sits in the lowest layer and imports no
 engine module. It has its own product, so the app does not link it. It keeps the nonisolated
 default, because the parser's property wrappers do not build in a main-actor module.
 
 Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
-([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
-([ffmpeg](/decisions/ffmpeg-audio.md)). `CASTCEncoder` is a C shim over the vendored, static
-astcenc ([astcenc](/decisions/astcenc.md)). It holds code, so it is in the `OpenSkyModules`
+([build system](build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
+([ffmpeg](../decisions/ffmpeg-audio.md)). `CASTCEncoder` is a C shim over the vendored, static
+astcenc ([astcenc](../decisions/astcenc.md)). It holds code, so it is in the `OpenSkyModules`
 product.
 
 The Metal shaders are the `OpenSkyShaders` module. Its build compiles the `.metal` files once into
 the `default.metallib` of the module's resource bundle, and the app, the CLI, `swift test`, and
-xcodebuild all load it through `ShaderLibrary` ([shader library](/decisions/shader-library.md)).
+xcodebuild all load it through `ShaderLibrary` ([shader library](../decisions/shader-library.md)).
 
 ## Keeping the lines clean
 
@@ -336,14 +336,14 @@ rules:
   to its clients. A file whose public declarations use a type of `X` writes `public import X`.
   An interface module publicly imports only lower modules and interfaces (module-graph rule 11).
 - `ExistentialAny` and strict memory safety are on too: a protocol type is written `any X`, and an
-  unsafe expression is marked `unsafe` ([Swift language rules](/decisions/language-rules.md)).
+  unsafe expression is marked `unsafe` ([Swift language rules](../decisions/language-rules.md)).
 - A package module does not swallow an error: write `attempt { try call() }` from
   `OpenSkyFormatsCore`, which logs the failure, or throw. The formats, game data, and save
-  modules do not trap ([Error handling](/decisions/error-handling.md)).
+  modules do not trap ([Error handling](../decisions/error-handling.md)).
 - A feature, interface, or world-domain module reads no system random source or clock: the
   shell passes a seeded generator and the time in, and `Stopwatch` times work for logs. No
   package module keeps global mutable state or uses the notification centre
-  ([Deterministic game rules](/decisions/deterministic-rules.md)).
+  ([Deterministic game rules](../decisions/deterministic-rules.md)).
 
 After a module is renamed or removed, delete its old products from `Build/Products` in the build cache
 (including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still
@@ -366,7 +366,7 @@ names. A fake stores each property and records each call, so an adapter test nee
 hand-written fake.
 One library, `OpenSkyTagsTesting`, holds no fixtures: it declares the shared
 Swift Testing tags, and the `testTarget` helper in `src/Package.swift` links it into every package
-test target ([test runs](/tools/test-runs.md#tags)).
+test target ([test runs](test-runs.md#tags)).
 
 A testing library depends on interfaces, lower modules, and other testing libraries, never on
 a feature implementation. So any test target may link it without building another feature.
@@ -375,14 +375,14 @@ A fixture that needs the real implementation goes in the feature's fixtures libr
 implementation and on testing libraries, and only `<Name>Tests` and the Xcode test bundles may
 link it. Example: `CellStreamerFixture` builds a real cell streamer, so it is in
 `OpenSkyWorldFixtures`. A module that ships in the app never depends on either kind
-([The Modular Architecture](/decisions/modular-architecture.md)).
+([The Modular Architecture](../decisions/modular-architecture.md)).
 
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A framework cannot use a
 system-library target, so `CFFmpeg` is a C target that carries its own link flags
-([ffmpeg audio](/decisions/ffmpeg-audio.md)). Xcode's missing-dependency check is wrong for these
+([ffmpeg audio](../decisions/ffmpeg-audio.md)). Xcode's missing-dependency check is wrong for these
 frameworks, so it is off for them
-([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
+([environment](environment.md#package-framework-variants-warn-about-declared-dependencies)).
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the

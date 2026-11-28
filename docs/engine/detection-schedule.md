@@ -8,14 +8,14 @@ tags: [engine, ai, perception, detection]
 
 # Detection schedule
 
-The [detection](/engine/detection.md) page gives the formula for one observer and one target.
+The [detection](detection.md) page gives the formula for one observer and one target.
 This page says when that check runs.
 
 ## Who runs detection in the game
 
 - Each actor runs its detection pass inside its own AI update. The update must not have ended
   early: the actor has 3D, its cell is attached, it is not the player, and it is not held in
-  [dialogue mode](/engine/dialogue-mode.md).
+  [dialogue mode](dialogue-mode.md).
 - A pass runs when the real time since the actor's last pass is over its interval. The next
   interval is random between `fDetectionUpdateTimeMin` (1 second) and `fDetectionUpdateTimeMax`
   (2 seconds). In a complex scene it is between 2.5 and 5 seconds. A scene is most likely complex
@@ -25,15 +25,15 @@ This page says when that check runs.
   again on the next frame.
 - A pass checks each actor in the high process level that has 3D, then the player.
 - The observer keeps tracking a target only for a reason. There are nine: the observer is
-  [hostile](/engine/hostility.md#aggression-draws-the-weapon) to it, the target is in combat, a
+  [hostile](hostility.md#aggression-draws-the-weapon) to it, the target is in combat, a
   teammate is involved, the observer watches for crime or trespass, the target is a corpse within
   a set range, and others. Without a reason the detection state of the pair is dropped. An old
   state expires after `fDetectionStateExpireTime`.
 - An actor that runs its warn package for the aggro radius skips one of the hostility reasons.
-- Combat can start on any result of 0 or more ([keeping a combat target](/engine/detection.md#keeping-a-combat-target)).
+- Combat can start on any result of 0 or more ([keeping a combat target](detection.md#keeping-a-combat-target)).
   `iAICombatMinDetection`, `fPlayerDetectActorValue`, `fSneakStealthBoyMult`, and
   `fSneakNoticeMin` are never read. The aggro radius rule is in
-  [combat behaviour](/engine/aggro-radius.md).
+  [combat behaviour](aggro-radius.md).
 
 A pair's check then repeats at an interval that depends on who asks:
 

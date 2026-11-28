@@ -10,7 +10,7 @@ tags: [engine, ui, menu, swf, settings]
 
 The system menu is the pause menu: Resume, Quicksave, Save, Load, Installed Content, Settings,
 Controls, Help, and Quit, the rows of the vanilla System page. It was the first real consumer of
-[menu mode](/engine/menu-mode.md) input. It can also show itself through the vanilla
+[menu mode](menu-mode.md) input. It can also show itself through the vanilla
 `Interface\quest_journal.swf` movie.
 
 The menu works with no install, no renderer, and no movie. Only the movie layer needs them.
@@ -28,11 +28,11 @@ Activating a row returns a result instead of doing the action:
 | Quicksave | quicksave | The host writes the `Quicksave` slot; the menu stays open |
 | Every other row | show page | The page model takes the keys |
 
-Each page is its own model: the Settings page steps the [player settings](/engine/settings.md),
+Each page is its own model: the Settings page steps the [player settings](settings.md),
 the Save and Load pages list saves newest first and ask before an overwrite or a delete, the
-Controls page waits for the next key and rebinds it ([control map](/formats/controlmap.md)),
+Controls page waits for the next key and rebinds it ([control map](../formats/controlmap.md)),
 Help and Installed Content list topics and show the text of one, and Quit asks Main Menu,
-Desktop, or Cancel, with Cancel selected. Main Menu opens the [title menu](/engine/main-menu.md).
+Desktop, or Cancel, with Cancel selected. Main Menu opens the [title menu](main-menu.md).
 Cancel on a page returns to the row list.
 
 Up and down wrap around, as the vanilla list does.
@@ -47,7 +47,7 @@ on the stack.
 
 The control map's Pause key, Esc, opens the menu. While the mouse is captured, the first Esc
 releases it instead. Opening it may write a pause autosave. `J` opens the [quest
-journal](/engine/journal.md).
+journal](journal.md).
 
 ## Settings
 
@@ -58,10 +58,10 @@ journal](/engine/journal.md).
 
 `startmenu.swf` is the title screen, not the pause menu. Its rows are Continue, New, Load,
 Creations, Mods, Credits, Quit, and Help, and it has no `$SETTINGS` string. It is still useful for
-testing the [ActionScript runtime](/engine/as2-runtime.md).
+testing the [ActionScript runtime](as2-runtime.md).
 
 The pause menu is `quest_journal.swf`. Its `QuestJournalBase` has three pages: Quests, General
-Stats, and System. The [quest journal](/engine/journal.md) drives the Quests page with the same
+Stats, and System. The [quest journal](journal.md) drives the Quests page with the same
 movie and setup, so the two menus cannot be open at once. The System page is `PageArray[2]`, and
 the movie builds its own rows:
 
@@ -69,7 +69,7 @@ the movie builds its own rows:
 
 Settings opens the movie's own panel with `$Gameplay`, `$Display`, and `$Audio`. Quit shows
 `$Main Menu` and `$Desktop`. The game resolves each token through the
-[translation map](/formats/translation-strings.md). The pages and transitions are the movie's own.
+[translation map](../formats/translation-strings.md). The pages and transitions are the movie's own.
 
 Start-up order:
 
@@ -116,7 +116,7 @@ calls the engine, and the engine answers with data, as the game does. Calls meas
 | `QuitToMainMenu`, `QuitToDesktop` | Opens the title menu, or quits |
 
 A mapping entry's key art is the key's name in `interface\controls\pc\keyboard_english.txt`, such as
-`L-Ctrl` or `Mouse1` ([control map](/formats/controlmap.md), "Key names"). The movie draws the
+`L-Ctrl` or `Mouse1` ([control map](../formats/controlmap.md), "Key names"). The movie draws the
 button with that name. The X key deletes a save and T lists the characters, as in the movie's own
 key handler.
 
@@ -130,7 +130,7 @@ the quicksave slot `sQuicksaveAbbrev`. The detail line follows the game's save d
 for an exterior cell and `sMenuDisplayUnknownLocationString` when there is no cell. Without game
 data, the pages keep OpenSky's English words.
 
-The Settings page keeps its values in the [player settings](/engine/settings.md). The movie runs
+The Settings page keeps its values in the [player settings](settings.md). The movie runs
 the page: its category list, its option lists, the keys, and the cursor. A category builds its own
 rows, each with `text`, `movieType`, and stepper `options`, and passes the array in
 `RequestGameplayOptions`, `RequestDisplayOptions`, or `RequestAudioOptions`. During that call the
@@ -191,7 +191,7 @@ leaves the rest to the movie. On PC with no gamepad, the platform is 0. There an
 the selection and its highlight, but the list scrolls only on a mouse wheel notch. So moving past the
 last row on screen with the keys selects a row that stays out of view, as in the game. With a gamepad
 active the platform is 1, and the same key scrolls the list to keep the selection in view
-([keys the game sends](/engine/as2-input.md#keys-the-game-sends)).
+([keys the game sends](as2-input.md#keys-the-game-sends)).
 
 The game keeps changed bindings in a custom control map file beside the default
 `Interface/Controls/PC/ControlMap.txt`, so they last after a restart.
@@ -271,7 +271,7 @@ form list or its messages.
 
 A second list, `HelpManualInstalledContentAE` (77 messages, `HMAE`), is used when a check in
 the game passes, likely that the player owns the Anniversary Edition upgrade. OpenSky always uses
-the shorter list ([unverified values](/engine/unverified-values.md)).
+the shorter list ([unverified values](unverified-values.md)).
 
 A clean-room read of `SkyrimSE.exe`, 2026-11-15, found that the engine fills the list from one
 of these two default objects, and that it reads no other file for it. The Creations download

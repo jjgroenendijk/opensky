@@ -11,10 +11,10 @@ tags: [format, havok, hkx, skeleton, animation]
 An `hkaSkeleton` is a bone tree plus a bind pose. The bind pose is the rest position of
 every bone. `skeleton.hkx` holds two: the animation rig (`NPC Root [Root]`, 99 bones) and
 the ragdoll skeleton (`Ragdoll_NPC COM [COM ]`, 18 bones). The container that holds them is
-described in [HKX container](/formats/hkx-container.md).
+described in [HKX container](hkx-container.md).
 
 `openskycli skeleton <hkx-key> [--nif <nif-key>]` prints a skeleton and its NIF match (see
-[CLI](/tools/cli.md)).
+[CLI](../tools/cli.md)).
 
 ## References
 

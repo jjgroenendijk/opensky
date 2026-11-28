@@ -9,7 +9,7 @@ tags: [rendering, metal, terrain, culling, streaming]
 
 # Scene drawing
 
-This page covers what the [Metal 4 renderer](/rendering/metal4-renderer.md) does with a scene:
+This page covers what the [Metal 4 renderer](metal4-renderer.md) does with a scene:
 terrain, culling, instancing, and swapping.
 
 ## Opaque alpha
@@ -37,7 +37,7 @@ sorted.
 
 ## Terrain splat
 
-Terrain has its own pipeline. It draws one item per `LAND` quadrant ([terrain](/engine/terrain.md)),
+Terrain has its own pipeline. It draws one item per `LAND` quadrant ([terrain](../engine/terrain.md)),
 between the opaque and alpha-test lists. One draw blends the quadrant's `BTXT` base texture with up
 to 8 `ATXT` layer textures by the per-vertex `VTXT` opacities (UESP LAND).
 
@@ -52,7 +52,7 @@ rejected:
   blending. One pass with a shader loop is cheaper.
 
 The cap is 8 layers, `ATXT` layer numbers 0 to 7, the format maximum per UESP and xEdit. Vanilla
-peaks near 6 per quadrant ([land](/formats/land.md)), so nothing real is dropped. Extras are dropped
+peaks near 6 per quadrant ([land](../formats/land.md)), so nothing real is dropped. Extras are dropped
 and counted.
 
 Weights are a second vertex stream (two float4 lanes, stride 32), so the 48-byte static layout stays
@@ -62,7 +62,7 @@ the order the mesh builder writes vertices, so a sample maps to a vertex one to 
 The blend starts at the base and, in layer order, does `mix(albedo, layerColor, saturate(weight))`.
 A straight blend is the plain reading of the opacities. The exact vanilla blend curve is not
 confirmed. Lighting after the blend is the static path, so terrain matches buildings. Terrain is
-always opaque. Its normal maps are on by default ([terrain](/engine/terrain.md)). The UV tiling
+always opaque. Its normal maps are on by default ([terrain](../engine/terrain.md)). The UV tiling
 density, 2 quads per repeat, is not confirmed either, but looks right at Whiterun.
 
 ## Frustum culling
@@ -99,26 +99,26 @@ each draw call, so the pointer lands on the group's visible instances.
 
 Culling works per instance. Each frame writes only visible instances, packed, and draws the group
 with that count. A fully culled group is skipped and uses no uniform slot. Terrain is not instanced.
-Grass uses the instance ring with its own pipeline ([grass](/engine/grass.md)).
+Grass uses the instance ring with its own pipeline ([grass](../engine/grass.md)).
 
 ## Billboard shapes
 
 A rigid shape below an `NiBillboardNode` keeps the node's position, rest rotation, and mode in
 its own frame. The flatten takes the nearest billboard above the shape. The static vertex shader
 turns the shape about that node to the frame's camera, by the rules on the
-[sequence page](/formats/nif-sequences.md#billboard-nodes). It works in world space from the
+[sequence page](../formats/nif-sequences.md#billboard-nodes). It works in world space from the
 instance's model matrix, so each placement turns about its own pivot in the same instanced draw.
 The turn also rotates the normal and the tangent frame. The draw ring stores the node's position
 with the mode plus 1, so a zeroed slot draws the shape at rest.
 
 A skinned shape is not turned here: its pose already holds the turn
-([node controllers](/engine/object-animation.md#node-controllers)). A billboard shape casts no
+([node controllers](../engine/object-animation.md#node-controllers)). A billboard shape casts no
 sun shadow, because the shadow and ray-traced passes draw it unturned. Its motion for temporal
 upscaling is the camera's motion only.
 
 ## Swapping scenes
 
-A new scene replaces the old one between frames, which is what [cell streaming](/engine/cell-streaming.md)
+A new scene replaces the old one between frames, which is what [cell streaming](../engine/cell-streaming.md)
 needs. It runs on the same thread as drawing, so "between frames" comes from sharing that thread,
 never from waiting on the GPU. A camera can come with it, which resets the sun and the fly pose.
 

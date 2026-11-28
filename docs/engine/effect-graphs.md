@@ -9,8 +9,8 @@ tags: [engine, animation, behavior-graph, magic]
 # Effect graphs
 
 Many magic and shout effects draw an art model whose mesh names a Havok behaviour graph. The mesh
-names it with `BSBehaviorGraphExtraData` ([NIF extra data](/formats/nif-extra-data.md)), as a trap
-mesh does ([object animation](/engine/object-animation.md)). On the install, about 1,250 meshes
+names it with `BSBehaviorGraphExtraData` ([NIF extra data](../formats/nif-extra-data.md)), as a trap
+mesh does ([object animation](object-animation.md)). On the install, about 1,250 meshes
 carry it, many under `meshes\magic` and `meshes\effects`.
 
 Such a graph waits for the animation events of the actor the effect is on. A hand effect waits for
@@ -43,7 +43,7 @@ two natives, and SKSE adds no native for them.
 - A new effect or addon starts its own graph instance. The project's decode and clips are shared
   by every effect of the same model. An effect that ends drops its graph.
 - `AnimationEventCoordinator.handle` is the one place every animation event passes
-  ([animation events](/engine/animation-events.md#sources)). It first sends the event to the
+  ([animation events](animation-events.md#sources)). It first sends the event to the
   graphs of the effects on the event's source, in effect order. So the graph hears it in the
   same frame.
 - A graph that does not declare the event as one of its own events ignores it.
@@ -55,7 +55,7 @@ two natives, and SKSE adds no native for them.
   `SetSubGraphFloatVariable` sets the variable on each sub-graph that declares it. From then on,
   that graph keeps the script's value and no longer takes the actor's.
 - A `BGSGamebryoSequenceGenerator` the graph reaches names a NIF sequence of the effect's own
-  mesh. The effect's particle systems play it ([particles](/rendering/particles.md#sequences)).
+  mesh. The effect's particle systems play it ([particles](../rendering/particles.md#sequences)).
   A generator in a referenced behaviour file counts as its parent graph's.
 - Each text key a played sequence passes goes to its graph as an event. A sequence the graph has
   just reached stands at 0 s. A clamped sequence passes each key once; a looped one passes them
@@ -103,7 +103,7 @@ only the sub-graphs on that actor.
 ## Where OpenSky differs
 
 - The graph's pose moves the effect model through its own posed copy
-  ([posed effect models](/rendering/visual-effects.md#posed-effect-models)). The model's rig
+  ([posed effect models](../rendering/visual-effects.md#posed-effect-models)). The model's rig
   is matched to the NIF's nodes by name; a rig bone the NIF does not name moves nothing.
 - A sub-graph copies the actor's variables one way, at each step. No source says whether the
   game shares one variable store between the graphs. A value a sub-graph writes does not reach

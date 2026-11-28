@@ -16,7 +16,7 @@ tags: [decision, dependency, swiftpm, cli]
 - The declarations live in the `OpenSkyCLIArguments` module. It has its own product, and only
   the `openskycli` target links it. The app and the engine modules do not import it.
 - The tracked `src/Package.resolved` pins the version, as for
-  [swift-collections](/decisions/swift-collections.md).
+  [swift-collections](swift-collections.md).
 
 ## Why
 
@@ -45,8 +45,8 @@ parsed command to its own `CLIRunnable` protocol and runs it on the main actor.
   the same commit, so no old name has to be kept working.
 - `game` has a hidden default subcommand that collects every word it does not know, so
   `game input press jump` reaches the app. The app's own catalog checks those words and
-  prints their help ([agent control](/tools/agent-control.md)).
-- The rules for names, typed values, and help text are in the [CLI](/tools/cli.md#conventions)
+  prints their help ([agent control](../tools/agent-control.md)).
+- The rules for names, typed values, and help text are in the [CLI](../tools/cli.md#conventions)
   page, with the checks that enforce them.
 
 ## Alternatives

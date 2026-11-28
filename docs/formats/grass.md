@@ -8,7 +8,7 @@ tags: [format, plugin, records, grass, terrain]
 # Grass records (GRAS)
 
 A `GRAS` record is one grass model plus the rules for placing it on
-[LAND texture layers](/formats/land.md). A land texture (`LTEX`) lists zero or more grasses
+[LAND texture layers](land.md). A land texture (`LTEX`) lists zero or more grasses
 in repeated `GNAM` fields.
 
 Layout source: xEdit dev-4.1.5

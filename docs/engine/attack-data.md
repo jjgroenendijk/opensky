@@ -44,7 +44,7 @@ flowchart TD
 
 | Value | Default | What it changes |
 | --- | --- | --- |
-| Damage multiplier | 1 | The skill-scaled weapon damage ([melee damage](/engine/melee-damage.md#skill-sneak-attacks-and-armour)) |
+| Damage multiplier | 1 | The skill-scaled weapon damage ([melee damage](melee-damage.md#skill-sneak-attacks-and-armour)) |
 | Attack chance | 1 | The attack's weight in the AI's random pick |
 | Spell | none | Cast on the target with the hit |
 | Flags | 0 | See below |
@@ -100,7 +100,7 @@ At the hit frame the attack first pays its stamina, then finds what it hits:
   loaded actor within reach and within twice the cone.
 
 The hit frame also sets the time of the actor's last attack, which the
-[attack chance](/formats/combat-style.md#attack-and-bash-chances) reads.
+[attack chance](../formats/combat-style.md#attack-and-bash-chances) reads.
 
 ## The AI's pick
 
@@ -138,7 +138,7 @@ An attack is a candidate only when all of these hold:
 - the attacker's Stamina is above 0, or the attack costs no stamina.
 
 Its weight starts at the attack chance. Against a staggered target it is multiplied by the
-attacker's [combat style](/formats/combat-style.md) `CSME` power attack staggered value for a
+attacker's [combat style](../formats/combat-style.md) `CSME` power attack staggered value for a
 power attack, else by attack staggered. Otherwise, a power attack against a blocking target,
 with the attacker inside the target's hit cone (`fCombatHitConeAngle`, 35 degrees), is multiplied
 by power attack blocking. A weight of 0 or less drops out.
@@ -150,7 +150,7 @@ The general attack pick leaves out bash (`0x2`) and left-hand (`0x8`) attacks, a
 power attacks only. With no target, every weight there is 10. A weapon in the left hand runs its
 own attack loop, whose pick takes only left-hand attacks that are not bashes. The bash pick takes
 only bash attacks that are not left-hand ones
-([combat blocking](/engine/combat-blocking.md#bash)).
+([combat blocking](combat-blocking.md#bash)).
 
 ## Stamina
 
@@ -189,7 +189,7 @@ makes the target play its large recoil instead of a stagger.
 ## Knockdown
 
 A knockdown above 0 pushes the target away from the attacker with that force, the same push an
-explosion's knockdown uses ([explosions](/engine/explosions.md)). The push comes from the
+explosion's knockdown uses ([explosions](explosions.md)). The push comes from the
 attacker's position, not from the impact point. It needs an attacking actor, and a killing blow
 skips it. The player is pushed like any other target.
 
@@ -211,9 +211,9 @@ Example: a knockdown of 40 on an actor that cannot ragdoll. It slides at 240 uni
 ## Bash
 
 The combat AI decides to bash in its block loop, from its combat style's bash chances
-([combat style](/formats/combat-style.md#attack-and-bash-chances)). A bash starts only while the
+([combat style](../formats/combat-style.md#attack-and-bash-chances)). A bash starts only while the
 actor's own attack state is none and its item can bash
-([combat blocking](/engine/combat-blocking.md#bash)). A bash runs the same weighted
+([combat blocking](combat-blocking.md#bash)). A bash runs the same weighted
 pick as a swing, over the attacks with flag `0x2`, so the attack chances choose between a bash
 and a power bash. Vanilla `NordRace` gives `bashStart` a chance of 0.5 and `bashPowerStart` 0.33.
 The bash says the Bash combat topic and lasts until the attack state is back to none. While the
@@ -247,6 +247,6 @@ knockdown push. These parts are not built yet:
 - Reach at contact is OpenSky's swing volume, not the edge-to-edge distance. There is no physics
   cast after a miss, and no sweep.
 - A bash plays a fixed bash clip, not the attack's own bash animation
-  ([combat blocking](/engine/combat-blocking.md#in-opensky)).
+  ([combat blocking](combat-blocking.md#in-opensky)).
 
 `openskycli game state assist` lists each NPC's picked attack under `attackPicks`.

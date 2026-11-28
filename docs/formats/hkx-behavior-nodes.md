@@ -8,14 +8,14 @@ tags: [format, havok, hkx, behavior, animation, locomotion]
 
 # HKX behavior node classes
 
-[HKX behavior graph objects](/formats/hkx-behavior.md) covers the top of a behavior file
+[HKX behavior graph objects](hkx-behavior.md) covers the top of a behavior file
 and stops at the graph's root generator. This page covers the node tree below it. Transitions,
 conditions, modifiers, and Bethesda's own classes are in
-[HKX behavior modifier classes](/formats/hkx-behavior-modifiers.md). Together the two
+[HKX behavior modifier classes](hkx-behavior-modifiers.md). Together the two
 pages cover every class in the vanilla player behavior files, as the
-[Havok behavior scope](/decisions/havok-behavior-scope.md) requires.
+[Havok behavior scope](../decisions/havok-behavior-scope.md) requires.
 
-`openskycli hkx <key>` prints the decoded nodes of a file (see [CLI](/tools/cli.md)).
+`openskycli hkx <key>` prints the decoded nodes of a file (see [CLI](../tools/cli.md)).
 
 ## References
 
@@ -25,7 +25,7 @@ checked byte by byte against vanilla files:
 - ret2end/HKX2Library (MIT): a Skyrim SE packfile reader and writer, and the only one of
   the three with Bethesda's `BS*` classes. Its member offset tables are the main source.
   Its class signatures match the vanilla class name tables exactly
-  ([HKX class signatures](/formats/hkx-class-signatures.md)).
+  ([HKX class signatures](hkx-class-signatures.md)).
 - soulsmods/DSMapStudio HKX2 (MIT): a separate version of the stock classes, for a
   cross-check.
 - exyorha/hkxparse (MIT): packfile structures.
@@ -35,7 +35,7 @@ were used.
 
 ## Shared headers
 
-Sizes and rules are as in [HKX behavior graph objects](/formats/hkx-behavior.md). Every
+Sizes and rules are as in [HKX behavior graph objects](hkx-behavior.md). Every
 offset is the offset in memory.
 
 Almost every class comes from one of these bases, so their members sit at fixed offsets:
@@ -150,7 +150,7 @@ wrap one `hkArray` at 0x10: of `hkbStateMachineTransitionInfo` (72 bytes each) a
 `hkReal m_localTime` at 0x00, `hkbEventProperty m_event` at 0x08, then `hkBool`
 `m_relativeToEndOfClip`, `m_acyclic`, and `m_isAnnotation` at 0x18, 0x19, and 0x1A. The
 vanilla walk and run clips have empty triggers. Footsteps come from animation annotations
-instead (see [hkaSplineCompressedAnimation](/formats/hka-animation.md#m_annotationtracks)).
+instead (see [hkaSplineCompressedAnimation](hka-animation.md#m_annotationtracks)).
 
 `hkbBlenderGenerator`, size 160, runs several children at once and mixes their poses.
 

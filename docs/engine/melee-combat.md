@@ -9,15 +9,15 @@ tags: [engine, combat, melee, behavior-graph, weapons, damage, gmst]
 # Melee combat
 
 This page covers one swing, from the key press to the health that comes off. The graph is on the
-[behavior runtime](/engine/behavior-runtime.md) page, and the names it uses on the
-[combat graph names](/engine/combat-graph-names.md) page. The sweep comes from
-[dynamic body contacts](/engine/dynamic-narrowphase.md). Health is on the
-[actor values](/engine/actor-values.md) page.
+[behavior runtime](behavior-runtime.md) page, and the names it uses on the
+[combat graph names](combat-graph-names.md) page. The sweep comes from
+[dynamic body contacts](dynamic-narrowphase.md). Health is on the
+[actor values](actor-values.md) page.
 
 ## The graph decides
 
 The engine raises `attackStart`, a power attack, or a bash event
-([melee damage](/engine/melee-damage.md)). It does not decide that an attack began. The behavior graph
+([melee damage](melee-damage.md)). It does not decide that an attack began. The behavior graph
 decides whether an attack state was entered, how long the windup lasts, and which frame connects.
 It says so by firing events back. So every melee state is read from the graph, not timed beside
 it.
@@ -57,7 +57,7 @@ created on first read would find the queue already empty.
 The weapon moves on the clip mark, not on the request. `weaponDraw` starts drawing, and the weapon
 stays where it is. `BeginWeaponDraw` arrives when the hand reaches it, and that frame moves the
 model. Sheathing is the mirror. The node names are on the
-[actor resolution](/engine/actor-resolution.md) page.
+[actor resolution](actor-resolution.md) page.
 
 Not every equip clip has that mark. `1HM_Equip.hkx`, `Bow_Equip.hkx`, and `CrossBow_Equip.hkx`
 have it at time 0.0. `Dag_Equip.hkx`, `Axe_Equip.hkx`, `Mac_Equip.hkx`, `2HC_Equip.hkx`, and
@@ -71,7 +71,7 @@ The clip mark is earlier and wins when a clip has it. The transition keeps a dag
 stuck mid-draw. Whichever comes first moves the weapon, once.
 
 A mark at the clip's very first frame is why the first update of a clip checks a closed interval
-([behavior runtime](/engine/behavior-runtime.md)). Under the half-open rule of later updates,
+([behavior runtime](behavior-runtime.md)). Under the half-open rule of later updates,
 `BeginWeaponDraw` at 0.0 could never fire.
 
 ## Attack phase
@@ -139,7 +139,7 @@ one sampled frame of a 30 Hz clip lands wherever that frame was, and the contact
 not a window. The volume uses the attacker's facing at the contact frame, which is where the
 player aimed.
 
-The game tests each attack against a cone from its [attack data](/engine/attack-data.md#the-hit-cone):
+The game tests each attack against a cone from its [attack data](attack-data.md#the-hit-cone):
 a half-angle of the `ATKD` strike angle (default 35 degrees), turned by the attack angle. OpenSky
 sweeps a capsule instead. Two of its numbers are OpenSky's choices:
 
@@ -169,7 +169,7 @@ Sweep perk) makes a swing hit every target it reaches, nearest first, then the l
 
 Unblocked damage starts from the `WEAP` `DATA` base damage, scaled by skill and by the attack's
 `ATKD` damage multiplier. The whole formula, with blocking and the bonus terms, is on the
-[melee damage](/engine/melee-damage.md) page.
+[melee damage](melee-damage.md) page.
 
 ## Stagger
 
@@ -177,7 +177,7 @@ A hit that staggers writes `staggerMagnitude` on the target's graph, then raises
 Writing first means the stagger reads this hit's magnitude, not the last one's.
 
 Which hit staggers, with what magnitude and direction, follows the game's rule in
-[hit reactions](/engine/hit-reactions.md). A bash gives its target a large recoil
+[hit reactions](hit-reactions.md). A bash gives its target a large recoil
 (`recoilLargeStart`) and never staggers. A blocked hit raises `blockHitStart` on the target and
 `recoilStart` on the attacker. `staggerDirection` is written with the magnitude.
 
@@ -186,7 +186,7 @@ The Disarm perk spells only fire on a second roll: `iPerkAttackDisarmChance` (50
 Bash (<https://en.uesp.net/wiki/Skyrim:Block>). A disarmed player sees `sPlayerDisarmedMessage`.
 
 A stagger on an NPC writes `staggerMagnitude` and raises `staggerStart` on that NPC's behaviour
-graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose graph lacks the
+graph ([actor graphs](actor-graphs.md)). An NPC that runs no graph, or whose graph lacks the
 event, answers false, and the trace records the hit as not staggered.
 
 ## Impact sound
@@ -198,14 +198,14 @@ footstep: graph event -> FSTP tag  -> IPDS -> IPCT for the material -> SNDR
 melee:    HitFrame    -> WEAP INAM -> IPDS -> IPCT for the material -> SNDR
 ```
 
-From `IPDS` on, the two are the same code ([footstep](/formats/footstep.md)). `WEAP` `INAM` is
+From `IPDS` on, the two are the same code ([footstep](../formats/footstep.md)). `WEAP` `INAM` is
 "Normal weapon swing impact set. Points to a IPDS" (UESP). `BIDS` is the block and bash set, read
-only by a bash ([item records](/formats/item-records.md)).
+only by a bash ([item records](../formats/item-records.md)).
 
 A swing only strikes actors, and actors have no Havok material per body part here. So the hit uses
 the `IPDS` default entry, the most frequent `IPCT` in the table. Every link is optional. A missing
 link ends the chain with a silent hit, not an error. The `IPCT` also shows its impact model
-and leaves its decal ([impacts and decals](/rendering/decals.md)).
+and leaves its decal ([impacts and decals](../rendering/decals.md)).
 
 ## Input
 
@@ -219,17 +219,17 @@ These take the same input path as sneak, sprint, and jump. The fixed movement st
 them: attacking does not move the capsule. The graph does that, if its attack clips carry movement.
 
 The game's two-button rules, with left, dual, and power attacks, are in
-[attack input](/engine/attack-input.md).
+[attack input](attack-input.md).
 
 Losing cursor capture drops the guard, because a block held through a lost mouse-up would stay up
 forever. The drawn state stays, like sneak, because the player set it on purpose.
 
 ## The left hand
 
-A one-handed weapon equipped into the left hand ([inventory state](/engine/inventory-state.md#the-left-hand))
+A one-handed weapon equipped into the left hand ([inventory state](inventory-state.md#the-left-hand))
 takes the block button. The player cannot block then; UESP
 ([Block](https://en.uesp.net/wiki/Skyrim:Block)) says the same. The left button follows the
-[attack input](/engine/attack-input.md) rules:
+[attack input](attack-input.md) rules:
 
 - A tap raises `attackStartLeftHand`. A hold past 0.3 seconds raises the left power attack for the
   move direction: `attackPowerStartInPlaceLeftHand`, `attackPowerStartForwardLeftHand`,
@@ -243,10 +243,10 @@ takes the block button. The player cannot block then; UESP
   both weapons on its contact frame, one blow each, right first.
 - A left power attack pays the left weapon's stamina. A dual power attack pays both weapons'. The
   game applies the power attack stamina entry point with the right-hand weapon
-  ([attack data](/engine/attack-data.md#stamina)).
+  ([attack data](attack-data.md#stamina)).
 
 An NPC with a sword, dagger, war axe, or mace in each hand and a combat style rolls its attack
-chance for each hand ([combat blocking](/engine/combat-blocking.md#loops-that-run-together)). The
+chance for each hand ([combat blocking](combat-blocking.md#loops-that-run-together)). The
 right hand rolls first, then the left, and the first to pass attacks. A right-hand pick of a
 dual-wield attack swings both weapons. Such an NPC without a combat style swings right, then left,
 then with both, in turn. Its hands follow the same left-hand rule as the player's. A left swing

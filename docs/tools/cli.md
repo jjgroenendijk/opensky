@@ -15,14 +15,14 @@ app, so a parse failure or skip in the CLI is exactly what the renderer would do
 
 Target membership follows the folders under `src/Sources/`. The app builds `OpenSky/`, and the
 CLI builds `OpenSkyCLI/`. Both link the engine modules of the
-Swift package through the `OpenSkyModules` product ([Swift modules](/tools/modules.md)). So
+Swift package through the `OpenSkyModules` product ([Swift modules](modules.md)). So
 app-only code is invisible to the CLI with no exception lists to maintain. Metal structs come
-through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).
+through the `OpenSkyShaderTypes` module ([build system](build-system.md)).
 The shaders come from the `OpenSkyShaders` module, whose resource bundle Xcode copies next to
 the binary. Build it with `make build-cli`.
 
 The command line is declared with swift-argument-parser in the `OpenSkyCLIArguments` module
-([decision](/decisions/swift-argument-parser.md)). `openskycli --help` and
+([decision](../decisions/swift-argument-parser.md)). `openskycli --help` and
 `openskycli help <command>` print help generated from those declarations, so the help cannot
 drift from the real options. Options are order-free, and an option value may start with `-`, so
 `--y -2` works. `--data-root` goes before or after the command name. `game` passes every word it
@@ -31,17 +31,17 @@ does not know to the app.
 ## Data root and load order
 
 `--data-root <path>` takes the install root or `Data/` itself. Without it, the
-[game data locator](/engine/game-data-locator.md) tries `OPENSKY_DATA_ROOT`, then the
+[game data locator](../engine/game-data-locator.md) tries `OPENSKY_DATA_ROOT`, then the
 `OpenSkyDataRoot` user default, then the Steam default path, then every Steam library. Missing or
 invalid is a typed error and exit 1. The install is read-only: commands write only where `--out` points.
 
 The load order comes from `OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText` user default, then the
-searched locations ([plugins.txt](/formats/plugins-txt.md)). There is no `--plugins-txt` flag,
+searched locations ([plugins.txt](../formats/plugins-txt.md)). There is no `--plugins-txt` flag,
 because the environment variable already covers a one-off run.
 
 Exit codes: 0 success, 1 failure, 2 usage error. A group without its subcommand, such as `swf`,
 prints its help and exits 2. `cell` and `render` default to the
-[first render cell](/decisions/first-render-cell.md).
+[first render cell](../decisions/first-render-cell.md).
 
 ## Conventions
 
@@ -111,13 +111,13 @@ the number. A summary line goes to stderr.
 | `record find --type <TYPE> [--where <filter>]... [--fields a,b] [--limit n] [--count] [--json]` | Every winning record of one type that matches the filters ([searching records](#searching-records)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
 | `gmst list [<prefix>]` | Every resolved GMST starting with `<prefix>`, with its value and winning plugin, and the text of a string setting from that plugin's string table. How a documented fallback is checked against the shipped number |
-| `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](/engine/ess-import.md)) |
-| `ess locks <save.ess>` | Each lock change form in a save: reference, stored level, flags, and key, beside the plugin's `XLOC` level and flags. It ends with a count of leveled locks by authored and stored level ([locks](/engine/locks.md)) |
+| `ess show <save.ess> [--offline]` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order ([ESS import](../engine/ess-import.md)) |
+| `ess locks <save.ess>` | Each lock change form in a save: reference, stored level, flags, and key, beside the plugin's `XLOC` level and flags. It ends with a count of leveled locks by authored and stored level ([locks](../engine/locks.md)) |
 | `ess list <folder>` | Each save's header in a folder |
-| `gaps [--only a,b] [--limit n] [--summary-out path] [--field-reads path] [--value-reads path] [--shallow-handlers path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table; the `fields` section needs `--field-reads`, the `flags` and `enums` sections need `--value-reads`, and the `shallow` section needs `--shallow-handlers`: the lists `make rank-gaps` writes from the index store and the source ([gap report](/tools/gaps.md)) |
-| `sweep quests [--out dir] [--limit n] [--examples n]` | Starts every start-game-enabled and story-manager quest headless and ranks what stops them: an alias that does not fill, a start-up stage not reached, a stage fragment error, or a scene that cannot start; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-quests/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
-| `sweep fragments [--out dir] [--limit n] [--examples n]` | Runs every quest stage, topic info, scene, and package fragment headless, one at a time, and ranks the problems by the fragments they hit, with examples; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-fragments/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
-| `sweep rules [--out dir] [--limit n] [--examples n]` | Checks the rules vanilla data implies, such as every load door leading to a navmesh, and lists the violations per rule; writes `report.txt` to `.logs/sweep-rules/<UTC time>/` or `--out` ([headless sweeps](/tools/headless-sweeps.md)) |
+| `gaps [--only a,b] [--limit n] [--summary-out path] [--field-reads path] [--value-reads path] [--shallow-handlers path]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use; `--summary-out` also writes the summary as a Markdown table; the `fields` section needs `--field-reads`, the `flags` and `enums` sections need `--value-reads`, and the `shallow` section needs `--shallow-handlers`: the lists `make rank-gaps` writes from the index store and the source ([gap report](gaps.md)) |
+| `sweep quests [--out dir] [--limit n] [--examples n]` | Starts every start-game-enabled and story-manager quest headless and ranks what stops them: an alias that does not fill, a start-up stage not reached, a stage fragment error, or a scene that cannot start; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-quests/<UTC time>/` or `--out` ([headless sweeps](headless-sweeps.md)) |
+| `sweep fragments [--out dir] [--limit n] [--examples n]` | Runs every quest stage, topic info, scene, and package fragment headless, one at a time, and ranks the problems by the fragments they hit, with examples; writes `report.txt` and `fallbacks.tsv` to `.logs/sweep-fragments/<UTC time>/` or `--out` ([headless sweeps](headless-sweeps.md)) |
+| `sweep rules [--out dir] [--limit n] [--examples n]` | Checks the rules vanilla data implies, such as every load door leading to a navmesh, and lists the violations per rule; writes `report.txt` to `.logs/sweep-rules/<UTC time>/` or `--out` ([headless sweeps](headless-sweeps.md)) |
 
 ### World
 
@@ -125,69 +125,69 @@ the number. A summary line goes to stderr.
 | --- | --- |
 | `cell [--worldspace/--x/--y] [--cell <editorID>] [--refs]` | An exterior cell of any worldspace, or an interior cell by editor ID, without Metal, merged over every active plugin: the winning plugin, reference count, and base type histogram. `--refs` lists each reference with its base editor ID and position |
 | `actor appearance [--worldspace/--x/--y] [--radius n] [--npc id]` | Placed actors in a block of cells: template chain, appearance sources, skeleton, parts, FaceGen path, and reason-tagged skips. Persistent actors are placed by position. `--npc` resolves one base record |
-| `actor values --npc <id>` or `--race <id>` `[--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
-| `collision [--worldspace/--x/--y] [--radius n] [--column x,y]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)). `--column` lists each grid shape over one world point, highest first, with its reference and heights |
+| `actor values --npc <id>` or `--race <id>` `[--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](../engine/actor-values.md)) |
+| `collision [--worldspace/--x/--y] [--radius n] [--column x,y]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](../engine/collision-world.md)). `--column` lists each grid shape over one world point, highest first, with its reference and heights |
 | `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
-| `lod [--worldspace edid]` | Every LOD file of a world space through the real decoders ([distant LOD](/engine/distant-lod.md)) |
+| `lod [--worldspace edid]` | Every LOD file of a world space through the real decoders ([distant LOD](../engine/distant-lod.md)) |
 
 ### Game rules
 
 | Command | What it checks |
 | --- | --- |
-| `archery [--census] [--ammo <text>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](/engine/archery.md)) |
-| `footstep [--set] [--armature] [--material]` | The footstep chain from set to sound file, per gait, with broken links reported ([footstep records](/formats/footstep.md), [material types](/formats/material-type.md)) |
-| `effects census` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions ([image space](/rendering/image-space.md)) |
+| `archery [--census] [--ammo <text>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](../engine/archery.md)) |
+| `footstep [--set] [--armature] [--material]` | The footstep chain from set to sound file, per gait, with broken links reported ([footstep records](../formats/footstep.md), [material types](../formats/material-type.md)) |
+| `effects census` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions ([image space](../rendering/image-space.md)) |
 | `effects imad <edid> [--at seconds]` | Samples one image-space modifier at one time |
 
 ### Assets
 
 | Command | What it checks |
 | --- | --- |
-| `pex <script> [--function <name>]` | Disassembles one compiled Papyrus script: its header, object, variables, properties, and each state's functions with their instructions. A script is found by the [script path](/formats/pex.md#script-paths) rules. `--function` keeps only the functions of that name ([PEX](/formats/pex.md)) |
-| `pex-calls <function>` | Every call of one function, in any case, across the archived scripts: the object, state, calling function, instruction, opcode, and operands of each `callmethod`, `callstatic`, or `callparent`. It shows which vanilla scripts drive a native and with which constants. A count goes to stderr ([PEX](/formats/pex.md)) |
+| `pex <script> [--function <name>]` | Disassembles one compiled Papyrus script: its header, object, variables, properties, and each state's functions with their instructions. A script is found by the [script path](../formats/pex.md#script-paths) rules. `--function` keeps only the functions of that name ([PEX](../formats/pex.md)) |
+| `pex-calls <function>` | Every call of one function, in any case, across the archived scripts: the object, state, calling function, instruction, opcode, and operands of each `callmethod`, `callstatic`, or `callparent`. It shows which vanilla scripts drive a native and with which constants. A count goes to stderr ([PEX](../formats/pex.md)) |
 | `vfs ls [pattern] [--containing <text>]` | Archive entries as `path<TAB>archive`. `fnmatch` wildcards with `FNM_NOESCAPE`, so `\` stays a separator, or a substring. `--containing` keeps the entries whose bytes hold the text, such as a NIF block type name. Loose files are not listed, but `cat` finds them |
 | `vfs cat <path> --out <file>` | Extracts one resource. Loose files win, as in the engine |
-| `nif <path> [--sequences] [--controllers]` | Container stats, each node with its local translation, the flattened model, each `NiStringExtraData` (such as `Prn`), any furniture markers, and each object LOD large-reference segment with the cells it covers ([LOD](/formats/lod.md#large-references)). `--sequences` adds every node's full transform, each effect shape's material, each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)), and each particle system with its shading, emitters, modifiers, blend, and atlas frames ([particles](/rendering/particles.md)). `--controllers` adds each node controller that plays on its own clock, the bone LOD bones and levels ([controllers](/formats/nif-controllers.md#node-controller-rules)), and each lightning controller with the interpolators every sequence feeds it ([lightning](/rendering/particles.md#lightning)) |
-| `dds <path> [--out <folder>] [--level <n>]` | The header and mip chain. `--out` uploads the texture as the loader does, prints the uploaded type, size, and levels, and writes `--level` (default 0) as PNGs: one per volume slice, else one ([volume textures](/formats/dds.md#volume-textures)) |
-| `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)). `--transitions <text>` lists each transition event that contains the text, with the states it enters ([paired animations](/engine/paired-animations.md)). `--blenders` lists each blender instead: flags, bound blend parameter, and each child's place and generator. `--bindings <text>` lists each node member bound to a variable whose name contains the text. On an actor graph, `--raise <event>`, repeated, steps it and prints the active states after each event, with `--set name=value` holding a variable ([dragon flight](/engine/dragon-flight.md#the-behavior-graph)), and each paired clip it reached as `paired clip <prefix>\|<clip>` |
-| `hkt show <path>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
-| `skeleton <path> [--nif <nif-path>] [--all]` | Every `hkaSkeleton` with its first 12 bones, or every bone with `--all`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
-| `animation <path>` | Decodes and samples every frame. A bad binding or a non-finite sample exits 1 ([animation](/formats/hka-animation.md)). `--annotations` also lists each annotation track that holds annotations, with its name and marks, after the track groups and their prefix ([paired animations](/engine/paired-animations.md)) |
-| `audio show <path>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
-| `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |
-| `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](/formats/fuz.md)) |
-| `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](/engine/asset-cache.md)) |
+| `nif <path> [--sequences] [--controllers]` | Container stats, each node with its local translation, the flattened model, each `NiStringExtraData` (such as `Prn`), any furniture markers, and each object LOD large-reference segment with the cells it covers ([LOD](../formats/lod.md#large-references)). `--sequences` adds every node's full transform, each effect shape's material, each controller sequence with its tracks ([sequences](../formats/nif-sequences.md)), and each particle system with its shading, emitters, modifiers, blend, and atlas frames ([particles](../rendering/particles.md)). `--controllers` adds each node controller that plays on its own clock, the bone LOD bones and levels ([controllers](../formats/nif-controllers.md#node-controller-rules)), and each lightning controller with the interpolators every sequence feeds it ([lightning](../rendering/particles.md#lightning)) |
+| `dds <path> [--out <folder>] [--level <n>]` | The header and mip chain. `--out` uploads the texture as the loader does, prints the uploaded type, size, and levels, and writes `--level` (default 0) as PNGs: one per volume slice, else one ([volume textures](../formats/dds.md#volume-textures)) |
+| `hkx <path>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](../formats/hkx-container.md)). `--transitions <text>` lists each transition event that contains the text, with the states it enters ([paired animations](../engine/paired-animations.md)). `--blenders` lists each blender instead: flags, bound blend parameter, and each child's place and generator. `--bindings <text>` lists each node member bound to a variable whose name contains the text. On an actor graph, `--raise <event>`, repeated, steps it and prints the active states after each event, with `--set name=value` holding a variable ([dragon flight](../engine/dragon-flight.md#the-behavior-graph)), and each paired clip it reached as `paired clip <prefix>\|<clip>` |
+| `hkt show <path>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](../formats/hkt-tagfile.md)) |
+| `skeleton <path> [--nif <nif-path>] [--all]` | Every `hkaSkeleton` with its first 12 bones, or every bone with `--all`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](../formats/hka-skeleton.md)) |
+| `animation <path>` | Decodes and samples every frame. A bad binding or a non-finite sample exits 1 ([animation](../formats/hka-animation.md)). `--annotations` also lists each annotation track that holds annotations, with its name and marks, after the track groups and their prefix ([paired animations](../engine/paired-animations.md)) |
+| `audio show <path>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](../formats/xwm.md)) |
+| `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](../engine/audio.md)) |
+| `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](../formats/fuz.md)) |
+| `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](../engine/asset-cache.md)) |
 | `swf show <path>` | One movie's header, every tag, and the names it exports |
-| `swf sweep` | Every `interface\*.swf`: tags, shapes, bitmaps, fonts, text, frame 1 display lists, and fontconfig aliases. LZMA movies are counted as unsupported, not failed ([SWF container](/formats/swf.md)) |
-| `swf render-sweep [--size WxH] [--movie text] [--out dir]` | Renders each movie's frame 1 over a movie-free baseline and counts changed pixels ([SWF layer](/rendering/swf-layer.md)) |
-| `swf action-sweep [--movie text] [--limit n]` | Every movie's ActionScript: opcode counts, unknown opcodes (expect none), host API names, clip events, and structure ([SWF actions](/formats/swf-actions.md)) |
+| `swf sweep` | Every `interface\*.swf`: tags, shapes, bitmaps, fonts, text, frame 1 display lists, and fontconfig aliases. LZMA movies are counted as unsupported, not failed ([SWF container](../formats/swf.md)) |
+| `swf render-sweep [--size WxH] [--movie text] [--out dir]` | Renders each movie's frame 1 over a movie-free baseline and counts changed pixels ([SWF layer](../rendering/swf-layer.md)) |
+| `swf action-sweep [--movie text] [--limit n]` | Every movie's ActionScript: opcode counts, unknown opcodes (expect none), host API names, clip events, and structure ([SWF actions](../formats/swf-actions.md)) |
 | `swf action-list --movie <text>` | One movie's action records with names resolved |
-| `swf action-run [--movie text] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](/engine/as2-game-delegate.md)) |
-| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump] [--out <file.png>]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, `key:<code>` sends a key, `point:<x>,<y>` moves the cursor to a stage point in pixels and prints the clip a press reaches and the clip on top, `click:<x>,<y>` also presses and releases there, and `gamepads:<n>` reports gamepads. Prints the host calls, the dumped nodes with their matrix, colour transform, stage bounds in pixels, shape fills, a text field's text, its font with the glyph count, its colour and layout flags, and the focus at the end. `--out` draws the stage after the steps into a PNG at 1280 by 720; it shows game art, so write it under `.logs/`. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
+| `swf action-run [--movie text] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](../engine/as2-game-delegate.md)) |
+| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump] [--out <file.png>]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, `key:<code>` sends a key, `point:<x>,<y>` moves the cursor to a stage point in pixels and prints the clip a press reaches and the clip on top, `click:<x>,<y>` also presses and releases there, and `gamepads:<n>` reports gamepads. Prints the host calls, the dumped nodes with their matrix, colour transform, stage bounds in pixels, shape fills, a text field's text, its font with the glyph count, its colour and layout flags, and the focus at the end. `--out` draws the stage after the steps into a PNG at 1280 by 720; it shows game art, so write it under `.logs/`. Used to measure the race menu movie ([race menu](../engine/race-menu.md)) |
 | `menu inventory [--category n] [--down n] [--drop] [--quantity n] [--cancel]`, `menu magic`, `menu quest-journal`, `menu container [--mode] [--side] [--transfer n] [--quantity n] [--confirm]`, `menu dialogue` | Drives one vanilla menu through its bridge against real records and reads the rows back out of the movie. `menu inventory` opens on the category list, moves it down `--category` rows, opens the item panel with right, then moves down `--down` rows. `--drop` presses the drop key, `--quantity` moves the item card's quantity slider (below 0 moves left), and `--confirm` accepts the card's confirm message. `menu magic` prints each item card text after the name of the field that shows it, such as `MagicCostTimeValue=14`. In the CLI because the real-data test host is unreliable here |
-| `menu system [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call, the faults, and the missing names. Help and Installed Content answer with two sample topics, and the Settings categories with the default values. `--then` takes menu keys, `state:<CONSTANT>`, `focus:<path>`, `call:<path>:<method>`, and `point:<x>/<y>` or `click:<x>/<y>` in stage pixels, split by `,`. `--dump` also prints a node's sprite frames with the character each placement shows, its colour transform when it has one, and its display children with each shape's fills ([system menu](/engine/system-menu.md)) |
+| `menu system [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call, the faults, and the missing names. Help and Installed Content answer with two sample topics, and the Settings categories with the default values. `--then` takes menu keys, `state:<CONSTANT>`, `focus:<path>`, `call:<path>:<method>`, and `point:<x>/<y>` or `click:<x>/<y>` in stage pixels, split by `,`. `--dump` also prints a node's sprite frames with the character each placement shows, its colour transform when it has one, and its display children with each shape's fills ([system menu](../engine/system-menu.md)) |
 
 ### Rendering
 
 | Command | What it checks |
 | --- | --- |
 | `render --out <file> [--set id=value,...] [...]` | Builds a cell, renders it offscreen, and writes a PNG. Use it for a cell or effect check; `preview` frames one record, and `game screenshot` captures the running app. `--set` applies player settings as the app does, such as `graphics.bSAOEnable=on`. The view distances come from the saved settings file, with `--set` over it. `--face-sun` turns the camera to the sun after the first frame, to check the lens flare; it needs `--weather` and a day hour |
-| `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](/tools/preview-render.md)) |
+| `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](preview-render.md)) |
 
 ### The app
 
 | Command | What it checks |
 | --- | --- |
-| `game <command> [...]` | Not a probe: drives the running app over its agent control socket. `game help` lists the app's commands and `game <command> --help` shows one. `game launch`, `game attach`, and `game run` start or join a session ([game commands](/tools/game-commands.md), [agent control](/tools/agent-control.md)) |
-| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value,...] [--no-overlay] [--screenshots] [--windowed\|--full-screen] [--size WxH] [--sound] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour hidden and muted, then prints the summary. Exits 1 when a scene fails ([benchmark](/tools/benchmark.md)) |
-| `load-pass [--scene <id>] [--runs <n>] [--serial] [--asset-cache] [--evict] [--off <names>]` | Times the benchmark's cold and warm cell builds of one scene without the app, split into load phases. Reads only the archives unless `--asset-cache`; `--serial` turns the parallel decode off; `--evict` drops the game data and the asset cache from the page cache before each cold pass; `--off` turns load optimisations off ([benchmark](/tools/benchmark.md#load-optimisation-switches)) |
-| `graphics status`, `graphics preset low\|medium\|high\|ultra` | The Graphics page without the app. `status` prints the preset that matches the settings, or Custom, and each base game option with its value and `applied`, or `unavailable:` and the reason. `preset` writes the values of the game's `Low.ini` to `Ultra.ini` into the player settings file ([graphics options](/engine/graphics-options.md)) |
-| `asset-optimisation build`, `asset-optimisation check`, `asset-optimisation clear`, `asset-optimisation status` `[--texture-quality original\|high\|medium\|low] [--max-texture-side n] [--folder] [--kinds a,b] [--width n] [--paths <file>]` | Asset optimisation without the app. `build` converts every source the folder does not hold yet and prints the space check first, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, texture quality, and location warnings. The texture quality and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](/engine/asset-cache.md)) |
+| `game <command> [...]` | Not a probe: drives the running app over its agent control socket. `game help` lists the app's commands and `game <command> --help` shows one. `game launch`, `game attach`, and `game run` start or join a session ([game commands](game-commands.md), [agent control](agent-control.md)) |
+| `benchmark [--preset quick\|standard\|full] [--scenes a,b] [--set id=value,...] [--no-overlay] [--screenshots] [--windowed\|--full-screen] [--size WxH] [--sound] [--capture <id>] [--out <dir>] [--list] [...]` | Opens the app and flies the benchmark tour hidden and muted, then prints the summary. Exits 1 when a scene fails ([benchmark](benchmark.md)) |
+| `load-pass [--scene <id>] [--runs <n>] [--serial] [--asset-cache] [--evict] [--off <names>]` | Times the benchmark's cold and warm cell builds of one scene without the app, split into load phases. Reads only the archives unless `--asset-cache`; `--serial` turns the parallel decode off; `--evict` drops the game data and the asset cache from the page cache before each cold pass; `--off` turns load optimisations off ([benchmark](benchmark.md#load-optimisation-switches)) |
+| `graphics status`, `graphics preset low\|medium\|high\|ultra` | The Graphics page without the app. `status` prints the preset that matches the settings, or Custom, and each base game option with its value and `applied`, or `unavailable:` and the reason. `preset` writes the values of the game's `Low.ini` to `Ultra.ini` into the player settings file ([graphics options](../engine/graphics-options.md)) |
+| `asset-optimisation build`, `asset-optimisation check`, `asset-optimisation clear`, `asset-optimisation status` `[--texture-quality original\|high\|medium\|low] [--max-texture-side n] [--folder] [--kinds a,b] [--width n] [--paths <file>]` | Asset optimisation without the app. `build` converts every source the folder does not hold yet and prints the space check first, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, texture quality, and location warnings. The texture quality and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](../engine/asset-cache.md)) |
 | `asset-optimisation extract --paths <file> --out <dir>` | Writes loose copies of the listed files, outside the repo and the install, to time loose files apart from the archives |
-| `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](/engine/asset-cache.md)) |
-| `asset-optimisation measure [--per-kind n]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](/engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
+| `asset-optimisation io-bench --paths <file>` | Loads the listed textures that have a cache entry as one batch, four ways: the archive path, the cache read on the CPU, and Metal fast resource loading from the raw entries and from LZ4 copies. Each runs cold, after a page cache eviction, then warm. Prints wall and process CPU time ([asset cache](../engine/asset-cache.md)) |
+| `asset-optimisation measure [--per-kind n]` | Per asset kind, builds the entries of up to `n` archive files (default 300) and loads them from the archives and from the cache, cold and warm. Prints wall and CPU time per kind and an `advice` line, `cache` or `archives`; the [asset cache](../engine/asset-cache.md) page explains how the result decides which kinds the cache stores |
 | `asset-optimisation compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as two renders with the cache off and on. 100 dB means identical |
-| `reference status` | The reference game prefix and what it still lacks, and the Wine that runs it ([reference game](/tools/reference-game.md)) |
+| `reference status` | The reference game prefix and what it still lacks, and the Wine that runs it ([reference game](reference-game.md)) |
 | `reference check` | Compares the Steam build and the SHA-256 of every `.esm` of the reference copy and the OpenSky install. Exits 1 on a difference |
 | `reference launch [--width n] [--height n] [--steam-wait s] [--preset low\|medium\|high\|ultra]` | Sets the window size and the game's own graphics preset, Low by default, in the prefix's `SkyrimPrefs.ini`, then starts Windows Steam and the game |
 | `reference export-view [--no-hide-menus] [--freeze]` | Writes the running OpenSky view as the batch file `bat opensky` runs in the reference game |
@@ -213,19 +213,19 @@ the number. A summary line goes to stderr.
   app and CLI share one PNG readback. `--neighbors` builds a 5 by 5 block and frames the cell bounds
   only. Distant LOD is hidden only in cells actually built: hiding the whole block while building one
   cell left a ring with neither terrain nor LOD. `--ui-sample` draws the UI sample and
-  `--navmesh-overlay` draws navmesh triangles ([navigation](/engine/navigation.md)).
+  `--navmesh-overlay` draws navmesh triangles ([navigation](../engine/navigation.md)).
 - `render` effect flags make the image-space and effect A/B captures.
   `--image-space-off` skips the composite pass, and `--tone-mapping-off` skips only its
-  [HDR tone mapping](/rendering/image-space.md). `--imgs` forces a baseline, and `--imad` starts
+  [HDR tone mapping](../rendering/image-space.md). `--imgs` forces a baseline, and `--imad` starts
   a modifier sampled at `--imad-at` seconds. `--membrane` puts an `EFSH` membrane on the first
   actor and frames it. `--frame-actor` frames that actor with no effect, for a skin or face
-  check. `--shading-off` turns [surface shading](/rendering/surface-shading.md) terms off, by
+  check. `--shading-off` turns [surface shading](../rendering/surface-shading.md) terms off, by
   name (`normalMaps,specular`) or `all`, for a with and without pair. `--weather` forces a
   weather, so its `SPGD` rain falls. Rain needs a few frames to fill the volume, so add
   `--frames 60`.
 - The streaming, walk, and sustained frame time gates are real-data tests:
   `FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`, and `SustainedRenderGateRealDataTests`.
-  `make test PLAN=Perf` runs them ([benchmark](/tools/benchmark.md)).
+  `make test PLAN=Perf` runs them ([benchmark](benchmark.md)).
 
 ## make probe
 
@@ -252,4 +252,4 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
   misspelled option exit 2, and `game help` prints the command list. All run without the app.
 
 Captures and the full `probe.log` go to `.logs/probe/<UTC timestamp>/`
-([run output](/tools/run-output.md)).
+([run output](run-output.md)).

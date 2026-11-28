@@ -9,7 +9,7 @@ tags: [engine, ai]
 # Sandbox procedure
 
 A sandbox procedure does one activity after another inside its package's place
-([package schedules](/engine/package-schedules.md)). Source: the Creation Kit wiki page
+([package schedules](package-schedules.md)). Source: the Creation Kit wiki page
 <https://ck.uesp.net/wiki/Sandbox_(Procedure)>, and the game settings, read from the install.
 All times are in game hours.
 
@@ -82,7 +82,7 @@ Where OpenSky differs from the game:
   one is in the place.
 - Allow Conversation turns on the running package's random conversation flag, as in the game,
   and the actor then follows the
-  [random conversation](/engine/random-conversations.md#random-conversations-adia) check.
+  [random conversation](random-conversations.md#random-conversations-adia) check.
   OpenSky sets it while the sandbox runs, not once when it starts.
 - That the durations are game hours is an inference: the wiki gives hours only for meals and
   sleep. With game hours, a sandboxing actor stays at a marker for about a minute of real

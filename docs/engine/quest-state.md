@@ -9,11 +9,11 @@ tags: [engine, quests, aliases, runtime-state, conditions, papyrus]
 
 # Quest state
 
-A quest is a `QUST` base record, not a placed reference. The [world state store](/engine/runtime-state.md)
+A quest is a `QUST` base record, not a placed reference. The [world state store](runtime-state.md)
 does not mind: state is keyed by the record's `ReferenceKey`, as
-[global variables](/engine/global-variables.md) are, so the journal, snapshot order, and save all
+[global variables](global-variables.md) are, so the journal, snapshot order, and save all
 apply. Quest changes never belong to a cell, because a quest is in none. The records are on the
-[quests](/formats/quest-records.md) page.
+[quests](../formats/quest-records.md) page.
 
 ## The component
 
@@ -57,7 +57,7 @@ Vanilla's real start machinery is not modeled. Skyrim starts quests through stor
 (the `QUST` `ENAM` event and the `SMEN`, `SMQN`, and `SMBN` node tree), through the seven-day
 repopulation timer, and through dialogue. A quest that vanilla starts from an event stays dormant
 here until something starts it. Quest scripts and stage fragments are on the
-[Papyrus quest scripts](/engine/papyrus-quests.md) page.
+[Papyrus quest scripts](papyrus-quests.md) page.
 
 ## Changing a quest
 
@@ -83,7 +83,7 @@ combined.
 
 A quest start from a script does not happen inside the call. `Start()`, `SetStage()` on a
 stopped quest, and showing an objective of a stopped quest each put a start request into the
-[story manager](/engine/story-manager.md)'s queue as a `QSTR` event, and the script waits. The
+[story manager](story-manager.md)'s queue as a `QSTR` event, and the script waits. The
 queue runs once per frame, oldest first, with a small time budget per frame.
 
 ```mermaid
@@ -166,7 +166,7 @@ quest after a load, and the waiting script still gets its answer.
 A stage holds items (log entries), each with conditions, text, and flags. "The script fragments will
 be run for all entries where the conditions pass" (Quest Stages Tab). When a stage is first set:
 
-- Every passing item's fragment runs ([Papyrus quests](/engine/papyrus-quests.md)).
+- Every passing item's fragment runs ([Papyrus quests](papyrus-quests.md)).
 - The passing items with text become the journal's log entry. "Only the most recent log entry is
   displayed", so a later stage replaces it.
 - A Complete Quest item completes the quest.
@@ -179,7 +179,7 @@ first item when all have conditions.
 
 Readers use a quest seam shaped like the global one: the session override wins, the baseline is next,
 and no answer means the form ID names no quest. It can be built from the live store or from a
-snapshot. Four `CTDA` functions read it ([conditions](/formats/conditions.md)). A quest parameter
+snapshot. Four `CTDA` functions read it ([conditions](../formats/conditions.md)). A quest parameter
 naming no quest is a failure with its own tally bucket.
 
 ## Aliases
@@ -241,7 +241,7 @@ faction, so the actor offers them only while in the alias.
 ## What does not fill yet
 
 Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. From Event fills when the
-[story manager](/engine/story-manager.md) starts the quest: `ALFD` names the event data member, and
+[story manager](story-manager.md) starts the quest: `ALFD` names the event data member, and
 a reference alias takes a reference member while a location alias takes a location member. A quest
 started any other way has no event, so the alias is counted and left empty.
 
@@ -389,8 +389,8 @@ from the live store or a snapshot. A script property and a quest alias run-on ca
 
 - Conditions: run-on 5 (quest alias) takes its alias number from `CTDA` parameter 3 and its quest
   from the list's owner. A `CIS1` or `CIS2` name resolves for a filled alias and stays unresolved for
-  an empty one ([condition evaluation](/engine/conditions.md)).
+  an empty one ([condition evaluation](conditions.md)).
 - Script properties: an alias-typed `VMAD` property binds to the filled reference. An empty one keeps
   the compiler default and is counted.
 - Alias scripts: the alias script sections of the `QUST` `VMAD` start on the reference in their alias
-  and end with the quest ([Papyrus quest scripts](/engine/papyrus-quests.md)).
+  and end with the quest ([Papyrus quest scripts](papyrus-quests.md)).

@@ -27,7 +27,7 @@ storyboard). OpenSky targets native macOS 26 and later, and the template also fa
 - Signing uses one Apple Development identity. macOS ties permission grants, such as consent to
   read a removable volume, to the code signature. An ad-hoc signature changes with every build, so
   macOS would ask again after each build. The details are on the
-  [build system](/tools/build-system.md#signing) page.
+  [build system](../tools/build-system.md#signing) page.
 - `NSRemovableVolumesUsageDescription` explains why OpenSky reads the chosen Skyrim install. The
   first access still needs the user's consent.
 - There is no app sandbox. The engine must read the user's install at any path, for example

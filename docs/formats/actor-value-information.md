@@ -13,7 +13,7 @@ the name, the abbreviation, and the description. For the 18 skills it also gives
 use values and the perk tree: where each perk box sits and how the boxes connect.
 
 `AVIF` has no number of its own. The actor value numbers that conditions, scripts, and saves
-use are listed in [actor values](/engine/actor-values.md). A record is matched to a number by
+use are listed in [actor values](../engine/actor-values.md). A record is matched to a number by
 name, as described below.
 
 ## Sources
@@ -79,7 +79,7 @@ reads these values, so OpenSky keeps them as they are.
 
 Lines point at `INAM` values, not at list positions. The grid only says where a box is drawn.
 It does not say what a perk needs. The needs are the conditions of the `PERK` record (see
-[perks](/formats/perks.md)).
+[perks](perks.md)).
 
 ## CNAM has two meanings
 
@@ -92,7 +92,7 @@ and all of them have no perk tree.
 ## Matching a record to an actor value number
 
 OpenSky tries these names in order against the table in
-[actor values](/engine/actor-values.md):
+[actor values](../engine/actor-values.md):
 
 1. The editor ID as written.
 2. The editor ID without a leading `AV`. Vanilla writes `AVOneHanded`.

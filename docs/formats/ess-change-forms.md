@@ -9,13 +9,13 @@ tags: [format, save, ess]
 
 A change form records how one form differs from its plugin record at save time: a moved
 reference, a container's items, a quest's stages. The section follows global data table 2
-in the [save body](/formats/ess.md).
+in the [save body](ess.md).
 
 Reference: UESP
 [Save File Format/Change Form](https://en.uesp.net/wiki/Skyrim_Mod:ChangeFlags) and the
 change form section of
 [Save File Format](https://en.uesp.net/wiki/Skyrim_Mod:Save_File_Format). Types are listed
-in [ESS](/formats/ess.md#basic-types).
+in [ESS](ess.md#basic-types).
 
 ## Envelope
 
@@ -78,7 +78,7 @@ Nothing after it is guessed.
 | Form flags | 0x1 | `uint32` flags, `uint16` unknown. `0x800` disabled, `0x20` deleted, as in a plugin |
 | Base object | 0x80 | `refID` |
 | Scale | 0x10 | `float32` |
-| Extra data | Any extra data flag | An extra data list, below. A running `TranslateTo` move is type 161 ([translation](/engine/papyrus-translation.md#a-move-in-a-save)) |
+| Extra data | Any extra data flag | An extra data list, below. A running `TranslateTo` move is type 161 ([translation](../engine/papyrus-translation.md#a-move-in-a-save)) |
 | Inventory | 0x20 or 0x8000000 | `vsval` count of items: `refID` item, `int32` count, `vsval` count of extra data lists |
 | Animation | 0x10000000 | `vsval` length, then bytes. Skipped. Inside: a flag, then for each behaviour graph a count, the project name, and the graph state; then the number 42 (body slots), the third-person slots, and the first-person slots or a 0 when they are the same |
 
@@ -90,7 +90,7 @@ the base container, so it can be negative.
 An actor has more data after the animation part, in this order. The process data comes first.
 An actor with process level `0xFFFFFFFF` in its actor header has no AI process and writes no
 process data. Process data has no length in front, and parts of it are not decoded
-([actor process data](/formats/ess-actor-process.md)). So a decoder reads the parts below only
+([actor process data](ess-actor-process.md)). So a decoder reads the parts below only
 for an actor with no process. Any other `ACHR` with bytes left there is
 `partial(blockedBy: "actor process data")`.
 
@@ -144,7 +144,7 @@ Other types with a fixed size, a repeated fixed size, or a short variable layout
 are skipped by size. The size tables live beside the reader. A type with no documented size
 stops the list, and the change form becomes partial. Lock flags are kept but not mapped:
 UESP does not say which bit is "locked". Real saves keep `XLOC` flag 0x04 (leveled) in the
-byte, and the level is the authored one ([locks](/engine/locks.md#leveled-locks)).
+byte, and the level is the authored one ([locks](../engine/locks.md#leveled-locks)).
 
 ## Actor base (`NPC_`)
 
@@ -205,10 +205,10 @@ extra data entry with no documented layout, is refused with a typed error.
   and sex.
 - Quests: flags, stages, and objectives. Topic infos: only the said-once flag.
 
-[ESS export](/engine/ess-export.md) lists what is not confirmed.
+[ESS export](../engine/ess-export.md) lists what is not confirmed.
 
 ## Confirmed on real data
 
-Not yet: see [ESS](/formats/ess.md#confirmed-on-real-data). The first real-data run must
+Not yet: see [ESS](ess.md#confirmed-on-real-data). The first real-data run must
 check the reference initial data for each initial type, and which extra data types stop
 lists most often.

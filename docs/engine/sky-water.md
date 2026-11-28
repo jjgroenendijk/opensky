@@ -9,8 +9,8 @@ tags: [engine, rendering, sky, water, environment]
 # Sky and water
 
 An exterior scene has one sky and at most one water plane per loaded cell. The record fields
-are on the [water](/formats/water.md) page. The renderer is on the
-[Metal 4 renderer](/rendering/metal4-renderer.md) page.
+are on the [water](../formats/water.md) page. The renderer is on the
+[Metal 4 renderer](../rendering/metal4-renderer.md) page.
 
 ## Sky
 
@@ -18,8 +18,8 @@ A worldspace without the "no sky" flag gets a sky. When scenes are merged, one s
 of them has one. The sky is a full-screen triangle drawn first, before any depth-tested geometry.
 
 With weather active, the sky uses the colors blended from the current weathers (see
-[weather](/engine/weather.md)). The sun, the moons, the stars, and the aurora draw over it
-([celestial sky](/engine/celestial-sky.md)). With no weather, the shader uses built-in night,
+[weather](weather.md)). The sun, the moons, the stars, and the aurora draw over it
+([celestial sky](celestial-sky.md)). With no weather, the shader uses built-in night,
 day, and twilight colors and a soft sun disc, from the time of day (default 13:00). The CLI
 screenshot takes `--time-of-day 0...24`. 24 is the same as 0.
 

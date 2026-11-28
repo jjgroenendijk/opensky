@@ -10,7 +10,7 @@ tags: [engine, locations, music, cell-reset, papyrus]
 
 A location is cleared when every boss in it is dead. A cleared location plays the dungeon cleared
 music once, counts toward the "Dungeons Cleared" statistic, and respawns more slowly
-([cell reset](/engine/cell-reset.md)).
+([cell reset](cell-reset.md)).
 
 ## The boss record
 
@@ -65,7 +65,7 @@ flowchart TD
 When the state goes from not cleared to cleared:
 
 - If the location has the clearable keyword (`DOBJ` `KWDO`), the game plays the dungeon cleared
-  music (`DCMS`, [music](/engine/music.md#special-music)) and sends the location cleared event.
+  music (`DCMS`, [music](music.md#special-music)) and sends the location cleared event.
   That event counts toward "Dungeons Cleared".
 - In every case, the "ever cleared" flag is set.
 

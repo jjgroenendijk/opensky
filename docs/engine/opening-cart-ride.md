@@ -119,7 +119,7 @@ Before stage 20, General Tullius waits on his horse beside the road with
 `MQ101TulliusHoldPosition`. Its conditions are `MQQuickstart` equal to 0 and `MQ101` below stage
 20. From stage 20 his patrol `MQ101TulliusPatrol3` holds instead. The stage 20 fragment does not
 ask Tullius to pick, and a stage change alone makes no actor pick
-([package schedules](/engine/package-schedules.md#when-to-pick-again)). So Tullius changes to his
+([package schedules](package-schedules.md#when-to-pick-again)). So Tullius changes to his
 patrol at his next regular pick, 0 to 15 real seconds after stage 20, while the cart horses
 change on their next AI update. His patrol rides on the carts' line, from `000F7B4F` at
 (21302, -79358), so he must pass that marker before the carts close the road. A rider's pick moves

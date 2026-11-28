@@ -11,12 +11,12 @@ tags: [engine, world, cell-scene, save-state, runtime-state]
 
 The world state store is the one place runtime changes to plugin data live. Scripts, inventory,
 quests, actor values, and many more write to it. It is mutable, so it lives on the main actor, and
-it holds no locks. Identity is on the [reference identity](/engine/reference-identity.md) page.
+it holds no locks. Identity is on the [reference identity](reference-identity.md) page.
 
 Other pages cover what particular components mean:
-[global variables](/engine/global-variables.md), [inventory state](/engine/inventory-state.md),
-[quest state](/engine/quest-state.md), [actor value store](/engine/actor-value-store.md), and
-[death](/engine/ragdoll.md).
+[global variables](global-variables.md), [inventory state](inventory-state.md),
+[quest state](quest-state.md), [actor value store](actor-value-store.md), and
+[death](ragdoll.md).
 
 ## Components
 
@@ -50,7 +50,7 @@ and the erased value, so none of it changes.
 
 Writes go through the store and never around it, so the journal, the dirty counts, and the save see
 every change, including every script change ([Papyrus
-activation](/engine/papyrus-activation.md#the-world-bridge)). Each write passes the reference's
+activation](papyrus-activation.md#the-world-bridge)). Each write passes the reference's
 loaded cell. An attributed change rebuilds one cell. A change without a cell rebuilds the loaded
 cells whose references hold its key; a persistent reference can sit in more than one. A reference
 no loaded cell holds, such as a spawned one, rebuilds every loaded cell. That is the correct
@@ -158,7 +158,7 @@ says when the snapshot was taken, not what state it describes.
 
 ## Applying state in a cell build
 
-A cell build takes a snapshot as a parameter ([cell scene](/engine/cell-scene.md)). The snapshot is
+A cell build takes a snapshot as a parameter ([cell scene](cell-scene.md)). The snapshot is
 taken on the main thread and is read-only, which is why the store never leaves the main actor.
 
 State is applied at exactly one point per build. References are collected and keyed, and then each
@@ -202,20 +202,20 @@ Three results follow from state living only in the store:
 - A change that no loaded cell can claim rebuilds every loaded cell. That is correct first. The way
   to narrow it is to attribute the write, or to mark its kind as one no cell build reads.
 - A settled physics body saves its resting pose without a rebuild, because it already draws there
-  ([dynamic bodies](/engine/dynamic-bodies.md#saving)). An idle prop is not world state at all
-  ([idle runtime](/engine/idle-runtime.md#prop)).
+  ([dynamic bodies](dynamic-bodies.md#saving)). An idle prop is not world state at all
+  ([idle runtime](idle-runtime.md#prop)).
 - An interior has no way to build alone. It only arrives as a door destination. So its rebuild runs
   the same door transition again with a fresh snapshot and no camera, so the player stays where they
-  stand ([interiors](/engine/interiors.md)).
+  stand ([interiors](interiors.md)).
 
 There is no patching of single instances: a rebuild is a whole cell.
 
 ## Save and load
 
 The snapshot is exactly what a save writes, and restoring it is exactly what a load does. The byte
-layout is on the [OpenSky save container](/formats/opensky-save.md), the
-[actor chunks](/formats/opensky-save-actor-chunks.md), and the
-[world chunks](/formats/opensky-save-world-chunks.md) pages.
+layout is on the [OpenSky save container](../formats/opensky-save.md), the
+[actor chunks](../formats/opensky-save-actor-chunks.md), and the
+[world chunks](../formats/opensky-save-world-chunks.md) pages.
 
 Saving writes the live snapshot with a load-order fingerprint, built from each plugin's `HEDR`.
 Loading decodes a slot, can check the fingerprint, and restores the snapshot. Restoring replaces

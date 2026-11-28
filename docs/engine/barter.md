@@ -14,9 +14,9 @@ tags: [engine, ui, menu, swf, inventory, barter, scaleform]
 the same paths. So OpenSky drives both with one bridge, one two-pane list, and one set of
 transactions. What differs is the price.
 
-The row list is the [inventory menu](/engine/inventory-menu.md)'s. Container transfers are the
-[interaction](/engine/interaction.md) container sessions. Merchants are on the
-[vendor factions](/engine/vendor-factions.md) page.
+The row list is the [inventory menu](inventory-menu.md)'s. Container transfers are the
+[interaction](interaction.md) container sessions. Merchants are on the
+[vendor factions](vendor-factions.md) page.
 
 `Actor.OpenInventory` opens the container menu on a living actor's own items, the way a
 follower's trade does. The actor uses the same holder as a corpse search. Without
@@ -78,14 +78,14 @@ same value.
 
 Choices on top of the formula:
 
-- Both settings are read from the load order ([game settings](/formats/gmst.md)), so a plugin that
+- Both settings are read from the load order ([game settings](../formats/gmst.md)), so a plugin that
   changes barter changes OpenSky. Only a missing, non-finite, or non-positive setting falls back to
   the vanilla default. A zero factor would divide the sell price by zero, and a negative one would
   pay the player to buy.
 - Speech is the player's live Speech skill. Without actor values it is 15, the vanilla starting
   skill and the value UESP lists.
 - The buy and sell modifiers are the player's `Mod Buy Prices` and `Mod Sell Prices` perk results,
-  with the merchant as the target ([perk entry points](/engine/perk-entry-points.md)). They carry
+  with the merchant as the target ([perk entry points](perk-entry-points.md)). They carry
   Haggling, Allure, the vendor perks such as Enthir's, and Fortify Barter, which vanilla authors
   as a perk effect on `Speechcraft Modifier`. The menu prices each row with the same modifiers.
 - A stack is priced per item and then multiplied. Vanilla shows one price per row. Pricing the
@@ -142,7 +142,7 @@ With a movie, both questions are drawn on the item card, at
 decides when to ask, and the card asks:
 
 - The count: `ShowQuantityMenu(count)`. The slider starts at the whole stack, and left and right
-  move it by one ([inventory quantity](/engine/inventory-menu.md#quantity)).
+  move it by one ([inventory quantity](inventory-menu.md#quantity)).
 - The sale: `ShowConfirmMessage(text)` with the `sNotEnoughVendorGold` text. The engine first
   writes the count to the barter menu's `iConfirmAmount`, which `onTransactionConfirm` sells.
 
@@ -205,7 +205,7 @@ dropped, not moved to whatever row took its place.
 Measured on the user's installed movies with `openskycli swf action-run --movie containermenu`
 and `--movie bartermenu`. Both movies place `InventoryLists_mc`, `ItemCard_mc`, and
 `BottomBar_mc` as imported characters, so they need the cross-movie import merge: 3 source movies,
-675 characters, 3 placeholders bound, 0 unresolved for each ([SWF imports](/formats/swf-display-list.md#importassets-57-and-importassets2-71)).
+675 characters, 3 placeholders bound, 0 unresolved for each ([SWF imports](../formats/swf-display-list.md#importassets-57-and-importassets2-71)).
 
 | Thing | Path |
 | --- | --- |

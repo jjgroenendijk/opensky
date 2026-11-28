@@ -47,7 +47,7 @@ wins. The `SFDC` and `NDSC` fades use the music seconds.
 
 [WARNING] How far music and the dialogue sounds duck is not in the data. The two levels are
 OpenSky's values, and the fade timing of `SFDC` and `NDSC` is borrowed from the music duck.
-Both are in the [unverified values](/engine/unverified-values.md).
+Both are in the [unverified values](unverified-values.md).
 
 ## A sound with no descriptor
 
@@ -57,7 +57,7 @@ to: music takes `MDSC`, the conversation's speaker `DDSC`, and any other voice `
 ## Rumble
 
 A sound shakes the controller when its output model (`SOPM`) sets Allows Rumble and its
-descriptor's `LNAM` sends some of its level to the motors ([sound](/formats/sound.md)).
+descriptor's `LNAM` sends some of its level to the motors ([sound](../formats/sound.md)).
 Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06 (only the
 behaviour was reported, no code). The game meters two rumble buses, one per motor, and sets both
 motors every frame:
@@ -76,14 +76,14 @@ world is paused the motors stop. The big motor plays on the left handle and the 
 the right.
 
 A blow from the player's weapon plays the weapon's Rumble tab: the left motor strength on the
-big motor, the right on the small one, for the tab's seconds ([items](/formats/item-records.md)).
+big motor, the right on the small one, for the tab's seconds ([items](../formats/item-records.md)).
 
 Every rumble follows the Gameplay page's Vibration switch, like a shout's
-([shouts](/engine/shouts.md#rumble)).
+([shouts](shouts.md#rumble)).
 
 [WARNING] How a sound's send feeds the bus, and when the weapon rumble plays, on every blow or
 only on some, are OpenSky's reading. Both are in the
-[unverified values](/engine/unverified-values.md).
+[unverified values](unverified-values.md).
 
 ## Reading it
 

@@ -25,7 +25,7 @@ reachable as `tools/lint/swift-baseline.sh`, so neither can regress silently.
   covering every target lives today, and `src/OpenSky.xcodeproj/project.pbxproj`, where a
   reintroduced per-target setting would override it. A project with no `SWIFT_VERSION` at
   all is treated as a failure rather than a pass. See
-  [Build system and xcodebuild invocation](/tools/build-system.md).
+  [Build system and xcodebuild invocation](build-system.md).
 
 The language-mode half matters more than it looks: one configuration falling back to
 `SWIFT_VERSION = 5.0` turns off strict concurrency checking for a whole target without
@@ -109,7 +109,7 @@ nonisolated VM would need a `MainActor.assumeIsolated` hop in every world call.
 The version lives in places that change in one commit: `required` at the top of
 `tools/lint/swift-baseline.sh`, and `DEVELOPER_DIR` in `ci.yml`, `preview.yml`, and
 `weekly.yml` under `.github/workflows/`, which names the Xcode the runner uses
-([CI](/tools/ci.md)). Install the new Xcode locally, then change them all; the language mode is a
+([CI](ci.md)). Install the new Xcode locally, then change them all; the language mode is a
 separate constant in the same script and changes only when a new Swift language version
 ships and every configuration moves to it together.
 

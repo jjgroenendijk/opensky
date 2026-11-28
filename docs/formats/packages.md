@@ -14,8 +14,8 @@ fields. The first package whose schedule and conditions are true wins. A templat
 gives the procedure. The package that uses the template gives the schedule, the conditions,
 and the data.
 
-See [package schedules](/engine/package-schedules.md) for the runtime and
-[conditions](/formats/conditions.md) for the `CTDA` layout.
+See [package schedules](../engine/package-schedules.md) for the runtime and
+[conditions](conditions.md) for the `CTDA` layout.
 
 References: UESP [PACK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK) and xEdit
 dev-4.1.6
@@ -51,7 +51,7 @@ OpenSky names these flags: must complete, keep speed at goal, unlock doors at pa
 sneak, ignore combat, weapons unequipped, weapon drawn, and wear sleep outfit
 ([UESP PACK](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK)). It keeps the other
 bits as raw values. The two door flags open the owner's cell to the player
-([trespass](/engine/crime.md#opened-by-the-owner)).
+([trespass](../engine/crime.md#opened-by-the-owner)).
 
 ## PSDT: schedule, 12 bytes
 
@@ -103,7 +103,7 @@ After `XNAM`, a template lists its branches. Each branch starts with an `ANAM` b
 type. Its conditions, `PRCB` root data (branch count and flags), `PNAM` procedure type,
 `FNAM` success flag, `PKC2` data input indexes, `PFO2` flag overrides, and `PFOR` follow.
 `PFOR` has no explained layout, so it stays raw. AI runs this tree
-([package schedules](/engine/package-schedules.md#procedure-tree)).
+([package schedules](../engine/package-schedules.md#procedure-tree)).
 
 After the branches come the template's own data inputs. Each one is a `UNAM` index, a
 `BNAM` name, and a 4-byte `PNAM` public flag. The decoder tells this `PNAM` from a

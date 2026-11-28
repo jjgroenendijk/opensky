@@ -9,7 +9,7 @@ tags: [engine, ai, packages, streaming]
 # Actors outside the loaded area
 
 A town resident is placed by the editor inside a house, but by day the game shows them outside, at
-work or in the market. Their packages ([package schedules](/engine/package-schedules.md)) keep
+work or in the market. Their packages ([package schedules](package-schedules.md)) keep
 running when the player is far away. This page describes how the game keeps them on schedule.
 A process level is how much work the game spends on one actor.
 
@@ -125,7 +125,7 @@ places again by the hour.
 
 OpenSky runs the low level only. Every 0.3 / timescale game hours, 54 game seconds at the default,
 a pass starts over each persistent placed actor that no loaded cell holds. The pass places the
-actors in turn inside the frame budget ([AI process levels](/engine/ai-process-levels.md#in-opensky)):
+actors in turn inside the frame budget ([AI process levels](ai-process-levels.md#in-opensky)):
 
 1. It picks the actor's package by the same rules as for a loaded actor.
 2. It finds the place of the package's first input that names one: a location (a reference,

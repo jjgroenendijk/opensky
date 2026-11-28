@@ -25,7 +25,7 @@ From UESP:
   12 (10 is Frostfall), `gameyear` the year of the 4th era, `gamedayspassed` the running day
   count, and `timescale` defaults to 20 and accepts 0.
 
-UESP needs a browser User-Agent (see [environment](/tools/environment.md)).
+UESP needs a browser User-Agent (see [environment](../tools/environment.md)).
 
 The vanilla default of the `GameHour` global is not documented there. OpenSky starts at 13:00.
 
@@ -41,7 +41,7 @@ a microsecond for any session length. The save stores the same `Double` exactly.
 Time moves only through one `advance(wallDelta:timescale:)` call, which is plain arithmetic. The
 clock never reads a wall clock. The frame time comes from the renderer's pause-aware frame clock.
 So the same start and the same steps always give the same clock. A paused frame gives a step of 0,
-so a menu freezes game time and resuming causes no jump (see [menu mode](/engine/menu-mode.md)).
+so a menu freezes game time and resuming causes no jump (see [menu mode](menu-mode.md)).
 
 Setters change only what they name:
 
@@ -107,7 +107,7 @@ about 17 game minutes, so a garbage value cannot skip months in one frame.
 ## The clock owns time
 
 Vanilla keeps time in global variables, and conditions and scripts read them. So the clock and the
-[runtime globals](/engine/runtime-state.md) must be one source of truth. OpenSky's choice: the
+[runtime globals](runtime-state.md) must be one source of truth. OpenSky's choice: the
 clock owns time. The five time globals, `GameHour`, `GameDaysPassed`, `GameDay`, `GameMonth`, and
 `GameYear`, are computed from it.
 
@@ -124,7 +124,7 @@ clock owns time. The five time globals, `GameHour`, `GameDaysPassed`, `GameDay`,
 
 The clock lives on the renderer, and is written and read on the main thread. Each frame, before
 the world tick and weather, the renderer takes one paused-aware frame step, reads `TimeScale` once,
-and advances the clock once. The [Papyrus world runtime](/engine/papyrus-world.md) ticks right
+and advances the clock once. The [Papyrus world runtime](papyrus-world.md) ticks right
 after, so a script waiting on game time sees this frame's clock.
 
 The renderer's time of day is the clock's hour. Setting it moves the hour and keeps the date. So the
@@ -135,7 +135,7 @@ slider writes through the `GameHour` global, the same path a script uses.
 
 The weather gets the game hours that really passed since its last update. Moving forward counts,
 including a forward drag of the slider. Dragging backward counts zero. One step counts at most 24
-hours. See [weather](/engine/weather.md).
+hours. See [weather](weather.md).
 
 ## Offscreen renders
 
@@ -150,6 +150,6 @@ Two separate things:
 - Between app launches, the time slider's hour is kept as a setting and starts the clock. The date
   starts on the 17th of Last Seed each launch.
 - In a save, the whole clock is the `CLOK` chunk ([save
-  chunks](/formats/opensky-save-world-chunks.md)). A save with no `CLOK` loads the vanilla start.
+  chunks](../formats/opensky-save-world-chunks.md)). A save with no `CLOK` loads the vanilla start.
   Loading a clock also resets the weather's elapsed-time mark, so a restored date does not count as
   months of weather.

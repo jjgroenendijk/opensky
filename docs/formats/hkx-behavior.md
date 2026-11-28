@@ -10,13 +10,13 @@ tags: [format, havok, hkx, behavior, animation]
 # HKX behavior graph objects
 
 A behavior graph decides which animation an actor plays and how clips blend. It lives in
-an HKX packfile (see [HKX container](/formats/hkx-container.md)). This page covers the
+an HKX packfile (see [HKX container](hkx-container.md)). This page covers the
 graph-level objects and how OpenSky follows pointers between objects. The node tree under
-the graph's root is in [HKX behavior node classes](/formats/hkx-behavior-nodes.md). The
+the graph's root is in [HKX behavior node classes](hkx-behavior-nodes.md). The
 scope and clean-room rules are in
-[Havok behavior scope](/decisions/havok-behavior-scope.md).
+[Havok behavior scope](../decisions/havok-behavior-scope.md).
 
-`openskycli hkx <key>` prints the objects of a file (see [CLI](/tools/cli.md)).
+`openskycli hkx <key>` prints the objects of a file (see [CLI](../tools/cli.md)).
 
 ## References
 

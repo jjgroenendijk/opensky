@@ -10,15 +10,15 @@ tags: [engine, physics, havok, ragdoll, nif]
 # Ragdoll joint solver
 
 This page covers the physics of a ragdoll. Death, the hand-off from animation, and saving are on
-the [death and ragdoll](/engine/ragdoll.md) page. The joints run inside the same fixed step as
-[dynamic rigid bodies](/engine/dynamic-bodies.md). A step that receives joints treats its bodies
+the [death and ragdoll](ragdoll.md) page. The joints run inside the same fixed step as
+[dynamic rigid bodies](dynamic-bodies.md). A step that receives joints treats its bodies
 as one ragdoll.
 
 ## Building a ragdoll
 
 A skeleton NIF has no ragdoll container class. It has `bhkRigidBody` blocks, each under a
 `bhkBlendCollisionObject` that targets a named `NiNode`, and constraint blocks that join pairs
-of them ([NIF rigid bodies](/formats/nif-rigid-body.md)). The ragdoll is built from these:
+of them ([NIF rigid bodies](../formats/nif-rigid-body.md)). The ragdoll is built from these:
 
 - Each body that can be simulated becomes one dynamic body, matched to an animation bone by
   name. The `NiNode` name is spelled exactly like the `hkaSkeleton` bone, for example

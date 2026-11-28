@@ -19,7 +19,7 @@ Streaming has two halves:
 ## Cell coordinates
 
 One exterior cell is 4096 world units. Cell `(x, y)` covers world X from `x * 4096` up to (not
-including) `(x + 1) * 4096`, and the same for Y ([coordinates](/decisions/coordinates.md)).
+including) `(x + 1) * 4096`, and the same for Y ([coordinates](../decisions/coordinates.md)).
 
 The coordinate is the floor of `position / 4096`, rounding down, not toward zero. A camera at
 X = -1 must land in cell -1, not cell 0. Rounding toward zero would put every position just below
@@ -34,10 +34,10 @@ which is 2. So the desired grid is the `(2 * radius + 1)` squared cells around t
 cells by default. An even side rounds down, so 6 loads the same grid as 5.
 
 OpenSky reads the setting from the layered INI files, and the player can change it on the
-Graphics page as "Full-detail cell grid" ([graphics options](/engine/graphics-options.md)). The
+Graphics page as "Full-detail cell grid" ([graphics options](graphics-options.md)). The
 value is read when a game starts. OpenSky allows at most 10 rings, a 21 x 21 grid, so a typo cannot
 ask for thousands of cells; this limit is OpenSky's own. The distant LOD starts past the same
-radius, and sound sources are stopped one ring past it ([audio](/engine/audio.md)).
+radius, and sound sources are stopped one ring past it ([audio](audio.md)).
 
 ## Who owns the loaded set
 
@@ -78,7 +78,7 @@ build runner. Once per frame, the renderer calls it with the camera position. It
 Every build request carries a world state snapshot, taken on the main thread when the request
 is made. That snapshot is the only way changeable runtime state reaches the build queue. A change
 to a cell already on screen queues a rebuild. The cell stays loaded and keeps drawing its old
-scene until the rebuild arrives ([runtime state](/engine/runtime-state.md)).
+scene until the rebuild arrives ([runtime state](runtime-state.md)).
 
 ## One serial queue, no locks
 
@@ -162,7 +162,7 @@ scene changes never move the camera.
 
 Each cell scene lists the mesh and texture cache keys it used. A cached mesh remembers its
 texture keys, so a cache hit still marks every texture the new cell uses. Collision uses the same
-mesh keys ([static collision](/engine/collision-world.md)).
+mesh keys ([static collision](collision-world.md)).
 
 On unload, the cell is removed first. Then the keys it used, minus the keys any loaded cell
 still uses, are evicted on the build queue. Assets shared with a neighbor survive. A build that
@@ -175,7 +175,7 @@ memory B still needs.
 ## Script lifetime
 
 The streamer announces when a cell joins and leaves the world, so the
-[Papyrus world runtime](/engine/papyrus-world.md) can follow cells without the streamer knowing
+[Papyrus world runtime](papyrus-world.md) can follow cells without the streamer knowing
 about it. The join event has a flag that is true only when the cell really joined, and false when a
 cell that never left was only rebuilt. So a rebuild does not fire load events again. A scene with no
 known `CELL` identity is never announced, because subscribers file script instances by it.
@@ -187,7 +187,7 @@ whose join is still queued goes out at once, as a first join.
 
 ## Distant LOD and coverage
 
-Once the whole near grid is settled, the same queue builds one [distant LOD](/engine/distant-lod.md)
+Once the whole near grid is settled, the same queue builds one [distant LOD](distant-lod.md)
 scene. It comes last, so its many first-load assets cannot delay near cells.
 
 Each ring is built to leave out a set of cells, its hidden cells, because full cells draw there.
@@ -232,12 +232,12 @@ which picks a new weather from the new climate. The map and fast travel read the
 worldspace when they open.
 
 A child worldspace takes some data from its parent, as its `PNAM` flags say
-([world records](/formats/world-records.md)). WhiterunWorld draws Tamriel's distant LOD and
+([world records](../formats/world-records.md)). WhiterunWorld draws Tamriel's distant LOD and
 shows Tamriel's map.
 
 ## Interiors
 
-A door transition uses the same serial runner ([interiors](/engine/interiors.md)). The exterior
+A door transition uses the same serial runner ([interiors](interiors.md)). The exterior
 stays on screen while the interior builds. Once the interior is ready, the grid stops: no new
 requests, no LOD, no unloads. The exterior scene is kept to return to. Leaving through a door
 builds or replaces the destination cell, moves the camera to the door's `XTEL` pose, and restarts
@@ -246,7 +246,7 @@ the grid.
 ## Actors
 
 Actors are part of a cell, not a separate stream. The cell build resolves and builds its `ACHR`
-records on the same queue ([actor resolution](/engine/actor-resolution.md)). So actors follow the
+records on the same queue ([actor resolution](actor-resolution.md)). So actors follow the
 same rules as statics: their body and head keys are cell assets, and a body shared by two loaded
 cells survives when one leaves. Skeletons are kept by the mesh library outside cell assets,
 because they are small and shared by everyone.
@@ -266,7 +266,7 @@ pages load only when touched.
 Streaming reports the Darwin physical footprint (`task_vm_info.phys_footprint`), not the resident
 set size. Real-data tests have two guards: sampling inside the process, and `tools/memguard.sh`
 outside it, which reads the same number with `/usr/bin/footprint` and kills the process if
-sampling stops ([testing](/testing.md)).
+sampling stops ([testing](../testing.md)).
 
 Limits: 2500 MB for the fly benchmark, 3.5 GiB inside a real-data test, 4 GiB for the outside
 watchdog, and a final settled footprint below 1.6 times the start.

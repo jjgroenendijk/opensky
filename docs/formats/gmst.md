@@ -57,7 +57,7 @@ vanilla value. An integer setting may fill a float field. A float with no fracti
 integer field.
 
 A string setting holds a string-table ID in a localized plugin. It resolves through the string
-table of the plugin that set it ([string tables](/formats/strings.md)).
+table of the plugin that set it ([string tables](strings.md)).
 
 A feature that shows several string settings lists them as one enum, whose raw values are the
 editor IDs, and reads them through `GameSettingTexts`. Each case carries OpenSky's own words
@@ -88,10 +88,10 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Movie labels | `sActorFade`, `sConfirmSave` | `interface\quest_journal.swf` builds the settings and save pages from its own `$` keys, such as `$Actor Fade`, in `interface\translate_english.txt` |
 | Reward XP | `iXPRewardPickLock`, `sRewardXP` | UESP [Skyrim:Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) gives level experience only for skill increases. A picked lock trains Lockpicking through `fSkillUsageLockPick` |
 | Speech globals | `iSpeechChallengeDifficultyEasy` | UESP [Skyrim:Speech](https://en.uesp.net/wiki/Skyrim:Speech) gives the persuasion thresholds 10, 25, 50, 75, 100. A line tests the globals `SpeechVeryEasy` and so on ([CK tutorial](https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks)) |
-| Replaced notices | `sQuestAddedText`, `sDungeonCleared`, `sSneakAttack` | The HUD shows these notices with `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`. See [journal](/engine/journal.md) and [melee damage](/engine/melee-damage.md) |
+| Replaced notices | `sQuestAddedText`, `sDungeonCleared`, `sSneakAttack` | The HUD shows these notices with `sHUDStarted`, `sHUDCompleted`, `sCleared`, and `sSuccessfulSneakAttackMain`. See [journal](../engine/journal.md) and [melee damage](../engine/melee-damage.md) |
 | Debug dialog | `sContinueText`, `sAbortText` | The developer assert box ("Continue Running Executable?", Abort, Retry, Ignore). A release build never opens it |
 | Favour points | `iFavorPointsRestore` | The wiki gives it no description, and its vanilla value is 0. UESP [Skyrim:Disposition](https://en.uesp.net/wiki/Skyrim:Disposition) says disposition "is no longer visible" and changes by relationship rank, -4 to 4, which quests set. No points exist to restore |
-| Ambush packages | `fSneakAmbushTargetMod`, `fSneakAmbushNonTargetMod` | The game adds them to the detection skill term of an NPC whose package has type 9 (Ambush) in `PKDT`. Every package in the three masters has type 18 or 19, the Creation Kit makes only these, and nothing makes a type 9 package at run time. The rule is on the [detection](/engine/detection.md#ambush-packages) page |
+| Ambush packages | `fSneakAmbushTargetMod`, `fSneakAmbushNonTargetMod` | The game adds them to the detection skill term of an NPC whose package has type 9 (Ambush) in `PKDT`. Every package in the three masters has type 18 or 19, the Creation Kit makes only these, and nothing makes a type 9 package at run time. The rule is on the [detection](../engine/detection.md#ambush-packages) page |
 | Ground flight | `fMoveFlyRunMult` | A flier's speed as a multiple of its ground gaits. Every vanilla flier has its own flying movement type, such as `Dragon_Flying_MT` |
 | Swim jump | `fJumpSwimmingMult` | A swimmer cannot jump. The jump key raises it toward the surface |
 | Ingredient uses | `iIngredientAlchemyUses`, `iIngredientWortcraftUses` | The install adds 0 uses per brew and 0 per bite, so the count never teaches an effect |
@@ -99,7 +99,7 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Preload only | `sImpactParticleWoodDefault` | The game loads the model once at start and never places it, as OpenSky observed |
 
 The rules of single settings that have no page of their own are on the
-[game setting rules](/engine/game-setting-rules.md) page.
+[game setting rules](../engine/game-setting-rules.md) page.
 
-A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
+A setting on this list counts as done in the [gap report](../tools/gaps.md). A setting the wiki
 does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.

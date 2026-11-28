@@ -46,7 +46,7 @@ WhiterunExterior06 content: Whiterun city-wall segments (`wrwallcap01`,
 `wrwallstr01`, `wrwallstrup128`, curve/divide variants), Jorrvaskr + Bannered Mare LOD
 stand-ins — unmistakably Whiterun, seen from the plains. All 8 model paths resolve in
 the vanilla BSAs; 2 scaled refs + wall curves exercise the full REFR transform
-(translation, yaw, scale), which is how the [coordinates](/decisions/coordinates.md)
+(translation, yaw, scale), which is how the [coordinates](coordinates.md)
 rules were checked visually.
 
 ## MODL path prefix (probe finding, binds scene build)
@@ -55,4 +55,4 @@ STAT MODL values in `Skyrim.esm` carry no `meshes\` prefix
 (`architecture\whiterun\wrcitywalls\wrwallcap01.nif`); BSA/VFS keys do. Verified on all
 8 target-cell models: raw path 0/8 hits, `meshes\` + path 8/8. Scene build / MeshLibrary
 must prepend `meshes\` before VFS lookup (mirror of the `textures/` rule in
-[NIF mesh](/formats/nif.md)).
+[NIF mesh](../formats/nif.md)).

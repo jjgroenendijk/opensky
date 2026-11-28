@@ -9,13 +9,13 @@ tags: [engine, actors, animation, hkx, skinning, streaming, locomotion]
 # Actor animation
 
 This page covers how an actor's pose reaches the GPU. The file layouts are on the
-[HKX container](/formats/hkx-container.md), [hkaSkeleton](/formats/hka-skeleton.md), and
-[hkaSplineCompressedAnimation](/formats/hka-animation.md) pages.
+[HKX container](../formats/hkx-container.md), [hkaSkeleton](../formats/hka-skeleton.md), and
+[hkaSplineCompressedAnimation](../formats/hka-animation.md) pages.
 
 Two kinds of actor are posed:
 
 - An NPC plays one clip at a time: an idle, a walk or run while moving, or a short combat clip.
-- The player is posed by a running [behavior graph](/engine/behavior-runtime.md).
+- The player is posed by a running [behavior graph](behavior-runtime.md).
 
 Both end in the same skinning math.
 
@@ -32,7 +32,7 @@ plays its idle and gets no movement controller.
 
 A combat clip, such as an attack, stagger, or hit reaction, plays as a short override. It starts at
 its own frame 0, not on the shared clock, and then returns to the latest walk, run, or idle clip.
-Which clips are used is on the [combat](/engine/combat.md) page.
+Which clips are used is on the [combat](combat.md) page.
 
 ## Skinning palette
 
@@ -59,7 +59,7 @@ The player uses the same path, with three differences:
   and direction the capsule moves by. A graph on a second clock could show a state the capsule
   was never in. The animation pass only publishes the pose the simulation made.
 - Ownership: the player body belongs to no cell, so it is not unloaded with a cell. The renderer
-  holds it. See [player camera and body](/engine/player-camera.md).
+  holds it. See [player camera and body](player-camera.md).
 
 ## Why NIF rotations are transposed
 
@@ -69,7 +69,7 @@ NIF bind pose, so it should have given the bind palette. It did not.
 
 The two files disagreed about which way a bone turns. NIF stores rotations for row vectors.
 OpenSky multiplies column vectors, so every NIF `Matrix33` must be transposed when read
-([NIF](/formats/nif.md)). It was not. Havok needs no transpose. So each bone came out of the two
+([NIF](../formats/nif.md)). It was not. Havok needs no transpose. So each bone came out of the two
 files as transposes of each other.
 
 It went unseen for two reasons. Vanilla statics hardly rotate their nodes, so the world looked the

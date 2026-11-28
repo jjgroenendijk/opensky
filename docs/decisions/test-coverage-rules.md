@@ -33,7 +33,7 @@ one test leaves state behind, and the next one passes only because of it.
 ## Coverage floors
 
 The floors read the merged profile of the recent `make test COVERAGE=1` runs with `llvm-cov`
-([Test runs](/tools/test-runs.md#code-coverage)). Each value is our own choice: no source
+([Test runs](../tools/test-runs.md#code-coverage)). Each value is our own choice: no source
 gives a number. `tools/coverage/floor.sh` and `tools/coverage/changed-lines.sh` hold the values.
 
 | Floor | Value | Applies to | Why this value |

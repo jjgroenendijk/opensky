@@ -8,8 +8,8 @@ tags: [format, plugin, records, projectile, archery]
 # Projectiles
 
 A PROJ is what an AMMO or a spell launches. Everything the flight needs is in one `DATA`
-struct. How arrows fly is on [archery](/engine/archery.md). The AMMO that names a projectile
-is on [item records](/formats/item-records.md).
+struct. How arrows fly is on [archery](../engine/archery.md). The AMMO that names a projectile
+is on [item records](item-records.md).
 
 Sources: UESP [`/PROJ`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PROJ) and xEdit
 `dev-4.1.6` `wbDefinitionsTES5.pas` `wbRecord(PROJ, ...)` at line 5449, `DATA` at 5454.
@@ -45,7 +45,7 @@ OpenSky accepts any `DATA` of 16 bytes or more, because flags through range hold
 flight model, and a mod may write a short struct.
 `MODL` is the model drawn in flight and `NAM1` the muzzle flash model. OpenSky reads the
 light, the muzzle flash light, and the muzzle flash duration too
-([what a projectile shows](/engine/spell-delivery.md#what-a-projectile-shows)).
+([what a projectile shows](../engine/spell-delivery.md#what-a-projectile-shows)).
 UESP calls 0x3C "uint32 always 0"; xEdit calls it `Sound - Disable`. The offset is the same.
 "Always 0" describes vanilla data, not the field, so OpenSky follows xEdit. `VNAM` is the
 sound level. A value above 4 loads as 1 (normal). The levels map to detection amounts: 0 loud
@@ -58,4 +58,4 @@ sound level of its costliest effect.
 
 No source gives a unit for gravity. On the 20 arrow projectiles in `Skyrim.esm` it is at
 most 1 while speed reaches the thousands, so it is a scale factor
-([archery](/engine/archery.md)).
+([archery](../engine/archery.md)).

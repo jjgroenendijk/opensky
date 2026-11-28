@@ -8,11 +8,11 @@ tags: [save, ess, export]
 # Skyrim save export
 
 OpenSky can write the running session as a Skyrim Special Edition save. The export is the
-reverse of the [import](/engine/ess-import.md): each part the import reads, the export
+reverse of the [import](ess-import.md): each part the import reads, the export
 writes, and a test checks that a written save imports back to the same state. The file
-layout is on the format pages: [ESS](/formats/ess.md),
-[ESS change forms](/formats/ess-change-forms.md), and
-[ESS Papyrus](/formats/ess-papyrus.md).
+layout is on the format pages: [ESS](../formats/ess.md),
+[ESS change forms](../formats/ess-change-forms.md), and
+[ESS Papyrus](../formats/ess-papyrus.md).
 
 The export is pure. The same session and the same plugins give the same bytes. Only the
 header's file time and save number come from the clock and the folder.
@@ -21,7 +21,7 @@ header's file time and save number come from the clock and the folder.
 
 - The in-game Save page ends with an `Export to Skyrim` row.
 - It writes into the Skyrim saves folder setting (see
-  [the saves folder](/engine/ess-import.md#the-saves-folder)). Each export is a new file,
+  [the saves folder](ess-import.md#the-saves-folder)). Each export is a new file,
   `OpenSky Export N.ess`, with the first free number. The write fails rather than replace
   a file, so a save the game wrote is never overwritten.
 
@@ -90,10 +90,10 @@ The export report counts each left-out part with its reason. These cannot be wri
 ## Unconfirmed choices
 
 There is no real save and no Skyrim SE runner on the development machine
-([environment](/tools/environment.md)), so no export has been loaded in the game yet.
+([environment](../tools/environment.md)), so no export has been loaded in the game yet.
 These choices follow UESP and ReSaver, and wait for that check:
 
-- the location table offsets on the uncompressed base ([ESS](/formats/ess.md));
+- the location table offsets on the uncompressed base ([ESS](../formats/ess.md));
 - form version 78 and change form version 74;
 - the 8-byte actor header of an `ACHR` change, written as zeros;
 - an actor change that ends after its inventory, with no animation data;

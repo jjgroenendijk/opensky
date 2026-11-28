@@ -9,12 +9,12 @@ tags: [engine, audio, xwm, wav, fuz, voice]
 # Audio decoding and voice
 
 This page covers how each kind of vanilla audio file reaches the
-[audio graph](/engine/audio.md). Music and voice are xWMA. Every sound effect is a plain WAV file.
+[audio graph](audio.md). Music and voice are xWMA. Every sound effect is a plain WAV file.
 
 ## xWMA
 
-Music and voice stream through the WMA decoder ([ffmpeg audio](/decisions/ffmpeg-audio.md)). The
-container is on the [.xwm](/formats/xwm.md) page.
+Music and voice stream through the WMA decoder ([ffmpeg audio](../decisions/ffmpeg-audio.md)). The
+container is on the [.xwm](../formats/xwm.md) page.
 
 Vanilla `.xwm` files have `cbSize == 0`, so the container gives the decoder empty extradata. But
 ffmpeg's WMAv2 decoder reads stream flags from extradata. So empty extradata is replaced with the
@@ -27,7 +27,7 @@ six-byte block that ffmpeg's own xWMA demuxer builds: byte 4 is 31, and the rest
 ## WAV
 
 Every sound effect in the install, all 5,978, is a RIFF/WAVE file of uncompressed linear PCM
-([.wav](/formats/wav.md)). Playing a file checks the RIFF form type at byte 8:
+([.wav](../formats/wav.md)). Playing a file checks the RIFF form type at byte 8:
 
 - `XWMA` streams through the decoder.
 - `WAVE` is read whole into one PCM buffer and scheduled once.
@@ -38,20 +38,20 @@ completion handler, so it is cleaned up in the frame it ends, not left for the s
 
 ## Voice
 
-A dialogue line is a [.fuz](/formats/fuz.md) file: a lip sync block followed by a complete xWMA
+A dialogue line is a [.fuz](../formats/fuz.md) file: a lip sync block followed by a complete xWMA
 file. Playing a voice line frames the container and sends the xWMA part down the same positional
 streaming path as an effect, in the Voice category. The streamer never needed a second container
 type, because the payload is a whole `.xwm` file at an offset.
 
 The call returns the source ID, the duration from the `dpds` table, and the untouched lip bytes
-for [lip sync](/engine/lip-sync.md). A broken container throws before any source starts, so a line
+for [lip sync](lip-sync.md). A broken container throws before any source starts, so a line
 that cannot be framed is a reported miss, not a silent player.
 
 Vanilla voice is mono 44.1 kHz, which is what the positional path needs. So the mono mix-down used
 for music never applies to a line.
 
 Choosing which file to play belongs to the records, not the engine. The path is built from the
-`INFO` and the speaker's voice type. The naming rule is on the [.fuz](/formats/fuz.md) page.
+`INFO` and the speaker's voice type. The naming rule is on the [.fuz](../formats/fuz.md) page.
 
 ## Playback clock
 
@@ -60,7 +60,7 @@ source has that ID or nothing has rendered yet. It keeps one clock that only gro
 remembers the clock value when it started, and its position is the difference.
 
 `AVAudioPlayerNode.playerTime(forNodeTime:)` was tried first. It hangs the app-hosted test host
-under offline manual rendering, every time ([environment](/tools/environment.md)). Subtraction
+under offline manual rendering, every time ([environment](../tools/environment.md)). Subtraction
 cannot block, which is a second reason to prefer it.
 
 The clock has two sources, both in seconds:
@@ -85,7 +85,7 @@ when the line ends, not when it is cut off.
 ## Dialogue speech
 
 Scenes and the dialogue menu speak through one channel per actor. A line is the voice files of
-its responses, in response order. A [shared response](/engine/dialogue.md) uses the files of the
+its responses, in response order. A [shared response](dialogue.md) uses the files of the
 `INFO` it shares. Each file plays at the speaker's head bone, on the Voice category, and drives the
 speaker's mouth from its lip track while lip sync is on. When a file plays out, the next one
 starts. A file that does not load is skipped, and the next one plays.

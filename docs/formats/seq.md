@@ -51,4 +51,4 @@ no quest, it uses the same object ID in the plugin that owns the file.
 
 `ccQDRSSE001-SurvivalMode.esl` and `ccBGSSSE037-Curios.esl` have no file. Every file
 decodes with no bytes left over. The runtime use is on the
-[story manager](/engine/story-manager.md) page.
+[story manager](../engine/story-manager.md) page.

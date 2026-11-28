@@ -12,7 +12,7 @@ tags: [engine, papyrus, session, events]
 
 Some natives act on the whole session, not on one record: they save, quit, fade the screen, or
 switch a game rule. The bridge reaches them through the `gameNatives` family
-([coordinators](/engine/coordinators.md)). The app fills it when a session starts. A native whose
+([coordinators](coordinators.md)). The app fills it when a session starts. A native whose
 hook is empty fails the call, so a test or a load without a session sees a refusal, not a silent
 success.
 
@@ -28,7 +28,7 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | `Game.QuitToMainMenu`, `Debug.QuitGame` | Ends the session, or quits the app |
 | `Game.FadeOutGame` | Waits, then fades the frame to black or white, or back, on the game clock ([fades](#fades)) |
 | `Game.TriggerScreenBlood`, `Game.ClearTempEffects` | Adds screen blood splatters, or clears them |
-| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Shows or removes `interface\titles.swf` over the world ([new game](/engine/main-menu.md#new-game)) |
+| `Game.ShowTitleSequenceMenu`, `Game.HideTitleSequenceMenu` | Shows or removes `interface\titles.swf` over the world ([new game](main-menu.md#new-game)) |
 | `Game.StartTitleSequence` | Plays the named clip of the titles movie, such as `Sequence1` |
 | `Game.ShowFirstPersonGeometry` | Shows or hides the first-person arms |
 | `Debug.TakeScreenshot` | Writes a PNG of the view, at its size, to `~/Pictures/OpenSky/` |
@@ -38,13 +38,13 @@ Signatures and behaviour come from the Creation Kit wiki pages named after each 
 | `Debug.CenterOnCellAndWait` | Moves the player to the cell |
 | `Game.ClearPrison`, `Game.SetPlayerReportCrime` | Ends a jail stay; stops crime reports against the player. A save keeps the switch |
 | `Game.GetPlayerGrabbedRef` | The body the player holds with telekinesis |
-| `Cell.Reset` | Flags a cell for reset ([cell reset](/engine/cell-reset.md#a-script-reset)): an interior, or a loaded exterior cell |
+| `Cell.Reset` | Flags a cell for reset ([cell reset](cell-reset.md#a-script-reset)): an interior, or a loaded exterior cell |
 | `ShaderParticleGeometry.Apply`, `Remove` | Lays the record's rain or snow over the weather, fading over `afFadeTime`; a load or a new game removes it |
 
 `Debug.DBSendPlayerPosition` sends to a debug tool that does not exist, so it does nothing.
 
 God mode and the crime-report switch sit on the player's world state, so the save keeps them in
-the [`PRUL` chunk](/formats/opensky-save-world-chunks.md#prul-player-rules).
+the [`PRUL` chunk](../formats/opensky-save-world-chunks.md#prul-player-rules).
 
 `ToggleCollisions` matches the console's `tcl` with no target: UESP's
 [console page](https://en.uesp.net/wiki/Skyrim:Console) says it turns off the player's collision
@@ -55,18 +55,18 @@ and gravity, so the player flies through walls. That is OpenSky's fly mode.
 A fade out waits `afSecsBeforeFade`, then covers the frame over `afFadeDuration`. A fade in
 covers the frame at once, waits, then uncovers it, as the wiki example "spend 2 seconds on a
 black screen before fading in" says. `abBlackFade` false fades to white. The fader lays over
-every image-space modifier ([image space](/rendering/image-space.md)) and runs on the game
+every image-space modifier ([image space](../rendering/image-space.md)) and runs on the game
 clock, so it stops while the world is paused. A loading screen draws over it, and a load or a
 new game clears it. `openskycli game debug fade` starts one, and `state frame` shows it.
 
 ## Actor and reference rules
 
 - `StartDeferredKill` and `EndDeferredKill` hold and release a death
-  ([bleedout](/engine/ragdoll.md#bleedout)). `IsInKillMove` is true while the actor plays
+  ([bleedout](ragdoll.md#bleedout)). `IsInKillMove` is true while the actor plays
   either half of a paired kill move.
 - `StartVampireFeed` sends the feed to the vampire scripts and plays the `IdleVampireFeed`
   tree with the target. `StartCannibal` marks the target as eaten and plays the
-  `IdleCannibalFeed` tree ([paired animations](/engine/paired-animations.md#starting-a-pair)).
+  `IdleCannibalFeed` tree ([paired animations](paired-animations.md#starting-a-pair)).
 - `DoCombatSpellApply` casts the spell. `PlayIdleWithTarget` plays a paired idle on both the
   actor and the target. With no target it takes the actor's combat target, and with neither it
   plays the idle on the actor alone.
@@ -78,7 +78,7 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
   dead actor's inventory through the pile.
 - `UnLockOwnedDoorsInCell` unlocks the doors of the actor's cell that its base owns.
 - `KnockAreaEffect` knocks the actors in the radius down, away from the caster
-  ([knockdown](/engine/ragdoll.md#knockdown)).
+  ([knockdown](ragdoll.md#knockdown)).
 - `ForceAddRagdollToWorld` starts a ragdoll at once.
 - `PlayImpactEffect` casts a line from the reference, or from the named node, along the given
   direction and length. The direction turns with the node when `abApplyNodeRotation` is set:
@@ -91,7 +91,7 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
   when the actor arrived, and false when no path starts, the walk gives up or is stopped, or
   `afWalkRunPercent` is outside 0 to 1.
 - `Game.PlayBink` plays a movie from `Data\Video` and waits until it ends or is skipped
-  ([movies](/engine/movies.md)).
+  ([movies](movies.md)).
 - `Faction.GetStolenItemValueCrime` and `GetStolenItemValueNoCrime` sum what the player stole
   from the faction, seen and unseen.
 
@@ -152,9 +152,9 @@ and a node name on each. Each end is one of three kinds:
 Two ragdoll ends make a link. A ragdoll or loose end with a fixed end makes a pin. Any other
 pair, and a living actor that is not ragdolling, answers false, as the CK wiki says the game
 does. The add waits while the fixed end's model loads, because the wiki lists both natives as
-latent. [Ragdoll solver](/engine/ragdoll-solver.md#script-links) has the solve.
+latent. [Ragdoll solver](ragdoll-solver.md#script-links) has the solve.
 
-The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
+The sub-graph natives are in [effect graphs](effect-graphs.md).
 
 ## Engine events
 
@@ -170,7 +170,7 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
 - `OnPlayerBowShot(akWeapon, akAmmo, afPower, abSunGazing)` goes to the player's scripts when an
   arrow leaves the bow.
 - `OnEnterBleedout()` and the trap contact events are on the
-  [bleedout](/engine/ragdoll.md#bleedout) and [trap contact](/engine/traps.md#trap-contact) pages.
+  [bleedout](ragdoll.md#bleedout) and [trap contact](traps.md#trap-contact) pages.
 
 ## Where OpenSky differs
 

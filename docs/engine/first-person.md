@@ -16,14 +16,14 @@ its own 99-bone `skeletonfirst.hkx`, and its own `skeleton.nif`. So OpenSky runs
 
 ## Two graphs, one bridge
 
-The [movement bridge](/engine/locomotion-graph.md) holds an optional first-person graph beside the
+The [movement bridge](locomotion-graph.md) holds an optional first-person graph beside the
 third-person one. It sends every variable write, every event, and every update to both, in the same
 order, in the same fixed step. The two share only the read-only decode. Node state is keyed per
 instance, so neither can see the other's clip phase or crossfade. Both get the same input. Neither
 leads the other.
 
 Root motion from the first-person graph is dropped. The third-person graph is the one source of
-movement ([walk mode](/engine/walk-mode.md)). A second graph moving the player would double every
+movement ([walk mode](walk-mode.md)). A second graph moving the player would double every
 step.
 
 The perspective is the one input that differs. Both vanilla files declare it three times:
@@ -35,7 +35,7 @@ graphs. A miss on either side is counted separately, because the first-person fi
 their own way.
 
 The first-person graph plays the clips in `_1stperson\animations\`. They reuse the third-person file
-names, so the clip lookup must stay in that folder ([behavior clips](/engine/behavior-clips.md)).
+names, so the clip lookup must stay in that folder ([behavior clips](behavior-clips.md)).
 With the weapon sheathed, the first-person idle holds the hands below the view, so nothing of the arms
 shows. Drawing the weapon or the fists lifts them into the lower corners, as in the game.
 
@@ -66,7 +66,7 @@ because a player with no shadow looks like a bug. The arms never cast, because t
 limbs the body already casts. A second copy at the eye would double the shadow.
 
 The dialogue camera hides the arms. It draws the body only in third person: in first person its eye
-is just behind the head, so the body stays hidden ([player camera and body](/engine/player-camera.md)).
+is just behind the head, so the body stays hidden ([player camera and body](player-camera.md)).
 
 ## Depth
 
@@ -105,7 +105,7 @@ arms. Vanilla's is a comfort setting, not a lens on the hands.
 The arms are built by the same actor assembly as the body, from the same resolved appearance, placed
 on the first-person rig. So a runtime equipment change reaches them with no second resolution.
 
-Each piece is swapped to its `MOD4` or `MOD5` model ([actor records](/formats/actors.md)). A piece
+Each piece is swapped to its `MOD4` or `MOD5` model ([actor records](../formats/actors.md)). A piece
 with neither is dropped with the reason `noFirstPersonModel`. That is why vanilla iron gauntlets show
 nothing on the arms while the cuirass and hands do.
 

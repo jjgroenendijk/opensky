@@ -41,7 +41,7 @@ size, and whether it moved, pressed, or released.
 
 ## Pause per menu
 
-Most menus pause the world. The [dialogue menu](/engine/dialogue-menu.md) does not: it takes input
+Most menus pause the world. The [dialogue menu](dialogue-menu.md) does not: it takes input
 while the world keeps running, because the voice, the speaker turning, and lip sync all run on the
 world clock. So each menu is opened with a policy: "pauses world" (the default) or "leaves world
 running". Only `"Dialogue Menu"` uses the second.
@@ -84,15 +84,15 @@ still moves its mark to now. So after a pause of any length, the next frame gets
 never the whole paused time.
 
 The animation step also drives particles and rain. So a zero step freezes game time, camera,
-animation, weather, particles, rain and snow, and the [Papyrus world runtime](/engine/papyrus-world.md)
+animation, weather, particles, rain and snow, and the [Papyrus world runtime](papyrus-world.md)
 together. The VM shows why the pause is a clock and not a branch: its frame hook still runs, with
 a step of 0, so nothing in it needs to know a menu is open. Offscreen renders apply the same rule
 to their fixed 1/30 second step.
 
 Drawing is not paused. A paused frame still encodes, presents, and draws the
-[screen-space UI](/rendering/ui.md). The world just holds still.
+[screen-space UI](../rendering/ui.md). The world just holds still.
 
 ## Users of the stack
 
-- The [system menu](/engine/system-menu.md) is a menu consumer. Esc, Return, and the move keys
+- The [system menu](system-menu.md) is a menu consumer. Esc, Return, and the move keys
   drive its choices while the world is paused.

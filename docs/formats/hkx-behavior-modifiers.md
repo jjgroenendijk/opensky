@@ -8,7 +8,7 @@ tags: [format, havok, hkx, behavior, animation]
 
 # HKX behavior modifier classes
 
-This page continues [HKX behavior node classes](/formats/hkx-behavior-nodes.md). It covers
+This page continues [HKX behavior node classes](hkx-behavior-nodes.md). It covers
 transitions and conditions, variable bindings, the modifier classes, and Bethesda's own
 `BS*` classes. The shared headers and sources are on that page. A modifier's own members
 start at 0x50.
@@ -143,7 +143,7 @@ clip from the body.
 ## Not decoded
 
 - `hkbRigidBodyRagdollControlsModifier`: OpenSky reads `m_durationToBlend` as the blend
-  time from animation to physics (see [ragdoll](/engine/ragdoll.md)). It does not read
+  time from animation to physics (see [ragdoll](../engine/ragdoll.md)). It does not read
   `m_bones`: the ragdoll uses every bone that has a body in the skeleton NIF.
   `hkbPoweredRagdollControlsModifier` gives the motor settings, and
   `BSRagdollContactListenerModifier` gives the contact event. Neither reads its `m_bones`.

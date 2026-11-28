@@ -8,9 +8,9 @@ tags: [rendering, image-space, metal]
 
 # Screen-space post effects
 
-The [image space pass](/rendering/image-space.md) also draws the game's screen-space effects.
+The [image space pass](image-space.md) also draws the game's screen-space effects.
 Each one is a game option on the launcher's graphics page
-([graphics options](/engine/graphics-options.md)). They all read pixels around the one they
+([graphics options](../engine/graphics-options.md)). They all read pixels around the one they
 change, and most read the scene depth. So when any of them is on, the composite uses its split
 path: the scene pass ends, the colour and the depth are copied, and one fullscreen triangle
 reads both copies. The grade (tone mapping, tint, fade) runs after the effects, in the same
@@ -70,7 +70,7 @@ the sky reaches.
   game's shaders in `Skyrim - Shaders.bsa`, 2026-11-06, behaviour only). On snow the game
   raises `ao` by a bias, so snow stays bright. OpenSky leaves a pixel with snow unchanged, as
   the game turns occlusion off wherever the snow mask is above zero
-  ([snow ground](/engine/terrain.md#snow-ground)).
+  ([snow ground](../engine/terrain.md#snow-ground)).
 - It darkens the colour under the fog, as the game's fog variant does. The fog part of the
   pixel, `fog colour × fog amount`, stays as it is, and only the rest is multiplied by `ao`.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
@@ -177,7 +177,7 @@ The sum follows the Windows game, observed in the reference game:
   in `depth ^ r`, where depth is the 0 to 1 depth buffer value. With `r` = 40 almost all
   slices lie far away, so the light shows as bright haze on distant land and on the sky.
 - Each slice adds `lit × density × phase`. `lit` is one tap of the
-  [sun cascades](/rendering/shadows.md), and 1 past the last cascade. The phase is
+  [sun cascades](shadows.md), and 1 past the last cascade. The phase is
   `(1 - g²) / (4π (1 - g cos))` with the angle between the view ray and the sun.
 - A pixel takes the slices in front of it; the sky takes them all. The result is
   `intensity × sum / slice count`, times the light colour. It is added to the scene colour
@@ -193,7 +193,7 @@ The sum follows the Windows game, observed in the reference game:
 
 `[ImageSpace] bDoDepthOfField`. The current image space's `DNAM` gives a strength, a clear
 distance, a range, and a code for the blur radius and the sky
-([image space records](/formats/image-spaces.md#depth-of-field)). Weather and cell image
+([image space records](../formats/image-spaces.md#depth-of-field)). Weather and cell image
 spaces blend the numbers by weight; the sky flag comes from the heaviest one. A running
 modifier with a depth of field channel moves each value toward its own, by the modifier's
 strength.

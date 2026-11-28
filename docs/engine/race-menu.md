@@ -116,7 +116,7 @@ does not reset the tint list when it opens; the player keeps the current layers.
 ## Chargen morphs
 
 Each `NAM9` slider picks one of two targets of the head part's chargen TRI
-([TRI](/formats/tri.md)) by its sign, with the absolute value as the weight. The order
+([TRI](../formats/tri.md)) by its sign, with the absolute value as the weight. The order
 starts from the xEdit and UESP field lists for `NPC_ NAM9`. A real-data probe then checked
 it against baked FaceGen heads (below):
 
@@ -186,7 +186,7 @@ FaceGen head, because the baked head belongs to the record's race and face.
   skinned mesh, set to the slider weights. The buffer is the one expressions use, so the
   vertex shader adds the deltas before skinning. A TRI whose vertex count differs from the
   mesh is skipped and logged.
-- The tint masks are decoded on the CPU ([DDS](/formats/dds.md), "CPU decode") and painted
+- The tint masks are decoded on the CPU ([DDS](../formats/dds.md), "CPU decode") and painted
   into a face tint picture at the first mask's size. It uploads under a texture key named
   after the layers, so the same face reuses one upload. The face part keeps its color map and
   overlays the face tint, the same way an NPC's baked face overlays its `facetint` texture.
@@ -247,7 +247,7 @@ show the placeholder text `TEXT`. An empty race description makes the movie prin
 The movie's Done button calls `ConfirmDone` only on a mouse click; its key handler does not
 look at the Done key. So the engine reads that key itself. The button's art is the `XButton`
 user event. The install's `controlmap.txt` binds `XButton` in its "Item Menus" context to the
-Ready Weapon key, `R` on PC ([control map](/formats/controlmap.md)). That key closes the
+Ready Weapon key, `R` on PC ([control map](../formats/controlmap.md)). That key closes the
 menu, as `ConfirmDone` does.
 
 On PC the categories change only with a click on the arrows beside the category name. The
@@ -260,7 +260,7 @@ menu or the title menu is open, the engine frees the mouse cursor so a click rea
 The drawn arrows are not the click areas. Each side of the category bar has an invisible click
 area, and the movie changes the category on a click inside it. Observed in the reference game on
 2026-11-15, at 1280 x 720 with the Body category open, clicking along the bar at y = 38 through
-the bridge ([reference game](/tools/reference-bridge-probes.md#clicking-a-menu-and-playing-a-movie)):
+the bridge ([reference game](../tools/reference-bridge-probes.md#clicking-a-menu-and-playing-a-movie)):
 
 | Stage x | What a click does |
 | --- | --- |
@@ -282,6 +282,6 @@ not, the movie closes and the engine rows stay in charge.
 
 While the race menu is open, the view looks at the player's face from in front, at eye height,
 and the player's body is drawn even in first person. It uses the
-[dialogue camera](/engine/dialogue-camera.md) framing, taken from the side the player faces.
+[dialogue camera](dialogue-camera.md) framing, taken from the side the player faces.
 [WARNING] The game's race menu camera is not documented, and `Skyrim.esm` has no setting for it,
 so this framing is OpenSky's choice.

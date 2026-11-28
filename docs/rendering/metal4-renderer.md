@@ -15,7 +15,7 @@ synthetic demo scene built in code (a checker ground, three crates, and an alpha
 tests and a missing install use. The command flow follows the structure of Apple's Xcode Metal 4
 game template.
 
-How scenes are grouped, culled, and swapped is on the [scene drawing](/rendering/scene-drawing.md)
+How scenes are grouped, culled, and swapped is on the [scene drawing](scene-drawing.md)
 page.
 
 ## Scene types
@@ -39,9 +39,9 @@ page.
 
 ## Pass order
 
-The shadow cascades draw first ([shadows](/rendering/shadows.md)). The scene pass then draws sky,
+The shadow cascades draw first ([shadows](shadows.md)). The scene pass then draws sky,
 opaque groups, terrain, alpha-test groups, grass, water, particles, precipitation, the
-[SWF layer](/rendering/swf-layer.md), and the [UI overlay](/rendering/ui.md) last.
+[SWF layer](swf-layer.md), and the [UI overlay](ui.md) last.
 
 Metal 4 does not track hazards between encoders. So the last cascade encoder issues a producer
 barrier (`barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions:
@@ -59,7 +59,7 @@ can stay in that tile memory: it is memoryless, and it costs no GPU memory and n
 | Offscreen color | shared | the CPU reads it back |
 | Grade copy and grade depth | private, made on first use | only a split scene pass needs them |
 
-The [image space pass](/rendering/image-space.md) grades in tile memory, so most frames keep depth
+The [image space pass](image-space.md) grades in tile memory, so most frames keep depth
 memoryless. Some frames split the scene pass in two, and the first half then stores depth into the grade
 depth target. A frame splits for a grade with blur or double vision, which reads other pixels, and
 for a refraction shape. It also splits when it copies the scene depth: for visible water while
@@ -69,16 +69,16 @@ the water depth setting is on, and for a soft effect in view.
 
 Static and skinned meshes each have an opaque and an alpha-test pipeline. All four share one
 fragment function, specialized by a function constant, so opaque draws pay nothing for discard.
-Alpha-test draws discard below the material's threshold. The [render debug](/rendering/render-debug.md)
+Alpha-test draws discard below the material's threshold. The [render debug](render-debug.md)
 twins use a second function constant that no shipping pipeline defines.
 
 Shading is: albedo times (sun and point-light diffuse plus six-axis directional ambient plus
 base ambient plus glow, back, rim, and soft light), plus specular. Vertex color is a baked tint,
 because Skyrim bakes ambient occlusion there. Material alpha is multiplied through. Normal maps,
-the terms, and their sources are in [surface shading](/rendering/surface-shading.md).
+the terms, and their sources are in [surface shading](surface-shading.md).
 
 Depth is `depth32Float`, less-compare, with writes on. Metal 4 sets the depth format at pass time,
-not in the pipeline. Near is 10 and far 350,000 ([coordinates](/decisions/coordinates.md)). The
+not in the pipeline. Near is 10 and far 350,000 ([coordinates](../decisions/coordinates.md)). The
 front face is counter-clockwise seen from outside, back faces are culled, and a double-sided
 material turns culling off per draw. The demo ground plane caught a wrong winding that closed boxes
 had hidden.
@@ -89,11 +89,11 @@ vertical palette and a sun disc from the time of day, and later geometry replace
 its far fog colour instead of black, so a gap in the geometry reads as fog, not as a hole. This
 is an OpenSky choice; what the game clears to there is not confirmed. Water blends with straight
 alpha (source RGB times source alpha, destination times one minus source alpha) and reads depth
-without writing it ([sky and water](/engine/sky-water.md)).
+without writing it ([sky and water](../engine/sky-water.md)).
 
 ## Interior lighting
 
-An interior resolves its [lighting records](/formats/lighting.md) before the renderer sees the
+An interior resolves its [lighting records](../formats/lighting.md) before the renderer sees the
 scene. The frame uniforms carry ambient, the directional light, six directional ambient colors, and
 fog colors, range, power, and maximum. Static and terrain fragments apply fog by camera distance
 after lighting. A bad fog range turns fog off.
@@ -110,7 +110,7 @@ lights never reach the shader. Water and sky keep their own paths.
 - Per-group draw uniforms (UV offset and scale, alpha, threshold) are a ring of frames in flight
   times group capacity, 256-byte aligned. Terrain and water uniforms share the ring, and the stride
   is the largest struct.
-- Matrices live in a separate per-instance ring ([scene drawing](/rendering/scene-drawing.md)).
+- Matrices live in a separate per-instance ring ([scene drawing](scene-drawing.md)).
 
 Every bind goes through one `MTL4ArgumentTable`, sized from the highest index in each `ShaderTypes.h`
 enum. The table state is captured per draw, so setting addresses and textures between draws is the
@@ -135,7 +135,7 @@ A skinned mesh selects the skinned pipeline. Buffer 6 holds normalized float4 we
 bone indices, and buffer 7 holds mesh-local bone matrices. The vertex shader blends position and
 direction by weight, then applies the instance matrices. With a bind-only palette, the palette is
 identity within float error, so the mesh draws in its authored pose. Animated poses come from
-[actor animation](/engine/actor-animation.md).
+[actor animation](../engine/actor-animation.md).
 
 ## Frame pacing and GPU time
 
@@ -145,7 +145,7 @@ event signaled with the frame index.
 GPU time is the span that Metal's commit feedback reports for each frame's commit: from
 `GPUStartTime` to `GPUEndTime`, in host seconds. It covers the shadow and scene passes together.
 The benchmark's pass timer also writes command-buffer timestamps (`writeTimestamp`) into Metal
-counter heaps, for the setup, shadow, and scene passes ([benchmark](/tools/benchmark.md)). The
+counter heaps, for the setup, shadow, and scene passes ([benchmark](../tools/benchmark.md)). The
 marks sit only between encoders. A mark inside one encoder reported about 0.2 ms for frames that
 took several milliseconds, because Apple GPUs run an encoder's draws together per tile.
 
@@ -162,8 +162,8 @@ finish. There is no drawable and no compositor. Tests and the CLI use it. Never 
 `MTKView.currentDrawable` in a test: a window-less drawable crashes in `waitForDrawable`.
 
 The sustained bench runs the same frame body on one reused target, with frame stats and timestamps
-on every frame, and reports average and percentile frame times ([CLI](/tools/cli.md)). Each frame
+on every frame, and reports average and percentile frame times ([CLI](../tools/cli.md)). Each frame
 waits for the GPU, so the numbers are an upper bound: a pipelined loop overlaps that round trip.
 
 Matrix conventions (column-major, `M * v`, right-handed, camera looking down -z, depth mapped to
-Metal's 0 to 1) are on the [coordinates](/decisions/coordinates.md) page.
+Metal's 0 to 1) are on the [coordinates](../decisions/coordinates.md) page.

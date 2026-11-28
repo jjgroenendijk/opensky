@@ -80,7 +80,7 @@ uses rotate in place walk and run the same way.
 ## Acceleration
 
 The race's `DATA` acceleration `A`, deceleration `D`, and angular acceleration `G` are times in
-seconds ([RACE DATA](/formats/actors.md#race-data-in-the-game)):
+seconds ([RACE DATA](actors.md#race-data-in-the-game)):
 
 - acceleration = `max(R, speed) / A`, in units per second squared;
 - deceleration = `max(R, speed) / D`;

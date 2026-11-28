@@ -10,15 +10,15 @@ tags: [engine, world, collision, triggers, papyrus, streaming]
 
 A trigger volume is an invisible shape. When the player walks in or out, a script gets
 `OnTriggerEnter` or `OnTriggerLeave`. Each cell has a trigger set beside its
-[static collision](/engine/collision-world.md). The Papyrus side is on the
-[Papyrus activation](/engine/papyrus-activation.md#ontriggerenter-ontriggerleave-and-ontrigger) page.
+[static collision](collision-world.md). The Papyrus side is on the
+[Papyrus activation](papyrus-activation.md#ontriggerenter-ontriggerleave-and-ontrigger) page.
 
 ## Two sources
 
 | Source | What it is | Placement |
 | --- | --- | --- |
 | A NIF body on SkyrimLayer 12 | A `bhkRigidBody` in the reference's mesh whose Havok filter names the trigger layer | Reference, then body, then shape, like a solid shape |
-| An `XPRM` primitive | A `REFR` field: an invisible volume with no mesh ([world records](/formats/world-records.md)) | The reference matrix: `DATA` position and rotation, and `XSCL` |
+| An `XPRM` primitive | A `REFR` field: an invisible volume with no mesh ([world records](../formats/world-records.md)) | The reference matrix: `DATA` position and rotation, and `XSCL` |
 
 A body is a trigger only if it names layer 12 (`SKYL_TRIGGER`). That is not the same as "not
 solid". Layer 15 (`SKYL_NONCOLLIDABLE`), the `No Collision` flag, and a non-simple response type
@@ -40,7 +40,7 @@ Only `box` and `sphere`. The others are counted as excluded:
 
 - `portalBox` is room portal geometry for occlusion, not gameplay.
 - A `box` on a room marker (a reference with `XRMR`) is room bounds for occlusion too
-  ([rooms and portals](/formats/placed-references.md#rooms-and-portals)).
+  ([rooms and portals](../formats/placed-references.md#rooms-and-portals)).
 - `line` is not a volume.
 - `none` has no shape.
 
@@ -72,7 +72,7 @@ A sphere's radius is `halfExtents.x`. Neither UESP's `REFR` page nor xEdit's
 
 The half-extents are before scale, in the reference's own frame. The placement matrix carries
 both pose and size. It is built by the same call as for meshes, so the engine has one `REFR`
-rotation convention ([coordinates](/decisions/coordinates.md)). So `XSCL` scales an `XPRM` box the
+rotation convention ([coordinates](../decisions/coordinates.md)). So `XSCL` scales an `XPRM` box the
 same way it scales a mesh. A sphere's radius is multiplied by the longest column of the matrix.
 
 ## The capsule test

@@ -13,7 +13,7 @@ Skyrim SE smooths edges with temporal anti-aliasing (TAA): each frame moves the 
 of a pixel, the jitter, and blends the new frame with the frames before it, the history. The
 Medium, High, and Ultra presets turn TAA on and FXAA off; the Low preset turns FXAA on and TAA
 off. Both can run at once, FXAA first. OpenSky's own path is MetalFX
-([upscaling](/rendering/upscaling.md)); this page holds the game's rules to compare it with.
+([upscaling](upscaling.md)); this page holds the game's rules to compare it with.
 
 ## Jitter
 

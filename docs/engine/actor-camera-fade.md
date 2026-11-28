@@ -126,7 +126,7 @@ These use the same amount and the same drawn alpha:
 - While an actor is in a teleport, summon, or remove fade, the camera fade does not change it.
 
 The distance fade of a reference, an actor included, is separate
-([reference fade](/engine/graphics-options.md#reference-fade)).
+([reference fade](graphics-options.md#reference-fade)).
 
 ## OpenSky
 

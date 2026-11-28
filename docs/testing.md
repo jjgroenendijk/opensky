@@ -12,13 +12,13 @@ Tests run through `make`. Fixture rules are in `src/Tests/OpenSkyTests/AGENTS.md
 `src/Tests/OpenSkyRealDataTests/AGENTS.md`, `src/Tests/HostedTestSupport/AGENTS.md`, and the legal
 section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
-the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
+the tag plans, coverage, and sanitizers work is on the [test runs](tools/test-runs.md) page.
 
 ## Targets
 
 - `OpenSkyFormatsCoreTests`, `OpenSkyGameDataTests`, and the other `<Module>Tests`: package test
   targets, one per library module in `src/Package.swift`. A change to engine code does not rebuild them
-  ([Swift modules](/tools/modules.md)).
+  ([Swift modules](tools/modules.md)).
 - `OpenSkyTests`: unit tests with Swift Testing for what a package test target cannot hold: the
   app module and the acceptance chains. None of it needs game data.
 - `OpenSkyRealDataTests`: the suites that read the user's install and skip without a data root. They
@@ -51,15 +51,15 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | `make check-perms` | Checks the one-time permission grants |
 
 `make test` runs every kind of test, unit, UI, sanitizer, and real-data, and `PLAN` picks it, so
-each run is one `xcodebuild` call on one test plan ([test runs](/tools/test-runs.md)).
+each run is one `xcodebuild` call on one test plan ([test runs](tools/test-runs.md)).
 
 No automatic step runs the tests locally. What to test for a change is the author's judgment,
 guided by the `testing-and-verifying` skill, and the commit's `Tests:` section records what ran.
 CI runs the lint checks and the whole unit plan on every push to a pull request, and the sanitizers
-and `make lint-index` weekly ([continuous integration](/tools/ci.md)).
+and `make lint-index` weekly ([continuous integration](tools/ci.md)).
 
 Two builds into one build tree collide in xcodebuild's build database, so start a second build
-in a checkout only after the first ends ([build system](/tools/build-system.md)).
+in a checkout only after the first ends ([build system](tools/build-system.md)).
 
 ## Real-data suites and the data root
 
@@ -91,7 +91,7 @@ It keeps the Debug configuration, because `@testable import` needs `ENABLE_TESTA
 Release turns off. It changes only the optimization level and sets the `OPENSKY_OPTIMIZED`
 condition, so a test knows which budget applies. Its products go in the `-optimized` cache tree
 beside the Debug one, so switching between it and `make test` does not rebuild the engine
-each time ([dynamic bodies](/engine/dynamic-bodies.md)).
+each time ([dynamic bodies](engine/dynamic-bodies.md)).
 
 A gated suite written outside `src/Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
 ever run it: `make test PLAN=RealData` would not reach it, and `make test` would skip it.
@@ -132,7 +132,7 @@ changes timings: no other OpenSky should be running, and Spotlight may be indexi
 
 `make benchmark` gives the before and after numbers for a performance change: load time split
 into asset phases, and frame, GPU pass, and CPU subsystem times per scene
-([benchmark tour](/tools/benchmark.md)). `make profile` then shows where the time goes.
+([benchmark tour](tools/benchmark.md)). `make profile` then shows where the time goes.
 
 `make profile` records an Instruments Time Profiler trace of the Release app while it flies the
 quick benchmark tour. `ARGS` passes other benchmark options, such as `ARGS='--scenes riften'`.
@@ -151,7 +151,7 @@ sample in which the main thread sits in one call for the whole second is a hang.
 - Profile a Release build. A Debug build makes tight math code many times slower, so it points at
   the wrong loops.
 - Start the process first, then run `xctrace record --attach <pid>`
-  ([why not `--launch`](/tools/environment.md#tests)). Attach
+  ([why not `--launch`](tools/environment.md#tests)). Attach
   to the right PID: `$!` after a subshell is the shell, not the program.
 - The CLI benches run the renderer, animation, streaming, and physics. Combat, factions, actor
   values, perception, and AI packages run only in the app. To profile those, launch the Release app
@@ -173,7 +173,7 @@ So nothing that needs the app lifecycle runs in unit tests: no delegate, no wind
 
 The host reads the app's own defaults and home folder. So the data root locator ignores both saved
 data root sources under the same signal, and a unit test reaches the install only through
-`OPENSKY_DATA_ROOT` ([game data locator](/engine/game-data-locator.md)). Before this, a machine where
+`OPENSKY_DATA_ROOT` ([game data locator](engine/game-data-locator.md)). Before this, a machine where
 the app pointed at an install on an external volume blocked the unit tests forever inside `open()`.
 `TEST_RUNNER_OPENSKY_DATA_ROOT=""` did not help, because it clears only the environment variable.
 
@@ -182,9 +182,9 @@ the app pointed at an install on an external volume blocked the unit tests forev
 - Fixtures are built in code (`BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`) or are
   tiny synthetic files the test writes. Never game files.
 - Rendering checks prefer exact assertions (buffer contents, transform math), plus a capture in a
-  run directory under `.logs/` for a person to look at ([run output](/tools/run-output.md)).
+  run directory under `.logs/` for a person to look at ([run output](tools/run-output.md)).
   `print()` shows in the live console but not in the `.xcresult`, so a backgrounded run loses it.
   Assert on a value or write a file.
 - Full-frame checks go through the offscreen renderer: one synchronous frame into an owned texture.
   Never render through `MTKView.currentDrawable` in a test, because a window-less drawable crashes in
-  `waitForDrawable` ([renderer](/rendering/metal4-renderer.md#offscreen-render)).
+  `waitForDrawable` ([renderer](rendering/metal4-renderer.md#offscreen-render)).

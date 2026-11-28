@@ -9,9 +9,9 @@ tags: [format, esm, magic, record, equipment]
 
 This page covers five small records near the magic records: SHOU (shout), WOOP (word of
 power), LVSP (leveled spell), DUAL (dual-cast data), and EQUP (equip type). EQUP answers
-"which hands does this item fill" for [equipment](/engine/inventory-equipment.md). MGEF,
-SPEL, and SCRL are on [magic records](/formats/magic-records.md); ENCH is on
-[enchantments](/formats/enchantments.md).
+"which hands does this item fill" for [equipment](../engine/inventory-equipment.md). MGEF,
+SPEL, and SCRL are on [magic records](magic-records.md); ENCH is on
+[enchantments](enchantments.md).
 
 Sources: the UESP pages
 [`SHOU`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SHOU),
@@ -64,7 +64,7 @@ LVSP uses the same leveled-list layout as LVLN and LVLI. xEdit reuses the same
 `wbLeveledListEntry`. Only the allowed targets change: an entry names a `SPEL` or another
 `LVSP`. The fields are `EDID`, `OBND`, `LVLD` (chance none), `LVLF` (flags), `LLCT` (entry
 count), and a run of 12-byte `LVLO` entries. The entry layout is on
-[actor records](/formats/actors.md).
+[actor records](actors.md).
 
 ## DUAL
 
@@ -76,7 +76,7 @@ offset `0x6C`). The fields are `EDID`, `OBND`, and a 24-byte `DATA`:
 | `0x00` | FormID | projectile (`PROJ`) |
 | `0x04` | FormID | explosion (`EXPL`) |
 | `0x08` | FormID | effect shader (`EFSH`) |
-| `0x0C` | FormID | hit effect art ([`ARTO`](/formats/art-objects.md)) |
+| `0x0C` | FormID | hit effect art ([`ARTO`](art-objects.md)) |
 | `0x10` | FormID | impact data set (`IPDS`) |
 | `0x14` | uint32 | inherit-scale flags: `0x01` hit effect art, `0x02` projectile, `0x04` explosion |
 

@@ -32,7 +32,7 @@ References: UESP [LCTN](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LCTN
 | `CNAM` | 4 x uint8 RGBA | Creation Kit color |
 
 `LCRT` has the same shape as `KYWD`: an optional `EDID` and an editor-only `CNAM`. See
-[keywords](/formats/keywords.md).
+[keywords](keywords.md).
 
 ## Packed arrays
 
@@ -108,7 +108,7 @@ editor location no Riverwood conversation can start.
 A quest alias (`ALLS`) with an `ALFL` field names one `LCTN` directly. OpenSky fills the
 alias with that location. The save file stores these fills in the `QLOC` chunk, separate
 from the `QALS` chunk for reference aliases. Older readers can then skip `QLOC`. See
-[OpenSky save](/formats/opensky-save-world-chunks.md).
+[OpenSky save](opensky-save-world-chunks.md).
 
 ## Cleared locations
 
@@ -118,7 +118,7 @@ start the check by itself: the location clears only when the next boss dies. A l
 lists no boss never clears this way; a script can still clear it with `Location.SetCleared()`.
 Clearing sets the flag `IsCleared` reads and shows the "cleared" notice. Only a location with the
 clearable keyword (`DOBJ` `KWDO`, vanilla `LocTypeClearable`), on itself or a parent, also plays
-the dungeon-cleared music ([music](/engine/music.md#special-music)).
+the dungeon-cleared music ([music](../engine/music.md#special-music)).
 
 The death rule is from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06. The disabled
 case was seen in the Windows reference game on 2026-11-06, through the bridge's `cleared` flag:

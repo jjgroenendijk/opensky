@@ -11,14 +11,14 @@ tags: [engine, actors, gameplay, stats, health, magicka, stamina, resistances, s
 
 An actor value is one number on an actor, such as health, One-Handed skill, or fire resistance. The
 vanilla table has 164 entries. This page covers what an actor value is before anything changes it:
-its baseline, derived from records. The record layouts are on the [actor records](/formats/actors.md)
-and [race and class](/formats/actors.md#race) pages.
+its baseline, derived from records. The record layouts are on the [actor records](../formats/actors.md)
+and [race and class](../formats/actors.md#race) pages.
 
 Related pages:
 
-- [Actor value store](/engine/actor-value-store.md): damage, modifiers, script writes,
+- [Actor value store](actor-value-store.md): damage, modifiers, script writes,
   regeneration, the HUD bars, and saving.
-- [Actor value names](/engine/actor-value-names.md): how a condition index and a Papyrus name find
+- [Actor value names](actor-value-names.md): how a condition index and a Papyrus name find
   the same value.
 
 The record side is read-only and built once per load order. The runtime side is mutable and knows
@@ -95,7 +95,7 @@ Magicka, and Stamina if Attribute Offsets or underlying Race or Class Base Attri
 (<https://ck.uesp.net/wiki/Stats_Tab>)
 
 Getting from 61 mismatches to 26 is what showed the `statsRace` rule on the
-[actor records](/formats/actors.md) page.
+[actor records](../formats/actors.md) page.
 
 `openskycli actor values --npc <formid-or-edid>` prints one actor's derivation with the record each
 input came from. `--race <formid-or-edid>` prints one race's starting attributes, regeneration

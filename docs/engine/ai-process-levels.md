@@ -100,14 +100,14 @@ the middle-low and low levels skip in detail was not found.
 
 A package procedure runs in full at High and Middle-high, with walking, animation, and furniture
 use. At Middle-low and Low it runs a cheap version with no animation and no wait, and these actors
-have no 3D, so no collision shape. For example, an [Activate procedure](/engine/activate-procedure.md#low-process-levels)
+have no 3D, so no collision shape. For example, an [Activate procedure](activate-procedure.md#low-process-levels)
 at Low counts a furniture target without the actor sitting down.
 
 ## In OpenSky
 
 OpenSky loads and attaches a cell in one step, so a loaded actor is always High, and
 Middle-high stays empty. An actor that no loaded cell holds is Low
-([unloaded actors](/engine/unloaded-actors.md#in-opensky)), or Middle-low when it stands in the
+([unloaded actors](unloaded-actors.md#in-opensky)), or Middle-low when it stands in the
 exterior of the loaded worldspace: the game keeps a worldspace's persistent cell loaded, and
 OpenSky gives no such actor a body.
 

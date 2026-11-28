@@ -10,7 +10,7 @@ tags: [engine, magic, combat, combat-ai, npc, spells]
 # AI spell use
 
 An NPC that owns spells casts them in a fight. The decision of when to cast is on the
-[combat behavior](/engine/combat-behavior.md) page. This page covers what stands behind it.
+[combat behavior](combat-behavior.md) page. This page covers what stands behind it.
 
 ## The same path as the player
 
@@ -36,7 +36,7 @@ or a heal: Ironflesh, a ward, two heals, a racial ability, and a Breton power. I
 behind two `LVSP` records, `LSpellBandit03FireFrostShock` and `LSpellBandit05FireFrostShock`, each
 with three choices at level 1. Without expanding those, a vanilla caster knows nothing to throw. The
 list rolls for the actor's base at its encounter level, the same roll the template chain uses for an
-`LVLN` and the outfit chain for an `LVLI` ([leveled lists](/engine/leveled-lists.md)).
+`LVLN` and the outfit chain for an `LVLI` ([leveled lists](leveled-lists.md)).
 
 The list is added to the actor's spellbook the first time the combat loop asks what that actor can
 cast, and its abilities are applied in the same pass. This is done late, not at cell build: a cell of
@@ -63,7 +63,7 @@ Ice Storm at 144, both aimed and reaching 4,000 units.
 ## What a released cast does
 
 The same as the player's. An aimed fire-and-forget spell fires its `PROJ`
-([spell delivery](/engine/spell-delivery.md)). A target actor spell applies to what the caster's aim
+([spell delivery](spell-delivery.md)). A target actor spell applies to what the caster's aim
 ray reaches. A held spell is held for 1.5 s and applies once a second. Only the ray differs: an NPC's
 spell leaves the NPC's own eye, aimed at the middle of the player's capsule.
 
@@ -74,7 +74,7 @@ for the minimum because their button is still held. An NPC has no button.
 
 - Combat style (`CSTY`) is not decoded. Vanilla tunes when a caster prefers magic, at what range, and
   with what magicka limits through `CSTY` and game settings. OpenSky uses one probability and one
-  choice rule ([combat behavior settings](/engine/combat-behavior.md#settings)). Decoding the style
+  choice rule ([combat behavior settings](combat-behavior.md#settings)). Decoding the style
   is the next step if the simple rule looks wrong in play.
 - The strongest affordable spell wins. Cost stands in for strength, because no record ranks a
   caster's spells.

@@ -11,7 +11,7 @@ tags: [format, audio, xwma, riff]
 Skyrim SE stores its music as `.xwm` files. xWMA is a Microsoft RIFF container for XAudio 2.
 It holds a Windows Media Audio (WMA) stream cut into packets of equal size. The container
 parser only reads the framing. A separate WMA decoder turns the packets into sound (see
-[audio](/engine/audio.md)).
+[audio](../engine/audio.md)).
 
 References. No Bethesda or Microsoft code was used.
 
@@ -108,5 +108,5 @@ Sample rate and block align go together: 2230-byte packets with 44.1 kHz, and 23
 packets with 32 kHz. One 48 kHz file with 1008-byte packets is different, and it still
 reads. All 269 files decode, and each decoded frame count equals what its `dpds` table says.
 
-Only music uses xWMA. Voice uses [`.fuz`](/formats/fuz.md), and sound effects use plain
-[`.wav`](/formats/wav.md).
+Only music uses xWMA. Voice uses [`.fuz`](fuz.md), and sound effects use plain
+[`.wav`](wav.md).

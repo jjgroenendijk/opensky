@@ -8,7 +8,7 @@ tags: [engine, ai, perception, detection, stealth, gmst]
 
 # Detection constants
 
-The formula that uses these is on the [perception and detection](/engine/detection.md) page.
+The formula that uses these is on the [perception and detection](detection.md) page.
 
 ## Settings from the load order
 
@@ -75,7 +75,7 @@ those editor IDs. When a secondary source and the shipped game disagree, the gam
 stay OpenSky constants.
 
 `Skyrim.esm` holds a game setting for the silent sound level only. The other three levels use
-the game's own defaults ([detection events](/engine/detection-events.md#sound-levels)).
+the game's own defaults ([detection events](detection-events.md#sound-levels)).
 
 ## Inputs
 
@@ -89,6 +89,6 @@ the game's own defaults ([detection events](/engine/detection-events.md#sound-le
 | Sleeping | The observer runs a sleep package |
 | Armour weight | The sum of the `ARMO` weights the target has equipped |
 | Action sound | The swing's `WEAP` `VNAM`, or the cast's first `MGEF` casting sound level |
-| Light level | The scene light at the target ([light level](/engine/detection.md#light-level)) |
+| Light level | The scene light at the target ([light level](detection.md#light-level)) |
 
 Only the player is a target, so only the player's inputs are sampled.

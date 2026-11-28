@@ -10,8 +10,8 @@ tags: [format, audio, voice, dialogue, xwma]
 
 Every spoken line of Skyrim SE dialogue is a `.fuz` file. It is a simple container that
 joins one `.lip` lip-sync block and one `.xwm` audio stream, so the game opens one file per
-line. The audio goes to the [xWMA parser](/formats/xwm.md) and the
-[WMA decoder](/decisions/ffmpeg-audio.md). The lip data goes to the [LIP parser](/formats/lip.md).
+line. The audio goes to the [xWMA parser](xwm.md) and the
+[WMA decoder](../decisions/ffmpeg-audio.md). The lip data goes to the [LIP parser](lip.md).
 
 ## References
 

@@ -9,8 +9,8 @@ tags: [engine, ui, menu, swf, quests, journal]
 
 # Quest journal
 
-The journal shows [quest state](/engine/runtime-state.md) on the Quests page of Skyrim's own
-`Interface\quest_journal.swf`. The same movie is the [system menu](/engine/system-menu.md). That
+The journal shows [quest state](runtime-state.md) on the Quests page of Skyrim's own
+`Interface\quest_journal.swf`. The same movie is the [system menu](system-menu.md). That
 page covers the movie's start-up. This page covers the Quests page and its data.
 
 ## What a row shows
@@ -24,7 +24,7 @@ whose `moveSelectionUp` and `moveSelectionDown` stop there.
 Two record facts decide what shows:
 
 - A quest is listed only when its `DNAM` type is not 0. Type 0 keeps a quest out of the journal
-  ([quest records](/formats/quest-records.md)). Vanilla always runs many type-0 controller
+  ([quest records](../formats/quest-records.md)). Vanilla always runs many type-0 controller
   quests, so without this filter the page would be a list of script hosts.
 - An objective shows only while one of its three display flags is set. `SetObjectiveDisplayed`
   controls exactly that. If several flags are set, failed wins over completed, and completed
@@ -35,7 +35,7 @@ Two record facts decide what shows:
 A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it.
 The page then lists it once, as finished. A
 quest a Fail Quest stage item failed leaves the active list and is listed with the completed ones,
-marked failed ([quest state](/engine/quest-state.md#stage-items)).
+marked failed ([quest state](quest-state.md#stage-items)).
 
 Running misc quests (type 6) share one row at the end of the active list, as in the game. Its
 objectives are the open objectives of all of them, and each keeps its own quest. The movie
@@ -46,10 +46,10 @@ game lists them.
 ### Tracked quests
 
 A tracked quest is "active" in the movie's words. Its targets show on the HUD compass and on
-the [map](/engine/world-map.md#quest-targets), and its open objectives use the `Active` frame.
+the [map](world-map.md#quest-targets), and its open objectives use the `Active` frame.
 A journal quest is tracked when it first shows an objective, as a new quest is in the game. The
 player can untrack it, and it then stays untracked. Tracking is saved in the `QTRK` chunk
-([world chunks](/formats/opensky-save-world-chunks.md)).
+([world chunks](../formats/opensky-save-world-chunks.md)).
 
 The description is the newest log entry only: "Only the most recent log entry is displayed"
 ([Quest Stages Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab)). It is the `CNAM` text of the
@@ -69,7 +69,7 @@ tables. On vanilla `Skyrim.esm`, exactly one table answers per field:
 | Stage `CNAM` journal text | `.dlstrings` |
 
 This follows the general rule: short names in `.strings`, long text in `.dlstrings`
-([strings](/formats/strings.md)). A plugin that is not localized has its text inline.
+([strings](../formats/strings.md)). A plugin that is not localized has its text inline.
 
 ## The measured page contract
 
@@ -181,7 +181,7 @@ reached.
 
 `_listeners`, `invalidationIntervalID`, `textField`, `width`, and `height` are not gaps. The page
 reads them before it sets them, or tests them against `null`, and Flash answers `undefined` too
-([AS2 input](/engine/as2-input.md)). A row is read back from `EntriesA`, not from the clip.
+([AS2 input](as2-input.md)). A row is read back from `EntriesA`, not from the clip.
 
 ## Alias text
 
@@ -315,9 +315,9 @@ Persuasions, Bribes, and Intimidations do in the game too.
 
 The four "Favorite" rows show a name instead of a count: the weapon, the spell, the school, and
 the shout the player used most, or "None"
-([general stats](/engine/statistics.md#favourites)).
+([general stats](statistics.md#favourites)).
 
-What raises each stat in the game is on [General stats](/engine/statistics.md).
+What raises each stat in the game is on [General stats](statistics.md).
 
 ## HUD notices
 

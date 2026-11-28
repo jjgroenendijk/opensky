@@ -114,8 +114,10 @@ Byte layout table, then what was confirmed on the real install.
 - Frontmatter needs `type`, `title`, and `description`. `tags` is optional. Do not add a
   `timestamp`; git records dates.
 - Group pages by folder: `formats/`, `engine/`, `rendering/`, `decisions/`, `tools/`.
-- Inside `docs/`, link from the docs root: `[BSA](/formats/bsa.md)`. Outside `docs/`, use a
-  repository path: `docs/formats/bsa.md`.
+- Inside `docs/`, link relative to the page: from `docs/engine/`, write
+  `[BSA](../formats/bsa.md)`. Never start a link with `/`: GitHub reads it as the
+  repository root, so the link breaks there. Outside `docs/`, use a repository path:
+  `docs/formats/bsa.md`.
 - Write a record or field signature in backticks: `` `NPC_ WNAM` ``. Without them,
   markdownlint reads the underscore as emphasis (rule MD037).
 
@@ -124,6 +126,7 @@ Byte layout table, then what was confirmed on the real install.
 `make check` and CI run these:
 
 - `make format-check`: Markdown style.
-- `tools/lint/docs-links.sh`: every link inside `docs/` points at a file that exists.
+- `tools/lint/docs-links.sh`: every link inside `docs/` is relative and points at a file
+  that exists.
 - `tools/lint/docs-length.sh`: no page is longer than `DOCS_MAX_LINES` in the `Makefile`. A
   page over the limit is split by topic, or cut. Do not raise the limit.

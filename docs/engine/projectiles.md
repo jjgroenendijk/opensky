@@ -9,8 +9,8 @@ tags: [engine, combat, archery, projectiles, proj, gmst, magic]
 # Projectiles
 
 Arrows and spell projectiles fly through one pipeline. How a bow shot starts is on the
-[archery](/engine/archery.md) page, and how a spell is cast on the [magic](/engine/magic.md) page.
-The `PROJ` record is on the [item records](/formats/item-records.md) page.
+[archery](archery.md) page, and how a spell is cast on the [magic](magic.md) page.
+The `PROJ` record is on the [item records](../formats/item-records.md) page.
 
 ## PROJ gravity is a multiplier
 
@@ -59,7 +59,7 @@ p(t) = p0 + v0 * t + 0.5 * a * t^2        v(t) = v0 + a * t
 ```
 
 Each step uses this closed form, not an approximation. Semi-implicit Euler, which the
-[dynamic body](/engine/dynamic-bodies.md) solver uses, adds an error of `0.5 * a * dt^2` per step.
+[dynamic body](dynamic-bodies.md) solver uses, adds an error of `0.5 * a * dt^2` per step.
 That is fine for a crate on a floor, but not for a path whose top and landing point are checked
 exactly. With the closed form, apex height and drop can be checked directly.
 
@@ -113,7 +113,7 @@ calls them "global game settings". They are engine defaults, not data, so all th
 source "UESP-documented default". They are still looked up, so a mod that adds one wins.
 
 Two checks from the same page. UESP says "a weapon with a reach of '1' has a reach of 141 distance
-units", which is the same `fCombatDistance` the install gives ([melee combat](/engine/melee-combat.md)).
+units", which is the same `fCombatDistance` the install gives ([melee combat](melee-combat.md)).
 And UESP says most projectile ranges are "measured in the tens of thousands": every vanilla arrow
 has `range` 60000, so `fVisibleNavmeshMoveDist` is what really limits a shot.
 
@@ -125,7 +125,7 @@ fall back to 1 unless a mod adds one.
 
 Static geometry and actors use different queries.
 
-- Static geometry uses the shape sweep ([dynamic body contacts](/engine/dynamic-narrowphase.md)).
+- Static geometry uses the shape sweep ([dynamic body contacts](dynamic-narrowphase.md)).
   A vanilla arrow flies 3600 units a second, so one 1/120 s substep covers 30 units. A ray would be
   exact for an infinitely thin arrow. But `PROJ` has a `collisionRadius`, and honoring it is the
   difference between an arrow that clips a door frame and one that slides past. A sphere of that

@@ -10,7 +10,7 @@ tags: [engine, crime, factions, inventory, runtime-state]
 
 A take that reaches someone else's property is theft. Theft that someone sees costs gold. The
 goods stay marked as stolen whether anyone saw or not. What guards then do is on the
-[guards and arrest](/engine/guard-response.md) page.
+[guards and arrest](guard-response.md) page.
 
 ## Ownership
 
@@ -19,7 +19,7 @@ Ownership answers one question: does this actor own, or may it freely use, that 
 The first match wins:
 
 1. The owner a script set on the reference with `SetActorOwner` or `SetFactionOwner`, including
-   no owner ([script state](/engine/papyrus-script-state.md#ownership)).
+   no owner ([script state](papyrus-script-state.md#ownership)).
 2. The reference's own `XOWN`.
 3. For a door with a teleport link: the `XOWN` of the door at the other end, loaded or not.
 4. Except for actors, activators, doors, and furniture: the owner of the encounter zone (`ECZN`).
@@ -127,7 +127,7 @@ WhiterunHoldLocation                   FNAM -> CrimeFactionWhiterun
 ```
 
 The first `FNAM` found on the way up wins. A `PNAM` loop stops at a location already visited
-([locations](/formats/locations.md)). UESP: "Bounties are tracked separately for each of Skyrim's
+([locations](../formats/locations.md)). UESP: "Bounties are tracked separately for each of Skyrim's
 nine holds and you will only incur a bounty in the hold in which you commit a crime."
 
 A chain with no `FNAM` has no crime faction. That is a real answer: a dungeon or a road belongs
@@ -154,7 +154,7 @@ transformation" (UESP [Crime](https://en.uesp.net/wiki/Skyrim:Crime)). The ledge
 werewolf count per crime faction, and a change seen when that count is above 0 is recorded with no
 gold. UESP does not say whether "first" is per hold or for the whole game; per crime faction is
 OpenSky's reading. The "Werewolf Transformations" stat is the change script's own count. See
-[beast forms](/engine/beast-forms.md).
+[beast forms](beast-forms.md).
 
 A crime by the player that costs gold shows a HUD notice: the gold, the `sAddCrimeGold` words
 "bounty added to", and the crime faction's name. A paid fine or a served sentence shows the cleared
@@ -192,13 +192,13 @@ with `doNotReportCrimesAgainstMembers` does not charge a crime against one of it
 actor in the faction, the faction itself, or an `NPC_` base whose own `SNAM` list (through its
 template chain) names the faction. The base case is a theft from something `XOWN` gives to an
 `NPC_`, because then the victim is the base record, not a placed actor. The
-bit names and values are from xEdit's `wbFACT` `DATA` flags ([factions](/formats/factions.md)).
+bit names and values are from xEdit's `wbFACT` `DATA` flags ([factions](../formats/factions.md)).
 
 ## Witnesses
 
 UESP: "If you are caught doing an illegal action by a witness you will incur a bounty ...
 Successfully sneaking while committing a crime will prevent you from being detected." The
-[perception pass](/engine/detection.md) already answers that every step. So crime does not compute
+[perception pass](detection.md) already answers that every step. So crime does not compute
 detection again. It takes the observer pairs that reached "detected", and drops dead observers.
 A suspicious observer has not seen a crime. Charging on suspicion would make sneaking pay off at
 random.
@@ -214,7 +214,7 @@ Crafting uses up stolen components before honest ones. UESP says an item fully u
 loses its stolen mark; spending the stolen copies first keeps the honest ones.
 
 The gold owed, the counts, and the stolen mark on goods are on the
-[bounty ledger](/engine/bounty-ledger.md) page.
+[bounty ledger](bounty-ledger.md) page.
 
 ## Where crimes are reported
 
@@ -329,7 +329,7 @@ reported. Quick Hands sets it to 0, so nothing is reported.
 ## The reporting chain
 
 A seen crime charges the bounty at once. It then stays open for 30 seconds of real time, as in
-[crime reports](/engine/crime-reports.md#killing-the-witnesses). The clock stops while the game is
+[crime reports](crime-reports.md#killing-the-witnesses). The clock stops while the game is
 paused. A crime is not checked in its first second. If every witness is dead inside the window,
 the bounty comes off again, and the HUD shows `sWitnessKilled` ("Last witness killed.") and then
 the bounty removed. When the window ends, the crime is final and sends `ADCR` once. Killing a
@@ -344,10 +344,10 @@ The open reports live in the session, not in a save. A loaded save keeps the bou
 
 The journal's Stats page counts "Items Stolen", "Assaults", "Murders", "Trespasses", "Total
 Lifetime Bounty", "Largest Bounty", "Locks Picked", and the jail stats
-([jail](/engine/jail.md)). The names are the Creation Kit's `QueryStat` list. A crime counts
+([jail](jail.md)). The names are the Creation Kit's `QueryStat` list. A crime counts
 whether or not it was seen; the bounty stats count only gold that was charged.
 
-A caught [pickpocket](/engine/pickpocket.md) is a pickpocket crime with the target as witness. It
+A caught [pickpocket](pickpocket.md) is a pickpocket crime with the target as witness. It
 costs the `CRVA` pickpocket price, 25 in vanilla, instead of the steal multiplier times the value.
 
 Melee, archery, and combat all report hits through one function, so a sword and an arrow cannot
@@ -356,10 +356,10 @@ disagree about what is a first strike.
 ## Not done yet
 
 The game's own rules for alarms, witnesses, guards, and statistics are in
-[crime reports](/engine/crime-reports.md).
+[crime reports](crime-reports.md).
 
 - Followers' crimes and animal witnesses are not modelled. Where the alarm differs is in
-  [crime reports](/engine/crime-reports.md#where-opensky-differs).
+  [crime reports](crime-reports.md#where-opensky-differs).
 - For an `NPC_`-owned victim, `doNotReportCrimesAgainstMembers` reads the base record's authored
   factions. A faction a script gave that actor later is not seen.
 - A script-set owner on an exterior cell is not read.

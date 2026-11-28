@@ -55,7 +55,7 @@ so these hints have nothing to start and return at once.
   otherwise. OpenSky models only the player's conversation. On the player the game returns
   None, and so does OpenSky.
 - `Actor.GetBribeAmount` returns the price that `GetBribeSuccess` tests, with the player's
-  "Mod Bribe Amount" perk factor. [Speech checks](/engine/speech-checks.md) gives the
+  "Mod Bribe Amount" perk factor. [Speech checks](speech-checks.md) gives the
   formula.
 - `Faction.SetReaction(akOther, aiNewValue)` sets how this faction reacts to the other one,
   and only in that direction. The wiki notes that 3 makes friends, so the value is read as an
@@ -82,7 +82,7 @@ the wiki notes for `FindClosestActor`.
 
 `Weather.GetOutgoingWeather` returns the weather a blend moves away from, and
 `GetCurrentWeatherTransition` how far the blend has come, from 0 to 1. With no blend
-running, they return None and 1, as the wiki describes. [Weather](/engine/weather.md)
+running, they return None and 1, as the wiki describes. [Weather](weather.md)
 describes the blend.
 
 ## Stack traces

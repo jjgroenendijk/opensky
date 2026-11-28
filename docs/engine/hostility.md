@@ -14,8 +14,8 @@ The derivation answers what one actor makes of another. Two facts come out, and 
 - the reaction: what the records say about the pair;
 - the hostility: whether that reaction, with this actor's own aggression, means a drawn weapon.
 
-The [combat loop](/engine/combat.md) asks it about the player. The records are on the
-[factions](/formats/factions.md) and [relationships](/formats/relationships.md) pages.
+The [combat loop](combat.md) asks it about the player. The records are on the
+[factions](../formats/factions.md) and [relationships](../formats/relationships.md) pages.
 
 ## Order of the terms
 
@@ -24,7 +24,7 @@ Asked what `observer` makes of `target`, the derivation takes the first term tha
 | Order | Term | Source of the answer |
 | --- | --- | --- |
 | 1 | Session override | The stored hostility: `StartCombat` or the player's blow |
-| 2 | Crime | Guards and a bounty ([guard response](/engine/guard-response.md)) |
+| 2 | Crime | Guards and a bounty ([guard response](guard-response.md)) |
 | 3 | Relationship | A rank a script set, else the `RELA` rank between the two `NPC_` bases |
 | 4 | Faction | The `FACT` relations between the two actors' memberships |
 | 5 | Default | Neutral |
@@ -136,7 +136,7 @@ and hostility records regard.
 ## Memberships at runtime
 
 The derivation reads the runtime faction membership component
-([factions](/formats/factions.md#runtime-membership)), not the `NPC_` record. So an actor a quest
+([factions](../formats/factions.md#runtime-membership)), not the `NPC_` record. So an actor a quest
 added to the Companions stays in after a reload, and an actor the player was never near costs
 nothing until something asks.
 
@@ -153,7 +153,7 @@ Seeding walks the actor's template chain once per actor per session.
 The game caches the reaction per pair. Each High-level actor keeps one record per other actor. A new
 record holds "unknown"; the first question for the pair works out the reaction and stores it, and
 later questions reuse it. The cache is used only when the other actor is at the High
-[process level](/engine/ai-process-levels.md) and the asking actor has process data; otherwise the
+[process level](ai-process-levels.md) and the asking actor has process data; otherwise the
 reaction is worked out on every call.
 
 Two resets clear it:

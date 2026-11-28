@@ -10,9 +10,9 @@ tags: [format, mesh, animation]
 
 A controller animates one value of its target object over time. Most controllers read
 their keys through one interpolator. The transform controller is on the
-[NIF](/formats/nif.md#camera-animation) page. The particle controllers are on the
-[NIF particle systems](/formats/nif-particles.md) page. Named sequences are on the
-[NIF sequences](/formats/nif-sequences.md) page.
+[NIF](nif.md#camera-animation) page. The particle controllers are on the
+[NIF particle systems](nif-particles.md) page. Named sequences are on the
+[NIF sequences](nif-sequences.md) page.
 
 Reference: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml),
 develop commit `292bb9403cbf4052c58d66e80906b6bde1700779`. The layouts were confirmed by
@@ -101,12 +101,12 @@ roll, and scale. A target Ptr of -1 is resolved by the look-at name.
 
 - Node controllers that play on their own clock. A transform controller that no manager feeds,
   a lag bone, and a bone LOD controller move nodes of a placed mesh
-  ([object animation](/engine/object-animation.md#node-controllers)). The rules follow.
+  ([object animation](../engine/object-animation.md#node-controllers)). The rules follow.
 
 - Shader property controllers that play on their own clock. See the next section.
 
 - Lightning bolts. Each `BSProceduralLightningController` becomes a bolt at the first shape
-  below its target node ([particles](/rendering/particles.md#lightning)). A sequence feeds it
+  below its target node ([particles](../rendering/particles.md#lightning)). A sequence feeds it
   by the interpolator IDs `Generation`, `Mutation`, `ArcOffset`, `Length`, and `Width`.
 
 ### Shader property controllers
@@ -116,7 +116,7 @@ A shader property's controller chain starts at its `NiObjectNET` controller ref.
 value. An active controller (flag bit 3) that no manager feeds (bit 5 clear) and whose
 interpolator has more than one key plays on its own clock: its frequency, phase, start, stop,
 and cycle type map the renderer's animation time into the keys. A manager-fed controller plays
-only through its sequence ([NIF sequences](/formats/nif-sequences.md)).
+only through its sequence ([NIF sequences](nif-sequences.md)).
 
 The variable numbers come from nif.xml:
 

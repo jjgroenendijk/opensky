@@ -9,8 +9,8 @@ tags: [engine, inventory, equipment, runtime-state, save-state]
 
 # Inventory state
 
-Inventory is a component in the [world state store](/engine/runtime-state.md). How the player uses it
-(taking, dropping, containers, menus) is on the [inventory and equipment](/engine/inventory-equipment.md)
+Inventory is a component in the [world state store](runtime-state.md). How the player uses it
+(taking, dropping, containers, menus) is on the [inventory and equipment](inventory-equipment.md)
 page.
 
 ## A full override
@@ -29,10 +29,10 @@ The initializer enforces two rules, both for determinism: stacks are sorted by f
 before stolen, with one entry per (item, stolen) pair and every count above zero. The equipped set
 is sorted with no duplicates. So two stores that reached the same inventory in different orders give
 equal snapshots and identical save bytes. How copies of one item can differ is on the
-[inventory and equipment](/engine/inventory-equipment.md#stacking) page.
+[inventory and equipment](inventory-equipment.md#stacking) page.
 
 Inventory travels in its own `INVN` chunk, not inside `RDLT`, so an older build skips it by length
-instead of refusing the file ([save chunks](/formats/opensky-save-world-chunks.md)).
+instead of refusing the file ([save chunks](../formats/opensky-save-world-chunks.md)).
 
 ## Baselines
 
@@ -47,12 +47,12 @@ store knows nothing about record types.
 | Player | The `Player` record, read as an actor |
 | Generated | Empty. A runtime object such as a dropped pile or a summon |
 
-The actor case uses the template resolver ([actor records](/formats/actors.md)), which already
+The actor case uses the template resolver ([actor records](../formats/actors.md)), which already
 follows `TPLT` links and the `ACBS` "Use Inventory" flag. The outfit is worn, not only carried,
 because a default outfit is by definition what the actor has on. Carrying it unworn would start every
 NPC naked.
 
-Leveled entries roll at the owner's encounter level ([leveled lists](/engine/leveled-lists.md)). The
+Leveled entries roll at the owner's encounter level ([leveled lists](leveled-lists.md)). The
 roll is seeded by the owner, so a baseline read twice at one level gives the same items. A cycle is
 caught by a visited set and a depth limit of eight.
 
@@ -90,7 +90,7 @@ Passing them apart is how a change ends up in the wrong cell.
 
 The equipment runtime sits over the inventory runtime, because equipping needs slot data the
 inventory layer should not hold. What each item occupies, body slots and hands, is on the
-[inventory and equipment](/engine/inventory-equipment.md) page.
+[inventory and equipment](inventory-equipment.md) page.
 
 An equip computes the whole new equipped set before writing anything. So a refused equip changes
 nothing, and an accepted one is one journal entry, not one per removed piece. A new item unequips
@@ -109,7 +109,7 @@ Unequipping something not worn is not an error: the state the caller asked for a
 Equipping moves nothing between owners, so carried weight and value do not change: worn armor is
 still carried. The write belongs to the owner's cell, so only that cell rebuilds, and the rebuilt
 actor resolves its appearance from the equipped set instead of its default outfit
-([actor resolution](/engine/actor-resolution.md)). The player uses the same API.
+([actor resolution](actor-resolution.md)). The player uses the same API.
 
 Removing the last copy of a worn item also unequips it. An owner never wears what it does not hold.
 
@@ -172,7 +172,7 @@ that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
 - `EquipItem` gives the actor one copy first when it holds none. This is the one place an item is
   equipped "from nowhere". The wiki page says the game does the same, and the opening relies on
   it: stage 10 of `MQ101` removes all the player's items, then equips the prisoner clothes.
-- `RemoveAllItems` keeps [quest items](/engine/inventory-menu.md#quest-items) unless
+- `RemoveAllItems` keeps [quest items](inventory-menu.md#quest-items) unless
   `abRemoveQuestItems` is true.
 - `DropObject(akObject, aiCount = 1)` drops at most what the player carries, as one stack in front
   of the player, and returns the new reference. Only the player drops, because OpenSky places a

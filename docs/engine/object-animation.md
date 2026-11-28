@@ -10,13 +10,13 @@ tags: [engine, animation, behavior, scripting, app-ui]
 # Object animation
 
 A swinging blade, a Nordic door, or a lever moves through a Havok behaviour graph, the same
-kind of graph the player runs ([behaviour runtime](/engine/behavior-runtime.md)). Its mesh
+kind of graph the player runs ([behaviour runtime](behavior-runtime.md)). Its mesh
 names the graph, and its script raises the graph's events.
 
 ## Finding the graph
 
 A cell build looks only at `ACTI` and `DOOR` references. Their mesh may hold a
-`BSBehaviorGraphExtraData` block ([NIF](/formats/nif.md#bsbehaviorgraphextradata)). It
+`BSBehaviorGraphExtraData` block ([NIF](../formats/nif.md#bsbehaviorgraphextradata)). It
 names a project file under `meshes\`. The rest of the set is read relative to the project's
 folder:
 
@@ -40,7 +40,7 @@ Each moving part is a node of the mesh with the same name as a rig bone. The bui
 reference its own copy of the mesh, and binds each shape below such a node to that node. The
 shape's transform becomes relative to the node, so at the node's rest transform the shape
 draws where the file put it. A shape under no rig bone stays still. The math is the one a
-weapon uses ([actor resolution](/engine/actor-resolution.md)).
+weapon uses ([actor resolution](actor-resolution.md)).
 
 The copy is per reference, because each object poses its own skinning palette. Its pose
 comes from a pose buffer, the same one the player body reads.
@@ -109,7 +109,7 @@ The rig of a graph mesh poses each node a sequence of the mesh moves. Each step,
 coordinator samples every sequence the graph's generators played, at the seconds since the
 graph reached it. A loop wraps and a clamp holds its last key. A sequence the graph comes back
 to starts again at its first key. Each text key the sequence passes goes to the graph as an
-event ([effect graphs](/engine/effect-graphs.md#sequence-text-keys)).
+event ([effect graphs](effect-graphs.md#sequence-text-keys)).
 
 ## Moving collision
 
@@ -120,7 +120,7 @@ bone's move from the node's rest transform. A body on no bone stays where it is.
 use the same path with their leaves ([Sequence doors](#sequence-doors)).
 
 The swinging blade's body moves with `Blade01`, so the player cannot walk through the blade. The
-blade's hit still comes from trap contact ([traps](/engine/traps.md#trap-contact)).
+blade's hit still comes from trap contact ([traps](traps.md#trap-contact)).
 
 Activators, doors, furniture, containers, and moving statics are checked for a graph.
 
@@ -133,7 +133,7 @@ Activators, doors, furniture, containers, and moving statics are checked for a g
 ## Sequence doors
 
 Most doors have no behaviour graph. Their mesh moves its leaves with two
-`NiControllerSequence` blocks named `Open` and `Close` ([NIF sequences](/formats/nif-sequences.md)).
+`NiControllerSequence` blocks named `Open` and `Close` ([NIF sequences](../formats/nif-sequences.md)).
 Each sequence has one transform track per leaf node, and text keys such as
 `0.0 Sound: DRSWoodGateHelgenOpen`. The name after `Sound:` is the editor ID of an `SNDR`.
 Confirmed on the install: the Helgen gate `Clutter\Helgen\HelgenGate01.nif` moves `DoorLeft`
@@ -156,7 +156,7 @@ or its activation is blocked. `SetOpen` writes it, and `SetOpen(true)` also unlo
 - A changed state plays the other sequence. A door that turns back part way starts the other
   sequence as far from its end as it was from its start.
 - Each text key the sequence passes goes to the animation event coordinator, which plays
-  `Sound:` keys ([animation events](/engine/animation-events.md)).
+  `Sound:` keys ([animation events](animation-events.md)).
 - A rebuilt cell brings a new pose buffer. The door keeps its motion and poses the new buffer.
 
 `GetOpenState` answers 1 open, 2 opening, 3 closed, or 4 closing
@@ -178,7 +178,7 @@ neither open nor search.
 ## Node controllers
 
 Some placed meshes move a node with a controller that plays on its own clock, outside any
-sequence ([NIF controllers](/formats/nif-controllers.md#what-opensky-does-with-them)). Examples on
+sequence ([NIF controllers](../formats/nif-controllers.md#what-opensky-does-with-them)). Examples on
 the install: the hawk of `effects\fxbirdoprey02.nif` that circles a path, and the moths that fly
 a banked path beside a lag bone in `dlc01\effects\ambient\dlc1fxambbeamgladespot.nif`.
 
@@ -195,13 +195,13 @@ bytes name `NiTransformController` or `BSLagBoneController`.
 
 A mesh whose only moving nodes are billboards needs no copy. The static vertex shader
 turns each rigid shape below an `NiBillboardNode` to the camera
-([scene drawing](/rendering/scene-drawing.md#billboard-shapes)), so every reference of a
+([scene drawing](../rendering/scene-drawing.md#billboard-shapes)), so every reference of a
 torch or a window glow shares one GPU mesh and one instanced draw. A billboard-only mesh
 still takes the copy in three cases: a billboard sits below another billboard, a particle
 system sits below a billboard and must move with it, or a controller or sequence also
 plays. Then the mesh has one root bone per named billboard node. After the controllers,
 each billboard node turns to the free-fly camera by its mode
-([billboard nodes](/formats/nif-sequences.md#billboard-nodes)), and the nodes below it
+([billboard nodes](../formats/nif-sequences.md#billboard-nodes)), and the nodes below it
 follow. The cell build also parses a mesh whose bytes name `NiBillboardNode`. The
 billboards of a reference that an object graph or a door sequence animates turn as
 graph or door bones. The "Animated objects" setting off stops the controller clock, but

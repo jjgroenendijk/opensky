@@ -10,10 +10,10 @@ tags: [engine, combat, combat-ai, npc, magic]
 # Combat behavior
 
 Each engaged actor runs one combat machine. It decides when to swing, block, cast, run, and search.
-Who fights at all is on the [combat loop](/engine/combat.md) page.
+Who fights at all is on the [combat loop](combat.md) page.
 
 The machine does not own a damage path. The blow, the block, the stagger, the death, and the ragdoll
-go through the same code the player's fight uses ([melee damage](/engine/melee-damage.md)). The
+go through the same code the player's fight uses ([melee damage](melee-damage.md)). The
 machine only decides who swings, when, and from where.
 
 ## Phases
@@ -39,11 +39,11 @@ run at 144 give the same fight. Each actor has its own machine.
 The attack phases match the player's own melee phases on purpose, so both sides of a fight can be
 read against each other. A stagger takes the attack away, as the graph's stagger transition does for
 the player. The graph also decides when an attack may start
-([actor graphs](/engine/actor-graphs.md#when-an-attack-may-start)).
+([actor graphs](actor-graphs.md#when-an-attack-may-start)).
 
 The machine asks for movement and never moves anything. Its command goes to the navigation mover,
 which owns the capsule, the navmesh path, stuck recovery, and saving
-([navigation](/engine/navigation.md)). A combat layer that wrote positions would be a second source
+([navigation](navigation.md)). A combat layer that wrote positions would be a second source
 of movement that disagreed with the first. So fleeing is "ask for a point away from the target", not
 "walk backwards". A point no navmesh reaches is a refused request the machine tries again, not a
 slide through a wall.
@@ -57,7 +57,7 @@ would make two runs of the same fight differ.
 
 Casting is a phase, not a kind of attack. A swing is timed by the machine and lands at the contact
 step. A cast is timed by the `SPIT` charge time and lands wherever its delivery takes it
-([magic](/engine/magic.md)). They share only when they are chosen:
+([magic](magic.md)). They share only when they are chosen:
 
 - An actor that cannot reach its target with a weapon casts with probability `rangedCastChance`
   when it can afford a spell that reaches. The roll is made once per approach, not once per step.
@@ -78,7 +78,7 @@ started.
 ## Combos
 
 A one-handed swing can chain into the next, as the player's combo does
-([melee combat](/engine/melee-combat.md#combos)). At the contact step of a sword, dagger, axe, or
+([melee combat](melee-combat.md#combos)). At the contact step of a sword, dagger, axe, or
 mace swing, the actor rolls `comboChance` with its seeded generator. On a hit, the next swing starts
 halfway through the recovery, inside the combo window, instead of after the attack interval. While
 it waits, `GetAttackState` reads 4 (next attack). A chain holds at most `maximumComboSwings` swings.
@@ -87,7 +87,7 @@ two-handed weapon, a bow, or bare hands never chains.
 
 The game has no separate chain roll: its next swing comes from the same attack loop as any other,
 once the attack state reaches the combo window
-([attack chances](/formats/combat-style.md#attack-and-bash-chances)). Both values here are
+([attack chances](../formats/combat-style.md#attack-and-bash-chances)). Both values here are
 OpenSky's. The combat style's Offensive Mult does not change the chance.
 
 ## Settings
@@ -99,7 +99,7 @@ So they are chosen in the open, with a reason each. An actor's
 
 | Setting | Value | Why this value |
 | --- | --- | --- |
-| Attack interval | 1.6 s | Slow enough to block, draw a bow, and see what happened between blows. Only an actor without a combat style, and an archer, waits it; a styled actor rolls its [attack chance](/formats/combat-style.md#attack-and-bash-chances) |
+| Attack interval | 1.6 s | Slow enough to block, draw a bow, and see what happened between blows. Only an actor without a combat style, and an archer, waits it; a styled actor rolls its [attack chance](../formats/combat-style.md#attack-and-bash-chances) |
 | Windup | 0.45 s | About where the vanilla one-handed attack clip puts its `HitFrame` |
 | Recovery | 0.35 s | Follow-through with no new attack |
 | Stagger | 0.7 s | How long a hit holds the attack away |
@@ -110,7 +110,7 @@ So they are chosen in the open, with a reason each. An actor's
 | Flee health | 0.2 of maximum | Visible before the kill, not set off by the first blow |
 | Flee distance | from the install | See [game settings](#game-settings) |
 | Flee break distance | flee distance + 400 units | More than one flee hop, so a path the navmesh cut short is tried again |
-| Search time | 30 s | The time after which the game drops a lost target ([detection](/engine/detection.md#keeping-a-combat-target)) |
+| Search time | 30 s | The time after which the game drops a lost target ([detection](detection.md#keeping-a-combat-target)) |
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
 | Ranged cast chance | 1 | Out of weapon reach a caster with a spell to throw throws it |
 | Held spell time | 1.5 s | Two applications of a once-a-second effect: long enough to see a beam, short enough to decide again |
@@ -122,7 +122,7 @@ install). The shield is checked when the actor's machine is made.
 
 ## Combat style
 
-An actor's `CSTY` [combat style](/formats/combat-style.md) scales the settings above for that
+An actor's `CSTY` [combat style](../formats/combat-style.md) scales the settings above for that
 actor. No source says how the game turns a style multiplier into behavior, so each mapping is
 OpenSky's. Each one is monotonic, is clamped, and leaves the settings unchanged at 0.5, the
 middle of the 0 to 1 range that vanilla styles use. Vanilla `DefaultCombatstyle` sets both
@@ -152,7 +152,7 @@ same damage formula.
 
 An actor with a combat style runs the game's block loop: block attack, offensive bash, and block
 on every pass, a 0.25 s wait when none passes, and bashes from a held guard
-([combat blocking](/engine/combat-blocking.md)).
+([combat blocking](combat-blocking.md)).
 
 An actor without a style rolls the block chance once per attack cycle, when it enters the gap, not
 once per step. So the block chance means what it says: per attack, not per sixtieth of a second.
@@ -188,7 +188,7 @@ game uses them, so each use is OpenSky's reading.
 | `fCombatPerchAttackTimeMin` | 4 s | The shortest perch stage |
 | `fCombatGroundAttackTimeMin`, `...Max` | 8 s, 17 s | The ground stage, by the style's ground time |
 
-Note 1: [combat approach](/engine/combat-approach.md) gives the game's rule for both radii and
+Note 1: [combat approach](combat-approach.md) gives the game's rule for both radii and
 for the speed in each band. A caster's back-off lasts at most 2 s, which is OpenSky's own number.
 
 The advance, range, healing, shout, and flight settings reach the fights that start while the
@@ -218,10 +218,10 @@ in three stages: in the air, on a perch, and on the ground. A fight starts in th
   perch attack time.
 - Ground: otherwise the actor lands and fights as any actor does, for a time between the two
   ground settings by the style's ground attack time (`CSFL`,
-  [combat style](/formats/combat-style.md)).
+  [combat style](../formats/combat-style.md)).
 
 After a perch or ground stage the actor goes back to the air. The stages pick where the actor
-flies: [dragon flight](/engine/dragon-flight.md) takes off, circles, hovers, and lands it. The
+flies: [dragon flight](dragon-flight.md) takes off, circles, hovers, and lands it. The
 stage order and the time mapping are OpenSky's reading.
 
 ## Fleeing
@@ -262,9 +262,9 @@ starting a fight. Without actor values, the flee health fraction below is the ru
 
 Assistance decides who joins. A calm living actor within 2,048 units of an engaged one joins
 the fight on that actor's side when it helps it: "helps allies" for an ally reaction, "helps
-friends and allies" for a friend too ([hostility](/engine/hostility.md)). The radius is
+friends and allies" for a friend too ([hostility](hostility.md)). The radius is
 OpenSky's; the wiki names none. Against an NPC the helper fights that NPC and stays calm toward
-the player ([NPC foes](/engine/combat.md#npc-foes)).
+the player ([NPC foes](combat.md#npc-foes)).
 
 Members of one faction are allies only when the faction lists itself as one
 (<https://ck.uesp.net/wiki/Faction>). On the install, `BanditFaction` does, so bandits help each
@@ -277,15 +277,15 @@ health rule and lone fighters.
 ## Aggro radius
 
 An actor that is not hostile warns a stranger near it and may attack it. The rule is on the
-[aggro radius](/engine/aggro-radius.md) page.
+[aggro radius](aggro-radius.md) page.
 
 ## Searching and giving up
 
-When [detection](/engine/detection.md) stops reporting `detected`, the actor goes to the position
+When [detection](detection.md) stops reporting `detected`, the actor goes to the position
 detection remembered and looks around for the search time. Detection drops that position as soon as
 the level decays to nothing, so a stale position is never walked to.
 
-- While searching, `GetCombatState` returns 2 ([conditions](/formats/conditions.md)).
+- While searching, `GetCombatState` returns 2 ([conditions](../formats/conditions.md)).
 - A searching actor is still engaged, so the player is still in combat.
 - Seeing the target again resumes the chase.
 - When the search time ends, the actor stops and its package is chosen again at once.
@@ -308,7 +308,7 @@ moved on during the fight, and the package the schedule names now is the right o
 `recoilStart`, `recoilStop`, `recoilLargeStart`, `IsRecoiling`, and `recoilMagnitude` all come from
 the behavior census of the install: the third-person `0_master.hkx` declares all five.
 In the game, the large recoil comes from a bash that lands while the target draws or swings an
-attack ([attack data](/engine/attack-data.md#stagger)). A melee weapon hit staggers an NPC only on
+attack ([attack data](attack-data.md#stagger)). A melee weapon hit staggers an NPC only on
 a 50 % roll. A blocked blow that is not a bash can make the attacker play the normal recoil.
 
 The HUD damage flash is a value, not a drawn effect: 1 on the step a blow lands, falling to 0 over

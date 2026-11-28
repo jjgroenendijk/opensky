@@ -11,8 +11,8 @@ tags: [format, nif, havok, collision, geometry, physics]
 A Skyrim NIF attaches Havok collision to a scene node through a collision object. OpenSky
 follows each collision object to its rigid body and shape graph. It turns the shapes into
 triangle lists or simple convex shapes in engine units. The mass, joints, and ragdoll data
-of a rigid body are in [NIF rigid bodies](/formats/nif-rigid-body.md). The per-cell
-collision world is in [collision world](/engine/collision-world.md).
+of a rigid body are in [NIF rigid bodies](nif-rigid-body.md). The per-cell
+collision world is in [collision world](../engine/collision-world.md).
 
 Main source: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml),
 types `bhkNiCollisionObject`, `bhkWorldObject`, `bhkEntity`, `bhkRigidBodyCInfo2010`, the
@@ -61,7 +61,7 @@ has a meaning only on layers `SKYL_BIPED` (8), `SKYL_DEADBIP` (32), and `SKYL_BI
 (33). On other layers OpenSky reports no part, not 0, because 0 is itself a part
 (`P_OTHER`, which vanilla puts on `NPC Neck`). Every body of the vanilla human
 `skeleton.nif` is on layer 8, group 0, with the correct part number. See
-[ragdoll self-collision](/engine/ragdoll-solver.md#self-collision).
+[ragdoll self-collision](../engine/ragdoll-solver.md#self-collision).
 
 A body is solid for the player when all of these are true:
 
@@ -131,7 +131,7 @@ has a radius of 0.05 Havok units, and each of its planes lies that far outside i
 An unknown shape type is counted. A broken collision root is recorded, and its sibling
 roots still decode. The walk stops at depth 64 and rejects loops. Every ref, count, index,
 strip, transform index, and triangle total is checked before use. The walk uses an explicit
-work stack, like the scene walk in [NIF](/formats/nif.md).
+work stack, like the scene walk in [NIF](nif.md).
 
 ### Convex radius
 
@@ -225,7 +225,7 @@ stores several, OpenSky makes one shape per material.
 
 A material index past the end of the table gives geometry with no material. The geometry is
 kept. `NiTriStripsData`'s Material CRC is not a surface and is skipped. Turning the value
-into a `MATT` record needs the plugin. See [material types](/formats/material-type.md).
+into a `MATT` record needs the plugin. See [material types](material-type.md).
 
 Real data check: in Tamriel cell (6, -2), every shape's material resolves to a `MATT`.
 `mineoreiron04.nif` gives one `MaterialDirt` shape and one `MaterialStone` shape, so the
@@ -239,4 +239,4 @@ per-material split works on real data.
   against the child's triangles gives the same contacts, so no vanilla file needs it.
 - Welding data is checked and skipped. Nothing uses it.
 
-`openskycli collision` checks every model of an exterior cell (see [CLI](/tools/cli.md)).
+`openskycli collision` checks every model of an exterior cell (see [CLI](../tools/cli.md)).

@@ -9,7 +9,7 @@ tags: [rendering, menus, effects, nif]
 # Menu scene
 
 Some menus draw a 3D scene of their own instead of the world. The skills menu's
-[perk sky](/engine/perk-sky.md) is the first one. The menu scene is the renderer layer
+[perk sky](../engine/perk-sky.md) is the first one. The menu scene is the renderer layer
 for it: a list of unlit effect meshes, each with a transform and a material, and one camera.
 
 ## How a frame draws it
@@ -43,7 +43,7 @@ for particles. A shape with alpha testing on compares against its threshold in t
 fragment shader.
 
 A sequence may change a shape's material while it plays: the emissive colour, alpha, and
-UV offset and scale ([sequence variables](/formats/nif-sequences.md#which-value-a-track-drives)).
+UV offset and scale ([sequence variables](../formats/nif-sequences.md#which-value-a-track-drives)).
 The pose is computed on the CPU each frame, and each draw carries its own uniforms.
 
 ## Billboards
@@ -51,7 +51,7 @@ The pose is computed on the CPU each frame, and each draw carries its own unifor
 A shape under an `NiBillboardNode` turns to face the camera before it is drawn. The turn
 happens at the billboard node, so the nodes below it keep their own rotation. The perk
 star's quad, for example, is turned 45 degrees inside its billboard. The modes and the
-+Z facing are on the [sequence page](/formats/nif-sequences.md#billboard-nodes).
++Z facing are on the [sequence page](../formats/nif-sequences.md#billboard-nodes).
 
 ## Residency
 

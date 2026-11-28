@@ -9,9 +9,9 @@ tags: [testing, tooling, xcodebuild]
 
 # Test runs
 
-This page explains how the commands on the [testing setup](/testing.md) page run. The xcodebuild
+This page explains how the commands on the [testing setup](../testing.md) page run. The xcodebuild
 behaviors they depend on, with the dates they were seen, are on the
-[environment](/tools/environment.md) page.
+[environment](environment.md) page.
 
 ## Test plans
 
@@ -62,7 +62,7 @@ Every plan sets `testTimeoutsEnabled`, `defaultTestExecutionTimeAllowance`, and
 `maximumTestExecutionTimeAllowance`. A test that runs past its allowance fails with its name and
 "Test exceeded execution time allowance", and the test host is stopped. Without it, a hung test
 blocks `xcodebuild` until someone kills it, as the `AVAudioPlayerNode.playerTime` hang did
-([environment](/tools/environment.md)). This works for Swift Testing tests, both a test blocked on a
+([environment](environment.md)). This works for Swift Testing tests, both a test blocked on a
 thread and one awaiting forever. Other tests in the same host stop with it and are not named.
 
 An allowance has a minimum of 60 seconds. Each value sits well above the slowest test of the plan,
@@ -92,7 +92,7 @@ tagged tests of `OpenSkyRealDataTests` this way. xcodebuild has no flag that sel
 run needs its own plan: `GPU` is the unit plan with every target narrowed to one tag, and `Quick`
 is the package targets with two tags skipped.
 
-A plan's `skippedTags` skips nothing on Xcode 27 ([environment](/tools/environment.md)). So `Quick`
+A plan's `skippedTags` skips nothing on Xcode 27 ([environment](environment.md)). So `Quick`
 sets the environment variable `OPENSKY_SKIPPED_TAGS=slow,gpu` instead, and every `.gpu` or `.slow`
 test outside the real-data bundle carries the condition trait `.unlessPlanSkips(.gpu)`. The trait
 turns the test off when the variable names its tag, and the run reports it as skipped. Other plans
@@ -167,9 +167,9 @@ A warm `xcodebuild test` spends about as long before the first test as on the te
 `start` is xcodebuild scanning the package folder and loading the scheme and the manifest
 before it resolves the graph; it grows with every visible file under the repository root, and
 was 9 to 30 s while a link to the compilation cache store sat there
-([the start-up scan](/tools/build-system.md#the-workspace-and-the-start-up-scan)). A change of
+([the start-up scan](build-system.md#the-workspace-and-the-start-up-scan)). A change of
 plan builds nothing, because the scheme builds the app-hosted bundle in every plan
-([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
+([environment](environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
 Over three weeks of runs before the cache moved, the median whole-plan run took 7.5 minutes: the
 difference was waiting on the external disk and on other sessions' builds. Each run pays the
 start-up, so batch edits into one run, and rerun a built plan with `make test-rerun`.
@@ -245,7 +245,7 @@ file is under its floor in `tools/coverage/floor.sh`. Only the whole plan runs e
 so only it checks the floors. Every `COVERAGE=1` run fails when the lines a branch changes in
 package modules, or a function it adds, did not run in a test, and lists the lines no test ran. CI
 diffs a pull request against its base and a push to `main` against itself. The values and their
-reasons are in [Test order and coverage rules](/decisions/test-coverage-rules.md).
+reasons are in [Test order and coverage rules](../decisions/test-coverage-rules.md).
 
 ## Sanitizers
 
@@ -274,8 +274,8 @@ Building costs more than testing. Cross-module incremental builds are on, so a t
 recompiles only files that use a changed declaration. Inside one module, most test files use most
 of it, so a change to a widely used engine type still recompiles most of `OpenSkyTests`. The parser
 tests are in their own bundle over their own module, so an engine change does not recompile them
-([Swift modules](/tools/modules.md)). An edit inside one function body recompiles one file. The
-shared compilation cache removes the cold first build in a new worktree ([build system](/tools/build-system.md#one-store-for-every-worktree)).
+([Swift modules](modules.md)). An edit inside one function body recompiles one file. The
+shared compilation cache removes the cold first build in a new worktree ([build system](build-system.md#one-store-for-every-worktree)).
 
 Swift Testing reports a duration that includes time a `@MainActor` test waited for the main actor.
 So durations from a parallel run are not a cost profile. Measure one test with

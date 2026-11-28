@@ -12,7 +12,7 @@ tags: [engine, magic, enchanting, soul-gems, inventory]
 At an arcane enchanter the player does two things. Disenchanting destroys an enchanted item and
 teaches its base enchantment. Enchanting puts known base enchantments on a plain weapon or piece of
 apparel and spends a filled soul gem. A made enchantment then acts like any other
-[item enchantment](/engine/item-enchantments.md).
+[item enchantment](item-enchantments.md).
 
 ## Sources
 
@@ -28,7 +28,7 @@ apparel and spends a filled soul gem. A made enchantment then acts like any othe
 
 The item must be carried and enchanted. A staff, and an item with the `MagicDisallowEnchanting`
 keyword, cannot be disenchanted. The player learns the last link of the enchantment's base chain
-([enchantment records](/formats/enchantments.md)): `EnchWeaponFireDamage02` teaches its base, not
+([enchantment records](../formats/enchantments.md)): `EnchWeaponFireDamage02` teaches its base, not
 itself. "The magnitude is irrelevant for purposes of disenchanting", and "only one item per effect
 may ever be disenchanted", so a known base is refused and the item stays.
 
@@ -72,7 +72,7 @@ raises the skill term. OpenSky follows the unpatched game.
 ## Weapon charge
 
 For a weapon "the maximum magnitude ... is generally not affected by the soul used". The soul
-sets the charge instead: 250 petty up to 3000 grand ([soul trap](/engine/soul-trap.md)). One use
+sets the charge instead: 250 petty up to 3000 grand ([soul trap](soul-trap.md)). One use
 costs:
 
 ```text
@@ -145,7 +145,7 @@ scales:
 | Recharge a weapon | The soul's charge times `fSkillUsageRechargeMult` (0.0002): 0.05 petty, 0.6 grand |
 
 The enchantment value is the item's game value minus its record value: what the
-[barter](/engine/barter.md) price adds for the enchantment.
+[barter](barter.md) price adds for the enchantment.
 
 ## Where a made enchantment lives
 
@@ -153,19 +153,19 @@ No plugin holds a made enchantment, so the player's enchanting component does: t
 every made enchantment, with its bases, a power per base, its charge, and its cost per use at
 Enchanting 0. A made
 enchantment takes a FormID in mod index `0xFF` from `0xFF600000` up, below the brewed potions. The
-enchanted [item copy](/engine/item-copies.md) names it. Its effects are rebuilt from the base
+enchanted [item copy](item-copies.md) names it. Its effects are rebuilt from the base
 records whenever they are needed, so they stay right if a base record changes in a mod update.
 Each base keeps its effects in the plugin that holds it, so one made enchantment can combine
 bases from different plugins.
 
 The equipped role goes to an item's best copy, and a made enchantment ranks above a plain copy of
 the same temper. So an enchanted copy is the one an equip wears. The save keeps the component in
-the `ENCK` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
+the `ENCK` chunk ([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 ## Enchanting menu
 
 Using an arcane enchanter (a `FURN` whose `WBDT` bench type is enchanting) opens the
-[crafting menu](/engine/crafting.md#crafting-menu) with the header
+[crafting menu](crafting.md#crafting-menu) with the header
 `<sEnchanting>: <sEnchantMenuDescription>`. It has four tabs in this order:
 
 | Tab | Setting | Rows |
@@ -191,15 +191,15 @@ closes. The kept value is the last one `CalculateCharge` sent; a cancel keeps th
 before. While the slider is open, the arrow, accept, and cancel keys go to the slider. The
 readout shows the magnitude and the uses.
 
-With a full choice, the third key opens the [name field](/engine/text-entry.md) titled by the
+With a full choice, the third key opens the [name field](text-entry.md) titled by the
 `sEnterItemName` button text. The name takes at most 32 characters, the PC limit on
 [UESP](https://en.uesp.net/wiki/Skyrim:Enchanting). Without a name, the made enchantment is named
-after its bases, joined by ` + `. A typed name goes on the made [copy](/engine/item-copies.md),
+after its bases, joined by ` + `. A typed name goes on the made [copy](item-copies.md),
 and the enchantment keeps the names of its bases.
 
 The game checks a typed name only against a list of allowed characters. There is no word
 filter on PC. The list is the rest of the `validNameChars` line in the interface font
-configuration ([SWF text](/formats/swf-text.md#fontconfigtxt)). Every character of the name must
+configuration ([SWF text](../formats/swf-text.md#fontconfigtxt)). Every character of the name must
 be in the list, matched exactly and with case. An empty name fails. A name that fails is dropped
 with no message: the field closes and the item keeps the name it had, the made one or an earlier
 typed one. A cancel keeps it too. The game uses the same check for the character name in the race

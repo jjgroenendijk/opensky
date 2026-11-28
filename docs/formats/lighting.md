@@ -104,7 +104,7 @@ default), or a radius that is not a positive finite number. The shadow types are
 spot, `0x800` hemisphere, and `0x1000` omni
 ([UESP LIGH](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LIGH)). A light with one
 casts shadows, so it does not light an effect shape
-([effect shapes](/formats/nif-materials.md#effect-shapes)).
+([effect shapes](nif-materials.md#effect-shapes)).
 
 The animation flags are `0x008` flicker, `0x040` flicker slow, `0x080` pulse, and `0x100`
 pulse slow (xEdit dev-4.1.6). OpenSky reads the period as seconds per cycle, and a slow flag

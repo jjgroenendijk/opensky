@@ -9,7 +9,7 @@ tags: [format, plugin, esm, formid, records]
 # FormID and TES4 plugin header
 
 Every record has a 32-bit FormID at offset `0x0C` of its header (see
-[ESM container](/formats/esm.md)). A raw FormID is relative to its file. Its top byte only
+[ESM container](esm.md)). A raw FormID is relative to its file. Its top byte only
 has a meaning together with the master list in that plugin's `TES4` header.
 
 References: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format)
@@ -29,14 +29,14 @@ References: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_
 
 OpenSky reads `ONAM` (the overridden forms), `INTV` (raw bytes), and `INCC` (the interior
 cell count). It skips fields added by mod tools. Text follows the
-[string decoding](/decisions/string-decoding.md) policy.
+[string decoding](../decisions/string-decoding.md) policy.
 
 The `HEDR` version is 1.71 in Skyrim SE. The record count includes groups and is not
 reliable. For example, `Skyrim.esm` says 920,181, while a walk finds 869,687 records and
 50,494 groups. OpenSky never uses it.
 
 The flags of the `TES4` record are plugin flags: `0x1` master (ESM), `0x80` localized
-(text is in [string tables](/formats/strings.md)), `0x200` light (ESL).
+(text is in [string tables](strings.md)), `0x200` light (ESL).
 
 ## FormID layout
 
@@ -86,7 +86,7 @@ Conditions stay as their plugin wrote them. The evaluator translates each FormID
 the load-order space when it runs. For example, `Dragonborn.esm` writes its own quests as
 `02xxxxxx`. It loads fifth, so in the load-order space they are `04xxxxxx`. Read raw, `02` is
 `Dawnguard.esm`, and the condition would name a quest that does not exist.
-For identities that must stay stable during a session, see [runtime reference identity](/engine/runtime-state.md).
+For identities that must stay stable during a session, see [runtime reference identity](../engine/runtime-state.md).
 
 ## Light plugins
 
@@ -100,7 +100,7 @@ object ID. Full plugins count their own positions from `00` and skip the light o
 For example, with `Skyrim.esm`, `Small.esl`, and `Mod.esp` active, `Mod.esp` is `01` and
 `Small.esl` object `0x801` is `FE000801`. Sources: UESP
 [FormIDs](https://en.uesp.net/wiki/Skyrim_Mod:FormIDs), and the `.ess` file's own light
-plugin list (see [ESS](/formats/ess.md)).
+plugin list (see [ESS](ess.md)).
 
 The Creation Kit wiki gives no layout for light plugins. Its
 [Data file](https://ck.uesp.net/wiki/Data_file) page says light masters came with SE 1.5.3

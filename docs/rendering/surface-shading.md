@@ -11,7 +11,7 @@ tags: [rendering, metal, shading, material, engine]
 
 The lit mesh fragment (`staticMeshFragment`) shades every static, skinned, and FaceGen mesh.
 Which terms a material has comes from its NIF shader flags and texture slots
-([NIF materials](/formats/nif-materials.md), "Lit-surface terms").
+([NIF materials](../formats/nif-materials.md), "Lit-surface terms").
 
 Reference: NifSkope's open GLSL shaders `sk_default.frag`, `sk_msn.frag`, and
 `sk_multilayer.frag` (<https://github.com/niftools/nifskope>, `res/shaders`), with the flag
@@ -83,7 +83,7 @@ A snow pixel has no such sparkle; it has the snow sparkles instead. The game's
 With improved snow on, a lit shape is snow when it sets SLSF2 bit 28 without bit 29 (tree
 animation), or SLSF1 bit 30. A shape with an LOD flag (SLSF2 bit 1, 2, 14, or 31) is never
 snow. Snow shading is the rim sheen and the sparkles of
-[snow ground](/engine/terrain.md#snow-ground), and the occlusion and specular rules below.
+[snow ground](../engine/terrain.md#snow-ground), and the occlusion and specular rules below.
 The snow mask is the raw diffuse alpha, not times the vertex or material alpha. The shader
 type plays no part: 19 cave icicles of type 14 and 9 shapes of type 0 set bit 28.
 
@@ -95,7 +95,7 @@ with the single colour, and an inn is far too dark without it.
 The emissive colour times its multiple adds to the light, scaled by the slot 2 glow map on a
 glow shape. An external-emittance shape uses the colour of its
 reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
-([effect shapes](/formats/nif-materials.md#effect-shapes)), instead. A reference without one
+([effect shapes](../formats/nif-materials.md#effect-shapes)), instead. A reference without one
 keeps the NIF colour. The sun terms
 use the sun shadow.
 
@@ -133,7 +133,7 @@ their surroundings only through their environment map.
 
 A static whose `STAT` `DNAM` names a `MATO` gets that material on the faces that point along
 a direction, such as snow on the tops of rocks
-([environment shading records](/formats/environment-shading.md#mato)). The surface override of
+([environment shading records](../formats/environment-shading.md#mato)). The surface override of
 every placed reference of the static carries it, and every lit shape of the model takes it:
 the game sets the `Projected_UV` flag on all of them, whatever the NIF says.
 
@@ -177,7 +177,7 @@ So a face takes the layer where `N . direction > c + (1 - c) * (bias + scale * n
   lights, and the ambient light, times the overlay texture.
 
 A material whose last `DATA` field is set also gives the shapes the snow shading: the rim
-sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). In the install the
+sheen and the sparkles of [snow ground](../engine/terrain.md#snow-ground). In the install the
 field is set on 34 of 42 winning records, dirt, moss, and ice included, and the game applies
 it to all of them. The snow mask is:
 
@@ -283,7 +283,7 @@ After fog, the game's lighting shader multiplies the colour by a fixed scene sca
 clamps each channel to at most 1 (behaviour described from a clean-room read of the game's
 shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The scale does
 not depend on the hour, the weather, or the image space. The sky takes the same scale with its
-sky scale ([light scales](/rendering/image-space.md#bloom-and-light-scales)). The clamp comes
+sky scale ([light scales](image-space.md#bloom-and-light-scales)). The clamp comes
 before any frame-wide step, so a surface brighter than 1 after lighting cannot get brighter on
 screen. OpenSky does both for lit meshes and terrain. The scale applies to the gamma value, so
 in linear terms it is `(1/1.2)^2.2`. Effect shapes, grass, water, and the sky are not clamped.
@@ -321,7 +321,7 @@ The launcher's Graphics page has one switch per term group under "Surface shadin
 switches write the `rendering.shading.*` player settings. A frame applies them as a mask over
 each material's terms, so turning a term off costs no rebuild. Two switches act on effect shapes
 and particles instead: "Soft effect edges" and "Scene light on effects"
-([effect shapes](/formats/nif-materials.md#effect-shapes)). "Glow and emissive colour" also
+([effect shapes](../formats/nif-materials.md#effect-shapes)). "Glow and emissive colour" also
 switches the external emittance of effects.
 
 ## Not modelled

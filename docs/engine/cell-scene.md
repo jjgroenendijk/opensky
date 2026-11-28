@@ -10,9 +10,9 @@ tags: [engine, world, rendering, esm]
 
 The cell scene builder turns one cell into a scene: draw lists, a load summary, and a world-space
 box for the camera. It gets the target cell as input. The first target is on the
-[first render cell](/decisions/first-render-cell.md) page. Sky and water are on the
-[sky and water](/engine/sky-water.md) page. Interiors are on the
-[interiors](/engine/interiors.md) page.
+[first render cell](../decisions/first-render-cell.md) page. Sky and water are on the
+[sky and water](sky-water.md) page. Interiors are on the
+[interiors](interiors.md) page.
 
 ## Walk order
 
@@ -28,10 +28,10 @@ From the UESP "Groups" page:
 4. Both the persistent (type 8) and temporary (type 9) groups, for their `REFR` records.
 
 The worldspace persistent cell is not a grid cell, even though its `XCLC` says (0, 0)
-([ESM groups](/formats/esm.md#worldspace-persistent-cell)). Each of its `REFR` and `ACHR`
+([ESM groups](../formats/esm.md#worldspace-persistent-cell)). Each of its `REFR` and `ACHR`
 records is added to the cell where it stands, found by dividing its position by 4096 and
 rounding down. Teleport doors use the same rule
-(see [interiors](/engine/interiors.md#finding-the-target)).
+(see [interiors](interiors.md#finding-the-target)).
 
 The walk is lazy. Only group headers are read. A record is decoded only when needed, and only
 the record types the scene uses.
@@ -46,7 +46,7 @@ whole file.
 ## Load order
 
 A cell holds the records of every active plugin, not only `Skyrim.esm`. The builder works
-in the load-order FormID space ([FormID](/formats/formid.md#load-order-space)): the first plugin
+in the load-order FormID space ([FormID](../formats/formid.md#load-order-space)): the first plugin
 keeps its FormIDs, and a record of a later plugin is decoded straight into that space.
 
 - The builder walks the first plugin's groups as above. Then each later plugin's `REFR`, `ACHR`,
@@ -75,10 +75,10 @@ overrides across the load order.
 
 A reference's base FormID is looked up in two cached indexes: `STAT` first, then the placeable
 base objects (`MSTT`, `TREE`, `FURN`, `ACTI`, `CONT`, `DOOR`, see
-[world records](/formats/world-records.md)). `STAT` has one top group. The others have one each.
+[world records](../formats/world-records.md)). `STAT` has one top group. The others have one each.
 
 `MODL` paths do not start with `meshes\`. The mesh library adds it. This was checked against the
-real archives ([first render cell](/decisions/first-render-cell.md)).
+real archives ([first render cell](../decisions/first-render-cell.md)).
 
 ## Skips
 
@@ -89,9 +89,9 @@ skipped, and counted. It never crashes or stops the build.
 | --- | --- |
 | malformed | The `REFR` does not decode (no `NAME` or `DATA`) |
 | unsupported-base | The base is in neither index, such as `NPC_`, `MISC`, `FLOR`, or `SOUN` |
-| marker | The base has no model, has the `Is Marker` flag, or its mesh is only `EditorMarker` geometry with no particle system ([world records](/formats/world-records.md#stat), [NIF](/formats/nif.md#from-scene-graph-to-meshes)) |
+| marker | The base has no model, has the `Is Marker` flag, or its mesh is only `EditorMarker` geometry with no particle system ([world records](../formats/world-records.md#stat), [NIF](../formats/nif.md#from-scene-graph-to-meshes)) |
 | load-failed | The mesh is missing, does not parse, or is empty |
-| runtime-disabled | The world state disabled it ([runtime state](/engine/runtime-state.md)) |
+| runtime-disabled | The world state disabled it ([runtime state](runtime-state.md)) |
 | runtime-deleted | The world state deleted it |
 
 A mesh with particle systems but no drawn shape, such as a siege fire, is not a marker. It
@@ -99,8 +99,8 @@ builds particle playbacks and adds no draw placement.
 
 Not counted: other records in the cell group, such as `NAVM` and `PGRE`, and deleted `REFR`
 records. Actors (`ACHR`) have their own pass and count (see
-[actor resolution](/engine/actor-resolution.md#streaming-and-accounting)). `LAND` becomes
-[terrain](/engine/terrain.md). A bad group under `WRLD` is skipped with a log, and the other
+[actor resolution](actor-resolution.md#streaming-and-accounting)). `LAND` becomes
+[terrain](terrain.md). A bad group under `WRLD` is skipped with a log, and the other
 blocks still load.
 
 A base, cell, or environment record that does not decode (for example a `STAT`, `CELL`, or
@@ -131,7 +131,7 @@ alpha-tested ones.
 
 ## Bounds
 
-Each object's transform comes from `DATA` and `XSCL` ([coordinates](/decisions/coordinates.md)).
+Each object's transform comes from `DATA` and `XSCL` ([coordinates](../decisions/coordinates.md)).
 The mesh library keeps a model-space box for each model when it parses it, because the vertex
 data is only on the GPU after upload. The builder moves the box's 8 corners per object and joins
 them into the cell box. Terrain and the water plane join too. The sky does not.
@@ -143,10 +143,10 @@ factory that makes the scene provider on the view's Metal device. The factory se
 plugin, and the texture and mesh libraries. This is cheap: the plugin is memory-mapped and only
 top group headers are read.
 
-The renderer starts empty. A [cell streamer](/engine/cell-streaming.md) builds cells off the main
+The renderer starts empty. A [cell streamer](cell-streaming.md) builds cells off the main
 thread and frames the camera on the first one. If setup fails, the app logs `[ERROR]` and shows a
 demo scene. It never crashes. A cell that fails to build is marked and not tried again, so one
 broken cell cannot cause a storm of retries.
 
 `openskycli render` and the benchmark's load passes build cells directly and in one thread. They are
-one-shot tools, not the live streaming loop ([CLI](/tools/cli.md)).
+one-shot tools, not the live streaming loop ([CLI](../tools/cli.md)).

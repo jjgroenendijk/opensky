@@ -14,7 +14,7 @@ picked lock stays open and a save remembers it.
 
 Sources: UESP "Skyrim:Lockpicking" for the formulas, UESP "Skyrim Mod:Mod File Format/REFR"
 for `XLOC`, and the install's GMSTs for every number a setting names. The `XLOC` layout is on
-[placed references](/formats/placed-references.md).
+[placed references](../formats/placed-references.md).
 
 ## Levels
 
@@ -84,10 +84,10 @@ kind; its meaning is not confirmed.
 ## The use-key gate
 
 Every press of the use key goes through one gate before any listener hears it
-([interaction](/engine/interaction.md)):
+([interaction](interaction.md)):
 
 1. A Filter Activation perk of the player passes on the target: the press is refused
-   ([perk entry points](/engine/perk-entry-points.md)).
+   ([perk entry points](perk-entry-points.md)).
 2. No lock, or unlocked: the press goes on.
 3. Locked, and the player carries the key: the lock opens, it stays open, and the press goes on.
 4. Locked otherwise: the press is refused. Audio, scripts, and the inventory never hear it.
@@ -153,7 +153,7 @@ coordinator, so a test can replay a session.
 | Mod Lockpicking Crime Chance | 86 | `QuickHands` (0) | Scales the chance that a seen pick of an owned lock is reported. 0 means never |
 
 A seen success, or a seen broken pick, on a lock the player may not open is a
-[crime](/engine/crime.md). A reported broken pick closes the menu. A success counts "Locks Picked".
+[crime](crime.md). A reported broken pick closes the menu. A success counts "Locks Picked".
 
 The perk runtime binds the lock as the locked reference, and the condition function
 `GetLockLevel` (65) answers with its level. On any other reference, the function answers from
@@ -163,11 +163,11 @@ the reference's own lock: its stored level, 255 for a lock that needs a key, and
 ## Skill use
 
 An opened lock reports `fSkillUsageLockPick<band>` uses (2, 3, 5, 8, 13). A broken pick reports
-`fSkillUsageLockPickBroken` (0.25). See [skill advancement](/engine/skill-advancement.md).
+`fSkillUsageLockPickBroken` (0.25). See [skill advancement](skill-advancement.md).
 
 ## The menu
 
-The menu draws the install's 3D lock in the [menu scene](/rendering/menu-scene.md), over the
+The menu draws the install's 3D lock in the [menu scene](../rendering/menu-scene.md), over the
 paused world:
 
 | Mesh | Holds | Sequences |
@@ -218,4 +218,4 @@ The level name is the `sLockLevelName<suffix>` text of the load order, such as "
 
 ## Saves
 
-The `LOCK` chunk holds every changed lock ([save format](/formats/opensky-save.md)).
+The `LOCK` chunk holds every changed lock ([save format](../formats/opensky-save.md)).

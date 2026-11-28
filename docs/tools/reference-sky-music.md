@@ -8,7 +8,7 @@ tags: [tool, reference, sky, music, map]
 
 # Reference sky and music
 
-The [reference game](/tools/reference-game.md)'s bridge reports these members in
+The [reference game](reference-game.md)'s bridge reports these members in
 `state.json`. `openskycli reference state` prints them.
 
 While the player stands in the world, `state.json` also holds `sky` and `music`. They give
@@ -25,7 +25,7 @@ capture.
 
 Vectors use the game's axes: +Y is north and +Z is up. None of the cloud value pairs moved
 over 5 seconds in clear weather (observed 2026-11-05), so the cloud scroll is not among them.
-The scroll rule is on the [weather](/engine/weather.md#clouds) page.
+The scroll rule is on the [weather](../engine/weather.md#clouds) page.
 
 `reference send 'marker <name>'` moves the player to the map marker whose name matches, in any
 case, for example `marker Whiterun` or `marker Embershard Mine`. It finds markers the player has

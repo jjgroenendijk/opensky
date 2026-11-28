@@ -31,7 +31,7 @@ behavior graph event name ("FootLeft")
   -> the sound file
 ```
 
-Every link may be missing in the data. See [audio](/engine/audio.md) for the runtime.
+Every link may be missing in the data. See [audio](../engine/audio.md) for the runtime.
 
 ## FSTP
 
@@ -83,7 +83,7 @@ Vanilla sets have one pair for each material the Creation Kit knows, 64 to 78 pa
 set. A pair with a null impact, or a `PNAM` shorter than 8 bytes, is skipped.
 
 If the table has no pair for the material, OpenSky tries the material's parent, then the
-parent's parent, along the `MATT` chain ([material type](/formats/material-type.md)). If
+parent's parent, along the `MATT` chain ([material type](material-type.md)). If
 there is no material (for example the player is in the air), or no material in the chain
 has a pair, OpenSky uses the set's most common impact. Ties go to record order. For
 a set where every entry is the same, which UESP calls "generally the same for all", this is
@@ -100,7 +100,7 @@ exactly that impact. For the vanilla humanoid sets, it is the solid stone impact
 `IPCT` also holds the visual part of an impact: `MODL` model, `DODT` decal, `DNAM` and
 `ENAM` texture sets, `NAM2` hazard, and a `DATA` struct (effect duration, angle threshold,
 placement radius, sound level). OpenSky draws the model and the `DNAM` decal
-([impacts and decals](/rendering/decals.md)). It does not use `ENAM`, `NAM2`, the angle
+([impacts and decals](../rendering/decals.md)). It does not use `ENAM`, `NAM2`, the angle
 threshold, or the placement radius.
 
 ## ARMA SNDD
@@ -108,14 +108,14 @@ threshold, or the placement radius.
 `ARMA SNDD` is an `FSTS` FormID (xEdit `wbFormIDCk(SNDD, 'Footstep Sound', [FSTS, NULL])`).
 The armor on an actor's feet decides how the actor sounds. That is why bare feet, light
 boots, and heavy boots sound different. In vanilla, 174 of 766 `ARMA` records have one. See
-[actor records](/formats/actors.md).
+[actor records](actors.md).
 
 ## Surface material
 
 The `IPDS` table is keyed by material, and the surface under the foot gives the material.
 A collision mesh names its material by a hash of the Creation Kit name. Exterior ground
 names it through the `MNAM` of the winning `LTEX`. Both lead to one `MATT` FormID. See
-[material types](/formats/material-type.md). Snow, wood, grass, and gravel sound different
+[material types](material-type.md). Snow, wood, grass, and gravel sound different
 because they are different `PNAM` pairs.
 
 ## Vanilla Skyrim.esm
@@ -139,5 +139,5 @@ empty, so a swimming player makes no footstep sound in vanilla either.
 The sound files are `.wav`, not `.xwm`. For example, the walking `FootLeft` of
 `DefaultFootstepSet` plays
 `sound\fx\fst\npc\stonesolid\walk\l\fst_npc_stonesolid_walk_01.wav`. See
-[WAV](/formats/wav.md). The vanilla `Player` wears iron boots, so it uses
+[WAV](wav.md). The vanilla `Player` wears iron boots, so it uses
 `FSTArmorHeavyFootstepSet`.

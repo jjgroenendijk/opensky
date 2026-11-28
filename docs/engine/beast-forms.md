@@ -65,7 +65,7 @@ Two activation rules are the engine's:
 
 Containers, doors, locks, and the "Feed" choice on a corpse come from the data. The change
 effects add perks with Filter Activation entries, such as `PlayerWerewolfFeed` and
-`DLC1VampireActivationBlocker`, and the [perk activation](/engine/perks.md) rules apply them.
+`DLC1VampireActivationBlocker`, and the [perk activation](perks.md) rules apply them.
 
 ### The Vampire Lord's cape and skin
 
@@ -77,7 +77,7 @@ biped slot 35, with the addon `DLC1VampireLordCapeAA` and the model
 The player's Vampire Lord has no cape. The player's change script equips
 `DLC1ClothesVampireLordArmor`, which has no cape part, and the engine never equips the cape on
 its own. The engine default object "Verlet Cape" names the cape only to start its cloth
-([cape cloth](/engine/cape-cloth.md)), not to dress anyone. A cape equipped by hand on the player
+([cape cloth](cape-cloth.md)), not to dress anyone. A cape equipped by hand on the player
 swings too.
 
 The cape is not Havok cloth. Its model is one unskinned shape, `VampLordCapeMesh`, with 70
@@ -111,7 +111,7 @@ grey-green.
 
 `Game.SendWereWolfTransformation` reports the change as a crime when an actor detects the
 player. The price is the crime faction's `CRVA` werewolf price, 1000 in every vanilla hold.
-[Crime](/engine/crime.md) has the details.
+[Crime](crime.md) has the details.
 
 ## IsBeastRace is not a beast form
 
@@ -140,7 +140,7 @@ are the change script's globals, observed in `Dawnguard.esm`:
 | Vampire Lord | `DLC1VampirePerkPoints` | `DLC1VampireBloodPoints` | `DLC1VampireNextPerk` |
 
 The menu shows the progress as the skill bar. Buying a perk takes one point from the global and
-runs the same refusal checks a skill perk has ([skills menu](/engine/skills-menu.md)).
+runs the same refusal checks a skill perk has ([skills menu](skills-menu.md)).
 Back, or moving down from a perk with nothing below it, closes the menu. A beast tree has no
 legendary step. `openskycli game state` reads the open page as "... beast tree (N points)".
 
@@ -158,4 +158,4 @@ It does not put on the form's own clothes. `state player` shows `form` and the
 - [WARNING] The Vampire Lord body draws black.
 
 - The game charges only the first witnessed change. OpenSky counts "first" per crime faction
-  ([crime](/engine/crime.md)); UESP does not say whether it is per hold or for the whole game.
+  ([crime](crime.md)); UESP does not say whether it is per hold or for the whole game.

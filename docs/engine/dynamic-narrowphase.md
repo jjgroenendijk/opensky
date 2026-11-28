@@ -8,7 +8,7 @@ tags: [engine, physics, collision, havok]
 
 # Dynamic body contacts
 
-This page covers how the [dynamic body](/engine/dynamic-bodies.md) solver finds contacts. A
+This page covers how the [dynamic body](dynamic-bodies.md) solver finds contacts. A
 contact with the static world comes from one sample point with a skin radius on one body, tested
 against the other surface. A hull's samples are its corners, and a radial volume's are its two
 segment ends. The only question asked of the other surface is: how deep is this sphere inside you?
@@ -54,7 +54,7 @@ face and its underside can be in different ones. A sample behind a face is dropp
 shape has a nearer face that the sample is outside of. A sample in front of a face, inside its skin,
 is the normal resting contact and is always kept. Without this, a jug on the farmhouse shelf and one
 on a thin table were pushed down through the board in the
-[real-data probe](/testing.md).
+[real-data probe](../testing.md).
 
 ### A triangle is prepared once
 

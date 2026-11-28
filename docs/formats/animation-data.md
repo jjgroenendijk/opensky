@@ -12,7 +12,7 @@ Havok clips in Skyrim carry no root motion of their own: the root bone stays at 
 origin. The motion that moves an actor, such as a chair exit stepping it aside, lives in two
 plain text files per behavior project, under `meshes\animationdata\` in
 `Skyrim - Animations.bsa`. OpenSky reads them to move an actor into and out of furniture
-([furniture](/engine/furniture.md)).
+([furniture](../engine/furniture.md)).
 
 No spec page covers these files: the UESP and Creation Kit mirrors have none. The layout
 below was read from the install's own files. Lines end in `\r\n`. Numbers are decimal text.

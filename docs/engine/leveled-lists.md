@@ -9,7 +9,7 @@ tags: [engine, actors, inventory, leveling]
 # Leveled lists
 
 A leveled list (`LVLN` actors, `LVLI` items, `LVSP` spells) picks entries by level. The record
-layout is on [actor records](/formats/actors.md). This page gives the rules of one roll and
+layout is on [actor records](../formats/actors.md). This page gives the rules of one roll and
 how the engine feeds it.
 
 Sources: UESP "Skyrim:Leveled Lists" (<https://en.uesp.net/wiki/Skyrim:Leveled_Lists>), the
@@ -103,7 +103,7 @@ and the difficulty.
   that level until a cell reset clears it; the next attach then freezes the new level and
   rebuilds the cell. A No Respawn reference never resets, so it keeps its roll.
 - A save keeps the frozen levels in the `LVRL` chunk
-  ([OpenSky save](/formats/opensky-save.md)).
+  ([OpenSky save](../formats/opensky-save.md)).
 - Memos of derived baselines key on the base and the roll, so a new level or placement
   derives again.
 
@@ -114,7 +114,7 @@ the encounter level, and the difficulty.
 ## Script changes
 
 Scripts change a list in two ways. `AddForm` adds an entry with a level and, on a
-`LeveledItem`, a count ([Papyrus script state](/engine/papyrus-script-state.md#added-forms)).
+`LeveledItem`, a count ([Papyrus script state](papyrus-script-state.md#added-forms)).
 `GlobalVariable.SetValue` changes the global an `LVLG` names. `LeveledScriptEdits` holds both
 for the one shared roller, so every resolver sees them. The Papyrus bridge fills it after
 each `AddForm`, `Revert`, and global write, and after a load. An added entry comes after the

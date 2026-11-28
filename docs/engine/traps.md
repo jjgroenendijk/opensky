@@ -17,7 +17,7 @@ trap rules of its own.
 ## Enable parents
 
 A placed reference can name an enable parent in `XESP`
-([placed references](/formats/placed-references.md)). The CK wiki ("Enable Parent") says a
+([placed references](../formats/placed-references.md)). The CK wiki ("Enable Parent") says a
 child follows its parent, and that `Enable` and `Disable` on a child have no effect. OpenSky
 resolves the effective state like this:
 
@@ -73,7 +73,7 @@ Without a running game (the CLI and the package tests) the world natives above a
 traced stubs too.
 
 A trap whose mesh names a behaviour graph runs it, and the animation natives drive that
-graph ([object animation](/engine/object-animation.md)). For a trap without a graph,
+graph ([object animation](object-animation.md)). For a trap without a graph,
 `WaitForAnimationEvent` waits one second of real time, then answers true. A thresher repeats
 `PlayAnimation` and `WaitForAnimationEvent` while its cell is loaded. An instant answer
 would run that loop thousands of times in each frame.
@@ -123,7 +123,7 @@ magnitude, at most 1, through the same path a stagger spell takes.
 
 `PushActorAway(actor, force)` knocks the actor down away from the receiver, "as if an explosion
 had gone off": each body of its ragdoll gains `force` Havok metres a second
-([knockdown](/engine/ragdoll.md#knockdown)). A negative force pulls the actor in, as the CK wiki
+([knockdown](ragdoll.md#knockdown)). A negative force pulls the actor in, as the CK wiki
 ([PushActorAway](https://ck.uesp.net/wiki/PushActorAway_-_ObjectReference)) notes. An actor with
 no ragdoll, and the player, slide on the capsule at the same speed.
 
@@ -140,7 +140,7 @@ on its walk capsule. A standing NPC slides on a capsule of its own until the pus
 values come from the CK wiki
 ([SetMotionType](https://ck.uesp.net/wiki/SetMotionType_-_ObjectReference)): 1, 2, 3, and 6
 simulate, 4 and 5 hold. 7 is for characters and fails. The choice is stored on the reference,
-saved in the `RMOT` chunk ([save format](/formats/opensky-save.md)), and read by the next build
+saved in the `RMOT` chunk ([save format](../formats/opensky-save.md)), and read by the next build
 of its cell:
 
 - Dynamic: every body in the model with a positive mass simulates, whatever motion system the
@@ -190,7 +190,7 @@ as `BladeTrapHit`, fire the same way when their ammo has a ballistic projectile.
 
 ## Hazards
 
-A `PHZD` places a `HAZD` hazard ([hazard records](/formats/hazards.md)). On the install 369 of
+A `PHZD` places a `HAZD` hazard ([hazard records](../formats/hazards.md)). On the install 369 of
 the 394 `PHZD` records carry an `XESP` parent: they are trap effects that wait for their trap.
 A cell build keeps the enabled `PHZD` records of the cell. The hazard runtime holds them while
 the cell is live and replaces them when the cell is rebuilt.
@@ -216,7 +216,7 @@ model where it sits.
 ## Activate parents
 
 A trap does not listen to its plate through a linked reference. The trap's `XAPR` field names
-the plate as an activate parent ([placed references](/formats/placed-references.md)). When the
+the plate as an activate parent ([placed references](../formats/placed-references.md)). When the
 plate's script calls `Activate(self)`, every resident reference that names the plate is
 activated too, with the plate as the activator, and so on down the chain. Each reference is
 activated once per chain, so a loop of parents ends.

@@ -9,7 +9,7 @@ tags: [engine, animation, havok, hkx, behavior]
 # Behavior state machines
 
 A `hkbStateMachine` moves a character between states, such as standing, walking, and jumping. The
-rest of the runtime is on the [behavior graph runtime](/engine/behavior-runtime.md) page.
+rest of the runtime is on the [behavior graph runtime](behavior-runtime.md) page.
 
 ## States
 
@@ -41,7 +41,7 @@ the state name, and the crossfade weight.
 ## What a machine publishes
 
 A machine writes three values back into graph variables. The engine reads some of them, such as
-`bIsSynced` and `iSyncIdleLocomotion` ([actor state](/engine/actor-state-graph.md)).
+`bIsSynced` and `iSyncIdleLocomotion` ([actor state](actor-state-graph.md)).
 
 | Member | Written |
 | --- | --- |
@@ -93,7 +93,7 @@ itself. The two files number their events on their own, so the event is matched 
 example, the arm machines in `mt_behavior.hkx` have global wildcards on
 `OffsetBoundStandingCartStart`. A prisoner's cart exit clip sends that event near its end, and
 the top machine of `0_master.hkx` then leaves `Cart_State` for the state that holds the
-locomotion file ([how an exit state ends](/engine/vehicles.md#how-an-exit-state-ends)).
+locomotion file ([how an exit state ends](vehicles.md#how-an-exit-state-ends)).
 
 Evidence from the install: in `0_master.hkx`, no `Master_Behavior` transition targets
 `Cart_State`. The `Cart` machine inside it has seven wildcards with flags `0xd00`, among them
@@ -144,7 +144,7 @@ the other three.
 ## The flag map
 
 The `hkbStateMachineTransitionInfo::TransitionFlags` names come from the same open-source lineage
-as the byte layouts ([Havok behavior scope](/decisions/havok-behavior-scope.md)). Every bit the
+as the byte layouts ([Havok behavior scope](../decisions/havok-behavior-scope.md)). Every bit the
 runtime uses was then checked against the install:
 
 | Bit | Name | Use in the vanilla player graph |
@@ -217,4 +217,4 @@ starts in an update already shows one step of its crossfade. One that reaches it
 dropped, not drawn at a weight of exactly 1.
 
 Of the effect's `FlagBits`, only the sync bit is used
-([clip synchronization](/engine/behavior-clips.md)).
+([clip synchronization](behavior-clips.md)).

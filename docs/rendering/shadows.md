@@ -39,7 +39,7 @@ right-handed and maps z to Metal's 0 to 1, like the perspective projection.
 
 The shadow map is a `depth32Float` array with 3 slices, 2048 by 2048 unless the game's
 `iShadowMapResolution` asks for another power of two from 512 to 16384
-([graphics options](/engine/graphics-options.md)). The game sets no top size; 16384 is the
+([graphics options](../engine/graphics-options.md)). The game sets no top size; 16384 is the
 largest Metal texture, and its 3 slices take 3 GB. A new size builds a new array while the game
 runs; the old one goes once the frames that use it finish. Each cascade gets one
 depth-only encoder, cleared to 1. The pre-pass runs on the same command buffer before the scene
@@ -118,7 +118,7 @@ reported, no code):
 
 OpenSky draws each map into the top-left corner of one 1,024 by 1,024 slice of a second depth
 array (the same array that holds the
-[rain occlusion view](/rendering/precipitation.md#roof-occlusion)). Only actors draw into it,
+[rain occlusion view](precipitation.md#roof-occlusion)). Only actors draw into it,
 culled on the CPU, into rings of their own.
 
 The shader takes the darker of the cascade result and every focus map that covers the point, each
@@ -149,7 +149,7 @@ All three shadow types draw as a full cube: a spotlight's cone and a hemisphere'
 not cut. The game cuts them: a spotlight's view uses its field of view plus the reference's
 `XLIG` FOV offset, and a hemisphere uses pi. The game also passes the `XLIG` shadow depth
 bias (default 1.0) into the light; OpenSky multiplies the 2-unit receiver offset by it
-([placed references](/formats/placed-references.md#how-the-game-uses-the-reference-extras)). The launcher's
+([placed references](../formats/placed-references.md#how-the-game-uses-the-reference-extras)). The launcher's
 graphics page holds the "Shadows from lights" switch, and `openskycli game debug shadows`
 reads how many lights drew a cube in `shadowLights`.
 
@@ -163,7 +163,7 @@ until the renderer is rebuilt; nothing saves it.
 The fly-path streaming gate (`FlyPathGateRealDataTests`, `make test PLAN=Perf`) holds both the
 average and the 95th percentile shadow pass time to 14 ms. That is below half of a 30 frames per
 second frame (33.33 ms) with some room over measured Whiterun runs. The benchmark tour reports the
-`shadows` pass per scene ([benchmark](/tools/benchmark.md)).
+`shadows` pass per scene ([benchmark](../tools/benchmark.md)).
 
 ## Not done
 

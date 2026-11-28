@@ -14,7 +14,7 @@ from lover to archnemesis, a secret flag, and an optional link to an `ASTP` reco
 `JarlHousecarl`. It has four titles (male and female, for each side) and a family flag.
 
 Hostility and the dialogue conditions `GetRelationshipRank` and `HasAssociationType` read
-these records. See [factions](/formats/factions.md) for the related faction records.
+these records. See [factions](factions.md) for the related faction records.
 
 References: UESP [RELA](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RELA) and
 [ASTP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ASTP); xEdit `dev-4.1.6`,
@@ -108,7 +108,7 @@ it reads the same from either end.
 
 `RELA` gives the rank the author set between two bases. The Papyrus function
 `Actor.SetRelationshipRank` changes it at runtime. OpenSky stores these changes per actor
-and saves them in the `RELS` chunk of the [OpenSky save](/formats/opensky-save-actor-chunks.md). A
+and saves them in the `RELS` chunk of the [OpenSky save](opensky-save-actor-chunks.md). A
 scripted rank wins over the record.
 
 Design choices:

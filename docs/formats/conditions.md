@@ -10,8 +10,8 @@ tags: [format, plugin, conditions]
 
 A condition is a "is this true right now?" test. Quests, dialogue, packages, music, perks,
 magic effects, and many other records use the same `CTDA` subrecord. How OpenSky answers a
-condition is on [condition evaluation](/engine/conditions.md). The functions it answers are
-on [condition functions](/engine/condition-functions.md).
+condition is on [condition evaluation](../engine/conditions.md). The functions it answers are
+on [condition functions](../engine/condition-functions.md).
 
 Sources:
 

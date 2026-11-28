@@ -23,7 +23,7 @@ Checked 2026-11-01. The install is under `/Volumes/data/steam/steamapps/common/S
 Edition/`. The game has never run on this Mac, so:
 
 - There is no `plugins.txt` and no `~/Library/Application Support/Skyrim Special Edition/`.
-  Every [load order](/formats/plugins-txt.md) takes the vanilla fallback. A probe of a modded
+  Every [load order](../formats/plugins-txt.md) takes the vanilla fallback. A probe of a modded
   load order needs a hand-made file named by `OPENSKY_PLUGINS_TXT`.
 - There is no `.ess` save in the macOS documents folder. Checked 2026-11-02: 13 saves of
   the reference game, at player levels 1, 9, and 17, are in the Wine prefix under
@@ -48,7 +48,7 @@ password is still required.
 
 A grant belongs to the built product, not the terminal. It lasts only while the product keeps
 one code signature, which is why signing names a real identity
-([build system](/tools/build-system.md#signing)):
+([build system](build-system.md#signing)):
 
 | Grant | Goes to |
 | --- | --- |
@@ -72,8 +72,8 @@ Retires when the test passes with this display arrangement.
 
 ### Reference game toolchain
 
-Checked 2026-10-28 ([reference game](/tools/reference-game.md),
-[bridge plugin](/decisions/reference-bridge.md)):
+Checked 2026-10-28 ([reference game](reference-game.md),
+[bridge plugin](../decisions/reference-bridge.md)):
 
 - The Game Porting Toolkit Wine (the gcenx cask, Wine 7.7) cannot run the current Windows
   Steam: Steam crashes in `bcrypt` on the `BCRYPT_RNG_ALG_HANDLE` pseudo-handle. Plain Wine
@@ -108,7 +108,7 @@ tool.
 ## Upstream spec hosts
 
 Checked 2026-10-20. Read the wikis from the offline mirrors ([offline
-wikis](/tools/offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and
+wikis](offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and
 `make sync-wiki ARGS='--site uesp'` keep them current.
 
 | Host | State | Use instead |
@@ -120,7 +120,7 @@ wikis](/tools/offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and
 | `TES5Edit/TES5Edit` on GitHub | The default branch is `dev-4.1.6`; raw URLs on another branch return 404 | Check with `gh api repos/TES5Edit/TES5Edit` |
 
 For a Papyrus signature, the install's own compiled script is the better source
-([actor natives](/engine/papyrus-actor-natives.md)).
+([actor natives](../engine/papyrus-actor-natives.md)).
 
 Retires per host when it changes behaviour.
 
@@ -141,7 +141,7 @@ Checked 2026-10-17 on Xcode 27.1, Swift 6.4. When a build changes a type's layou
 another file, the driver logs `not scheduling dependents of <file>; unknown changes`. The next
 build compiles only the fixed file, so the dependents keep old field offsets and crash with
 `EXC_BAD_ACCESS`. `tools/failed-build-records.sh` works around it
-([build system](/tools/build-system.md#driver-records-after-a-failed-build)).
+([build system](build-system.md#driver-records-after-a-failed-build)).
 
 Retires when the driver keeps skipped dependents in its record after a failed job: the
 reproduction then passes without the script's call in `tools/xcodebuild.sh`.
@@ -183,12 +183,12 @@ Retires when the installed Xcode ships that fix: delete the override, and a clea
 
 | Symptom | Cause and workaround | Retires when |
 | --- | --- | --- |
-| A test host hangs at idle, with nothing in the result bundle | `AVAudioPlayerNode.playerTime(forNodeTime:)` hangs under `.offline` manual rendering. The playback position is counted from `manualRenderingSampleTime` instead ([audio](/engine/audio.md)) | The query answers under offline rendering (checked 2026-08-10, Xcode 26.6) |
+| A test host hangs at idle, with nothing in the result bundle | `AVAudioPlayerNode.playerTime(forNodeTime:)` hangs under `.offline` manual rendering. The playback position is counted from `manualRenderingSampleTime` instead ([audio](../engine/audio.md)) | The query answers under offline rendering (checked 2026-08-10, Xcode 26.6) |
 | `The test runner hung before establishing connection`, or a real-data run that runs 0 tests with no error | A days-old `testmanagerd` stalls. Check its start with `ps -eo pid,lstart,command \| grep testmanagerd` and `kill -9` it; `launchd` starts a new one. It is shared, so check for other running tests first | A fresh daemon stops going stale (checked 2026-10-18) |
-| MetalFX tests wait out their allowance | `ANECompilerService` can stop answering for hours, and MetalFX builds its temporal scaler through it. The renderer builds scalers off the main actor ([upscaling](/rendering/upscaling.md#building-the-scaler)), and `MetalFXCompilerProbe` fails the tests early with a clear message | MetalFX builds its scalers without the Neural Engine (checked 2026-10-13) |
-| A real-data test uses tens of GB and locks the machine | Wrap heavy real-data runs in `tools/memguard.sh` ([testing](/testing.md#memory-watchdog)) | The tests carry their own bounds (checked 2026-07-20) |
-| `xccov` reports no package file, only `OpenSky.app` with 0 files | Package modules build into frameworks the result bundle does not list as coverage products. `tools/coverage/` reads the profile with `llvm-cov` instead ([test runs](/tools/test-runs.md#code-coverage)) | `xccov view --report` lists the package frameworks (checked 2026-11-09, Xcode 27.2) |
-| `xcrun xctrace record --launch -- openskycli ...` never starts the process | Start the process first and attach with `--attach <pid>`. `tools/profile.sh` does this ([profiling](/testing.md#profiling)) | A `--launch` recording of the CLI completes (checked 2026-10-01, xctrace 27.0) |
+| MetalFX tests wait out their allowance | `ANECompilerService` can stop answering for hours, and MetalFX builds its temporal scaler through it. The renderer builds scalers off the main actor ([upscaling](../rendering/upscaling.md#building-the-scaler)), and `MetalFXCompilerProbe` fails the tests early with a clear message | MetalFX builds its scalers without the Neural Engine (checked 2026-10-13) |
+| A real-data test uses tens of GB and locks the machine | Wrap heavy real-data runs in `tools/memguard.sh` ([testing](../testing.md#memory-watchdog)) | The tests carry their own bounds (checked 2026-07-20) |
+| `xccov` reports no package file, only `OpenSky.app` with 0 files | Package modules build into frameworks the result bundle does not list as coverage products. `tools/coverage/` reads the profile with `llvm-cov` instead ([test runs](test-runs.md#code-coverage)) | `xccov view --report` lists the package frameworks (checked 2026-11-09, Xcode 27.2) |
+| `xcrun xctrace record --launch -- openskycli ...` never starts the process | Start the process first and attach with `--attach <pid>`. `tools/profile.sh` does this ([profiling](../testing.md#profiling)) | A `--launch` recording of the CLI completes (checked 2026-10-01, xctrace 27.0) |
 | A launch trace of a built `OpenSky.app` shows the old code | `xctrace record --launch` of the app's executable runs the copy LaunchServices knows, `/Applications/OpenSky.app`, not the given path. Check the `OpenSky` binary path in the exported samples. Start the app with `open -n <app>` and attach, as `tools/profile.sh` does; an attach misses the first seconds of the start | A `--launch` trace runs the given path (checked 2026-11-15, xctrace 27.2) |
 
 ### Test plans and Swift Testing
@@ -205,6 +205,6 @@ Checked 2026-10-13 on Xcode 27.0:
   `-only-testing` works, and so does selecting a whole target.
 - A plan's `skippedTags` skips nothing, but `selectedTags` works. So `Quick` skips through
   the environment variable `OPENSKY_SKIPPED_TAGS` and a condition trait
-  ([test runs](/tools/test-runs.md#tags)).
+  ([test runs](test-runs.md#tags)).
 
 Retires when Xcode matches plan selection and `skippedTags` against Swift Testing tests.

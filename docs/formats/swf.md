@@ -12,13 +12,13 @@ Skyrim's interface is made of Adobe SWF movies, played by Scaleform GFx. This pa
 the file container: the header, the compression, and the tag stream. The tags themselves
 are on four more pages:
 
-- [SWF shapes and bitmaps](/formats/swf-shapes.md)
-- [SWF fonts and text](/formats/swf-text.md), including `fontconfig.txt`
-- [SWF display list](/formats/swf-display-list.md), including labels, exports, and imports
-- [SWF actions](/formats/swf-actions.md), the ActionScript 1/2 bytecode
+- [SWF shapes and bitmaps](swf-shapes.md)
+- [SWF fonts and text](swf-text.md), including `fontconfig.txt`
+- [SWF display list](swf-display-list.md), including labels, exports, and imports
+- [SWF actions](swf-actions.md), the ActionScript 1/2 bytecode
 
-The GPU side is on [screen-space UI layer](/rendering/ui.md). The bytecode runtime is on
-[AS2 runtime](/engine/as2-runtime.md).
+The GPU side is on [screen-space UI layer](../rendering/ui.md). The bytecode runtime is on
+[AS2 runtime](../engine/as2-runtime.md).
 
 Reference: Adobe SWF File Format Specification, version 19 (a public Adobe document). All
 byte-aligned integers are little-endian. Bit fields are packed most significant bit first.
@@ -99,12 +99,12 @@ mapped linearly between the two. If the corners would overlap, the sprite scales
 
 `openskycli swf sweep` decodes every tag in every movie and prints the counts.
 `openskycli swf render-sweep` renders frame 1 of each movie. `openskycli swf action-sweep`
-counts the bytecode. See [CLI](/tools/cli.md). Their logs and captures go to `.logs/` only,
+counts the bytecode. See [CLI](../tools/cli.md). Their logs and captures go to `.logs/` only,
 because a rendered vanilla movie contains game art.
 
 ## Not implemented
 
 - `ZWS` (LZMA) decompression.
 - PlaceObject3 filters other than drop shadow, glow, and blur, and blend modes other than add
-  ([SWF render layer](/rendering/swf-layer.md#filters-and-blend-modes)).
+  ([SWF render layer](../rendering/swf-layer.md#filters-and-blend-modes)).
 - DoABC (82), ActionScript 3, and GFx extension tags.

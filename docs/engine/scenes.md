@@ -9,8 +9,8 @@ tags: [engine, dialogue, quests, papyrus, runtime-state]
 
 A scene is a short script a quest owns: phases run in order, and each phase starts actions
 such as a line of dialogue or a wait. The record layout is on the
-[scene records](/formats/scenes.md) page. Lines are chosen by the
-[dialogue runtime](/engine/dialogue.md), so a scene line follows the same selection rules as
+[scene records](../formats/scenes.md) page. Lines are chosen by the
+[dialogue runtime](dialogue.md), so a scene line follows the same selection rules as
 a line in the dialogue menu.
 
 Source for the rules: the Creation Kit wiki, <https://ck.uesp.net/wiki/Category:Scenes>,
@@ -67,7 +67,7 @@ A dead actor's dialogue or package action is done at once. The game also lets a 
 past a dead actor.
 
 An actor of a scene observes combat when it detects a fight that it could watch, as described in
-[watching a fight](/engine/random-conversations.md#watching-a-fight). It keeps its scene package,
+[watching a fight](random-conversations.md#watching-a-fight). It keeps its scene package,
 and bits 0x40 and 0x80 then match. OpenSky does not build watching a fight yet, so these bits
 never match.
 
@@ -163,7 +163,7 @@ loop stops with it.
 ### Package actions
 
 The Creation Kit says a scene's package overrides every other package of the actor. While a
-package action runs, the [package selector](/engine/package-schedules.md#scene-packages) picks
+package action runs, the [package selector](package-schedules.md#scene-packages) picks
 from the action's packages instead of the actor's own list. When the action ends, the actor
 goes back to its own list. The runtime asks for the packages again on every tick, so a scene
 that a save restored gives them back.
@@ -183,8 +183,8 @@ for two more.
 ### Line length
 
 A line lasts as long as its voice file, as in the game. The game's rules for when a line ends and
-what cuts it are on the [lip sync](/engine/lip-sync.md#how-long-a-line-lasts) page. The file is
-`sound\voice\<plugin>\<voice type>\<name>.fuz` ([voice files](/formats/fuz.md)). Its length
+what cuts it are on the [lip sync](lip-sync.md#how-long-a-line-lasts) page. The file is
+`sound\voice\<plugin>\<voice type>\<name>.fuz` ([voice files](../formats/fuz.md)). Its length
 is the playing time in the xWMA packet table. The voice type is the speaker's `VTCK`. The
 file is read off the main actor, and the line's clock starts when the length is known. So the
 next line starts in the tick this one ends: no gap and no overlap.
@@ -192,7 +192,7 @@ next line starts in the tick this one ends: no gap and no overlap.
 A response with no voice file lasts the time of its text: `fAIDefaultSpeechMult` (0.15) seconds
 per character, kept between `fDialogSpeechDelaySeconds` (2 s) and `fSubtitleSpeechDelay` (8 s). For
 example, 30 characters last 4.5 seconds. The window is OpenSky's reading of the two names
-([speech timers](/engine/dialogue.md#speech-timers)). A line with no text lasts 3 seconds. A save
+([speech timers](dialogue.md#speech-timers)). A line with no text lasts 3 seconds. A save
 loaded while a line waits for its voice file ends that line at once.
 
 ## Time
@@ -209,12 +209,12 @@ when it finished on its own.
 
 A scene record has no idle fields. Idles come from three places:
 
-- a package action's package plays its own idle list ([package idles](/engine/idle-runtime.md#package-idles));
+- a package action's package plays its own idle list ([package idles](idle-runtime.md#package-idles));
 - a line plays its response's speaker idle (`SNAM`) on the speaker and its listener idle
   (`LNAM`) on the actor it looks at, when the line starts;
 - a fragment calls `PlayIdle`.
 
-A line also turns the speaker's head toward its `HTID` alias ([head tracking](/engine/head-tracking.md)).
+A line also turns the speaker's head toward its `HTID` alias ([head tracking](head-tracking.md)).
 These idles play without their own conditions, because the author picked them.
 
 [WARNING] When the game starts the speaker and listener idles in a line is not known. OpenSky
@@ -222,7 +222,7 @@ starts both with the line.
 
 ## Fragments
 
-Scene fragments are in the `VMAD` tail of the `SCEN` ([VMAD](/formats/vmad.md)). Slot 0x01 is
+Scene fragments are in the `VMAD` tail of the `SCEN` ([VMAD](../formats/vmad.md)). Slot 0x01 is
 the begin fragment and 0x02 the end fragment. A phase fragment has flag 0x01 for phase begin
 and 0x02 for phase end. A fragment with no script runtime to run it is noted as not run in the
 trace, not dropped.
@@ -235,7 +235,7 @@ the component only when the state changed, because any write to a base record re
 loaded cells.
 
 A save stores the playing scenes in the `SCNS` chunk, and the pause time of each paused scene
-in the `SCNP` chunk ([world chunks](/formats/opensky-save-world-chunks.md)). After a load, a
+in the `SCNP` chunk ([world chunks](../formats/opensky-save-world-chunks.md)). After a load, a
 scene goes on from the same phase with the same running actions, still paused if it was.
 The gap after a conversation scene is not saved: after a load, the next conversation scene may
 begin at once.
@@ -244,7 +244,7 @@ begin at once.
 
 The game starts a scene whose actors are not loaded, and plays it. This was observed in the
 Windows reference game through the bridge plugin's scene readout
-([reference game](/tools/reference-game.md)):
+([reference game](../tools/reference-game.md)):
 
 - During the opening cart ride, far-away scenes such as `IvarsteadSSScene`,
   `DialogueRiftenSS02Scene`, and `MorthalInitialScene` play while every actor is unloaded. Each
@@ -291,7 +291,7 @@ stateDiagram-v2
   waits until it is over.
 - One partner walks to the other before the first phase, and the scene stays paused until
   they are near and face each other
-  ([walking together](/engine/random-conversations.md#walking-together)). The walk and the
+  ([walking together](random-conversations.md#walking-together)). The walk and the
   phases have no time limit.
 - After its last phase, a conversation scene waits 2 seconds before it ends, and holds its
   actors for that time.
@@ -323,8 +323,8 @@ that partner's alias is not optional.
 - The scene counts as interruptible, with or without flag 0x10.
 
 The quest starts when two actors fire the event
-([random conversations](/engine/random-conversations.md)), and the
-[story manager](/engine/story-manager.md) picks it. For the Riften market:
+([random conversations](random-conversations.md)), and the
+[story manager](story-manager.md) picks it. For the Riften market:
 
 ```mermaid
 flowchart TD
@@ -348,7 +348,7 @@ line ends. A voiced line gets 0.25 s more. No limit on the number of scenes at o
 beyond the one-at-a-time rule above.
 
 In OpenSky, a conversation scene whose partners are free, and whose speaker has a loaded body,
-asks the [social pass](/engine/random-conversations.md#walking-together) to bring them together.
+asks the [social pass](random-conversations.md#walking-together) to bring them together.
 The first partner walks to the second, by the same distances as after an `ADIA` event. After it
 asked for the walk, the scene pauses for 2 seconds, and it begins when the two stand together.
 Before each line of any scene, the speaker turns to its listener: the action's look target, or
@@ -367,7 +367,7 @@ OpenSky differs in these points:
 - A partner whose place no loaded cell holds gets no walk.
 - One pair walks together at a time. A pair that has not met after 30 seconds gives its turn to
   another scene and tries again 60 seconds later. A line waits at most 3 seconds for its speaker
-  to turn. These times are OpenSky's choices ([unverified values](/engine/unverified-values.md)).
+  to turn. These times are OpenSky's choices ([unverified values](unverified-values.md)).
 - It starts the gap when the conversation ends.
 
 For example, `RiftenGrandPlazaScene30` starts with its quest at the start of the game. From
@@ -391,7 +391,7 @@ its two speakers and ends.
 
 - Observing combat is not known, so the observe-combat behaviour flags never act.
 - A conversation partner does not walk to the other partner before the scene begins. The game's
-  walk is in [walking together](/engine/random-conversations.md#walking-together).
+  walk is in [walking together](random-conversations.md#walking-together).
 - A speaker does not wait to face its look target before its line.
 - The check on a waiting conversation pair follows the game's list. An actor with no running
   package is not held back by the package flag, and a sandbox that allows conversation counts

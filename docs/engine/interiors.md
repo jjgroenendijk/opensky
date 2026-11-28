@@ -9,24 +9,24 @@ tags: [engine, world, interior, door, streaming]
 # Interior door transitions
 
 One path covers both directions: outside to inside, and inside to outside. The record fields
-(`CELL`, `REFR` `XTEL`) are on the [world records](/formats/world-records.md) page.
+(`CELL`, `REFR` `XTEL`) are on the [world records](../formats/world-records.md) page.
 
 ## Building an interior
 
 The builder finds the interior `CELL` through its block and sub-block groups (see
-[finding an interior cell](/formats/world-records.md#cell)), then reads its
+[finding an interior cell](../formats/world-records.md#cell)), then reads its
 persistent and temporary children the same way as an exterior cell. The `DATA` interior flag
 must be set.
 
 An interior scene has no terrain, no sky, and no distant LOD. Its lighting comes from `XCLL`
-and the lighting template, plus its own lights (see [lighting](/formats/lighting.md)).
+and the lighting template, plus its own lights (see [lighting](../formats/lighting.md)).
 
 Water in an interior is mostly placed water meshes. A cell water plane is drawn only for a
-height an author set on purpose ([sky and water](/engine/sky-water.md#interior-water)).
+height an author set on purpose ([sky and water](sky-water.md#interior-water)).
 
 The room markers and portals become a graph, and the renderer skips the rooms the camera
-cannot see ([room and portal culling](/rendering/room-portal-culling.md)). Room bounds are
-occlusion data, so they never become trigger volumes ([trigger volumes](/engine/trigger-volumes.md)).
+cannot see ([room and portal culling](../rendering/room-portal-culling.md)). Room bounds are
+occlusion data, so they never become trigger volumes ([trigger volumes](trigger-volumes.md)).
 
 ## Finding the target
 
@@ -50,11 +50,11 @@ The transition is built on the same serial queue as cells:
 
 FormIDs resolve over the whole load order, so a door in one plugin may lead into a cell of
 another. A door into another worldspace changes the streamed worldspace
-([cell streaming](/engine/cell-streaming.md#changing-worldspace)).
+([cell streaming](cell-streaming.md#changing-worldspace)).
 
 ## Activation and streaming
 
-A door is activated through the normal [interaction](/engine/interaction.md) target. Only an
+A door is activated through the normal [interaction](interaction.md) target. Only an
 "Open" target starts a transition, and it passes the exact door that was looked at. The same path
 works for the return door.
 
@@ -70,4 +70,4 @@ On return, the target exterior cell is built or reused, streaming resumes around
 position, and the normal grid rules remove old cells.
 
 `openskycli interior` walks out, in, and back through the nearest door, and draws the arrival
-view ([CLI](/tools/cli.md)).
+view ([CLI](../tools/cli.md)).

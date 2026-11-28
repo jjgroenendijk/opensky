@@ -164,7 +164,7 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 - **Xcode.** The image holds several Xcodes, and its default changes over time. So the workflow
   `env` sets `DEVELOPER_DIR` to the one Xcode that matches the local one, and
   `tools/lint/swift-baseline.sh` fails when the two Swift versions differ
-  ([Swift toolchain](/tools/swift-toolchain.md)). The `xcode-27` image is a public preview of
+  ([Swift toolchain](swift-toolchain.md)). The `xcode-27` image is a public preview of
   GitHub, so a job can wait longer for a runner than on `macos-26`.
 - **Every error at once.** The job sets Xcode's "continue building after errors" default, so a
   failed run lists the compile errors of every target.
@@ -206,7 +206,7 @@ The compilation cache roughly halves the build:
   On 2026-10-17, ten leaked entries held 8.7 GB of the 10 GB, and GitHub evicted live entries.
 - The cache is saved after a failed test too, because the compiled tasks are still valid.
 - A restored store only grows. `COMPILATION_CACHE_LIMIT_SIZE` does not shrink it
-  ([build system](/tools/build-system.md)). So a push to `main` deletes the store before the build
+  ([build system](build-system.md)). So a push to `main` deletes the store before the build
   when it is over `CAS_MAX_MB`. That run builds cold and saves a fresh entry.
 - One cold build makes a store of about 1.9 GB on disk (measured 2026-10-17). Each push to
   `main` adds 0.4 to 0.8 GB, and a 2.8 GB store is 890 MB compressed. `CAS_MAX_MB` is 5120, so
@@ -220,7 +220,7 @@ The compilation cache roughly halves the build:
 everything, which costs too much on every pull request.
 
 `make lint-index` runs every check that reads the index store: Periphery's unused-code scan, the
-adapter rule, and the design rules with a gate ([code health](/decisions/code-health-automation.md)).
+adapter rule, and the design rules with a gate ([code health](../decisions/code-health-automation.md)).
 A task replayed from the compilation cache writes almost no index data. Measured 2026-11-08: a
 Debug build of the CLI into an empty tree, served from a warm cache, wrote 276 index units for
 about 5,000 Swift files. So the index build is uncached. It also builds `OpenSkyRealDataTests`,
@@ -231,11 +231,11 @@ index tree (measured 2026-11-15). So a finding now waits for the weekly run: run
 `make lint-index` locally before a push that adds or removes declarations.
 
 The `Module metrics` job runs `make module-metrics` and keeps `module-metrics.md` as a run
-artifact for 90 days. It is design rule 6 of [Design metrics](/decisions/design-metrics.md), a
+artifact for 90 days. It is design rule 6 of [Design metrics](../decisions/design-metrics.md), a
 report that fails nothing.
 
 The `Design groups` job runs `make design-groups` and keeps `design-groups.txt` as a run
-artifact for 90 days. It is design rule 7 of [Design metrics](/decisions/design-metrics.md), a
+artifact for 90 days. It is design rule 7 of [Design metrics](../decisions/design-metrics.md), a
 report that fails nothing. It builds the index store first, so it takes as long as a build.
 
 No pull request fails on a weekly finding, so the `Report` job keeps one issue,
@@ -248,7 +248,7 @@ fails the checks at once and opens the issue.
 
 `preview.yml` builds the Release app and publishes it as a GitHub pre-release every night and on
 demand. It reads the `Lint` result of `ci.yml` to pick a commit, and it restores the caches that
-`ci.yml` saves without saving its own. [Releases](/tools/releases.md) explains it.
+`ci.yml` saves without saving its own. [Releases](releases.md) explains it.
 
 ## Not in CI
 

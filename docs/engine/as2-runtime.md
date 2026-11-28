@@ -9,13 +9,13 @@ tags: [engine, swf, actionscript, ui, scaleform]
 
 # AS2 runtime
 
-The AS2 runtime runs the ActionScript 1 and 2 bytecode that the [SWF action parser](/formats/swf-actions.md)
+The AS2 runtime runs the ActionScript 1 and 2 bytecode that the [SWF action parser](../formats/swf-actions.md)
 frames. Related pages:
 
-- [AS2 display runtime](/engine/as2-display-runtime.md): the clip tree the bytecode drives, the
+- [AS2 display runtime](as2-display-runtime.md): the clip tree the bytecode drives, the
   property surface, and scene generation.
-- [AS2 input and events](/engine/as2-input.md): events, input, hit testing, focus, and timers.
-- [GameDelegate bridge](/engine/as2-game-delegate.md): calls between a movie and the engine, and
+- [AS2 input and events](as2-input.md): events, input, hit testing, focus, and timers.
+- [GameDelegate bridge](as2-game-delegate.md): calls between a movie and the engine, and
   what driving the vanilla menus showed.
 
 Vanilla Skyrim menus are mostly class registration code. `openskycli swf action-sweep` counts 1,127
@@ -28,7 +28,7 @@ The interpreter is in `src/Sources/OpenSkyFormatsSWF/AS2/` and the display runti
 `src/Sources/OpenSkyFormatsSWF/Runtime/`. `SWF*` types parse bytes. `AS2*` types run the
 bytecode. The `Runtime/` files are the one meeting point: they hold both an `AS2Object` and a
 placement. Both folders import no AppKit and build into the app and the CLI. What is in scope is on
-the [AS2 scope decision](/decisions/swf-as2-scope.md) page.
+the [AS2 scope decision](../decisions/swf-as2-scope.md) page.
 
 ## One machine per movie
 

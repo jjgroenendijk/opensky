@@ -19,9 +19,9 @@ SE behavior files (hk_2010.2.0-r1, 64-bit little-endian). The six are `hkbNode`,
 structs stored inside another object, so no file lists them in its class name table. Their
 signatures come from HKX2Library only. Each signature matches ret2end/HKX2Library (MIT), the
 main source for the member offsets in
-[HKX behavior node classes](/formats/hkx-behavior-nodes.md) and
-[HKX behavior modifier classes](/formats/hkx-behavior-modifiers.md). The graph-level
-classes are listed in [HKX behavior graph objects](/formats/hkx-behavior.md).
+[HKX behavior node classes](hkx-behavior-nodes.md) and
+[HKX behavior modifier classes](hkx-behavior-modifiers.md). The graph-level
+classes are listed in [HKX behavior graph objects](hkx-behavior.md).
 
 ## Stock Havok classes
 

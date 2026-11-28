@@ -11,7 +11,7 @@ tags: [decision, concurrency, main-actor, streaming, audio, scripting, loading]
 Every package module except `OpenSkyCLIArguments` uses `defaultIsolation(MainActor.self)`. So all
 code runs on the main actor unless it says otherwise. `OpenSkyCLIArguments` holds the `openskycli`
 command declarations, which the argument parser needs nonisolated ([Swift Argument
-Parser](/decisions/swift-argument-parser.md)). This page splits the work into two kinds and gives
+Parser](swift-argument-parser.md)). This page splits the work into two kinds and gives
 each kind its own default:
 
 - **Loading** reads a file and decodes it: NIF, HKX, DDS, PEX, SWF, WAV, XWM, FUZ, and save
@@ -54,7 +54,7 @@ measurement.
 - **One serial worker with a `Mutex` mailbox.** Loading that runs during play, and long
   synchronous work that owns caches with no locks inside. One serial queue runs the work and owns
   the caches. Only values in a `Mutex` cross to the main actor. An actor is not used here, for the
-  reasons in [cell streaming](/engine/cell-streaming.md): the work has no `await` inside, and an
+  reasons in [cell streaming](../engine/cell-streaming.md): the work has no `await` inside, and an
   actor would add `await` to the synchronous frame loop.
 - **`@concurrent` function.** One-shot loading outside the frame loop, such as a record catalog
   or a save file. The function takes `Sendable` values and returns a `Sendable` value. A
@@ -122,7 +122,7 @@ than Release, so the numbers are an upper bound.
 | Animation clips, behavior graphs, camera tracks | Serial worker, `Mutex` mailbox | Loading during play |
 | Player behavior graph clips | Serial worker, `Mutex` mailbox | Loading during play. The clips the start states reach are prefetched when the graph is built. While a clip loads, the graph keeps its last full pose |
 | Papyrus script files | Serial worker, `Mutex` mailbox | Loading during play |
-| Audio file read and decode | Serial worker, `Mutex` state | Loading during play. Decoders are not `Sendable`, and AVFAudio calls back on its own threads. See [audio](/engine/audio.md) |
+| Audio file read and decode | Serial worker, `Mutex` state | Loading during play. Decoders are not `Sendable`, and AVFAudio calls back on its own threads. See [audio](../engine/audio.md) |
 | Audio tick (volumes, retire, purge) | Main actor | Simulation. Average 0.006 ms, maximum 0.450 ms per frame |
 | Script execution (Papyrus) | Main actor | Simulation. Native functions read and write main-actor game state synchronously |
 | Menu movies (SWF) and fonts | Serial worker, `Mutex` mailbox | Loading when a menu opens |
@@ -130,7 +130,7 @@ than Release, so the numbers are an upper bound.
 | Preview catalog and detail | `@concurrent` function | Loading for `openskycli preview`. Hundreds of thousands of records. The detail builder sits in a `Mutex`, because its mesh and texture caches have no lock. Only the offscreen render of the picture runs on the main actor |
 | Launch setup (locate the install, settings) | Main actor | Reads a few small files before the first frame |
 | Session start (renderer, game systems, first frame) | Main actor | Wires every system to the loaded data and starts the start-game quests before the first frame. 0.74 s in a Release build (measured 2026-10-05). |
-| MetalFX scaler and frame interpolator build | `@concurrent` function | MetalFX compiles a model through the Neural Engine compiler: seconds the first time, and the service can stop answering. The frame draws at full size until the build lands ([upscaling](/rendering/upscaling.md#building-the-scaler)) |
+| MetalFX scaler and frame interpolator build | `@concurrent` function | MetalFX compiles a model through the Neural Engine compiler: seconds the first time, and the service can stop answering. The frame draws at full size until the build lands ([upscaling](../rendering/upscaling.md#building-the-scaler)) |
 | World data load (archives, record stores) | `@concurrent` function with one child task per stage | Loading before the game window opens. 19.3 s on the main thread in a Debug build (measured 2026-10-04). The launcher shows each stage |
 
 ## The shared play-time worker
@@ -147,7 +147,7 @@ update.
 
 The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
 `Sendable`. It owns the builder alone: the main actor reads a separate set of record stores
-([cell streaming](/engine/cell-streaming.md)).
+([cell streaming](../engine/cell-streaming.md)).
 
 The render encode grew with the loaded cells in the same run: 0.6 ms at the start and up to 24 ms
 with 25 cells loaded. That is a data layout question for the per-frame profile, not a reason to

@@ -17,7 +17,7 @@ that uses it at once.
   writes the game's INI files.
 - A missing value uses the catalog default. The catalog takes its defaults from the
   install's `Skyrim/SkyrimPrefs.ini` where a key has a valid value, for example
-  `fAudioMasterVolume`, `iDifficulty`, and `bCrosshairEnabled` ([INI](/formats/ini.md)).
+  `fAudioMasterVolume`, `iDifficulty`, and `bCrosshairEnabled` ([INI](../formats/ini.md)).
 - `fMouseHeadingSensitivity` 0.0125 is the slider middle. OpenSky picked this mapping; the
   game's own curve is not documented.
 - The Save on Pause timer reads `bSaveOnPause` and `fAutosaveEveryXMins`.
@@ -31,13 +31,13 @@ that uses it at once.
 | Look sensitivity, invert Y | The camera input |
 | Crosshair, compass, floating markers, HUD opacity | The HUD movie and the SWF layer |
 | Difficulty | The combat damage multipliers, from the `fDiffMult*` GMSTs |
-| Key bindings | The game view's key table ([control map](/formats/controlmap.md)) |
+| Key bindings | The game view's key table ([control map](../formats/controlmap.md)) |
 | Save on rest, wait, travel, pause | The autosave policy |
 | Start at title screen | Whether the session opens on the title menu |
-| Survival Mode, Ask about Survival Mode | The Survival Mode plugin's globals ([Survival Mode prompt](/engine/survival-mode.md)) |
+| Survival Mode, Ask about Survival Mode | The Survival Mode plugin's globals ([Survival Mode prompt](survival-mode.md)) |
 
 The two subtitle settings choose which lines the HUD shows
-([dialogue menu](/engine/dialogue-menu.md), "Subtitles").
+([dialogue menu](dialogue-menu.md), "Subtitles").
 
 ## Autosaves
 

@@ -16,9 +16,9 @@ Skills improve by use. The path:
 4. Crossing the threshold raises the skill by one point, and banks that point's worth toward the
    character level.
 
-The actor value table is on the [actor values](/engine/actor-values.md) page. The `AVIF` record,
+The actor value table is on the [actor values](actor-values.md) page. The `AVIF` record,
 whose `AVSK` field holds the four numbers per skill, is on the
-[actor value information](/formats/actor-value-information.md) page.
+[actor value information](../formats/actor-value-information.md) page.
 
 ## Formulas
 
@@ -79,7 +79,7 @@ A separate world state component was the other option, and was rejected:
 
 The cost: a script can write skill progress with `SetActorValue`, as vanilla also allows. The write
 is stored as a distance from the record value, like a trained point
-([actor values](/engine/actor-values.md)).
+([actor values](actor-values.md)).
 
 The cost of the next point uses the base skill, never the modified one. A Fortify One-Handed potion
 raises damage, not the number of blows the next point needs.
@@ -185,7 +185,7 @@ active, its holder owns that perk. The perk changes the experience of each use t
 
 The stones' perks choose their skills with condition 681 `EPMagic_IsAdvanceSkill`, in an OR
 group. Conditions 691 and 692 ask about the object and the action of the use
-([condition functions](/engine/condition-functions.md)). Every use passes its skill, its action
+([condition functions](condition-functions.md)). Every use passes its skill, its action
 (normal, power attack, bash, lock picked, lockpick broken), and its object where one exists.
 A melee hit reports a power attack as the power-attack action and a bash as the bash action. A
 power bash reports the bash action, because the action list has no power-bash value. A melee hit
@@ -203,7 +203,7 @@ gives it `RestedPerk`. The Survival Mode plugin adds a second effect, chosen by 
 Each point banks `level * fXPPerSkillRank` toward the character level. A skill point that crosses
 the character threshold does not raise the level in the same call. The level waits until the
 player opens the skills menu, which applies every earned level at once. See
-[character leveling](/engine/character-leveling.md).
+[character leveling](character-leveling.md).
 
 Without character leveling (as in tests of skills alone), the experience is still computed and
 reported, but not banked.
@@ -221,7 +221,7 @@ not from use. Spending the stored progress would take away something the point d
 
 Both act on the player only. Both refuse a name that is not one of the eighteen skills, and refuse
 when the session has no progression. Names use the record names too, so the wiki's
-`Game.AdvanceSkill("Marksman", 50.0)` raises Archery ([actor values](/engine/actor-values.md) lists
+`Game.AdvanceSkill("Marksman", 50.0)` raises Archery ([actor values](actor-values.md) lists
 the names).
 
 UESP [Leveling](https://en.uesp.net/wiki/Skyrim:Leveling) gives the Speech and Pickpocket units: "1

@@ -10,7 +10,7 @@ tags: [rendering, trees, wind, weather]
 
 A tree sways with the weather's wind, and its leaves flutter. OpenSky moves the vertices in the
 static and skinned mesh vertex shaders. Grass has its own wind
-([scene drawing](/rendering/scene-drawing.md)).
+([scene drawing](scene-drawing.md)).
 
 ## What the data gives
 
@@ -30,7 +30,7 @@ The Creation Kit wiki ([Tree](https://ck.uesp.net/wiki/Tree)) says:
 - the weather's wind speed moves `BSTreeNode` trees, and may or may not move leaves.
 
 A shape with the shader flag `SLSF2` bit 29 (`Tree_Anim`) stores the leaf's wind weight in its
-vertex alpha, not its opacity ([NIF](/formats/nif.md)). OpenSky keeps that alpha and draws the
+vertex alpha, not its opacity ([NIF](../formats/nif.md)). OpenSky keeps that alpha and draws the
 shape opaque.
 
 ## OpenSky's model
@@ -54,7 +54,7 @@ weather has speed 0, and nothing moves.
 [WARNING] The game moves a skinned tree by its bones and splits front, back, and side motion.
 OpenSky bends every tree as one shape, and the scales `treeSwayTilt` (0.1), the leaf side share
 (0.5), and the fade distance are OpenSky's values. The shadow pass draws trees still. All are in
-the [unverified values](/engine/unverified-values.md).
+the [unverified values](../engine/unverified-values.md).
 
 ## Reading it
 

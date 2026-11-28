@@ -10,8 +10,8 @@ tags: [format, plugin, papyrus, vmad, formid]
 
 A `VMAD` field attaches compiled Papyrus scripts to a record and gives the property values
 set for each script. OpenSky reads the scripts, turns object values into stable reference
-keys (see [FormID](/formats/formid.md)), and binds the values to the backing variables named
-in the [PEX](/formats/pex.md) file.
+keys (see [FormID](formid.md)), and binds the values to the backing variables named
+in the [PEX](pex.md) file.
 
 Sources:
 
@@ -44,7 +44,7 @@ Script flags: bit 0 inherited, bit 1 removed. A removed script is kept for inspe
 never run.
 
 Strings have no encoding marker. They follow the
-[string decoding](/decisions/string-decoding.md) policy and cannot fail. Vanilla names are
+[string decoding](../decisions/string-decoding.md) policy and cannot fail. Vanilla names are
 ASCII.
 
 ## Properties
@@ -139,7 +139,7 @@ A dialogue result script is also generated. The Creation Kit puts the two result
 response into a script named `TIF_<editorID>_<formID>`. In vanilla it is usually
 `TIF__<formID>`, with two underscores, because most `INFO` records have no editor ID. Each
 box is a function named `Fragment_<n>`. The name does not say which box it is. Its position
-together with the flag byte does. See [dialogue runtime](/engine/dialogue.md).
+together with the flag byte does. See [dialogue runtime](../engine/dialogue.md).
 
 | Offset | Type | Meaning |
 | --- | --- | --- |
@@ -183,7 +183,7 @@ length, a count that cannot fit, an array before version 5, an unknown property 
 extra bytes on a record without fragments, is an error.
 
 A `VMAD` larger than 64 KB comes through the `XXXX` size field (see
-[ESM container](/formats/esm.md)). The VMAD reader sees the full data and has no 64 KB limit.
+[ESM container](esm.md)). The VMAD reader sees the full data and has no 64 KB limit.
 
 ## Vanilla Skyrim.esm
 
