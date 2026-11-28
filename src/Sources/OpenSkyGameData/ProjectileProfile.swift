@@ -40,6 +40,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var explosionScale: Float = 1
     /// `DATA` flag 0x400 clear: an NPC's shot turns toward its combat aim point.
     public var correctsCombatAim = true
+    /// What using the projectile does once it stands in the world.
+    public var activation = ProjectileActivation()
 
     public init(
         projectile: FormID? = nil,
@@ -71,6 +73,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         isCone = record.kind == .flame || record.kind == .cone
         kind = record.kind
         correctsCombatAim = !record.flags.contains(.disableCombatAimCorrection)
+        activation = ProjectileActivation(record: record)
         visuals = ProjectileVisuals(record: record)
         // A trap dart names `FireBallExp01` but leaves the explosion flag off.
         explosion = record.flags.contains(.explosion) ? record.explosion : nil
@@ -132,5 +135,32 @@ nonisolated public struct ProjectileVisuals: Equatable, Sendable {
     private static func path(_ path: String?) -> String? {
         guard let path, !path.isEmpty else { return nil }
         return path
+    }
+}
+
+/// The `PROJ` flags Can Be Disabled and Can Be Picked Up, and the disable sound.
+/// See docs/engine/projectiles.md, "Pick-up, bounce, and stick in the game".
+nonisolated public struct ProjectileActivation: Equatable, Sendable {
+    public var canBePickedUp: Bool
+    public var canBeDisabled: Bool
+    public var disableSound: FormID?
+
+    /// A shot without a record, such as a dev shot, can be picked up.
+    public init(
+        canBePickedUp: Bool = true,
+        canBeDisabled: Bool = false,
+        disableSound: FormID? = nil
+    ) {
+        self.canBePickedUp = canBePickedUp
+        self.canBeDisabled = canBeDisabled
+        self.disableSound = disableSound
+    }
+
+    public init(record: Projectile) {
+        self.init(
+            canBePickedUp: record.flags.contains(.canBePickedUp),
+            canBeDisabled: record.flags.contains(.canBeDisabled),
+            disableSound: record.disableSound
+        )
     }
 }

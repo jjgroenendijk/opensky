@@ -122,4 +122,16 @@ struct NPCArcheryAimTests {
         profile.kind = .lobber
         #expect(profile.aimGravityFactor == 1)
     }
+
+    /// A spell area of 10 feet is 220 units, past `fCombatAimProjectileGroundMinRadius`.
+    @Test func aLargeBlastIsAimedAtTheFeet() {
+        var settings = ArcherySettings.resolve(store: GameSettingStore(plugins: []))
+        #expect(settings.groundAimMinimumRadius == 128)
+        #expect(settings.aimsAtFeet(explosionRadius: 0, spellArea: 10))
+        #expect(settings.aimsAtFeet(explosionRadius: 200, spellArea: 0))
+        #expect(!settings.aimsAtFeet(explosionRadius: 128, spellArea: 5))
+        #expect(!settings.aimsAtFeet(explosionRadius: .nan, spellArea: 0))
+        settings.groundAimMinimumRadius = 300
+        #expect(!settings.aimsAtFeet(explosionRadius: 200, spellArea: 10))
+    }
 }

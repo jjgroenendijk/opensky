@@ -235,6 +235,9 @@ nonisolated public enum ActivationRefusal: Equatable, Sendable {
     case beastForm
     /// A refusal the HUD shows as this notice, such as a fleeing actor's.
     case notice(String)
+    /// The use does nothing and shows nothing, such as on a stuck projectile that
+    /// cannot be picked up.
+    case inert
 }
 
 /// A use-key press the activation gate refused. No `InteractionEvent` follows it.

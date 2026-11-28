@@ -136,6 +136,10 @@ extension CombatMotionAdapter {
         ImpactPlayback(owner: self).playImpact(impact, at: position, gain: gain)
     }
 
+    public func playSound(_ sound: FormID, at position: SIMD3<Float>) {
+        ImpactPlayback(owner: self).playSound(sound, at: position, gain: 1)
+    }
+
     public func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         let streamer = game.streamer
         return ShapeSweeper.firstHit(
@@ -200,14 +204,18 @@ extension CombatMotionAdapter {
         let owner: CombatMotionAdapter
 
         func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float) {
-            let game = owner.game
             let impactEffects = owner.impactEffects
             impactEffects.showImpact(impact, at: position)
+            playSound(impact.sound, at: position, gain: gain)
+        }
+
+        func playSound(_ id: FormID, at position: SIMD3<Float>, gain: Float) {
+            let game = owner.game
             guard
                 let engine = game.gameSession?.worldAudio, engine.isRunning,
                 let assets = game.audio.assets,
                 let sounds = game.combatRecords?.soundStore,
-                let sound = attempt({ try sounds.resolveAny(impact.sound) }),
+                let sound = attempt({ try sounds.resolveAny(id) }),
                 let path = engine.filePicker.path(for: sound)
             else { return }
             let request = AudioPlayRequest(

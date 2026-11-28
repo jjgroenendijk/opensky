@@ -13,6 +13,8 @@ nonisolated public final class FakeProjectileRuntimePort: ProjectileRuntimePort 
     public var live: [LiveProjectile] = []
     public var removeArrowsCalls: [FormID] = []
     public var removeArrowsResult = 0
+    public var activateStuckCalls: [ReferenceKey] = []
+    public var activateStuckResult: StuckProjectileUse?
     public var npcSpellAimCalls: [(point: SIMD3<Float>, concentration: Bool)] = []
     public var npcSpellAimResult: SIMD3<Float> = .zero
 
@@ -33,6 +35,11 @@ nonisolated extension FakeProjectileRuntimePort {
     public func removeArrows(stuckIn host: FormID) -> Int {
         removeArrowsCalls.append(host)
         return removeArrowsResult
+    }
+
+    public func activateStuck(_ key: ReferenceKey) -> StuckProjectileUse? {
+        activateStuckCalls.append(key)
+        return activateStuckResult
     }
 
     public func npcSpellAim(at point: SIMD3<Float>, concentration: Bool) -> SIMD3<Float> {

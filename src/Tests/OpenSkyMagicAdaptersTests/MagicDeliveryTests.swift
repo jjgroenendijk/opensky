@@ -99,6 +99,7 @@ struct MagicDeliveryTests {
     @Test func anNPCSpellCarriesTheTrackerNoiseOfItsCastingType() {
         let archery = FakeArcheryRuntimePort()
         archery.projectiles.npcSpellAimResult = SIMD3(0, 0, 50)
+        archery.settings = .synthetic
         host.fakeCombat.archery = archery
         let delivery = MagicSpellDeliveryAdapter(game: host)
         let npc = ProjectileShooter(
@@ -115,6 +116,38 @@ struct MagicDeliveryTests {
             key: .player, origin: .zero, aim: SIMD3(1, 0, 0), isFirstPerson: true, location: nil
         )
         #expect(delivery.aimedWithNoise(player, casting: Self.payload).aim == SIMD3(1, 0, 0))
+    }
+
+    /// A spell area of 10 is 220 units, past `fCombatAimProjectileGroundMinRadius`: the
+    /// NPC aims at the target's feet, not the middle of its capsule.
+    @Test func anNPCAimsALargeBlastAtTheFeet() {
+        let archery = FakeArcheryRuntimePort()
+        archery.settings = .synthetic
+        host.fakeCombat.archery = archery
+        let delivery = MagicSpellDeliveryAdapter(game: host)
+        let npc = ProjectileShooter(
+            key: Self.foe, origin: SIMD3(0, 500, 100), aim: SIMD3(1, 0, 0),
+            isFirstPerson: false, location: nil
+        )
+        let blast = SpellPayload(
+            spell: .plugin(name: "base.esm", objectID: 0x601), sourcePlugin: "base.esm",
+            caster: Self.foe,
+            entries: [MagicItemEffect(
+                effect: FormID(0x0100),
+                magnitude: 20,
+                area: 10,
+                duration: 0
+            )],
+            isHostile: true, ignoresResistance: false, projectile: nil, name: "Fireball"
+        )
+
+        _ = delivery.aimedWithNoise(npc, casting: blast)
+        _ = delivery.aimedWithNoise(npc, casting: Self.payload)
+
+        let points = archery.projectiles.npcSpellAimCalls.map(\.point)
+        #expect(points.first == .zero)
+        #expect(points.last.map { $0.z > 0 } == true)
+        #expect(delivery.castTarget(of: Self.foe) == points.last)
     }
 
     @Test func aWardFacesAlongTheHoldersHeading() {

@@ -34,52 +34,42 @@ string tables the English names above stay.
 
 ## Leveled locks
 
-`XLOC` flag 0x04 marks a leveled lock. The CK wiki "Reference" page
-(<https://ck.uesp.net/wiki/Reference>) says: "A leveled lock starts with the specified lock
-level when the player is level one, and becomes harder as the player's level increases."
-No open source gives the step.
+`XLOC` flag 0x04 marks a leveled lock. The game works out its level as:
 
-[WARNING] The step is OpenSky's choice: the lock rises one band for every 10 player levels
-above level 1, and stops at Master. A "requires key" lock does not scale.
+level = authored level + L × truncate(`fLeveledLockMult`), at most 99.
 
-| Authored | Player level 1 to 10 | 11 to 20 | 21 to 30 | 31 to 40 | 41 and up |
-| --- | --- | --- | --- | --- | --- |
-| Novice | Novice | Apprentice | Adept | Expert | Master |
-| Apprentice | Apprentice | Adept | Expert | Master | Master |
-| Expert | Expert | Master | Master | Master | Master |
+- `fLeveledLockMult` is 1.5, which truncates to 1.
+- L is the level of the reference's encounter zone. With no zone, or the default zone, L is the
+  player's level.
+- A level of 255 (requires key) does not scale.
+- The bands then apply as in the table above.
 
-The level is worked out each time a band is chosen: for the prompt, the gate, the
-lockpicking session, and the perk conditions. The stored level stays the authored one, so a
-picked and relocked lock keeps scaling. UESP "Skyrim:Lockpicking" notes that a leveled lock
-can give experience again "if the lock has leveled up since when it was first picked",
-which fits a level worked out again later. Papyrus `SetLockLevel` to another level stops the
-scaling. Papyrus `GetLockLevel` answers the stored level.
+Example: an authored level of 25 in a zone of level 30 gives 55, which is Expert. Viola
+Giordano's front door in Windhelm is a leveled Adept lock (50). At player level 1 it is 51,
+Expert, and from level 26 it is 76 or more, Master. UESP "Skyrim:That Was Always There" calls
+it "a difficult leveled lock (Expert or Master level)".
 
-What the install and UESP show:
+The stored level stays the authored one, so a picked and relocked lock keeps scaling. A save
+holds the authored level too: `openskycli ess locks <save.ess>` lists each `ExtraLock` beside
+the plugin's `XLOC`, and every leveled lock in 13 saves, at player levels 1 to 17, stored its
+authored level. The vanilla masters hold 146 leveled locks: 142 in `Skyrim.esm` and 4 in
+`Dragonborn.esm`. Most are Thieves Guild strongboxes (`TGRStrongbox`), jail evidence chests,
+and city doors.
 
-- The vanilla masters hold 146 leveled locks: 142 in `Skyrim.esm` and 4 in `Dragonborn.esm`.
-  Most are Thieves Guild strongboxes (`TGRStrongbox`), jail evidence chests, and city doors.
-- Viola Giordano's front door in Windhelm is a leveled Adept lock. UESP
-  "Skyrim:That Was Always There" calls it "a difficult leveled lock (Expert or Master
-  level)", so it shows one or two bands above its authored level. The rule above gives
-  Expert from player level 11 and Master from level 21.
-- No UESP page gives the band of one leveled lock at several player levels, which would fix
-  the step. That observation needs the game itself.
+[WARNING] OpenSky does not follow this rule yet. It raises the lock one band for every 10
+player levels above level 1, stops at Master, and does not read the encounter zone. Papyrus
+`SetLockLevel` to another level stops the scaling, and `GetLockLevel` answers the stored level.
 
-What the saves show. `openskycli ess locks <save.ess>` lists each `ExtraLock` change form
-beside the plugin's `XLOC`. Run over 13 saves on the development machine
-(`.logs/ess-locks/20261102T210713Z`), every leveled lock stores its authored level:
+## Broken locks
 
-| Player level | Saves | Leveled locks, authored -> stored |
-| --- | --- | --- |
-| 1 | 1 | 0 -> 0 (4), Adept 50 -> 50 (5) |
-| 9 | 1 | 0 -> 0 (6), Adept 50 -> 50 (9) |
-| 17 | 11 | 0 -> 0 (6), Apprentice 25 -> 25 (1), Adept 50 -> 50 (10) |
+Bytes 12 to 15 of `XLOC` are a broken-lock counter. Every reference with `XLOC` starts locked
+(flag 0x01), whatever the file says. Unlocking clears flag 0x01 and sets the counter to 0.
 
-So a save holds the authored level, not the band the game shows, and saves cannot fix the
-step. This agrees with the rule above that the stored level stays the authored one. The
-stored flag byte keeps 0x04 on every leveled lock. Bit 0x01 is set on some locks of each
-kind; its meaning is not confirmed.
+- The lock is broken when the counter is at least 1, or at least 2 when the player's perk entry
+  point 16, "Ignore Broken Lock", gives more than 0.0001.
+- A broken lock makes `GetLocked` return 2 and `GetIsLockBroken` return 1, and lockpicking it is
+  refused with `sImpossibleLock`.
+- No code was found that raises the counter, so in the vanilla game no lock breaks.
 
 ## The use-key gate
 

@@ -11,5 +11,6 @@ public protocol ProjectileRuntimePort: AnyObject {
     var impacts: MeleeImpactResolver? { get }
     var live: [LiveProjectile] { get }
     @discardableResult func removeArrows(stuckIn host: FormID) -> Int
+    func activateStuck(_ key: ReferenceKey) -> StuckProjectileUse?
     func npcSpellAim(at point: SIMD3<Float>, concentration: Bool) -> SIMD3<Float>
 }

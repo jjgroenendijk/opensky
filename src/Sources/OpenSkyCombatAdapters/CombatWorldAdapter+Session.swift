@@ -14,7 +14,7 @@ import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
@@ -27,7 +27,7 @@ import OpenSkyRendering
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension CombatWorldAdapter {
@@ -41,6 +41,34 @@ extension CombatWorldAdapter {
         frames.registerCombatMelee(stage: stage)
         frames.registerCombatArchery(stage: stage)
         frames.registerCombatLoop(stage: stage)
+        frames.registerStuckProjectileUse()
+    }
+}
+
+extension CombatFrameSteps {
+    func registerStuckProjectileUse() {
+        hosts.streamer.activationGate.register(.projectile) { [weak self] target in
+            self?.stuckProjectileRefusal(for: target.interaction.reference)
+        }
+    }
+
+    /// A use of a stuck projectile: the first one plays its disable sound, and one that
+    /// cannot be picked up is refused without a notice. Nil for any other reference.
+    func stuckProjectileRefusal(for reference: FormID) -> ActivationRefusal? {
+        guard
+            let key = SpawnedReferenceIdentity.key(for: reference),
+            let use = hosts.combat.activateStuckProjectile(key)
+        else { return nil }
+        if let sound = use.disableSound {
+            motion.playSound(sound, at: use.position)
+        }
+        return use.allowsPickUp ? nil : .inert
+    }
+}
+
+extension CombatWorldAdapter {
+    public func stuckProjectileRefusal(for reference: FormID) -> ActivationRefusal? {
+        frames.stuckProjectileRefusal(for: reference)
     }
 }
 

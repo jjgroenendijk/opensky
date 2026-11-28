@@ -132,11 +132,13 @@ page.
 Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbXLOC`, `wbXESP`, and `wbMapMarkerEnum`.
 
 `XLOC` is 20 bytes on every one of the 1,505 vanilla locks: uint8 level, 3 unused bytes,
-a `KEYM` FormID, uint8 flags (0x04 leveled), and 11 more bytes. Levels are 1 novice,
+a `KEYM` FormID, uint8 flags (0x01 locked, 0x04 leveled) and 3 unused bytes, a uint32
+broken-lock counter, and a uint32 of unknown use. Levels are 1 novice,
 25 apprentice, 50 adept, 75 expert, 100 master, and 255 requires key. The decoder keeps the
 number: the game bands any value by its `iLockLevelMax*` settings, and 310 vanilla locks store
 0, which reads as Novice ([locks](../engine/locks.md#levels)). Shorter fields from 4 bytes up
-decode what they hold.
+decode what they hold. At load the game sets flag 0x01 on every reference with `XLOC`,
+whatever the file says ([locks](../engine/locks.md#broken-locks)). Nothing reads flag 0x08.
 
 `XESP` is a parent reference and uint8 flags (0x01 opposite of parent, 0x02 pop in), then
 3 unused bytes. `REFR`, `ACHR`, and `PHZD` carry it.
@@ -230,13 +232,22 @@ first child of the skeleton root.
 
 `XNDP` is bookkeeping between a door and its navmesh. It changes nothing else.
 
-`XFVC` is the extra favour cost of a request:
+`XFVC` is the extra favour cost of a crime. It counts when the player commits a crime of type
+0 to 6 (6 is a werewolf transformation) and a unique NPC judges it. Membership in a faction
+that ignores that crime type lets the crime pass first. Pickpocketing, and an assault on that
+NPC, never take the favour test. The test:
 
-1. cost = base cost + truncate(`XFVC`);
+1. cost = crime value + truncate(`XFVC` of the target reference); a werewolf transformation
+   counts as 1000;
 2. cost = truncate(cost * m), at least 1, where
    `m = fSpeechcraftFavorMax + (fSpeechcraftFavorMin - fSpeechcraftFavorMax) * Speech / 100`;
 3. points = truncate(cost * `fCrimeFavorMult` + `iCrimeFavorBaseValue`);
-4. the actor refuses when the points are above its relationship rank.
+4. the NPC ignores the crime when the points are at most its relationship rank with the player
+   (4 lover down to -4 archnemesis).
+
+Example: cost 1 at Speech 100 gives 0.5, which becomes 1. A friend (rank 1) ignores the crime;
+an acquaintance (rank 0) does not. `INFO` favour levels 1, 2, and 3 read the globals
+`FavorCostSmall`, `FavorCostMedium`, and `FavorCostLarge` with the same Speech multiplier.
 
 `XHTW` is stored and never read. When it loads, the value also lands in the favour cost
 slot, which a later `XFVC` overwrites. `XMBO` and `XIS2` are stored and never read. `XOCP`,

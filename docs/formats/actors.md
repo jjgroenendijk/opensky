@@ -286,7 +286,7 @@ Fields beyond the ones above, read into the actor's details:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `SHRT` | lstring | Short name |
+| `SHRT` | lstring | Short name, for `<Alias.ShortName=...>` text |
 | `KWDA` | FormID array | Keywords |
 | `NAM6`, `NAM7` | float | Height and weight |
 | `NAM8` | uint32 | Sound level |
@@ -315,8 +315,18 @@ How the game uses some of them:
 - `ATKR` names an attack race. Its attacks merge with the NPC's own, matched by `ATKE` event
   name ([attack data](../engine/attack-data.md#which-list-an-actor-uses)).
 - `ANAM` is a far-away model, an `ARMO`. `DNAM` byte 44 is its distance, a float clamped to
-  65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
-  from the camera wears one `ANAM` item; a nearer actor has it taken off.
+  65,535 and kept as a whole number; 0 turns it off. It applies only to an actor with 3D and
+  AI whose parent cell is the worldspace's persistent cell, which the game makes at run time.
+  A worldspace with parent flag `0x40` (use sky cell) uses its parent's cell. When the camera
+  is further away than the distance, the game adds one `ANAM` item if the actor has none,
+  equips it, and refreshes the actor's 3D. When the camera comes back within range, the game
+  removes the item from the inventory, not only from the body. One more check against the
+  player is not known.
+- `SHRT` is read only by the text tag `<Alias.ShortName=X>` in quest, objective, dialogue, and
+  book text. An empty `SHRT` gives the full name. The same tag handler also fills `Pronoun`
+  (he, she), `PronounObj` (him, her), `PronounPos` (his, hers), `PronounPosObj` (his, her),
+  `PronounRef` and `PronounInt` (himself, herself), `Gender` (male, female), and `Race` (the
+  race name), from the `sPronoun*` and `sGender*` settings.
 - `DOFT` and `SOFT`: the items of both outfits go into the actor's inventory as outfit items.
   Only the default outfit is worn. `SetOutfit` with a new outfit takes the old outfit's items
   away, stores the new outfit on the base, adds its items, and equips them at once when the

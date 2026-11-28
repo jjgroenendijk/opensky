@@ -109,3 +109,18 @@ nonisolated public struct LiveProjectile: Equatable, Sendable {
         self.nextConeLook = nextConeLook
     }
 }
+
+/// What one use of a stuck projectile does.
+nonisolated public struct StuckProjectileUse: Equatable, Sendable {
+    /// False when the use does nothing more, so the AMMO is not taken.
+    public let allowsPickUp: Bool
+    /// The `PROJ` disable sound to play, on the use that disabled it.
+    public let disableSound: FormID?
+    public let position: SIMD3<Float>
+
+    public init(allowsPickUp: Bool, disableSound: FormID?, position: SIMD3<Float>) {
+        self.allowsPickUp = allowsPickUp
+        self.disableSound = disableSound
+        self.position = position
+    }
+}

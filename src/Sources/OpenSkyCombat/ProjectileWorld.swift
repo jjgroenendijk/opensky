@@ -84,6 +84,9 @@ nonisolated public struct StuckProjectile: Equatable, Sendable {
     /// The reference it stuck in, for the readout. Nil for terrain and for
     /// anything the sweep could not name.
     public let host: FormID?
+    public var activation = ProjectileActivation()
+    /// Set by the first use of a projectile with Can Be Disabled.
+    public var isDisabled = false
 }
 
 /// Everything the archery runtimes need from the session around them. It refines
