@@ -87,6 +87,11 @@ extension CombatPort {
         archery?.projectiles.removeArrows(stuckIn: host) ?? 0
     }
 
+    /// Nil for a reference that is no stuck projectile.
+    public func activateStuckProjectile(_ key: ReferenceKey) -> StuckProjectileUse? {
+        archery?.projectiles.activateStuck(key)
+    }
+
     /// Whether the player's weapon is out; nil before melee starts.
     public var meleeWeaponInHand: Bool? {
         melee?.state.drawState.isWeaponInHand

@@ -49,4 +49,6 @@ public enum ActivationGateStep: Int, FramePhase {
     case lock
     /// Actor state, used furniture, parent activation, and combat (`ActivationRefusalRule`).
     case notice
+    /// Last, because the first use of a stuck projectile changes it.
+    case projectile
 }

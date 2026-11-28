@@ -3,9 +3,10 @@
 // is at its body-length cap. See docs/engine/projectiles.md, "After the impact".
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
+import OpenSkyGameData
 import simd
 
 /// The arrows standing in actors, the clock they age on, and the recovery roll.
@@ -37,7 +38,8 @@ extension ProjectileRuntime {
             rotation: ProjectileImpactQuery.stuckRotation(
                 alongFlight: projectile.state.velocity
             ),
-            host: impact.reference
+            host: impact.reference,
+            activation: projectile.profile.activation
         )
         guard let key = world.spawnStuckProjectile(arrow) else { return false }
         stuck.append((arrow, key))
@@ -81,6 +83,21 @@ extension ProjectileRuntime {
             stuck[index].key.map { attached.holder[$0] == actor } ?? false
         }
         removeStuckArrows(Array(held.dropLast(max(0, arrows.arrowsPerActor))))
+    }
+
+    /// A use of the stuck projectile `key`: the first use of one with Can Be Disabled
+    /// disables it, and only one with Can Be Picked Up lets the take go on. Nil for
+    /// a key that is no stuck projectile.
+    public func activateStuck(_ key: ReferenceKey) -> StuckProjectileUse? {
+        guard let index = stuck.firstIndex(where: { $0.key == key }) else { return nil }
+        let rule = stuck[index].arrow.activation
+        let disables = rule.canBeDisabled && !stuck[index].arrow.isDisabled
+        stuck[index].arrow.isDisabled = stuck[index].arrow.isDisabled || disables
+        return StuckProjectileUse(
+            allowsPickUp: rule.canBePickedUp,
+            disableSound: disables ? rule.disableSound : nil,
+            position: stuck[index].arrow.position
+        )
     }
 
     /// Pulls out every arrow standing in `host`: Papyrus `ClearExtraArrows`. Returns the count.

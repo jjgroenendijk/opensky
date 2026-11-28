@@ -71,4 +71,10 @@ nonisolated public enum SpawnedReferenceIdentity: Sendable {
         }
         return FormID(modIndex | UInt32(sequence))
     }
+
+    /// The generated key a placed FormID stands for, or nil for a plugin FormID.
+    public static func key(for formID: FormID) -> ReferenceKey? {
+        guard formID.rawValue & 0xFF00_0000 == modIndex else { return nil }
+        return .generated(UInt64(formID.rawValue & 0x00FF_FFFF))
+    }
 }

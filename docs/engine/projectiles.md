@@ -224,8 +224,11 @@ Example: in first person a target sits 0.6 degrees off the crosshair. The shot t
   damage. Where it lands next, it lies at the contact point; one that falls on an actor is gone.
 - A surface whose material OpenSky cannot name holds the arrow, and so does every surface when the
   load order has no material records.
-- The `PROJ` flags Can Be Picked Up and Can Be Disabled are not read. A stuck arrow is a placed
-  `AMMO`, so every one can be taken with the item rules. Every vanilla arrow sets Can Be Picked Up.
+- A stuck arrow is a placed `AMMO`, so a take goes through the item rules. A use of one without
+  Can Be Picked Up does nothing, and shows nothing. Disabling one only plays the disable sound,
+  because a stuck arrow has no flight sound or timer left. Example: a stuck bound arrow
+  (`BoundArrowPROJ` sets only Can Be Disabled) plays its disable sound on the first use and is
+  never taken.
 - An arrow sticks in an actor at the actor's position when it hit, not on a bone. No arrow
   impales.
 - Any hit on an actor with a shield can be deflected, not only a hit on the shield's own body.

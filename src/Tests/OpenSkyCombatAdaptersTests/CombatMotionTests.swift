@@ -1,7 +1,7 @@
 // The combat world moves actors, drives their graphs, and plays impacts through its ports.
 
 import OpenSkyBehavior
-import OpenSkyCombatAdapters
+@testable import OpenSkyCombatAdapters
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -26,6 +26,33 @@ struct CombatMotionTests {
         host.fakeAiWorld.isAIDisabledResult = false
         host.fakePackages.ignoresCombatResult = true
         #expect(adapter.packageIgnoresCombat(Self.foe))
+    }
+
+    /// `BoundArrowPROJ` sets only Can Be Disabled: a use of a stuck one takes nothing.
+    @Test func aStuckProjectileThatCannotBePickedUpRefusesTheUse() {
+        let archery = FakeArcheryRuntimePort()
+        host.fakeCombat.archery = archery
+        let stuck = FormID(0xFF00_0007)
+        #expect(adapter.stuckProjectileRefusal(for: stuck) == nil)
+
+        archery.projectiles.activateStuckResult = StuckProjectileUse(
+            allowsPickUp: false, disableSound: FormID(0x0005_5555), position: .zero
+        )
+        #expect(adapter.stuckProjectileRefusal(for: stuck) == .inert)
+        #expect(adapter.stuckProjectileRefusal(for: FormID(0x0001_397D)) == nil)
+        #expect(archery.projectiles.activateStuckCalls == [.generated(7), .generated(7)])
+
+        archery.projectiles.activateStuckResult = StuckProjectileUse(
+            allowsPickUp: true, disableSound: nil, position: .zero
+        )
+        #expect(adapter.stuckProjectileRefusal(for: stuck) == nil)
+    }
+
+    @Test func theStuckProjectileCheckJoinsTheActivationGate() {
+        let seam = FakeActivationGateSeamPort()
+        host.fakeStreamer.activationGate = seam
+        adapter.frames.registerStuckProjectileUse()
+        #expect(seam.registerCalls == [.projectile])
     }
 
     @Test func movesGoThroughTheStreamer() {

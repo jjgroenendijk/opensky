@@ -46,6 +46,11 @@ struct SpawnedReferenceTests {
         )
     }
 
+    @Test func aSpawnFormIDMapsBackToItsKey() {
+        #expect(SpawnedReferenceIdentity.key(for: FormID(0xFF00_0007)) == .generated(7))
+        #expect(SpawnedReferenceIdentity.key(for: FormID(0x0001_397D)) == nil)
+    }
+
     @Test func pluginKeysAndOverrunSequencesHaveNoSpawnFormID() {
         #expect(SpawnedReferenceIdentity.formID(for: .plugin(name: "a.esm", objectID: 5)) == nil)
         #expect(SpawnedReferenceIdentity.formID(for: .generated(0x0100_0000)) == nil)

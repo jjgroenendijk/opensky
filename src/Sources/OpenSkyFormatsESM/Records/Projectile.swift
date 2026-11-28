@@ -23,10 +23,10 @@ nonisolated public struct Projectile: Equatable, Sendable {
         public static let explosion = Flags(rawValue: 0x0002)
         public static let alternateTrigger = Flags(rawValue: 0x0004)
         public static let muzzleFlash = Flags(rawValue: 0x0008)
-        static let canBeDisabled = Flags(rawValue: 0x0020)
+        public static let canBeDisabled = Flags(rawValue: 0x0020)
         /// The projectile survives its impact as a pickup — what makes a spent
         /// arrow retrievable.
-        static let canBePickedUp = Flags(rawValue: 0x0040)
+        public static let canBePickedUp = Flags(rawValue: 0x0040)
         static let supersonic = Flags(rawValue: 0x0080)
         static let pinsLimbs = Flags(rawValue: 0x0100)
         static let passThroughSmallTransparent = Flags(rawValue: 0x0200)

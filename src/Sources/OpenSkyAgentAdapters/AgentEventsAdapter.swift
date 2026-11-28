@@ -238,6 +238,8 @@ struct AgentStreamerEvents {
                 data["reason"] = "perk"
             } else if event.refusal == .mounted {
                 data["reason"] = "mounted"
+            } else if event.refusal == .inert {
+                data["reason"] = "inert"
             }
             state?.tap.append(AgentEventKind.activationRefused, data)
         }
