@@ -90,6 +90,16 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         return Self.clamp(Self.neutralOffense / offense, to: Self.intervalScaleRange)
     }
 
+    /// The attack chance at the offensive value: `fCombatAttackChanceMin` (0.05) to
+    /// `fCombatAttackChanceMax` (1).
+    public func attackChance() -> Float {
+        let offense = offensiveMultiplier.isFinite ? offensiveMultiplier : Self.neutralOffense
+        return Self.attackChanceMin + (Self.attackChanceMax - Self.attackChanceMin) * offense
+    }
+
+    public static let attackChanceMin: Float = 0.05
+    public static let attackChanceMax: Float = 1
+
     /// The block chance scales with defense over neutral.
     public func blockChance(base: Float) -> Float {
         let defense = Self.finitePositive(defensiveMultiplier, or: Self.neutralDefense)
@@ -138,6 +148,10 @@ nonisolated extension CombatBehaviorSettings {
         settings.blockChance = tuning.blockChance(base: blockChance)
         settings.castChance = tuning.castChance(base: castChance)
         settings.rangedCastChance = min(rangedCastChance, tuning.rangedCastChance())
+        settings.attackChance = tuning.attackChance()
+        settings.staggeredAttackMult = max(
+            tuning.attackWeights.attackStaggered, tuning.attackWeights.powerAttackStaggered
+        )
         return settings
     }
 }

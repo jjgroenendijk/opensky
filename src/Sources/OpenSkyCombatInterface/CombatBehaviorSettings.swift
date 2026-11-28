@@ -8,8 +8,8 @@ import Foundation
 /// The cadence, spacing, block, flee and search numbers one combat behavior
 /// machine runs on.
 nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
-    /// Seconds an actor waits between the end of one attack and the start of
-    /// the next.
+    /// Seconds an actor waits between the end of one attack and the start of the next, when
+    /// it has no attack chance; an archer's wait between shots in every case.
     ///
     /// Inherited unchanged from the dev target's `intervalSeconds`, and for its
     /// reason: slow enough that a player can block, draw a bow, and watch what
@@ -116,6 +116,13 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     public var shoutRetrySeconds: Float = 4
     /// The stage times of a flying actor.
     public var flight = CombatFlightSettings()
+    /// The chance, 0 through 1, that an actor in reach starts an attack on one roll. A combat
+    /// style sets it from its offensive value. Nil waits `attackIntervalSeconds` instead.
+    public var attackChance: Float?
+    /// How long an actor in reach waits after a failed attack roll before it rolls again.
+    public var attackRollSeconds: Float = 0.25
+    /// What the attack chance is multiplied by against a staggered target.
+    public var staggeredAttackMult: Float = 1
 
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()
