@@ -67,14 +67,6 @@ extension RagdollWorldAdapter {
         remains.showDismemberment(of: key, node: node, at: position)
     }
 
-    public func explodablePart(of key: ReferenceKey) -> ExplodablePart? {
-        remains.explodablePart(of: key)
-    }
-
-    public func showPartExplosion(of key: ReferenceKey, node: String, at position: SIMD3<Float>) {
-        remains.showPartExplosion(of: key, node: node, at: position)
-    }
-
     public func isCorpseKept(_ key: ReferenceKey) -> Bool {
         remains.isCorpseKept(key)
     }

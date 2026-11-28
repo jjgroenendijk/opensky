@@ -15,8 +15,6 @@ nonisolated public struct StruckBodyPart: Equatable, Sendable {
     public var healthPercent: UInt8
     /// An AVIF index, or nil for none.
     public var actorValue: Int32?
-    /// Set when the part has the explodable flag, so a killing blow rolls on it.
-    public var explodable: ExplodablePart?
     /// The severable `IPDS`, in the load-order FormID space, that sprays blood around.
     public var bloodImpactDataSet: FormID?
 
@@ -27,7 +25,6 @@ nonisolated public struct StruckBodyPart: Equatable, Sendable {
         damageMultiplier: Float = 1,
         healthPercent: UInt8 = 0,
         actorValue: Int32? = nil,
-        explodable: ExplodablePart? = nil,
         bloodImpactDataSet: FormID? = nil
     ) {
         self.partType = partType
@@ -36,7 +33,6 @@ nonisolated public struct StruckBodyPart: Equatable, Sendable {
         self.damageMultiplier = damageMultiplier
         self.healthPercent = healthPercent
         self.actorValue = actorValue
-        self.explodable = explodable
         self.bloodImpactDataSet = bloodImpactDataSet
     }
 }

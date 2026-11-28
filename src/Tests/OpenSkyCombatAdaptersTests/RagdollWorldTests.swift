@@ -125,9 +125,6 @@ struct RagdollWorldTests {
         adapter.removeCorpse(Self.actor)
         adapter.showDismemberment(of: Self.actor, node: "NPC Head", at: .zero)
         #expect(host.fakeEffects.showDefaultBloodCalls.count == 1)
-        #expect(adapter.explodablePart(of: Self.actor) == nil)
-        adapter.showPartExplosion(of: Self.actor, node: "NPC Head", at: .zero)
-        #expect(host.fakeEffectsWorld.detonateEffectExplosionCalls.isEmpty)
     }
 
     @Test func aDeathIsReportedToTheStoryAndMagic() {

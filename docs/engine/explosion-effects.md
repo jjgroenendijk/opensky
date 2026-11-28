@@ -98,12 +98,5 @@ flowchart TD
   order without that record shows no swap effect.
 - [WARNING] The swap power uses the `DATA` radius as it is, with no 22 units-per-foot factor and a
   scale of 1, as OpenSky's blast damage does. The viewer is the camera.
-- An exploded part is kept in the death state like a cut head, with a flag. The body is drawn
-  without the part, and no piece of it is left to fall. A save keeps it
-  ([save actor chunks](../formats/opensky-save-actor-chunks.md#deth-deaths)).
-- [WARNING] OpenSky acts on the mark, which the game does not. The roll uses the part the
-  killing hit struck ([body parts](../formats/body-parts.md#which-part-a-hit-strikes)), or the
-  first explodable part for a hit that found none.
-- A blown-off part plays the part's explodable explosion. Its debris and decals are not drawn.
-- A part that does not explode is cut off by the same roll, with no perk needed. A body with no
-  explodable part keeps the perk rule of [decapitation](ragdoll.md#decapitation).
+- Like the game, OpenSky does not roll for an explodable part. Only a decapitating blow cuts a
+  body ([decapitation](ragdoll.md#decapitation)).
