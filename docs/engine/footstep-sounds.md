@@ -12,10 +12,10 @@ The player's footsteps have no step timer. The vanilla movement clips carry thei
 marks: annotations in the animation files, raised as events by the behavior graph. `0_master.hkx`
 declares `FootLeft` and `FootRight` as the first two of its 1,217 events. So the graph already says
 when a foot lands, at the moment the animation plants it. A rhythm computed from speed would drift
-away from the animation the player sees ([behavior runtime](/engine/behavior-runtime.md)).
+away from the animation the player sees ([behavior runtime](behavior-runtime.md)).
 
-The records and the chain from tag to sound file are on the [footstep records](/formats/footstep.md)
-page. How a surface names its material is on the [material types](/formats/material-type.md) page.
+The records and the chain from tag to sound file are on the [footstep records](../formats/footstep.md)
+page. How a surface names its material is on the [material types](../formats/material-type.md) page.
 
 ## The route
 
@@ -35,7 +35,7 @@ Once per frame:
 
 The ground material under the capsule is passed along too. The impact table is keyed by it, so
 snow, wood, grass, and gravel choose different `IPCT` records and different sounds
-([walk mode](/engine/walk-mode.md)).
+([walk mode](walk-mode.md)).
 
 The footstep set comes from `ARMA` `SNDD` on the armature in the feet slot of the built body. With
 none, it is `DefaultFootstepSet`. Worn parts come before skin parts in a resolved appearance, so
@@ -45,7 +45,7 @@ Footsteps are positional, placed at the feet, not at the listener. That is what 
 sound right.
 
 A routed step also shows the `IPCT` impact model at the feet, such as dust
-([impacts and decals](/rendering/decals.md)).
+([impacts and decals](../rendering/decals.md)).
 
 ## What the game does
 
@@ -78,7 +78,7 @@ flowchart TD
 - There is no ground check. A foot tag sent in the air plays, on the last ground material. There is
   no rate limit, no minimum time between steps, and no merging of one tag sent twice in a frame.
   So the step rate is the rate of the foot marks in the clips that play, and a clip that runs too
-  fast is heard at once ([shared nodes](/engine/behavior-clips.md#behavior-references)).
+  fast is heard at once ([shared nodes](behavior-clips.md#behavior-references)).
 - Two different worn sets play two sounds per step.
 - A hard landing of the player, with fall damage above 0, plays a heavy landing sound above a
   fall-damage threshold and a light one below it. The threshold starts at 500.

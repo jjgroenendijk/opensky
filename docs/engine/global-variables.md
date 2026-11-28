@@ -8,9 +8,9 @@ tags: [engine, world, globals, conditions, game-clock, runtime-state]
 
 # Global variables
 
-A [`GLOB` record](/formats/records.md) gives a name, a number type, and a default value. A session
+A [`GLOB` record](../formats/records.md) gives a name, a number type, and a default value. A session
 then writes over the default, and conditions, scripts, and the game clock must all read what the
-session last wrote. The overrides live in the [world state store](/engine/runtime-state.md).
+session last wrote. The overrides live in the [world state store](runtime-state.md).
 
 ## A map beside the components
 
@@ -45,7 +45,7 @@ values.
   component changes. Merging the two by sequence gives the real causal order.
 - Global writes fire their own callback, not the reference change callback. The reference callback
   rebuilds cells, and a global changes a number, not a scene. The time globals are not written
-  as the clock runs: a read computes them from the clock ([game clock](/engine/game-clock.md)).
+  as the clock runs: a read computes them from the clock ([game clock](game-clock.md)).
   A scrub or a script write to one moves the clock instead, and must not rebuild every loaded
   cell.
 
@@ -59,16 +59,16 @@ reader off the main actor gets the same answers without touching the store.
 It answers four questions: the value with its type, the number alone (the clock reads `TimeScale`
 this way), the right side of a `CTDA` comparison, and whether the session has written the global.
 
-A seam built with the [game clock](/engine/game-clock.md) answers the five time globals from the
+A seam built with the [game clock](game-clock.md) answers the five time globals from the
 clock, ahead of any override. Writing one of those globals moves the clock instead. It is journaled
 on the globals ring, stores no override, and does not fire the global callback, so moving the time
 does not roll the weather again. The game clock page explains why the clock owns time.
 
-For a `CTDA` comparison ([conditions](/formats/conditions.md)), a literal passes through and a global
+For a `CTDA` comparison ([conditions](../formats/conditions.md)), a literal passes through and a global
 operand resolves through the seam. No answer means the condition names a global nothing defines. The
 evaluator treats that as a failure, not as a comparison with zero
-([condition evaluation](/engine/conditions.md)).
+([condition evaluation](conditions.md)).
 
 The first reader was weather: each climate weather chance can name a global, so changing that global
-changes which weather the pick returns ([weather](/engine/weather.md)). The weather store stays
+changes which weather the pick returns ([weather](weather.md)). The weather store stays
 read-only. A new seam is handed to it on every global change, and it picks again.

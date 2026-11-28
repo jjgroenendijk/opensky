@@ -10,7 +10,7 @@ tags: [engine, actor, facegen, app-ui]
 
 The game ships one baked FaceGen head per NPC: a single mesh with the face, hair, brows,
 and eyes merged. OpenSky draws that head by default. It can also build the head from its
-parts, the `HDPT` records ([Head parts](/formats/head-parts.md)). This is the path a
+parts, the `HDPT` records ([Head parts](../formats/head-parts.md)). This is the path a
 custom character will need, because a custom character has no baked head.
 
 The choice lives in the actor's presentation state for the session, and a change rebuilds the
@@ -48,14 +48,14 @@ An assembled head, on an NPC or on the player, gets the same face data the race 
 - The race TRI has one target per race, named after the race, such as `NordRace`. The head
   shows the target of the race's morph race (`RACE` `NAM8`), else its own, at weight 1.
 - The chargen TRI takes the `NAM9` sliders and the `NAMA` parts, as on the
-  [race menu](/engine/race-menu.md#the-drawn-head) page.
+  [race menu](race-menu.md#the-drawn-head) page.
 - The race and chargen weights never change. The expression TRI's targets move with blinks,
-  expressions, and lip sync ([face morphs](/engine/face-morphs.md)).
+  expressions, and lip sync ([face morphs](face-morphs.md)).
 - The face part paints the `TINI` tint layers into a face tint, at each layer's `TINC` colour
   and `TINV` percent. `FTST` picks the complexion texture set.
 
 [WARNING] The race target at weight 1 is OpenSky's reading of the data, not observed in the
-game ([unverified values](/engine/unverified-values.md)).
+game ([unverified values](unverified-values.md)).
 
 On the install, Heimskr's assembled head covers the same pixels as his baked head with an
 intersection-over-union above 0.85.

@@ -8,7 +8,7 @@ tags: [engine, crime, factions, combat, papyrus]
 
 # Guards and arrest
 
-A bounty from [crime](/engine/crime.md) makes guards act. This page covers who is a guard, what
+A bounty from [crime](crime.md) makes guards act. This page covers who is a guard, what
 guards do, how an arrest ends, and the script surface.
 
 ## Who is a guard
@@ -56,7 +56,7 @@ nothing: "Self-defense against an unprovoked assault is legal" (UESP
 [Crime](https://en.uesp.net/wiki/Skyrim:Crime)). An aggressor in a policed faction, such as a guard,
 is not charged. Other actors get nothing from crime, and the record terms decide. Guard hostility ranks
 above relationships and factions, so a guard who is the player's friend still arrests them
-([combat](/engine/combat.md)).
+([combat](combat.md)).
 
 ## Confrontation
 
@@ -76,7 +76,7 @@ the bounty is gone. A conversation that could not open holds that guard back for
 
 A conversation that closes with the bounty cleared, but not through `PlayerPayCrimeGold` or
 `SendPlayerToJail`, sent the guard away quietly: a bribe, a Thane's status, or the Thieves Guild.
-It ends the [pickpocket](/engine/pickpocket.md) refusals charged to that faction.
+It ends the [pickpocket](pickpocket.md) refusals charged to that faction.
 
 This state lives in the session, not in a saved component, like the set of assaulted actors. A
 loaded save starts every encounter again from the ledger.
@@ -86,7 +86,7 @@ loaded save starts every encounter again from the ledger.
 | Ending | Effect |
 | --- | --- |
 | Pay (`PlayerPayCrimeGold`) | Refused unless the player's gold covers the bounty. Takes the gold and clears both halves of the bounty. The counts stay. By default it takes every stolen stack into the faction's `STOL` evidence chest, still stolen. `abGoToJail` moves the player to the `JAIL` marker |
-| Jail (`SendPlayerToJail`) | Takes stolen goods, clears the bounty, and sends the player to the jail cell ([jail](/engine/jail.md)). A faction with no cell to enter passes the sentence at once and moves the player to the `JAIL` marker |
+| Jail (`SendPlayerToJail`) | Takes stolen goods, clears the bounty, and sends the player to the jail cell ([jail](jail.md)). A faction with no cell to enter passes the sentence at once and moves the player to the `JAIL` marker |
 
 The Creation Kit describes the `JAIL` marker as "the spot where you'd be if you served time and
 were released from jail".
@@ -121,7 +121,7 @@ faction, not about no faction, and about the hold the subject stands in when the
 crime faction. The guard's arrest line `DGCrimeForcegreetTopic` runs `GetCrimeGold > 0` on the
 guard. These cases report "unavailable" instead of 0: no `FACT` data, a parameter naming a faction
 no plugin defines, and a null parameter for an actor with no crime faction outside any hold
-([condition evaluation](/engine/conditions.md)).
+([condition evaluation](conditions.md)).
 
 ## Papyrus natives
 
@@ -158,4 +158,4 @@ scripted alarm fail silently because the witness faced away. The wiki also notes
 
 - A guard does not answer another actor's alarm, and does not pursue or fight an NPC criminal.
   Only guards who see the player themselves act. The game never arrests an NPC
-  ([crime reports](/engine/crime-reports.md#guards)).
+  ([crime reports](crime-reports.md#guards)).

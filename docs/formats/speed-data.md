@@ -67,4 +67,4 @@ The modifier reads its state, direction, and goal from its bindings, then:
 
 Any lookup that fails outputs the goal. The output is usually bound to `SpeedSampled` (and
 `HorseSpeedSampled` on the horse). The engine writes `Speed`, never `SpeedSampled`; there is no
-playback-rate scaling on top. See [the locomotion graph](/engine/locomotion-graph.md).
+playback-rate scaling on top. See [the locomotion graph](../engine/locomotion-graph.md).

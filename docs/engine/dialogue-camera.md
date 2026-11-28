@@ -10,7 +10,7 @@ tags: [engine, dialogue, camera, npc, packages]
 
 When a conversation starts in first person, the player turns to look at the speaker. The speaker
 stops and faces the player. The camera does not move to a new place, and nothing is given back
-when the conversation ends. Topic selection is on the [dialogue runtime](/engine/dialogue.md) page.
+when the conversation ends. Topic selection is on the [dialogue runtime](dialogue.md) page.
 
 ## The turn to the speaker
 
@@ -90,11 +90,11 @@ so nothing here can disagree with what the AI does on the next frame.
 The facing hold turns the whole actor in place, at the same turn rate a walking actor uses. It
 sends a "standing still" drive every frame, so the animation keeps the idle clip. It does not
 count against the limit of eight movers. A turn has no path, no collision sweep, and no new
-search, so the CPU budget that limit protects does not apply ([navigation](/engine/navigation.md)).
+search, so the CPU budget that limit protects does not apply ([navigation](navigation.md)).
 Starting a walk ends a hold, and starting a hold ends a walk, because one yaw has one owner.
 During the conversation the speaker turns its head toward the player
-([head tracking](/engine/head-tracking.md)).
+([head tracking](head-tracking.md)).
 
 Suspension is a latch, not a saved plan. While an actor stood in a conversation, the world moved
 on. On release it needs the package its schedule names now. So the package is selected again from
-scratch, as after [combat](/engine/combat.md).
+scratch, as after [combat](combat.md).

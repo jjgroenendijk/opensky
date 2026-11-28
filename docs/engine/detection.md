@@ -11,7 +11,7 @@ tags: [engine, ai, perception, detection, stealth, sneak]
 
 This page covers what one observer makes of one target: how the detection value is computed,
 how it builds up into a state, and which inputs are still missing. What an alerted actor then
-does is on the [combat](/engine/combat.md) page.
+does is on the [combat](combat.md) page.
 
 Sources:
 
@@ -47,7 +47,7 @@ attenuation would make everything zero anyway.
 Observers are actors something already simulates: hostile to the player, engaged by the combat
 behavior, or running a package. Every observer tracks the player. An observer also tracks each NPC
 it attacks on sight, within 4096 units, as the combat loop finds them once a second
-([NPC foes](/engine/combat.md#npc-foes)). Past the cap of 64 pairs, the player's pairs come first.
+([NPC foes](combat.md#npc-foes)). Past the cap of 64 pairs, the player's pairs come first.
 An NPC target is seen standing still, so it makes no movement noise.
 
 ## The formula
@@ -154,7 +154,7 @@ of 12.5, before `fSneakSkillMult`.
 ### Detection events
 
 When the sight value is not positive, or the target is out of range, the observer checks the
-target's last sound event and its projectiles. [Detection events](/engine/detection-events.md)
+target's last sound event and its projectiles. [Detection events](detection-events.md)
 gives the distances, what makes an event, and the sound levels.
 
 ### Light level
@@ -209,7 +209,7 @@ not use it. Zero is a
 real answer: a target too quiet to notice even up close has no radius.
 
 Where each constant and each input comes from is on the
-[detection constants](/engine/detection-constants.md) page.
+[detection constants](detection-constants.md) page.
 
 ## Level and state
 
@@ -258,7 +258,7 @@ alone.
   before it refills, and holds at most 50 points.
 - A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10).
   In OpenSky the hold starts when an aggressive observer hears the target's
-  [sound event](/engine/detection-events.md#in-opensky). The event also puts that observer in
+  [sound event](detection-events.md#in-opensky). The event also puts that observer in
   its Alert state: an unaware observer becomes suspicious of the target, and the place of the
   event is the place it searches.
 
@@ -335,7 +335,7 @@ becoming hidden is not defined.
 ## Who runs detection
 
 When the game checks a pair, and the limits OpenSky puts on the pass, are on the
-[detection schedule](/engine/detection-schedule.md) page.
+[detection schedule](detection-schedule.md) page.
 
 ## Condition functions
 
@@ -351,7 +351,7 @@ Creation Kit adds 4096 to each.
 The run-on reference asks about the parameter: `[Observer].GetDetected Target`. Detection is not
 symmetric. A guard may see the player while the player does not know it is there. Asking about a
 reversed pair, which is not tracked, fails as unavailable. An untracked pair is not an undetected
-one. See [condition evaluation](/engine/conditions.md).
+one. See [condition evaluation](conditions.md).
 
 When an actor in combat loses a target that perception was tracking, it goes to the stored
 position. `GetCombatState` then returns 2, "Searching". Combat music keeps playing while an actor
@@ -360,7 +360,7 @@ searches.
 ## Checking it
 
 `openskycli gmst detection` prints every setting with its source, and
-`openskycli gmst list <s>` prints any group of game settings ([CLI](/tools/cli.md)).
+`openskycli gmst list <s>` prints any group of game settings ([CLI](../tools/cli.md)).
 
 OpenSky's choice: detection reads the light level at half the player's eye height, and a spell
 aims at the middle of its target's capsule.

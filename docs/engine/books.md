@@ -11,14 +11,14 @@ tags: [engine, menu, inventory]
 Using a book or a note in the inventory closes the inventory and opens the book menu on its
 text. Activating a book that lies in the world opens it too, without picking it up. The text
 is the `BOOK` record's `DESC`, from the `.dlstrings` table
-([localized strings](/formats/strings.md)). A record with the note flag opens as a note.
+([localized strings](../formats/strings.md)). A record with the note flag opens as a note.
 
 ## Reading
 
 Reading takes effect when the book opens, as in the game:
 
-- A skill book raises its skill once ([skill books](/engine/skill-advancement.md)).
-- A spell tome teaches its spell ([spellcasting](/engine/spellcasting.md)).
+- A skill book raises its skill once ([skill books](skill-advancement.md)).
+- A spell tome teaches its spell ([spellcasting](spellcasting.md)).
 
 ## The movie
 
@@ -36,7 +36,7 @@ Left and right arrows turn the pages, and Escape closes the book.
 ## The button bar
 
 `Interface\bookmenu.swf` is the bar under the pages, drawn as the
-[overlay movie](/rendering/swf-layer.md#overlay-movie). Its frame script calls
+[overlay movie](../rendering/swf-layer.md#overlay-movie). Its frame script calls
 `BottomBar.InitExtensions`, which registers one callback, measured on the install:
 
 | Call | What it does |
@@ -46,7 +46,7 @@ Left and right arrows turn the pages, and Escape closes the book.
 
 For a book in the inventory the take button is hidden. For a book read where it lies it shows,
 and Enter or E takes the book and closes the menu. Taking a book that someone owns is theft, by the
-same rule as taking any item ([crime](/engine/crime.md)).
+same rule as taking any item ([crime](crime.md)).
 
 ## The 3D book
 
@@ -135,7 +135,7 @@ A spell tome read from the inventory teaches its spell without opening the book 
 plays `UISpellLearned`, shows the spell-added notice, and uses up one tome. A known spell shows the
 already-known notice, plays no sound, and keeps the tome. A tome read from a container is removed
 only for a new spell. The first read of any book marks it read and counts it for the stats
-([general stats](/engine/statistics.md)).
+([general stats](statistics.md)).
 
 ## Differences from the game
 

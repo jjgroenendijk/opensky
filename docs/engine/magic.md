@@ -9,18 +9,18 @@ tags: [engine, magic, effects, actors, alchemy]
 
 # Magic and active effects
 
-An active effect is a decoded [`MGEF`](/formats/magic-records.md), with the `EFIT` numbers beside
-it, acting on an actor. It moves that actor's [actor values](/engine/actor-values.md) and ends by
+An active effect is a decoded [`MGEF`](../formats/magic-records.md), with the `EFIT` numbers beside
+it, acting on an actor. It moves that actor's [actor values](actor-values.md) and ends by
 itself. This page covers effects once they are applied.
 
 Related pages:
 
-- [Spellcasting](/engine/spellcasting.md): knowing spells, readying them, and casting.
-- [Spell delivery](/engine/spell-delivery.md): spells that leave the caster, and resistances.
-- [AI spell use](/engine/ai-spell-use.md): NPCs casting in a fight.
-- [Item enchantments](/engine/item-enchantments.md): weapon charge and worn effects.
-- [Enchanting](/engine/enchanting.md): disenchanting and making enchantments.
-- [Shouts](/engine/shouts.md): words of power, dragon souls, and the shout key.
+- [Spellcasting](spellcasting.md): knowing spells, readying them, and casting.
+- [Spell delivery](spell-delivery.md): spells that leave the caster, and resistances.
+- [AI spell use](ai-spell-use.md): NPCs casting in a fight.
+- [Item enchantments](item-enchantments.md): weapon charge and worn effects.
+- [Enchanting](enchanting.md): disenchanting and making enchantments.
+- [Shouts](shouts.md): words of power, dragon souls, and the shout key.
 
 ## Sources
 
@@ -28,7 +28,7 @@ Nothing here is from memory. The rules come from:
 
 - The Creation Kit wiki's Magic Effect page, for the flags and the archetype table
   (<https://ck.uesp.net/wiki/Magic_Effect>). The live site refuses automated requests, so it is read
-  through the Wayback Machine ([environment](/tools/environment.md)).
+  through the Wayback Machine ([environment](../tools/environment.md)).
 - UESP's Mod File Format/MGEF page, for the `DATA` layout and the flag bits
   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MGEF>).
 - UESP's Alchemy Effects page, for the ingredient rule
@@ -75,7 +75,7 @@ numbers are used as written.
 ## Which archetypes run
 
 Value Modifier, Dual Value Modifier, and Peak Value Modifier move actor values as this page
-describes. Every other archetype is on the [archetypes](/engine/magic-archetypes.md) page. An
+describes. Every other archetype is on the [archetypes](magic-archetypes.md) page. An
 archetype with no rule applies nothing and adds to a count per archetype, so the missing work is
 measured.
 
@@ -91,7 +91,7 @@ value in the vanilla table (usually -1, "none") applies nothing and has its own 
 
 A timed Recover effect on health, magicka, or stamina changes both the maximum and the current value,
 as the Creation Kit says. It holds its magnitude in the temporary slot
-([actor value store](/engine/actor-value-store.md)). The maximum rises, the current value rises with
+([actor value store](actor-value-store.md)). The maximum rises, the current value rises with
 it, and damage taken in the meantime is kept: 125 maximum with 60 taken reads 40 of 100 once the
 effect ends.
 
@@ -111,7 +111,7 @@ the same invented loss.
 ## The component
 
 An actor's effects are a world state component, in the order they were applied
-([runtime state](/engine/runtime-state.md)). It is separate from the actor value component because
+([runtime state](runtime-state.md)). It is separate from the actor value component because
 the two change at different rates: current health is written sixty times a second, and the effect
 list only when something is applied, ends, or is dispelled.
 
@@ -133,7 +133,7 @@ through that write. Without that, a held modifier would last exactly one frame.
 ## Conditions
 
 An effect entry's `CTDA` list is evaluated against the target when the effect is applied, with both
-run-ons naming the receiving actor ([condition evaluation](/engine/conditions.md)). An
+run-ons naming the receiving actor ([condition evaluation](conditions.md)). An
 empty list is true. A list OpenSky cannot evaluate is a false with a reason, and the entry is
 skipped and counted, never passed quietly.
 
@@ -247,7 +247,7 @@ it, and it belongs to alchemy, not to applying effects.
 
 ## Saving
 
-Timed effects go in the `AEFF` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)). It
+Timed effects go in the `AEFF` chunk ([save chunks](../formats/opensky-save-actor-chunks.md)). It
 stores elapsed time, not remaining time, so a loaded effect shows the same total duration as before.
 
 The `AVOV` chunk leaves out the temporary slot, because saving both it and the effect behind it
@@ -263,7 +263,7 @@ slot is rebuilt on the first frame its holder is loaded again.
 
 The magic menu (`Interface\magicmenu.swf`) uses the same list clips as the inventory movie
 (`/Menu_mc/InventoryLists_mc`), filled through `EntriesA` as the
-[inventory menu](/engine/inventory-menu.md#list-data) does. The first tab holds every known
+[inventory menu](inventory-menu.md#list-data) does. The first tab holds every known
 spell and power. An ability or a disease is not listed, so it cannot be readied; it shows only
 under the effects on the player. The other tabs follow in this order: the five schools
 (Alteration, Illusion, Destruction, Conjuration, Restoration), shouts, powers, and the effects on
@@ -278,7 +278,7 @@ left hand.
 Each tab row carries a `flag` and `bDontHide`, as the inventory's do, because a tab with a
 `flag` of 0 draws as a divider. The movie opens with its item panel hidden. On the first write
 with rows, OpenSky opens the panel with `ShowItemsList`, as the inventory does
-([inventory navigation](/engine/inventory-menu.md#navigation)). Without both, the menu shows
+([inventory navigation](inventory-menu.md#navigation)). Without both, the menu shows
 an empty list. `openskycli menu magic` fills the movie with a made-up spell list and prints how
 many tab and spell rows it drew, and the texts on the spell card.
 
@@ -313,7 +313,7 @@ these fields:
 
 The recharge is the recovery time of the last unlocked word, or of the first word when none is
 unlocked, times the player's Shout Recovery Mult. Which word the game uses is not confirmed
-([unverified values](/engine/unverified-values.md)). The movie also reads `soulSpent` on the
+([unverified values](unverified-values.md)). The movie also reads `soulSpent` on the
 card it last got: when it is true, the last unlocked word plays its `Learn` animation. After
 the player spends a dragon soul, OpenSky sends the shout's card again with `soulSpent` set.
 

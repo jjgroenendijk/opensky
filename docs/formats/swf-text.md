@@ -9,8 +9,8 @@ tags: [format, swf, ui, font, text, scaleform]
 # SWF fonts and text
 
 This page covers the font and text tags in a SWF movie, and the Scaleform file that maps
-font names. The container is on [SWF](/formats/swf.md). The glyph atlas is on
-[screen-space UI layer](/rendering/ui.md).
+font names. The container is on [SWF](swf.md). The glyph atlas is on
+[screen-space UI layer](../rendering/ui.md).
 
 Reference: Adobe SWF File Format Specification v19, chapter 10 "Fonts and Text"
 (pp. 173-182).
@@ -26,7 +26,7 @@ length-prefixed `FontName`, `NumGlyphs` UI16, then:
   each glyph out by offset, so padding between glyphs does not matter.
 - GlyphShapeTable: one bare SHAPE per glyph (`NumFillBits`, `NumLineBits`, shape records,
   no style arrays). Fill index 0 is off and 1 is on. See
-  [SWF shapes](/formats/swf-shapes.md).
+  [SWF shapes](swf-shapes.md).
 - CodeTable: `NumGlyphs` character codes, UI16 with `WideCodes`, else UI8.
 - Layout, only with `HasLayout`: `FontAscent`, `FontDescent`, `FontLeading` SI16, an SI16
   advance per glyph, a bit-packed RECT per glyph, then `KerningCount` UI16 and the kerning
@@ -91,7 +91,7 @@ The flags turn on these fields, in order:
 
 STRINGs end with a zero byte. SWF 6 and later say strings are UTF-8, but older movies use
 code-page bytes, so OpenSky decodes them leniently
-([string decoding](/decisions/string-decoding.md)). An HTML field keeps its markup; see
+([string decoding](../decisions/string-decoding.md)). An HTML field keeps its markup; see
 [HTML text](#html-text).
 
 The spec gives `Indent` as UI16, but `craftingmenu.swf` stores 65534 there for the bottom bar's
@@ -123,7 +123,7 @@ Other lines, such as `mapdefault`, are kept and reported as not understood.
 To resolve an alias, OpenSky finds its `map` line, then looks for a font with that name in
 the font libraries: exact match first, then without regard to case. It is not known whether
 GFx matches a `map` name against a font's export name (see ExportAssets on
-[SWF display list](/formats/swf-display-list.md)) or its internal name, so both are tried.
+[SWF display list](swf-display-list.md)) or its internal name, so both are tried.
 
 ### Finding a font in the game
 
@@ -160,7 +160,7 @@ kerning>`, `<b>`, and `<img>`.
   decode to their characters. An unknown one stays as written.
 - Each style draws as its own run, in its own font, size, and colour. Kerning applies only
   inside one style.
-- `<img>` draws a bitmap in the line ([AS2 display runtime](/engine/as2-display-runtime.md#text)).
+- `<img>` draws a bitmap in the line ([AS2 display runtime](../engine/as2-display-runtime.md#text)).
 - `<b>` and `kerning` change nothing: vanilla picks a bold font through `face`.
 
 ## Vanilla fonts and text

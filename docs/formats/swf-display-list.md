@@ -10,7 +10,7 @@ tags: [format, swf, ui, scaleform]
 
 A movie shows a list of placed characters, sorted by depth. Control tags change the list,
 and `ShowFrame` shows it. This page covers those tags and the tags that link movies. The
-container is on [SWF](/formats/swf.md). The [AS2 runtime](/engine/as2-runtime.md) steps the
+container is on [SWF](swf.md). The [AS2 runtime](../engine/as2-runtime.md) steps the
 frames after the first.
 
 References: Adobe SWF File Format Specification v19, chapter 3 "The display list"
@@ -33,7 +33,7 @@ assets" (pp. 285-286).
 PlaceObject2 flag byte, MSB to LSB: `HasClipActions`, `HasClipDepth`, `HasName`,
 `HasRatio`, `HasColorTransform`, `HasMatrix`, `HasCharacter`, `Move`. The fields follow in
 the reverse order: `CharacterId` UI16, MATRIX, CXFORMWITHALPHA, `Ratio` UI16, `Name`
-STRING, `ClipDepth` UI16, then CLIPACTIONS ([SWF actions](/formats/swf-actions.md)).
+STRING, `ClipDepth` UI16, then CLIPACTIONS ([SWF actions](swf-actions.md)).
 
 PlaceObject3 adds a second flag byte, MSB to LSB: reserved, `OpaqueBackground`,
 `HasVisible`, `HasImage`, `HasClassName`, `HasCacheAsBitmap`, `HasBlendMode`,
@@ -61,7 +61,7 @@ size) (spec pp. 42-47).
 The flags byte of a drop shadow, MSB to LSB: `InnerShadow`, `Knockout`, `CompositeSource`, then
 `Passes` UB[5]. A glow has `InnerGlow`, `Knockout`, `CompositeSource`, and `Passes` the same way.
 `Angle` is in radians and the blur and distance in pixels. The
-[SWF render layer](/rendering/swf-layer.md#filters-and-blend-modes) draws them.
+[SWF render layer](../rendering/swf-layer.md#filters-and-blend-modes) draws them.
 
 ## Place rules
 
@@ -138,7 +138,7 @@ those character IDs as if it defined them. The real character is in the source m
 
 Vanilla movies import their fonts from the font library movies. So an edit text's `FontID`
 usually names a character the movie does not define. OpenSky resolves the import name
-through `fontconfig.txt` ([SWF text](/formats/swf-text.md)).
+through `fontconfig.txt` ([SWF text](swf-text.md)).
 
 ## Imported sprites
 
@@ -170,7 +170,7 @@ never placed or exported again is skipped without reading the source. This keeps
 
 On `inventorymenu.swf`: 3 movies, 675 characters, 3 placeholders bound, 0 unresolved, 8
 imports skipped. The 11 display nodes become 373. See
-[inventory menu](/engine/inventory-menu.md).
+[inventory menu](../engine/inventory-menu.md).
 
 ## Loaded movies
 

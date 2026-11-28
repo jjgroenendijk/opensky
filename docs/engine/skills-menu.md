@@ -8,7 +8,7 @@ tags: [engine, menus, progression, perks, swf]
 
 # Skills menu
 
-The skills menu is where the player spends what [character leveling](/engine/character-leveling.md)
+The skills menu is where the player spends what [character leveling](character-leveling.md)
 earns: an attribute pick, perk points, and legendary skills. The Quick Stats key opens it
 (`/`, controlmap event `Quick Stats`, scan code 0x35).
 
@@ -52,10 +52,10 @@ Making a skill legendary uses the Jump key on a keyboard (Space) and the Y butto
 
 ## The two movies
 
-`statsmenu.swf` stays up while the menu is open, with the [perk sky](/engine/perk-sky.md)
+`statsmenu.swf` stays up while the menu is open, with the [perk sky](perk-sky.md)
 behind it. While a pick is owed, the stats movie is in its `LEVEL_UP` state and
 `levelupmenu.swf` is drawn over it on the SWF overlay layer
-([overlay movie](/rendering/swf-layer.md#overlay-movie)). After the last pick the overlay
+([overlay movie](../rendering/swf-layer.md#overlay-movie)). After the last pick the overlay
 goes and the stats movie returns to `STATS`.
 
 This is the game's layering. The stats movie has code for the level-up state: it places
@@ -137,7 +137,7 @@ text white.
 ### The perk sky
 
 Vanilla draws the perk stars, their lines, and the sky behind the ring in 3D, outside the
-movie. OpenSky draws them too: the [perk sky](/engine/perk-sky.md) page has the meshes, the
+movie. OpenSky draws them too: the [perk sky](perk-sky.md) page has the meshes, the
 layout, and the camera. The movie places each perk name where its star lands on screen, and
 its `MoveCamera` calls drive the opening camera move.
 
@@ -157,5 +157,5 @@ for the altar: it reads `DragonSouls`, refuses a tree with no perks, removes eac
 `fLegendarySkillResetValue` record, so the fallback of 15 applies to a vanilla install.
 
 The legendary counts are saved in their own `PLGD` chunk beside `PLVL`
-([save chunks](/formats/opensky-save.md#chunks)). `PLVL` entries carry no length, so a new
+([save chunks](../formats/opensky-save.md#chunks)). `PLVL` entries carry no length, so a new
 field there would break older readers.

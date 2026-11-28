@@ -9,11 +9,11 @@ tags: [engine, world, collision, nif, streaming, spatial-index]
 # Static collision world
 
 Every cell scene has a set of static collision shapes, built from the decoded
-[NIF Havok collision](/formats/nif-collision.md) of its placed references. Exterior cells stream
+[NIF Havok collision](../formats/nif-collision.md) of its placed references. Exterior cells stream
 in the 5x5 grid. An interior builds with its own cell. This layer only holds fixed world geometry
 and a way to find shapes near a point. The capsule that moves against it is on the
-[walk mode](/engine/walk-mode.md) page. Trigger volumes are on the
-[trigger volumes](/engine/trigger-volumes.md) page.
+[walk mode](walk-mode.md) page. Trigger volumes are on the
+[trigger volumes](trigger-volumes.md) page.
 
 ## Building a cell's shapes
 
@@ -41,7 +41,7 @@ A triangle mesh placed many times shares one copy of its vertex arrays.
 
 Each shape also keeps the `MATT` material of its surface. The NIF stores a Havok material value,
 which is a hash of a Creation Kit material name. The build resolves it through the material type
-index, so nothing later has to know about the hash ([material types](/formats/material-type.md)).
+index, so nothing later has to know about the hash ([material types](../formats/material-type.md)).
 
 A NIF shape has one material for all its geometry, so every piece of a split mesh has its shape's
 material. A capsule contact and a step probe both report the material they touched. That is how
@@ -74,12 +74,12 @@ searched.
 ## Movable bodies
 
 A solid body whose Havok data says it can move leaves the static set when the cell builds. It is
-simulated as a [dynamic rigid body](/engine/dynamic-bodies.md). Dynamic bodies give their shapes
+simulated as a [dynamic rigid body](dynamic-bodies.md). Dynamic bodies give their shapes
 back to the same queries at their current pose. So the capsule, the interaction ray, and shape
 sweeps see one list of shapes, and do not need to know which kind each one is.
 
 In the game, NPC character bodies live in the same simulation as the movable bodies
-([walk mode](/engine/walk-mode.md#who-moves-the-capsule)).
+([walk mode](walk-mode.md#who-moves-the-capsule)).
 
 ## Streaming
 
@@ -103,5 +103,5 @@ failures. Empty cells say so.
 The fly-path gate (`FlyPathGateRealDataTests`) records the collision time of every cell build. The
 limit is a p95 of 750 ms per build. The build limit allows for the uneven timing of the background
 queue, which shows up in repeated runs. The render limit is a mean and p95 of 33.33 ms per frame,
-and the memory limit is 1,024 MB with a steady plateau. See [walk mode](/engine/walk-mode.md) for
+and the memory limit is 1,024 MB with a steady plateau. See [walk mode](walk-mode.md) for
 how timing noise is handled.

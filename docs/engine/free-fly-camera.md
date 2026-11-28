@@ -24,9 +24,9 @@ so the math has no AppKit and can be unit tested:
 - Look: mouse movement while the pointer is captured. Pointer right turns right, pointer up looks
   up. AppKit's `deltaY` is positive downward, so it is negated.
 - Boost: hold Shift.
-- Activate: E. In walk mode it uses the [interaction](/engine/interaction.md) target. Fly mode has
+- Activate: E. In walk mode it uses the [interaction](interaction.md) target. Fly mode has
   no target.
-- Mode: F (Toggle POV) cycles fly, [walk mode](/engine/walk-mode.md), and third person. Fly is
+- Mode: F (Toggle POV) cycles fly, [walk mode](walk-mode.md), and third person. Fly is
   the default. X and V work only in fly mode.
 - Capture: a click in the view hides the pointer and freezes it
   (`CGAssociateMouseAndMouseCursorPosition(0)`), so only raw movement arrives. Esc, or the view
@@ -43,7 +43,7 @@ The pose is a position (Z up, game units), a yaw, and a pitch, in radians.
 - `forward = (cos p * cos y, cos p * sin y, sin p)`
 - `right = (sin y, -cos y, 0)`. It is always level, so strafing stays level at any pitch.
 - The view matrix is `lookAt(eye: position, target: position + forward, up: +Z)`, the same as the
-  rest of the renderer ([coordinates](/decisions/coordinates.md)).
+  rest of the renderer ([coordinates](../decisions/coordinates.md)).
 
 Each frame, look first, so movement uses the new heading. Then move along
 `forward * f + right * s + Z * v`, normalized so a diagonal is not faster, times speed and frame

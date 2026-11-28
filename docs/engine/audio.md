@@ -10,9 +10,9 @@ tags: [engine, audio, playback, spatial]
 # World audio playback
 
 The audio engine turns decoded sound files into positioned, audible sound. How each file type is
-decoded, and the voice route, are on the [audio decoding](/engine/audio-decoding.md) page. The
-things that start sounds are [world sound effects](/engine/world-sfx.md),
-[music](/engine/music.md), and [footstep sounds](/engine/footstep-sounds.md).
+decoded, and the voice route, are on the [audio decoding](audio-decoding.md) page. The
+things that start sounds are [world sound effects](world-sfx.md),
+[music](music.md), and [footstep sounds](footstep-sounds.md).
 
 ## The graph
 
@@ -61,17 +61,17 @@ filter applies it again to sources that are already playing.
 - Solo is one optional category, so only one can be soloed at a time.
 
 The engine starts with the game, unless the Sound setting is off
-([settings](/engine/settings.md)). A start failure, such as no output device, leaves the game silent.
+([settings](settings.md)). A start failure, such as no output device, leaves the game silent.
 It never crashes and never blocks rendering.
 
 The four categories are the four vanilla `SNCT` nodes marked for menu display: Effects, Voice,
-Music, and Footsteps ([sound records](/formats/sound.md)). A world sound follows `SNDR` `GNAM` to
+Music, and Footsteps ([sound records](../formats/sound.md)). A world sound follows `SNDR` `GNAM` to
 `SNCT` `PNAM` to one of them. Missing or broken data falls back to Effects.
 
 ## World to listener coordinates
 
 The world is right-handed and Z-up, in native units: +X east, +Y north, +Z up, and 1 unit is
-0.0142875 m ([coordinates](/decisions/coordinates.md)). The listener space of
+0.0142875 m ([coordinates](../decisions/coordinates.md)). The listener space of
 `AVAudioEnvironmentNode` is right-handed and Y-up, and its distance settings use the position
 unit, which OpenSky sets to meters.
 
@@ -118,7 +118,7 @@ flag the tick checks. The main actor never waits for the decode queue.
   instead of rewinding, so a file the decoder cannot use cannot spin the decode queue.
 - Each positional source remembers the exterior cell of its position. The tick stops sources more
   than one ring past the loaded grid around the listener's cell: 3 rings for the default 5 x 5
-  grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)).
+  grid ([cell streaming](cell-streaming.md#the-desired-grid)).
 
 ## Gain ramps
 

@@ -96,4 +96,4 @@ Vanilla examples:
 | `MaleMouthHumanoidDefault` | `MouthHuman.tri` | 141 |
 | `FemaleMouthHumanoidDefault` | `MouthHumanF.tri` | 141 |
 
-See [face morph runtime](/engine/face-morphs.md) for how the offsets reach the GPU.
+See [face morph runtime](../engine/face-morphs.md) for how the offsets reach the GPU.

@@ -9,8 +9,8 @@ tags: [engine, facegen, morph, animation, metal, actor, app-ui]
 # Face morph runtime
 
 A face morph moves face vertices to make an expression, such as `Aah` for an open mouth. Each
-loaded actor has its own named weights from 0 to 1. The file format is on the [TRI](/formats/tri.md)
-page. How the head is found is on the [actor records](/formats/actors.md#facegen-paths)
+loaded actor has its own named weights from 0 to 1. The file format is on the [TRI](../formats/tri.md)
+page. How the head is found is on the [actor records](../formats/actors.md#facegen-paths)
 page.
 
 ## Which meshes morph
@@ -197,7 +197,7 @@ Source for every value: the Creation Kit wiki page "Category:Settings"
 
 ## Lip sync
 
-A voice line's [lip track](/formats/lip.md) writes the lip layer. It drives the speech targets
+A voice line's [lip track](../formats/lip.md) writes the lip layer. It drives the speech targets
 and the blink, brow, look, and squint targets of the face, and it turns the head. Its blinks add
 to the automatic blinks, clamped like any other weight. When the line ends the lip weights fade
 out over 0.15 seconds.
@@ -205,7 +205,7 @@ out over 0.15 seconds.
 ## Settings
 
 The launcher's Graphics page turns blinking, eye movement, dialogue expressions, and
-[head tracking](/engine/head-tracking.md) on or off under Characters. Each switch writes one
+[head tracking](head-tracking.md) on or off under Characters. Each switch writes one
 persisted player setting, so a choice survives a restart.
 
 ## Failures

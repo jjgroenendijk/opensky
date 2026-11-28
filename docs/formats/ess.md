@@ -8,8 +8,8 @@ tags: [format, save, ess, lz4]
 # Skyrim save (`.ess`)
 
 A `.ess` file is a Skyrim save. OpenSky reads one and imports what it can into its own save
-format ([ESS import](/engine/ess-import.md)). It also writes one from a session
-([ESS export](/engine/ess-export.md)). A save holds the user's game data, so no save, part
+format ([ESS import](../engine/ess-import.md)). It also writes one from a session
+([ESS export](../engine/ess-export.md)). A save holds the user's game data, so no save, part
 of a save, or save screenshot is ever committed. Tests build saves in code.
 
 References: UESP
@@ -17,14 +17,14 @@ References: UESP
 [Save File Format/Global Data](https://en.uesp.net/wiki/Skyrim_Mod:Save_File_Format/Global_Data).
 All integers are little-endian unless a section says otherwise.
 
-The change forms have their own page: [ESS change forms](/formats/ess-change-forms.md).
-The Papyrus table has its own page: [ESS Papyrus](/formats/ess-papyrus.md).
+The change forms have their own page: [ESS change forms](ess-change-forms.md).
+The Papyrus table has its own page: [ESS Papyrus](ess-papyrus.md).
 
 ## Basic types
 
 | Name | Layout |
 | --- | --- |
-| `wstring` | `uint16` length, then that many bytes. Decoded by the [string decoding](/decisions/string-decoding.md) policy |
+| `wstring` | `uint16` length, then that many bytes. Decoded by the [string decoding](../decisions/string-decoding.md) policy |
 | `vsval` | Variable size. The low two bits of the first byte give the width: 0 = 1 byte, 1 = 2 bytes, 2 = 4 bytes. The value is the whole little-endian number shifted right by 2. Width bits 3 are an error |
 | `refID` | 3 bytes, big-endian. The top 2 bits are the kind, the low 22 bits the value |
 | vector | 3 `float32`: x, y, z |
@@ -89,7 +89,7 @@ decompresses a body.
 | file location table | 100 bytes | Below |
 | global data table 1 | entries | Types 0 to 8 |
 | global data table 2 | entries | Types 100 to 114 |
-| change forms | entries | [ESS change forms](/formats/ess-change-forms.md) |
+| change forms | entries | [ESS change forms](ess-change-forms.md) |
 | global data table 3 | entries | Types 1000 to 1005 |
 | formIDArray | `uint32` count, then `uint32` ids | |
 | visitedWorldspaceArray | `uint32` count, then `uint32` ids | |
@@ -142,12 +142,12 @@ types the import uses and keeps the others as bytes.
 | 3 | Global Variables | `vsval` count, then `refID` global and `float32` value |
 | 4 | Created Objects | Four lists in order: weapon enchantments, armor enchantments, potions, poisons. Each is a `vsval` count of entries: `refID` form, `uint32` times used, `vsval` count of effects. An effect is `refID` effect, `float32` magnitude, `uint32` duration, `uint32` area, `float32` price |
 | 6 | Weather | The first six `refID`s (climate, weather, previous weather, two unnamed, region weather) and three `float32`s (hour, start, transition). The rest is undocumented |
-| 1001 | Papyrus | [ESS Papyrus](/formats/ess-papyrus.md) |
+| 1001 | Papyrus | [ESS Papyrus](ess-papyrus.md) |
 
 ## Confirmed on real data
 
 Not yet. No Skyrim save exists on the development machine
-([environment](/tools/environment.md)). The layouts above come from UESP and are checked
+([environment](../tools/environment.md)). The layouts above come from UESP and are checked
 only against synthetic saves built from the same tables. `make test PLAN=RealData` with
 `OPENSKY_SKYRIM_SAVES` set runs `ESSRealDataTests`, which decodes every save in the folder
 and imports the newest. The first run on real saves must confirm:

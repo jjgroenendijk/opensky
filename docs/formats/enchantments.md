@@ -9,8 +9,8 @@ tags: [format, esm, magic, record, enchantment]
 # Enchantments
 
 An ENCH is the effect list on an enchanted weapon, armor piece, or staff. A weapon or armor
-names it through `EITM` ([item records](/formats/item-records.md)). The effect records and
-the cost formula are on [magic records](/formats/magic-records.md).
+names it through `EITM` ([item records](item-records.md)). The effect records and
+the cost formula are on [magic records](magic-records.md).
 
 Sources: UESP [`/ENCH`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ENCH) and xEdit
 dev-4.1.6 `Core/wbDefinitionsTES5.pas`. All integers and floats are little-endian.

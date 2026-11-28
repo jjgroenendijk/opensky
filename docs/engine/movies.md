@@ -11,7 +11,7 @@ tags: [engine, movie, bink, menus, rendering, audio]
 The game plays a Bink movie in two places: the Bethesda logo, `BGS_Logo.bik`, before the main
 menu, and any movie a script starts with
 [`Game.PlayBink`](https://ck.uesp.net/wiki/PlayBink_-_Game). The file layout is in
-[Bink](/formats/bink.md).
+[Bink](../formats/bink.md).
 
 ## How a movie plays
 

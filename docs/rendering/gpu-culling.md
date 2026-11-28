@@ -31,7 +31,7 @@ instance.
 
 The kernel uses the same positive-vertex test as `Frustum.intersects`, so both paths keep the
 same instances. In an interior, the camera view first skips instances in rooms the camera
-cannot see ([room and portal culling](/rendering/room-portal-culling.md)); the cascades do
+cannot see ([room and portal culling](room-portal-culling.md)); the cascades do
 not. Before it encodes a group's draw, the CPU tests the group's combined bounding box once.
 A group outside the view gets no draw, and its instances count as culled.
 
@@ -61,4 +61,4 @@ With the switch on, the CPU counts cover only the groups that stay on the CPU.
 `make benchmark` measures the GPU path, and `make benchmark ARGS='--set rendering.gpuCulling=off'`
 the CPU path. The `encode` entry of each scene's `cpu` field holds the CPU time of the shadow and
 scene pass encoding
-([benchmark](/tools/benchmark.md)).
+([benchmark](../tools/benchmark.md)).

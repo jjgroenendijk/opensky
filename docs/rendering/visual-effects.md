@@ -14,8 +14,8 @@ point. It has up to two parts:
 - **Art**: a model from an `ARTO` (or an `ADDN`), drawn at the anchor.
 - **Membrane**: an `EFSH` effect shader drawn as a glow over the actor's own meshes.
 
-The records are in [visual effect records](/formats/visual-effects.md),
-[effect shaders](/formats/effect-shaders.md), and [art objects](/formats/art-objects.md).
+The records are in [visual effect records](../formats/visual-effects.md),
+[effect shaders](../formats/effect-shaders.md), and [art objects](../formats/art-objects.md).
 
 ## Where effects come from
 
@@ -24,8 +24,8 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | A spell hit | The `MGEF` hit shader and hit effect art, on each target | The effect duration; for an instant spell, the shader's settle time or 2 s for art |
 | A race ability | The same links of each `RACE SPLO` ability, on each resident actor of the race | While the actor is resident |
 | An explosion | The `EXPL` model at the blast point | 2 s |
-| A projectile | The `PROJ` model along its flight, and its muzzle flash at the launch ([spell delivery](/engine/spell-delivery.md#what-a-projectile-shows)) | The flight; the muzzle flash duration |
-| An impact | The `IPCT` model at the contact point ([impacts and decals](/rendering/decals.md)) | 2 s |
+| A projectile | The `PROJ` model along its flight, and its muzzle flash at the launch ([spell delivery](../engine/spell-delivery.md#what-a-projectile-shows)) | The flight; the muzzle flash duration |
+| An impact | The `IPCT` model at the contact point ([impacts and decals](decals.md)) | 2 s |
 | A script | `VisualEffect.Play` or `EffectShader.Play` on a reference | The `afTime` argument, or until `Stop` when it is negative |
 
 An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. With its flag 0x01 (rotate
@@ -46,17 +46,17 @@ At most 32 effects live at once; the oldest timed one goes first. This is OpenSk
 
 Most art models draw as one shared copy. A model whose nodes move draws as its own copy, posed
 each frame by `EffectModelPoser`. A model moves when it has an active node controller
-([NIF controllers](/formats/nif-controllers.md#node-controller-rules)), when it names a behaviour
-graph ([effect graphs](/engine/effect-graphs.md)), or both. About 60 vanilla magic and FX models
+([NIF controllers](../formats/nif-controllers.md#node-controller-rules)), when it names a behaviour
+graph ([effect graphs](../engine/effect-graphs.md)), or both. About 60 vanilla magic and FX models
 carry a lag bone, such as `magic\absorbbeam01.nif`, and many name a graph.
 
 - The poser reads each model's node controllers off the main actor, once per model. A model that
   names a graph plays only its lag bones, as a placed mesh does
-  ([object animation](/engine/object-animation.md#node-controllers)).
+  ([object animation](../engine/object-animation.md#node-controllers)).
 - Its bones are the bones of the graph's rig, then the moved nodes the rig does not name. Each
   bone is a root at its model-frame transform. The graph's pose sets the rig bones, and the
   node controllers set the moved nodes. A lag bone trails the effect's anchor.
-- An effect on an actor runs its graph ([effect graphs](/engine/effect-graphs.md)). An effect at a
+- An effect on an actor runs its graph ([effect graphs](../engine/effect-graphs.md)). An effect at a
   point runs none, so its graph bones keep the rig's reference pose.
 - A copy goes back to a pool when its effect ends, and the next effect of the same model takes
   it, so a model has at most as many copies as effects of it that live at once.
@@ -104,7 +104,7 @@ Screen blood: a melee or ranged hit on the player places splatters.
 
 Weapon blood: a melee hit on an actor whose race lacks the no-weapon-blood flag makes the
 attacker's weapon bloody. A weapon model holds blood shapes, whose effect shader sets the
-`Weapon_Blood` flag ([effect shapes](/formats/nif-materials.md#effect-shapes)). They stay
+`Weapon_Blood` flag ([effect shapes](../formats/nif-materials.md#effect-shapes)). They stay
 hidden on a clean weapon. On a bloody one they draw blended, with their alpha times the blood's
 strength: full for `fWeaponBloodLifetime`, fading over `fWeaponBloodFadeDuration`, and gone
 below `fWeaponBloodFalloffThreshold`. The first-person weapon draws its blood in the arms pass.

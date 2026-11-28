@@ -9,10 +9,10 @@ tags: [engine, menu, time]
 # Sleep and wait
 
 The Wait key (T) opens the wait menu. Using a bed opens the same menu as the rest menu. The
-player picks 1 to 24 hours, and the [game clock](/engine/game-clock.md) moves forward by that
+player picks 1 to 24 hours, and the [game clock](game-clock.md) moves forward by that
 much. `openskycli game debug rest <hours> [--sleep]` passes time the same way without the
 menu and without its refusals. An NPC's Sleep package lies down in a bed
-([furniture](/engine/furniture.md)).
+([furniture](furniture.md)).
 
 ## Refusals
 
@@ -35,7 +35,7 @@ menu `sNoWait...`. OpenSky checks them in this order:
 
 ## Passing time
 
-The clock moves in steps of 15 game minutes. Each step ages the [weather](/engine/weather.md)
+The clock moves in steps of 15 game minutes. Each step ages the [weather](weather.md)
 and runs one script step with the new clock, so `OnUpdateGameTime`, `WaitGameTime`, and a weather
 change can happen during a rest. Each step also ages active effects. UESP says "any advanced passage
 of time (sleeping or waiting) will count against any timed magical effects"
@@ -45,18 +45,18 @@ game time counts as that time over the timescale: one hour at timescale 20 is 18
 magicka, and stamina, and makes an autosave (`rest` or `wait`). Actors do not move on with their
 packages during the skipped time.
 
-A bed's owner comes from the same ownership rule as theft ([crime](/engine/crime.md)). A bed
+A bed's owner comes from the same ownership rule as theft ([crime](crime.md)). A bed
 the player owns, or that the player's faction owns at a rank they hold, is allowed.
 
 The Can't Wait flag is record-header flag `0x80000` on CELL and on WRLD (UESP
 "Skyrim Mod:Mod File Format/CELL" and ".../WRLD"). The order of the first two rows is
-OpenSky's reading. Sleeping sends the Papyrus sleep events ([registrations](/engine/papyrus-registrations.md#sleep)).
+OpenSky's reading. Sleeping sends the Papyrus sleep events ([registrations](papyrus-registrations.md#sleep)).
 The rest bonuses come from the vanilla `PlayerSleepQuestScript`, which
 listens for `OnSleepStop`. Read from its compiled `OnSleepStop`: the marriage quest and a spouse
 in the same location give `MarriageRested` (Lover's Comfort). Otherwise a location with the
 `LocTypeInn` or `LocTypePlayerHouse` keyword gives `WellRested`, and any other bed gives `Rested`.
 Beast blood gives none. The bonus values are in
-[skill advancement](/engine/skill-advancement.md#experience-multipliers).
+[skill advancement](skill-advancement.md#experience-multipliers).
 
 ## The movie
 

@@ -8,10 +8,10 @@ tags: [engine, audio, sfx, ambience]
 
 # World sound effects and ambience
 
-The world sound director connects the [sound records](/formats/sound.md) to
-[interaction](/engine/interaction.md) and to cell streaming. It plays one-shot sounds when the
+The world sound director connects the [sound records](../formats/sound.md) to
+[interaction](interaction.md) and to cell streaming. It plays one-shot sounds when the
 player uses things, and a looping ambience bed for the current cell. It does nothing until the
-[world audio engine](/engine/audio.md) is turned on.
+[world audio engine](audio.md) is turned on.
 
 ## Events
 
@@ -31,7 +31,7 @@ Scripts listen to the same interaction event beside the director. Neither replac
 ## Activation sounds
 
 A use-key event carries the target's sounds, resolved when the cell was built from the base
-record's sound fields ([world records](/formats/world-records.md)). The director resolves the
+record's sound fields ([world records](../formats/world-records.md)). The director resolves the
 activation sound. It follows `SNDR` `GNAM` to `SNCT` `PNAM` to find the vanilla menu category,
 and plays the sound at the reference's position. Missing or broken category data falls back to
 Effects.
@@ -64,7 +64,7 @@ The director turns the context into a fixed, ordered list of `SNDR` or `SOUN` Fo
   has the override flag (`RDAT` flags bit 0), only the overriding region with the highest
   `RDAT` priority is used;
 - interior: the acoustic space's `SNAM`, plus the sound area of the region it borrows through
-  its own `RDAT` ([acoustic space](/formats/acoustic-space.md)).
+  its own `RDAT` ([acoustic space](../formats/acoustic-space.md)).
 
 The new bed is compared with the old one, and only the changes stop or start sources. A scene
 swap sends the context again, so an interior entered twice still refreshes.
@@ -72,7 +72,7 @@ swap sends the context again, so an interior entered twice still refreshes.
 ## Region sounds
 
 Each `RDSA` entry holds a sound, a set of weather flags, and a chance
-([region records](/formats/weather.md#regn)). The sound's `SNDR` decides how the entry plays:
+([region records](../formats/weather.md#regn)). The sound's `SNDR` decides how the entry plays:
 
 - `LNAM` asks for a loop or an envelope: the entry is a loop. It plays without a break while it
   may play. The stream rewinds at the end of the file instead of finishing.
@@ -133,7 +133,7 @@ stops them: on a context change, through the toggle, or with Stop ambience.
 ## Threading
 
 The director runs on the main actor, like the rest of the audio engine. A sound file is read and
-parsed on the shared play-time worker ([concurrency](/decisions/concurrency.md)). A sound whose
+parsed on the shared play-time worker ([concurrency](../decisions/concurrency.md)). A sound whose
 file has not arrived starts after the drain that brings it, so it can start a frame or more late.
 A loop or ambience bed that was stopped in the meantime does not start. Streaming decode runs on
 the engine's decode queue. Nothing from OpenSky runs on the audio render thread. The sound, weather,

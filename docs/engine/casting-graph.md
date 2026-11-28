@@ -10,7 +10,7 @@ tags: [engine, magic, casting, animation, behavior]
 
 A cast plays its clips through the actor's behaviour graph. The graph enters a casting state, and
 an event that names the kind of cast picks the clips. The clips then raise the spell-fire event
-that releases the spell ([casting cues](/engine/spellcasting.md#casting-cues)).
+that releases the spell ([casting cues](spellcasting.md#casting-cues)).
 
 These facts come from a clean-room read of the game's behaviour. They describe what the game does;
 they hold no code, offsets, or names from the program.
@@ -108,7 +108,7 @@ a scroll uses other idles; most likely they use the same ones.
   single start waits while the other hand may still join, up to the 0.05 second window.
 - A fire-and-forget hand raises its ready event when the charge is full, and its release event
   when the button is let go. The spell then waits for the spell-fire event
-  ([casting cues](/engine/spellcasting.md#casting-cues)).
+  ([casting cues](spellcasting.md#casting-cues)).
 - A concentration hand raises its release event when the charge is full. A spell with no charge
   time, such as Flames, raises it right after its start event. The graph's loop then
   raises the spell-fire event that starts the spell.

@@ -22,7 +22,7 @@ per target.
 - `-workspace src/OpenSky.xcworkspace` and `-derivedDataPath`, this checkout's build tree;
 - `COMPILATION_CACHE_CAS_PATH` and `SDK_EXPLICIT_MODULES_OUTPUT_PATH`, shared by every tree;
 - `-IDEBuildingContinueBuildingAfterErrors=YES` ([below](#stale-module-copies));
-- `CLANG_COVERAGE_MAPPING=YES` for Debug ([test runs](/tools/test-runs.md#code-coverage)) and
+- `CLANG_COVERAGE_MAPPING=YES` for Debug ([test runs](test-runs.md#code-coverage)) and
   `ARCHS=arm64` for Release, because `Float16` does not exist on x86_64;
 - `CLANG_COVERAGE_MAPPING=NO` for Release. Without it a plain build takes coverage from the
   scheme's test plan, and the app adds to a counter at every branch, which slows each
@@ -49,7 +49,7 @@ Measured with `git ls-tree` on 2026-11-09, on `main` before the change and on th
 | `make help` | 95 lines with `ALL=1` | 61 lines | |
 | Scripts in `tools/` | 40 files, 3,618 lines | 44 files, 3,175 lines | The logic of the old recipes moved into scripts |
 | Checks: lint, format, coverage | 29 files, 2,900 lines | 42 files, 3,269 lines | One script per check, from the old recipes, and a self-check in every lint |
-| Test plans | 13 files, 3,937 lines | 9 files, 1,342 lines | [Test runs](/tools/test-runs.md#test-plans) gives each plan's reason |
+| Test plans | 13 files, 3,937 lines | 9 files, 1,342 lines | [Test runs](test-runs.md#test-plans) gives each plan's reason |
 | Workflows | 633 lines | 604 lines | Each job still installs its tools |
 | Custom SwiftLint rules | 19 | 19 | Each is a project rule SwiftLint does not ship |
 | `make check`, no changes | 24 s | 14 s, with every self-check | |
@@ -66,7 +66,7 @@ What went, and why Xcode or plain behaviour replaces it:
   at all" needs `make clean`.
 - The log filter. The summary comes from the result bundle ([below](#output-and-transcripts)).
 - The coverage computation stays: `xccov` reports no package file ([test
-  runs](/tools/test-runs.md#code-coverage)).
+  runs](test-runs.md#code-coverage)).
 - The module-graph check stays. It reads the declared graph from the manifest, not the imports,
   and checks rules a manifest cannot state, such as layers.
 
@@ -135,7 +135,7 @@ src/config/
     └── *.xctestplan         the nine test plans (see test runs)
 ```
 
-The test plans are in `src/config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
+The test plans are in `src/config/TestPlans/` for the same reason ([test runs](test-runs.md)).
 `Debug.xcconfig` and `Release.xcconfig` are the project's base configurations for every target. The
 target files sit above them and apply to both configurations of one target. Only a setting that
 differs per configuration inside one target still belongs in the project file.
@@ -145,13 +145,13 @@ The project's files never reach a package target, whose settings come from `src/
 `XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
 file above every target in the build. A build started from the Xcode window does not read it. It
 turns off a missing-dependency check that is wrong for package framework variants
-([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
+([environment](environment.md#package-framework-variants-warn-about-declared-dependencies)).
 It also holds the prefix-mapping settings and `SWIFT_PACKAGE_NAME`, which keep the shared
 compilation cache key the same in every worktree (see below).
 
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `src/config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
-([Swift toolchain](/tools/swift-toolchain.md)).
+([Swift toolchain](swift-toolchain.md)).
 
 ## The OpenSkyShaderTypes module
 
@@ -163,7 +163,7 @@ does. SwiftPM links a clang target's object file, so the target also holds `Shad
 declares nothing. It is Objective-C because the header imports Foundation.
 The shaders reach the header by a relative path, `../OpenSkyShaderTypes/ShaderTypes.h`, because
 a package target's Metal compile takes no header search path
-([shader library](/decisions/shader-library.md)).
+([shader library](../decisions/shader-library.md)).
 
 There is no bridging header. A bridging header is visible to every Swift file in its target, so every
 file depended on the shared header whether it used it or not, and `OpenSkyCLI` had to name the app's
@@ -190,7 +190,7 @@ What it helps and what it does not:
 - A branch switch gains nothing: switching in place keeps `Build/` in the cache, so the build
   system's own incremental state decides.
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
-  ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
+  ([environment](environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
   Each switch between build contexts, such as `make build-cli` then `make test`, then
   compiles those modules again and relinks everything above them. So the `OpenSky` scheme
   builds `openskycli` for testing, and the Debug `make build-app` and `make build-cli` use
@@ -206,7 +206,7 @@ The store grows to tens of gigabytes. It prunes itself in generations: on 2026-1
 `builtin/v1.2/` folder started next to the 91 GB `v1.1/`, and each hit copied its entry into the
 new folder. `COMPILATION_CACHE_LIMIT_SIZE` set below the store's size shrank nothing at once.
 `make clean ARGS=--deep` removes it. CI starts its
-store over by size instead ([CI](/tools/ci.md#caches)).
+store over by size instead ([CI](ci.md#caches)).
 
 ### One store for every worktree
 
@@ -243,7 +243,7 @@ The misses are the two dependency packages, whose checkouts sit inside each tree
 The mapping has three costs:
 
 - A replayed task writes no index data. Periphery reads the index, so `make lint-index` builds
-  uncached into the `-index` cache tree ([code-health automation](/decisions/code-health-automation.md)).
+  uncached into the `-index` cache tree ([code-health automation](../decisions/code-health-automation.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. The build cache is
   outside the checkout too, so `make test PLAN=RealData` passes the checkout to the test process as
   `TEST_RUNNER_OPENSKY_CHECKOUT`, and real-data suites write into its `.logs/`.
@@ -286,7 +286,7 @@ with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 tests with their messages and the test totals. `xcresulttool get build-results` and `get
 test-results summary` hold both, so no filter parses the transcript. A failed run with no bundle
 prints the last 40 transcript lines. Where run directories go and how they age out is on the [run
-output](/tools/run-output.md) page.
+output](run-output.md) page.
 
 ### Stale module copies
 
@@ -314,7 +314,7 @@ compile job the driver starts no second wave, but it still saves the new depende
 `<Target>-primary.priors`. The next build then thinks those files are current and links their
 old objects. In a final class or a struct, every file reads a stored property at a fixed
 offset. So an old object reads the wrong field and crashes with `EXC_BAD_ACCESS`
-([environment](/tools/environment.md#a-failed-compile-skips-the-files-that-depend-on-it)).
+([environment](environment.md#a-failed-compile-skips-the-files-that-depend-on-it)).
 
 So after every failed build, `tools/failed-build-records.sh` reads the transcript and deletes
 the record of each target with a failed compile. The target is the folder of the failed file

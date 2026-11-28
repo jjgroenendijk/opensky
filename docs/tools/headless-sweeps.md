@@ -145,5 +145,5 @@ A handler that does no work and is not named this way cannot be counted. The gat
 `tools/lint/syntax-rules.sh` stops one from being added: `unnamed_native_stub` and
 `unnamed_condition_stub` fail a handler that only answers a constant, unless it answers
 `.deviated(_, .stubbed)`, a `.failure(...)` with a reason, or carries a `// Matches the game:`
-comment that says why the game does nothing there either ([gap report](/tools/gaps.md),
+comment that says why the game does nothing there either ([gap report](gaps.md),
 "Shallow handlers").

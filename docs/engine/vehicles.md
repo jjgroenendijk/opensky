@@ -13,8 +13,8 @@ A vehicle is a reference that carries another reference. There are three kinds o
 - A rider on a vehicle: `SetVehicle(vehicle)` on an actor. `SetVehicle(None)` takes the actor
   off again.
 - A rider on a horse: a placed actor whose `ACHR` has an `XHOR` field
-  ([placed references](/formats/placed-references.md)) rides that horse while its package's "Ride
-  Horse if possible?" input is true ([package schedules](/engine/package-schedules.md)).
+  ([placed references](../formats/placed-references.md)) rides that horse while its package's "Ride
+  Horse if possible?" input is true ([package schedules](package-schedules.md)).
 
 Sources: <https://ck.uesp.net/wiki/SetVehicle_-_Actor> and
 <https://ck.uesp.net/wiki/TetherToHorse_-_ObjectReference>.
@@ -27,7 +27,7 @@ no pose, because only a loop in plugin or script data can make one.
 ## Towing
 
 In the game, a towed cart is a set of physics bodies pulled by the horse
-([the game's tow rig](/engine/cart-tow-rig.md)). The cart does not steer or brake by itself: it
+([the game's tow rig](cart-tow-rig.md)). The cart does not steer or brake by itself: it
 is dragged, so a cart stops because its horse stops. Its bodies collide like any other physics
 body, so in a line of carts nothing but the horses' own stopping places keeps a cart from running
 into the one in front. OpenSky does not build those six bodies. It moves
@@ -83,12 +83,12 @@ cannot tip.
 
 In the game, the wheels are free hinge bodies in the physics simulation: contact and friction with
 the ground roll them, with no separate ground queries. The cart's six bodies and five joints are
-all simulated ([cart tow rig](/engine/cart-tow-rig.md)). OpenSky does not simulate them; it places
+all simulated ([cart tow rig](cart-tow-rig.md)). OpenSky does not simulate them; it places
 the cart by its own ground queries and turns the wheels by distance, as below.
 
 A towed cart whose mesh has wheel nodes turns its wheels as it rolls. The cell build gives such a
 cart its own copy of the mesh, with each wheel's shapes bound to its node, the way an animated
-object is drawn ([object animation](/engine/object-animation.md)). Each wheel turns about the
+object is drawn ([object animation](object-animation.md)). Each wheel turns about the
 model's X axis by the distance it rolled forward, divided by its radius. The radius is the height
 of the wheel node's centre: about 59 for the back wheels of the prisoner carriage and about 48 for
 the front ones.
@@ -114,11 +114,11 @@ and every actor linked by any chain of links to a towed cart, walks with a colli
 leaves out the moving collision of the towed carts in its own group. Another group's cart still
 blocks it, so at Helgen the second cart's horse stops behind the first cart, where both horses'
 patrols lead: marker `000BB976` from stage 20, and `000BB97B` from stage 22
-([opening cart ride](/engine/opening-cart-ride.md#the-routes)). A patrol leg that ignores static
+([opening cart ride](opening-cart-ride.md#the-routes)). A patrol leg that ignores static
 collision still meets the carts that are not its
 own. A rider moves with its seat, so it cannot drift into
 a cart. A mounted escort's horse is neither, so a cart blocks it, with the front and back of its
-long body ([character shapes](/engine/character-shapes.md)). The cart's own ground search
+long body ([character shapes](character-shapes.md)). The cart's own ground search
 also leaves it out. A seated player does not walk, so the cart cannot push
 the player out of the seat.
 
@@ -126,7 +126,7 @@ The cart has no rolling sound of its own. Its physics bodies play only impact so
 physics body does: a new contact slower than 60 units a second is silent; above that, each side
 plays its own material's impact sound, the heavy sound above 160 units a second when the material
 has one, and each material pair plays at most once every 150 ms. The steady creak of the opening
-ride is a quest sound ([sounds](/engine/papyrus-session-natives.md#sounds)).
+ride is a quest sound ([sounds](papyrus-session-natives.md#sounds)).
 
 When a follower leaves its carrier, it rests at its last pose. Until its cell is rebuilt, its
 collision stays at that pose; after the rebuild it is static again.
@@ -139,7 +139,7 @@ the `NPC COM` bone carries the seat, for example (-33.5, -199.6, 138.8) for seat
 frame. This was read from the clips on the install.
 
 A seat idle holds: its state in `0_master.hkx` plays a looping clip (`m_mode` 1), so the rider stays
-seated until another idle, such as a cart exit, replaces it ([idle runtime](/engine/idle-runtime.md)).
+seated until another idle, such as a cart exit, replaces it ([idle runtime](idle-runtime.md)).
 
 The player follows the same rule. The player's root sits on the vehicle's root. While the player
 plays a seat idle, the first-person eye goes to the clip's `NPC Head [Head]` bone, so the view sits
@@ -153,7 +153,7 @@ loads, the rider sits on the horse's root.
 
 The horse walks the rider's package, so it is the horse that enters triggers. At Helgen this
 matters: the gate triggers fire only for the riders' horses, never for the cart horses
-([opening cart ride](/engine/opening-cart-ride.md#the-gate-triggers)). The rider plays the
+([opening cart ride](opening-cart-ride.md#the-gate-triggers)). The rider plays the
 clips in `meshes\actors\character\animations\horse_rider\`: `idle.hkx` while the horse stands, and
 `walkforward.hkx` or `runforward.hkx` as the horse walks or runs. [WARNING] The walk and run names
 follow the horse's own folder; `idle.hkx` was seen on the install. A clip that does not load leaves
@@ -165,7 +165,7 @@ same sit state as a cart passenger. The horse drives no pose of the rider. A rid
 loads after it was put on the horse still needs its riding clip, so OpenSky plays it again when
 the body arrives.
 
-The player mounts and steers a horse through the mount coordinator ([riding](/engine/riding.md)).
+The player mounts and steers a horse through the mount coordinator ([riding](riding.md)).
 
 ## Where the rest of the engine sees a rider
 
@@ -174,7 +174,7 @@ dialogue camera and the speaker's position, the AI packages, combat, perception,
 rider talks from its seat, not from where it was placed.
 
 `MQ101` calls `Game.SetHudCartMode` for the ride, which hides the HUD but keeps the subtitles
-([HUD modes](/rendering/hud.md#hud-modes)).
+([HUD modes](../rendering/hud.md#hud-modes)).
 
 ## Drawing
 
@@ -203,8 +203,8 @@ A rider leaves its vehicle in one of four ways:
 - `SetVehicle(None)`, or `SetVehicle` with the rider itself, as the
   [Creation Kit wiki](https://ck.uesp.net/wiki/SetVehicle_-_Actor) says.
 - The rider's graph sends `ExitCartEnd`. This is the rule for cart passengers.
-- A horse rider's package ends ([package schedules](/engine/package-schedules.md)).
-- The player dismounts a horse ([riding](/engine/riding.md)).
+- A horse rider's package ends ([package schedules](package-schedules.md)).
+- The player dismounts a horse ([riding](riding.md)).
 
 The cart exit idles lead to a state of the `Cart` machine in `0_master.hkx`. The state sends
 `ExitCartBegin` when it starts and `ExitCartEnd` when it ends, and it ends with its clip, which
@@ -232,7 +232,7 @@ marks that moment. OpenSky takes any actor off its vehicle on that event.
 
 While seated, a rider reads `GetSitState` 3. `ExitCartBegin` frees it from the vehicle. From then
 on it moves like any actor, by its root motion through the character controller, with gravity and
-ground following ([actor graphs](/engine/actor-graphs.md#pose)). So the exit motion is not applied
+ground following ([actor graphs](actor-graphs.md#pose)). So the exit motion is not applied
 in the cart's frame. `ExitCartEnd` acts as `SetVehicle(None)`: the sit state goes back to 0 and the
 link clears. Neither event puts the rider on the ground; the controller does.
 
@@ -295,7 +295,7 @@ camera in a cart view mode that drops the cart's roll, and `IdleCartPrisonerCExi
 C exit state also sends `ZeroOutCameraPitch`, which levels the camera.
 
 The exit clips themselves keep the root still: only the body moves. The travel in the table above
-is in the project's motion table ([animation data](/formats/animation-data.md)). So from
+is in the project's motion table ([animation data](../formats/animation-data.md)). So from
 `ExitCartBegin` OpenSky holds the rider at the seat pose it had then, and moves its root by the
 motion table's offset and turn at the clip's current time, in that pose's frame, on the ground
 under it. The cart is stopped by then, so the start pose does not move. Worked example: seat A

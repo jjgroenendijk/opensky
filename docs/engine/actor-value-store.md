@@ -9,8 +9,8 @@ tags: [engine, actors, gameplay, stats, runtime-state, hud, papyrus]
 
 # Actor value store
 
-The baselines come from records ([actor values](/engine/actor-values.md)). This page covers what a
-session does to them. The store is a world state component ([runtime state](/engine/runtime-state.md)).
+The baselines come from records ([actor values](actor-values.md)). This page covers what a
+session does to them. The store is a world state component ([runtime state](runtime-state.md)).
 
 ## Current values
 
@@ -58,7 +58,7 @@ are left intact." (<https://ck.uesp.net/wiki/SetActorValue_-_Actor>)
 | Damage | `DamageActorValue`. Never positive | Yes |
 
 The eighteen `Skill Advance` slots (indices 114 to 131) hold skill experience, one per skill in the
-same order ([skill advancement](/engine/skill-advancement.md)).
+same order ([skill advancement](skill-advancement.md)).
 
 Callers read a resolved entry: an absolute base plus the three modifiers. The store builds it from
 the baseline on the way out and takes it apart on the way in, so nothing outside the component knows
@@ -88,7 +88,7 @@ modified by -10 reads 80/90.
 
 A timed Fortify Health, Magicka, or Stamina effect writes the temporary slot, so the bar's ceiling
 rises and falls with it. At expiry a living actor is left at 1, not 0, when the lost ceiling would
-empty the value ([active effects](/engine/magic.md)).
+empty the value ([active effects](magic.md)).
 
 ## A base write is a delta
 
@@ -142,7 +142,7 @@ non-finite time is treated the same way. A long stall runs at most eight steps. 
 sorted order, so the result does not depend on how they were collected.
 
 Health does not regenerate at zero. An actor at zero is dead or bleeding out, and that is for
-[death](/engine/ragdoll.md) to decide. Only the player and actors in loaded cells regenerate. An
+[death](ragdoll.md) to decide. Only the player and actors in loaded cells regenerate. An
 actor in an unloaded cell is not simulated.
 
 Three game settings slow it in combat (values from `Skyrim.esm`):
@@ -154,7 +154,7 @@ Three game settings slow it in combat (values from `Skyrim.esm`):
 | `fCombatStaminaRegenRateMult` | 0.35 | 5% a second becomes 1.75% (UESP "Skyrim:Stamina") |
 
 An actor whose race sets `DATA` flag `0x80000` skips the health multiplier and regenerates health at
-the full rate in combat. Trolls and the werewolf set it ([actors](/formats/actors.md)).
+the full rate in combat. Trolls and the werewolf set it ([actors](../formats/actors.md)).
 
 The player's health uses its `Combat Health Regen Multiply` actor value instead, which UESP gives
 as 0.7: "0.70% of your maximum health each second outside of combat and 0.49% during combat"
@@ -163,7 +163,7 @@ any actor fights it, because every fight in OpenSky is against the player.
 
 Damage pauses the damaged value: `fDamagedHealthRegenDelay`, `fDamagedMagickaRegenDelay`, and
 `fDamagedStaminaRegenDelay` (0.5 s each), and `fDamagedAVRegenDelay` (1 s) when one of them is
-missing. The pause is not saved. Casting stops magicka ([spellcasting](/engine/spellcasting.md)).
+missing. The pause is not saved. Casting stops magicka ([spellcasting](spellcasting.md)).
 
 Each step rewrites the whole component and keeps the override table, so a buff survives. Refill
 fills to the effective maximum and keeps the table. "Reset to records" drops it.
@@ -186,7 +186,7 @@ above.
 
 A blocked blow costs the blocker stamina, for the player and for an NPC. `incomingDamage` is the
 blow before the block: base damage, fortify bonus, skill, sneak, and armour
-([melee damage](/engine/melee-damage.md)). UESP says only that a block uses "a small amount" of
+([melee damage](melee-damage.md)). UESP says only that a block uses "a small amount" of
 stamina, so the meaning of `incomingDamage` is read from the setting's name.
 
 ## HUD bars
@@ -202,7 +202,7 @@ Current values go in the `AVAL` chunk, one entry per actor that differs from a f
 override table goes in `AVOV`, and each `AVOV` entry travels beside that actor's `AVAL` entry. The
 temporary slot is not saved: the active effect sets it again on load, and saving both would double
 the buff. The layouts, and why these are separate chunks, are on the
-[save chunks](/formats/opensky-save-actor-chunks.md) page.
+[save chunks](../formats/opensky-save-actor-chunks.md) page.
 
 Maximums are not saved. So a save loaded against changed records gets the new numbers. The stored
 current value is kept, and the first change clamps it into the new range.

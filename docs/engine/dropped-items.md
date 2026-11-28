@@ -9,7 +9,7 @@ tags: [engine, inventory]
 # Dropped items
 
 An item dropped from an inventory lands in front of the actor that dropped it, clear of walls.
-The size test uses the item's [object bounds](/formats/records.md#object-bounds).
+The size test uses the item's [object bounds](../formats/records.md#object-bounds).
 
 ## Where it lands
 

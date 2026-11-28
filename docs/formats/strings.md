@@ -9,7 +9,7 @@ tags: [format, strings, localization, plugin]
 # Localized string tables
 
 A plugin with the "localized" flag (`0x80` in the `TES4` header, see
-[FormID](/formats/formid.md)) keeps no display text in its records. Where a record would
+[FormID](formid.md)) keeps no display text in its records. Where a record would
 hold a zstring, it holds a uint32 string ID instead. This is called an "lstring". The text
 is in a table per language: `Strings/<plugin>_<language>.<ext>`. The table can be a loose
 file or inside a BSA. In vanilla it is in `Skyrim - Interface.bsa`. All five vanilla masters
@@ -51,10 +51,10 @@ in neither of the other two tables.
 - Extra bytes after the data block are allowed. A file shorter than the header says is not.
 - A length-prefixed entry without its final null byte is allowed.
 - The file does not say its text encoding. Some languages use UTF-8, others use old code
-  pages. OpenSky uses the [string decoding](/decisions/string-decoding.md) policy: UTF-8
+  pages. OpenSky uses the [string decoding](../decisions/string-decoding.md) policy: UTF-8
   when the bytes are valid UTF-8, else windows-1252, else ISO 8859-1.
 
-The language comes from `[General] sLanguage`, see [INI settings](/formats/ini.md). When a
+The language comes from `[General] sLanguage`, see [INI settings](ini.md). When a
 table is missing, lookups return nothing and OpenSky logs one error.
 
 A string ID is local to the plugin that wrote the record. Two plugins can use the same ID

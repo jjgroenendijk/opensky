@@ -10,7 +10,7 @@ tags: [format, ini, config, localization, lod]
 
 OpenSky reads the Skyrim INI files as settings. It never writes them. Section and key names
 are case-insensitive. Text encoding follows the
-[string decoding](/decisions/string-decoding.md) policy.
+[string decoding](../decisions/string-decoding.md) policy.
 
 ## File order
 

@@ -9,15 +9,15 @@ tags: [engine, magic, effects, combat, actors]
 # Magic effect archetypes
 
 An archetype is the code-based behaviour an `MGEF` record picks in its `DATA` block
-([magic records](/formats/magic-records.md)). This page lists what each archetype does in
+([magic records](../formats/magic-records.md)). This page lists what each archetype does in
 OpenSky. How a timed effect is stored, ticked, and saved is on the
-[magic](/engine/magic.md) page.
+[magic](magic.md) page.
 
 ## Sources
 
 - The Creation Kit wiki's Magic Effect page, archetype table
   (<https://ck.uesp.net/wiki/Magic_Effect>), read through the Wayback Machine
-  ([environment](/tools/environment.md)). Every quote below without another link is from it.
+  ([environment](../tools/environment.md)). Every quote below without another link is from it.
 - UESP spell pages for numbers the wiki does not give:
   [Ward](https://en.uesp.net/wiki/Skyrim:Ward), [Cloak](https://en.uesp.net/wiki/Skyrim:Cloak),
   [Calm](https://en.uesp.net/wiki/Skyrim:Calm),
@@ -65,7 +65,7 @@ An effect that acts on no actor value still stores one value at index -1 (none) 
   10 health left gives 10. A timed absorb pays each second, whatever the Recover flag says,
   because a held modifier cannot move health between two actors. An instant absorb's hit shader
   and art stay for `fMagicAbsorbVisualTimer` seconds (2.5 in `Skyrim.esm`), not the shader's own
-  settle time ([visual effects](/rendering/visual-effects.md)).
+  settle time ([visual effects](../rendering/visual-effects.md)).
 - Accumulate Magnitude: "Grants up to `<MAG>` of a chosen actor value, but starts at 0 and
   increases over time." UESP's Ward page says a ward charges up over "a period of time of
   about one second". OpenSky grows the value in a straight line over one second. The shape and
@@ -112,7 +112,7 @@ keyword is looked for on the actor's `NPC_` record and on its race.
 Calm and Frenzy at once: in the game the later effect wins, because both set one value.
 OpenSky lets Calm win. A calmed actor that attacks is the more harmful mistake.
 
-The loop fights only the player ([combat](/engine/combat.md)), so Frenzy cannot make an actor
+The loop fights only the player ([combat](combat.md)), so Frenzy cannot make an actor
 attack another NPC, and fear runs from the player only.
 
 ## Effect list
@@ -163,7 +163,7 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   the caster, as a spawned actor in the caster's cell; the next cell build draws it. When the
   effect ends, the spawn is removed.
   A self-cast summon looks for room in front of the caster. With `s` the summon's 2D
-  [bounds radius](/formats/records.md#object-bounds) and `c` the caster's, the aim point is the
+  [bounds radius](../formats/records.md#object-bounds) and `c` the caster's, the aim point is the
   caster's position plus its facing times `c + s + 0.5 * fSummonedCreatureSearchRadius`
   (default 512), at the caster's height. The search for a free spot reaches out to
   `c + s + fSummonedCreatureSearchRadius` and needs `s` of clearance. A summon with `s` above
@@ -180,7 +180,7 @@ the change, through `MagicWorld`. A queue keeps the runtime a value with no worl
   Commanded Actor Limit) adds to that 1: Twin Souls allows "two atronachs or reanimated
   zombies". Past the limit, the caster's oldest actor goes and its effect ends.
 - A commanded actor follows its caster and fights the caster's foes, and foes fight it back
-  ([combat allies](/engine/combat.md#allies)). A commanded actor that dies ends its effect, so a
+  ([combat allies](combat.md#allies)). A commanded actor that dies ends its effect, so a
   summon fades and a raised corpse stays down. [WARNING] Summons are not saved as commanded.
 - A summon walks back to its caster once it is `fSummonedCreatureMaxFollowDist` away and stops
   `fSummonedCreatureMinFollowDist` from them. A summon whose effect ends stays
@@ -201,7 +201,7 @@ asks for a knock-down, so the push can only come from the projectile. Dawnguard'
 When a cloak's spell lands, OpenSky pushes each target away from the cloak's holder at
 `impactForce * fProjectileKnockMultBiped` (0.25), read as a Havok speed and scaled to units: about
 875 units a second for Shield Charge. The push knocks the actor down as a ragdoll, the path
-`PushActorAway` uses ([knockdown](/engine/ragdoll.md#knockdown)). The flame, frost, and shock
+`PushActorAway` uses ([knockdown](ragdoll.md#knockdown)). The flame, frost, and shock
 cloaks name projectiles with an impact force of 5 or 10, so they knock down a little too.
 
 [WARNING] The speed scale is OpenSky's reading; no source gives it.
@@ -258,7 +258,7 @@ renews ends after 1.5 seconds, an OpenSky number.
   that distance, never nearer than `fMagicGrabActorMinDistance` (120). The `Grabbed` actor value
   is 1, and the actor counts as paralysed. When the hold ends, a grabbed NPC is knocked down
   along the aim at `fMagicGrabActorThrowForce` (15) Havok metres a second
-  ([knockdown](/engine/ragdoll.md#knockdown)), and a grabbed player is knocked back at 15 times
+  ([knockdown](ragdoll.md#knockdown)), and a grabbed player is knocked back at 15 times
   100 units a second. [WARNING] The player's scale is OpenSky's. The wiki's list of actors it
   does not affect is not checked.
 - Guide: "Creates a trail of Hazard objects from the caster to the nearest quest target." The

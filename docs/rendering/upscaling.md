@@ -78,7 +78,7 @@ in `RendererUpscaleTests`. The other choices lost 2 to 8 dB of peak signal-to-no
 
 MetalFX builds the temporal scaler and the frame interpolator through the Neural Engine
 compiler, a system service. The first build of a size takes seconds, and the service can stop
-answering for hours ([environment](/tools/environment.md)). So the renderer never builds a
+answering for hours ([environment](../tools/environment.md)). So the renderer never builds a
 scaler inside a frame:
 
 1. A frame that needs a scaler it does not have starts a `@concurrent` build task and draws the
@@ -97,7 +97,7 @@ The scaler forgets its history when the scene swaps, the output size changes, th
 scale changes, or the camera cuts. A cut is a move of more than 1024 units or a turn of more
 than 60 degrees in one frame. Without a reset, the first frames after a cut would show a ghost
 of the old view. The game's own TAA resets only at a loading screen
-([temporal anti-aliasing in the game](/rendering/temporal-aa.md)).
+([temporal anti-aliasing in the game](temporal-aa.md)).
 
 ## Limits
 
@@ -111,4 +111,4 @@ of the old view. The game's own TAA resets only at a loading screen
 ## Checking it
 
 `make benchmark ARGS='--set rendering.renderScale=67%'` measures the GPU time against a native run,
-and `--set rendering.upscaler=spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).
+and `--set rendering.upscaler=spatial` picks the other scaler ([benchmark](../tools/benchmark.md)).

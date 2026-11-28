@@ -9,7 +9,7 @@ tags: [engine, combat, ai, navigation]
 # Combat movement
 
 An NPC in combat runs one movement loop beside its attack and block loops
-([combat blocking](/engine/combat-blocking.md#loops-that-run-together)). The loop picks one branch.
+([combat blocking](combat-blocking.md#loops-that-run-together)). The loop picks one branch.
 
 ```mermaid
 flowchart TD
@@ -32,14 +32,14 @@ only when it starts again. While a move runs, it does not test the case again.
 | --- | --- |
 | Out of range | Fall back to a ranged weapon, advance, surround, distant circle, wait 0.25 s |
 | Out of position | Reposition, surround, wait 0.25 s |
-| In range | Circle or fall back, back off, wait 0.25 s ([close-range movement](/formats/combat-style.md#close-range-movement)) |
+| In range | Circle or fall back, back off, wait 0.25 s ([close-range movement](../formats/combat-style.md#close-range-movement)) |
 
 Each move ends when its path ends or fails, or when the NPC's combat target changes. Then the loop
 starts again from the top.
 
 In this page, `reach` is the low edge of the NPC's optimal range, and the maximum range is the
 largest attack range of its equipment. `inner` is the inner advance radius
-([advance radii](/engine/combat-approach.md#advance-radii)).
+([advance radii](combat-approach.md#advance-radii)).
 
 ### Out of range
 
@@ -66,7 +66,7 @@ flowchart TD
 - Fall back to a ranged weapon runs only when the NPC's ranged range is above 1024 units.
 - The advance always starts. Its goal is a free place around the target at `reach + inner`. The
   NPC books that place when its path is planned. It walks at the
-  [approach speeds](/engine/combat-approach.md#speed), with the bands at `reach + inner` and
+  [approach speeds](combat-approach.md#speed), with the bands at `reach + inner` and
   `reach + outer`, and turns to face the target within 768 units.
 - The advance ends when its path ends. It also ends early while the path runs, when the target
   moves slower than 5 units a second, the NPC is inside the goal distance, and its bearing lies in
@@ -176,7 +176,7 @@ movement or starts to flee or search.
 
 A melee NPC with a combat style runs these parts of the close loop:
 
-- the in-range moves ([close-range movement](/formats/combat-style.md#close-range-movement));
+- the in-range moves ([close-range movement](../formats/combat-style.md#close-range-movement));
 - the advance to a free place, and the reposition when it stands out of its place;
 - the surround and the distant circle once its advance path has failed for more than 1 s, then the
   0.25 s wait.
@@ -212,4 +212,4 @@ OpenSky differs in these ways:
 - Flank distant walks to the point at the flank distance on the NPC's own bearing.
 - The flanking loop runs only between attacks. A move under way goes on through an attack.
 - Falling back to a ranged weapon is not built
-  ([combat style](/formats/combat-style.md#where-opensky-differs)).
+  ([combat style](../formats/combat-style.md#where-opensky-differs)).

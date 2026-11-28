@@ -14,9 +14,9 @@ stream (BS) 100. The original Skyrim used stream 83. Fallout 3 and New Vegas use
 version with user version 11. A file is a header, then the blocks one after another, then a
 footer.
 
-Related pages: [NIF skinning](/formats/nif-skinning.md),
-[NIF materials](/formats/nif-materials.md), [NIF Havok collision](/formats/nif-collision.md),
-[NIF particle systems](/formats/nif-particles.md), and [LOD](/formats/lod.md).
+Related pages: [NIF skinning](nif-skinning.md),
+[NIF materials](nif-materials.md), [NIF Havok collision](nif-collision.md),
+[NIF particle systems](nif-particles.md), and [LOD](lod.md).
 
 Reference: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml),
 structs `Header`, `BSStreamHeader`, `ExportString`, `SizedString`, `Footer`. NifSkope was
@@ -31,7 +31,7 @@ so.
 | ExportString | uint8 length (with the null), then the bytes and a null |
 | SizedString | uint32 length, then the bytes. No null |
 
-Strings follow the [string decoding](/decisions/string-decoding.md) policy. Some vanilla
+Strings follow the [string decoding](../decisions/string-decoding.md) policy. Some vanilla
 string tables hold random bytes from the exporter's memory, for example `0c 90 29 7b ...` in
 `dwelexiconstandrunes01.nif`. A garbage name must not reject the mesh.
 
@@ -88,10 +88,10 @@ same `NiObjectNET` and `NiAVObject` fields. For streams 83 and 100, flags are ui
 | float x 3 | Translation | |
 | float x 9 | Rotation | `Matrix33`, see below |
 | float | Scale | Uniform only |
-| int32 | Collision ref | See [NIF Havok collision](/formats/nif-collision.md) |
+| int32 | Collision ref | See [NIF Havok collision](nif-collision.md) |
 
 A name index that points nowhere gives no name. The local transform is `T * R * S` with
-column vectors (see [coordinates](/decisions/coordinates.md)).
+column vectors (see [coordinates](../decisions/coordinates.md)).
 
 ### Matrix33 is transposed
 
@@ -105,7 +105,7 @@ identity. A skeleton does. Without the transpose, the bind pose from `skeleton.n
 disagrees with the same file's `NiSkinData` by up to about 10 units on a thigh, and with
 `skeleton.hkx` by up to 61.9 units. With the transpose, the rig matches the NIF bind pose to
 5.3e-5, and `rootParentToSkin * boneWorld * skinToBone` is the identity to 8e-6 for every
-bone of a vanilla body. See [actor animation](/engine/actor-animation.md).
+bone of a vanilla body. See [actor animation](../engine/actor-animation.md).
 
 ## NiNode
 
@@ -119,7 +119,7 @@ After the shared fields:
 | int32 x count | Effects | Skipped |
 
 `BSFadeNode`, `BSLeafAnimNode`, `BSTreeNode`, and `BSOrderedNode` use the same layout.
-`BSMultiBoundNode` adds a tail (see [LOD](/formats/lod.md)). `NiLODNode` is not walked on
+`BSMultiBoundNode` adds a tail (see [LOD](lod.md)). `NiLODNode` is not walked on
 purpose. It picks one child by distance, and walking all of them would stack the LOD
 versions on top of each other.
 
@@ -130,10 +130,10 @@ node.
 
 | Block | Appended fields |
 | --- | --- |
-| `BSValueNode` | uint32 value, uint8 flags. An add-on node ([NIF extra data](/formats/nif-extra-data.md#add-on-nodes)) |
+| `BSValueNode` | uint32 value, uint8 flags. An add-on node ([NIF extra data](nif-extra-data.md#add-on-nodes)) |
 | `BSBlastNode`, `BSDamageStage` | uint8 minimum, maximum, and current stage (`nif.xml` `BSRangeNode`) |
 | `BSMasterParticleSystem` | uint16 maximum emitter objects, then a Ref list of particle systems |
-| `NiBillboardNode` | uint16 billboard mode. Turns to the camera ([billboard nodes](/formats/nif-sequences.md#billboard-nodes)) |
+| `NiBillboardNode` | uint16 billboard mode. Turns to the camera ([billboard nodes](nif-sequences.md#billboard-nodes)) |
 
 A destructible mesh holds one `BSDamageStage` per stage. A reference at a damage stage draws
 only the `BSDamageStage` nodes whose minimum to maximum range holds that stage. With no stage
@@ -143,7 +143,7 @@ set, the walk draws every stage that is not hidden.
 
 `BSMultiBoundNode` names a `BSMultiBound`, whose data ref names a box around the subtree.
 `BSMultiBoundAABB` is a centre and a half size (float32 x 3 each). `BSMultiBoundOBB` adds a
-`Matrix33` rotation, stored like the node rotation ([LOD](/formats/lod.md)). The mesh
+`Matrix33` rotation, stored like the node rotation ([LOD](lod.md)). The mesh
 preview shows the boxes; culling does not use them yet.
 
 ## NiSwitchNode
@@ -189,7 +189,7 @@ name:
 Reference: the `BSBehaviorGraphExtraData` entry of nif.xml (NifTools). Confirmed on the
 install: `meshes\traps\swingingblade\trapbladeswinging01.nif` names
 `Traps\SwingingBlade\TrapBladeSwinging01.hkx`, a path relative to `meshes\`. How OpenSky runs it:
-[object animation](/engine/object-animation.md).
+[object animation](../engine/object-animation.md).
 
 ## BSFurnitureMarkerNode
 
@@ -212,8 +212,8 @@ Each marker, for Skyrim (stream above 34):
 Reference: the `BSFurnitureMarker` and `FurniturePosition` entries of nif.xml (NifTools).
 Confirmed on the install: `meshes\furniture\headchoppingblock.nif` has one 68-byte block
 named `FRN` with three sit markers, 8 + 3 x 20 bytes. The `FURN` record's `ENAM`, `FNMK`,
-and `FNPR` fields describe the same markers by index ([world records](/formats/world-records.md)).
-How OpenSky uses them: [furniture](/engine/furniture.md).
+and `FNPR` fields describe the same markers by index ([world records](world-records.md)).
+How OpenSky uses them: [furniture](../engine/furniture.md).
 
 ## BSTriShape
 
@@ -223,8 +223,8 @@ Skyrim SE geometry, stream 100 only. After the shared fields:
 | --- | --- | --- |
 | float x 4 | Bounding sphere | Center and radius, shape-local |
 | int32 | Skin ref | -1 is static |
-| int32 | Shader property | See [NIF materials](/formats/nif-materials.md) |
-| int32 | Alpha property | See [NIF materials](/formats/nif-materials.md) |
+| int32 | Shader property | See [NIF materials](nif-materials.md) |
+| int32 | Alpha property | See [NIF materials](nif-materials.md) |
 | uint64 | Vertex desc | Below |
 | uint16 | Triangle count | uint32 only in Fallout 4 |
 | uint16 | Vertex count | |
@@ -253,7 +253,7 @@ A normal byte maps to `(byte / 255) * 2 - 1` (as in NifSkope and nifly). Positio
 always full floats in Skyrim SE. The "full precision" flag (0x400) chooses half or full
 floats only in Fallout 4. It appears in vanilla Skyrim SE files and is ignored.
 
-`BSSubIndexTriShape` is a full `BSTriShape` plus segment data. See [LOD](/formats/lod.md).
+`BSSubIndexTriShape` is a full `BSTriShape` plus segment data. See [LOD](lod.md).
 
 ### BSDynamicTriShape
 
@@ -319,7 +319,7 @@ are static.
   `Markers\Marker_LinkMarker.nif`. Their `BSXFlags` block is present too. A mesh with only
   editor-marker geometry has nothing to draw. Some marker meshes, such as `MarkerX.nif` and
   `MarkerXHeading.nif`, have no such shape; the record flag below hides them
-  ([world records](/formats/world-records.md#stat)).
+  ([world records](world-records.md#stat)).
 - A shape or node with the `NiAVObject` hidden flag (flags bit 0) is dropped with its
   subtree, because the game does not draw it. Particle emitter source meshes set it, for
   example `SPLASHeMIT:0` in `Effects\FXCreekFlatLong01.nif` (flags `0xF`).
@@ -332,7 +332,7 @@ are static.
   emitter sources (`emitFireBall:0`), and `OrderedAlphaBound`.
 - A shape named `CurrentPlane` or `CurrentPlane:<n>`, and the first child of a node named
   `CurrentPlane`, is dropped too. The collision decode keeps its transform and bound radius as a
-  water current ([water physics](/engine/water-physics.md#current-planes)).
+  water current ([water physics](../engine/water-physics.md#current-planes)).
 - A ref out of range, a loop, or depth above 64 is an error. A subtree used under two
   parents is allowed; only a loop on the current path is an error.
 - Every scene walk (bind pose, meshes, particles, collision targets) uses one explicit work
@@ -354,7 +354,7 @@ offset under that node's keys. Reference: `nif.xml` blocks `NiCamera`, `NiTimeCo
 | `NiCamera` | The shared node fields (rest transform and controller ref), then 2 bytes of camera flags and the frustum floats left, right, top, bottom, near; top and bottom are skipped |
 | `NiTransformController` | Next controller ref, flags (uint16), frequency, phase, start time, stop time, target ref, interpolator ref |
 | `NiTransformInterpolator` | A rest translation, rotation, and scale (32 bytes), then the data ref |
-| `NiTransformData` | Rotation, translation, and scale keys, as in `.kf` animation files. The camera ignores the scale keys; [sequence](/formats/nif-sequences.md) playback applies them |
+| `NiTransformData` | Rotation, translation, and scale keys, as in `.kf` animation files. The camera ignores the scale keys; [sequence](nif-sequences.md) playback applies them |
 
 The horizontal field of view is `2 * atan((right - left) / 2 / near)`. A camera with no
 controller, or with a controller that has no interpolator, keeps its rest transform. Between
@@ -364,7 +364,7 @@ so a curved camera path is followed as straight segments between keys.
 
 A chain can start with a `BSFrustumFOVController` before the transform controller. Its
 keys are the horizontal field of view in degrees; the shot uses them instead of the
-frustum's value ([NIF controllers](/formats/nif-controllers.md)). A transform controller
+frustum's value ([NIF controllers](nif-controllers.md)). A transform controller
 whose interpolator is an `NiPathInterpolator` moves the camera along its path instead of
 along keys. On
 the install, 77 meshes are named by `CAMS` records and one, `killcam_topsideclosea.nif`, is

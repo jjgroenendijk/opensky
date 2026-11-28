@@ -52,7 +52,7 @@ record, or mesh that carries it and take working content down with it. Mojibake 
 string is recoverable and visible; a lost archive is neither.
 
 Lookups must never be silently corrupted. That is handled by normalization rather than by decode:
-BSA and VFS paths are lowercased and separator-folded before lookup ([VFS](/formats/vfs.md)), so
+BSA and VFS paths are lowercased and separator-folded before lookup ([VFS](../formats/vfs.md)), so
 both the archive side and the request side of a comparison run through the same decode and the same
 folding. A wrong-encoding name still matches itself.
 
@@ -68,17 +68,17 @@ fields whose encoding the format itself pins down, where garbage means the file 
 what it claims to be rather than that an author typed an accent:
 
 * Havok type and version names, ASCII by the container's own layout
-  ([HKX container](/formats/hkx-container.md)).
+  ([HKX container](../formats/hkx-container.md)).
 * Four-character record and chunk tags, which have their own ASCII readers
   (`FourCC`, `SWFFile`, `HKXHeader`).
 
 OpenSky's own save format is not game data: it is written and read by this engine, so it
-stays strict UTF-8 ([OpenSky save](/formats/opensky-save.md)).
+stays strict UTF-8 ([OpenSky save](../formats/opensky-save.md)).
 
 ## Consequences
 
 * Localized string table lookup does not throw on undecodable bytes
-  ([strings](/formats/strings.md)). It still throws on framing that leaves the data block.
+  ([strings](../formats/strings.md)). It still throws on framing that leaves the data block.
 * Text written back out is different: `BinaryWriter.writeZString` takes an explicit encoding
   and throws on a string it cannot encode, because when writing we choose the encoding and an
   unrepresentable character is a real error.

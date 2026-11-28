@@ -9,9 +9,9 @@ tags: [engine, explosions, projectiles, combat]
 # Explosions in the game
 
 This page gives the game's rules for a projectile that explodes, and for the explosion itself. The
-`EXPL` and `PROJ` fields are on the [explosion records](/formats/explosions.md) page, with what
-OpenSky does today. The push on loose bodies is on the [impulses](/engine/impulses.md#explosions)
-page. The screen effects are on the [explosion effects](/engine/explosion-effects.md) page.
+`EXPL` and `PROJ` fields are on the [explosion records](../formats/explosions.md) page, with what
+OpenSky does today. The push on loose bodies is on the [impulses](impulses.md#explosions)
+page. The screen effects are on the [explosion effects](explosion-effects.md) page.
 
 ## When a projectile explodes
 
@@ -28,7 +28,7 @@ level.
 
 A spell with several effects still sets off one explosion per impact. The explosion comes from
 the spell's main effect, the same effect that gives the hand art and the projectile
-([spellcasting](/engine/spellcasting.md#casting-cues)):
+([spellcasting](spellcasting.md#casting-cues)):
 
 - The main effect has the highest cost, cut to a whole number. On a tie, the earlier effect wins.
 - An effect with `MGEF` flag bit 24 (`0x01000000`) is skipped. For a concentration spell, an
@@ -113,7 +113,7 @@ NPC:    1 + 2 x skill / 100
 ```
 
 - An object that is not an actor takes the damage times the falloff as destruction damage
-  ([destruction](/engine/papyrus-destruction.md#in-the-game)).
+  ([destruction](papyrus-destruction.md#in-the-game)).
 - An actor needs a clear line from the explosion, unless the `EXPL` flag Ignore LOS (`0x10`) is
   set. The line starts 24 units from the centre along the explosion's direction, and ends at the
   actor's centre, or at the camera for the player. When the explosion points almost straight
@@ -146,11 +146,11 @@ is not above 75. 60 percent of the current health is above 50. The chance is `9 
 
 A dead or ragdolled actor gets the push instead. Which actors can be knocked down, and what a
 race with No Knockdowns gets instead, is the same as for an attack's knockdown
-([attack data](/engine/attack-data.md#knockdown)).
+([attack data](attack-data.md#knockdown)).
 
 ## Push
 
-The push is on the [impulses](/engine/impulses.md#explosions) page. Two more rules:
+The push is on the [impulses](impulses.md#explosions) page. Two more rules:
 
 - With the `EXPL` flag Push Explosion Source Ref Only (`0x20`), only the bodies of the source
   reference are pushed.

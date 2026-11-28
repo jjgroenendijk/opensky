@@ -8,7 +8,7 @@ tags: [journal, stats, ui]
 # General stats
 
 The journal's General Stats page shows misc stats, one counter each. Scripts read and change them
-with `Game.QueryStat` and `Game.IncrementStat`. The page layout is on [journal](/engine/journal.md#stats-page).
+with `Game.QueryStat` and `Game.IncrementStat`. The page layout is on [journal](journal.md#stats-page).
 
 Source for the rules below: the UESP page <https://en.uesp.net/wiki/Skyrim:Statistics>
 (revision 3569833). A stat rises by one for each event unless the table says otherwise.
@@ -229,7 +229,7 @@ skill.
 
 ## How OpenSky counts
 
-Which stats OpenSky counts so far is on [journal](/engine/journal.md#stats-page). Some rules
+Which stats OpenSky counts so far is on [journal](journal.md#stats-page). Some rules
 above leave a choice, and OpenSky reads them like this:
 
 - A kill counts only when the player is the killer. The victim's `ActorType*` keywords, on its

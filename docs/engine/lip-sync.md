@@ -9,8 +9,8 @@ tags: [engine, dialogue, voice, lip-sync, facegen, audio]
 # Lip sync
 
 Every loaded actor with FaceGen expression targets has a lip sync player beside its face morph
-player ([face morphs](/engine/face-morphs.md)). The track format is on the
-[.lip](/formats/lip.md) page, and the voice container on the [.fuz](/formats/fuz.md) page.
+player ([face morphs](face-morphs.md)). The track format is on the
+[.lip](../formats/lip.md) page, and the voice container on the [.fuz](../formats/fuz.md) page.
 
 ## Starting a line
 

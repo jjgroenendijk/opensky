@@ -10,7 +10,7 @@ tags: [tool, cli, agent, testing]
 
 Agent control lets a script or an agent play the running app from a terminal. The app runs a
 small server, and `openskycli game ...` sends it one command per call. The workflow for agents
-is in the `driving-the-running-game` skill, and [game commands](/tools/game-commands.md) lists
+is in the `driving-the-running-game` skill, and [game commands](game-commands.md) lists
 every command. This page explains how the parts fit.
 
 ## The server
@@ -28,7 +28,7 @@ so they open no socket either.
 
 `game launch` also sets `OPENSKY_SURVIVAL_MODE`, from `--survival-mode on|off|ask` with `off` as
 the default. So the Survival Mode question never stops an agent session unless the script asks
-for it ([Survival Mode prompt](/engine/survival-mode.md)).
+for it ([Survival Mode prompt](../engine/survival-mode.md)).
 
 It listens on a Unix domain socket, never a network port. The default path is
 `~/Library/Application Support/OpenSky/agent-control.sock`; `OPENSKY_AGENT_SOCKET` changes it
@@ -152,7 +152,7 @@ one core busy the whole time.
   `--pos` goes to that worldspace first, such as `--worldspace DLC2SolstheimWorld --x 7 --y 8`.
 - `debug teleport --x --y` and `--cell` stand the player where the game's `coc` does: on the
   cell's `COCMarkerHeading`, else on an `XMarkerHeading`, else on an `XMarker`
-  ([centre on cell](/engine/center-on-cell.md)). An exterior cell without one
+  ([centre on cell](../engine/center-on-cell.md)). An exterior cell without one
   puts the player at the cell centre, on the terrain. Where the cell hides its terrain, as
   city worlds such as `WindhelmWorld` do, the player stands on the top collision surface
   there, which can be a roof.

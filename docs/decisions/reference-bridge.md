@@ -11,7 +11,7 @@ tags: [decision, reference, dependency, licensing, skse, clean-room]
 
 OpenSky drives the Windows reference game through `OpenSkyBridge`, a small SKSE plugin
 in `reference/bridge/`. It runs console commands that OpenSky sends and reports the
-player's place, view, hour, and weather. [Reference game](/tools/reference-game.md) shows
+player's place, view, hour, and weather. [Reference game](../tools/reference-game.md) shows
 how to use it.
 
 ## Why a plugin

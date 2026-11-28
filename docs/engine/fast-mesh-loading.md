@@ -10,7 +10,7 @@ tags: [engine, assets, cache, loading, metal4]
 
 Fast mesh loading reads the vertex and index bytes of a cached mesh straight from its entry
 file into GPU buffers, with Metal fast resource loading (MTLIO). It works like fast texture
-loading ([asset cache](/engine/asset-cache.md), "Direct GPU loading"): the CPU does not
+loading ([asset cache](asset-cache.md), "Direct GPU loading"): the CPU does not
 copy the bytes.
 
 Reference: Apple, `MTLIOCommandQueue` and `MTLIOCommandBuffer.load(_:offset:size:sourceHandle:sourceHandleOffset:)`.
@@ -49,7 +49,7 @@ not read the GPU blocks or the model.
 With parallel decode on, a cell build reads the layout blocks of its new meshes on every core
 first. A model with a ready layout skips the CPU decode, and only its read commands queue on
 the build thread. The other models decode on the workers
-([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
+([concurrency](../decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
 
 The setting `assetOptimisation.directLoad.meshes` is off by default. `make benchmark ARGS='--set
 assetOptimisation.directLoad.meshes=on'` measures it.

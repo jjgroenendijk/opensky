@@ -9,17 +9,17 @@ tags: [format, save, io, world-state, determinism]
 # OpenSky native save container
 
 `.osav` is the file OpenSky writes when it saves a session. It holds the
-[world-state snapshot](/engine/runtime-state.md) (every runtime change to what the plugins
+[world-state snapshot](../engine/runtime-state.md) (every runtime change to what the plugins
 say), the load order of the session, and a small header.
 
 This format is OpenSky's own, not Bethesda's `.ess`. Nothing in it is reverse engineered, so
 this page is the specification. A `.ess` file is a separate export
-([ESS export](/engine/ess-export.md)); it is never a slot in the save store.
+([ESS export](../engine/ess-export.md)); it is never a slot in the save store.
 
 All integers are little-endian. Floats are IEEE 754 bit patterns, little-endian. A string is
 a `UInt16` byte length followed by that many UTF-8 bytes. The chunk payloads are on
-[save chunks: world and scripts](/formats/opensky-save-world-chunks.md) and
-[save chunks: actors](/formats/opensky-save-actor-chunks.md).
+[save chunks: world and scripts](opensky-save-world-chunks.md) and
+[save chunks: actors](opensky-save-actor-chunks.md).
 
 ## Design goals
 
@@ -67,9 +67,9 @@ A uint32 plugin count, then for each plugin in load order:
 | uint32 | recordCount | HEDR record and group count |
 | uint32 | nextObjectID | HEDR next object ID |
 
-The three numbers come from the TES4 `HEDR` field ([FormID](/formats/formid.md)). The
+The three numbers come from the TES4 `HEDR` field ([FormID](formid.md)). The
 Creation Kit updates them whenever the file changes, so they are a cheap "same plugin?"
-check. The list is the resolved [load order](/formats/plugins-txt.md).
+check. The list is the resolved [load order](plugins-txt.md).
 
 A load compares the lists position by position and names the first difference. Case in file
 names is ignored. Order matters: a plugin `ReferenceKey` uses the name and survives
@@ -150,42 +150,42 @@ chunk cannot read into the next.
 means harvested, so it has no other field. `HRVD` is a uint32 entry count, then one key and a
 float32 game day per harvest with a known day. A decoder applies it after `HRVS` and ignores a key
 that `HRVS` does not name. The day is kept; a plant grows back when its cell
-resets ([cell reset](/engine/cell-reset.md)), not on a day count.
+resets ([cell reset](../engine/cell-reset.md)), not on a day count.
 
 `LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or
 1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that
-still matches its `XLOC` writes no entry. See [locks](/engine/locks.md).
+still matches its `XLOC` writes no entry. See [locks](../engine/locks.md).
 
 `RLOC` is a uint32 entry count, then per moved reference: the key, the cell, the cell
 that draws it now, in the same cell encoding, and the editor ID of that cell's worldspace as a
 string. The string is empty for an interior. A city world and Tamriel share grid coordinates,
 so an exterior cell needs its worldspace. The target cell is never absent. A reference
 moved back to its plugin cell writes no entry. See
-[reference identity](/engine/reference-identity.md).
+[reference identity](../engine/reference-identity.md).
 
 `RMOT` is a uint32 entry count, then per reference: the key, the cell, and a motion byte, 1
 for dynamic or 4 for keyframed. Any other byte fails the load. A reference no script set a
-motion type on writes no entry. See [traps](/engine/traps.md#motion-type).
+motion type on writes no entry. See [traps](../engine/traps.md#motion-type).
 
 `RDMG` is a uint32 entry count, then per reference: the key, the cell, the model path as a
 string, and the damage stage as a uint32. An empty path keeps the base's model. The stage is
 stored plus one, so 0 means the mesh draws every `BSDamageStage` child. A reference no
 destruction stage changed writes no entry. See
-[destruction](/engine/papyrus-destruction.md#in-the-game).
+[destruction](../engine/papyrus-destruction.md#in-the-game).
 
 `RDLK` is a uint32 entry count, then per linked door: the key, the cell, and the key of the
 door it leads to. Both doors of a link write an entry. A door with no link writes none. See
-[random doors](/engine/random-doors.md).
+[random doors](../engine/random-doors.md).
 
 `LVRL` is a uint32 entry count, then per reference: the key, the cell, and the player level
 as a uint32. A level below 1 is dropped, so that reference rolls at the live level. See
-[leveled lists](/engine/leveled-lists.md).
+[leveled lists](../engine/leveled-lists.md).
 
 `SUMM` holds the character name (string), the level (uint16), the race name and the
 location name (strings), and the real play time in seconds (float64, finite, not negative).
 `THMB` holds a uint16 width and height, each 1 to 512, then width times height RGBA8
 pixels, top row first. The save list reads only these two chunks and skips the others
-by their length ([title menu](/engine/main-menu.md)). `CLOK` is read only when a save loads.
+by their length ([title menu](../engine/main-menu.md)). `CLOK` is read only when a save loads.
 
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 

@@ -41,7 +41,7 @@ Run directory (optional, never committed): .logs/game/<UTC timestamp>/
   value before and after. A record without it is incomplete, because nothing is left to check
   again.
 - **Deterministic tests**: the test suites that check the same behaviour without the app.
-- **Run directory**: a run directory under `.logs/` ([run output](/tools/run-output.md)), or
+- **Run directory**: a run directory under `.logs/` ([run output](run-output.md)), or
   `none`. `make prune` deletes old run directories, so the tests stay the lasting evidence.
 
 A behaviour that no command can force or read yet gets the command in the same milestone. The

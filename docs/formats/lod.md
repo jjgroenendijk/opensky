@@ -8,7 +8,7 @@ tags: [format, lod, terrain, tree, nif, rendering]
 # Skyrim SE distant LOD
 
 LOD (level of detail) files hold simple terrain, objects, and trees for the area beyond the
-loaded cells. See [distant LOD](/engine/distant-lod.md) for how OpenSky draws them.
+loaded cells. See [distant LOD](../engine/distant-lod.md) for how OpenSky draws them.
 
 References:
 
@@ -65,9 +65,9 @@ A terrain file usually has two `BSMultiBoundNode` children: `chunk` holds the la
 `WATER` holds a water shape.
 
 The vanilla diffuse maps at all levels are 32-bit xRGB8888 DDS with full mip chains. The
-normal maps are DXT5. See [DDS](/formats/dds.md).
+normal maps are DXT5. See [DDS](dds.md).
 
-Blocks added on top of the shared [NIF](/formats/nif.md) layouts:
+Blocks added on top of the shared [NIF](nif.md) layouts:
 
 | Block | Data after the inherited part |
 | --- | --- |
@@ -116,7 +116,7 @@ segments. Segment 0 lies in cell (4, -4), segment 3 in cell (4, -1), and segment
 `openskycli nif <key>` prints each segment's triangles and the cells its bounds cover.
 
 OpenSky splits such a shape into one mesh per segment that holds triangles, so the
-[large-reference ring](/engine/distant-lod.md#large-references) can hide one cell. Other
+[large-reference ring](../engine/distant-lod.md#large-references) can hide one cell. Other
 `BSSubIndexTriShape` blocks draw whole.
 
 ## Trees: LST and BTT

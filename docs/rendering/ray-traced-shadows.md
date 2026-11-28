@@ -49,4 +49,4 @@ The player setting `rendering.rayTracedShadows` turns it on, from the launcher's
 page.
 
 The effect and its frame cost have not been checked on an M3 or later Mac yet. The
-[benchmark](/tools/benchmark.md) records that cost once one is available.
+[benchmark](../tools/benchmark.md) records that cost once one is available.

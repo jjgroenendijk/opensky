@@ -66,7 +66,7 @@ every texture whole.
    each of many small cards, so its density is high, and the mesh size alone would pick a
    level far too coarse. A moving instance, such as an actor on the opening cart, is
    measured where it draws this frame, not at the bounds its cell was built with. A
-   landscape texture repeats every two terrain quads ([terrain](/engine/terrain.md)).
+   landscape texture repeats every two terrain quads ([terrain](../engine/terrain.md)).
    Every map of a material is measured at the same surface as its diffuse: the normal,
    glow, detail, environment mask, back light, and face tint maps share its UV density. A
    multilayer inner map is measured at its larger inner scale, and a landscape noise map
@@ -101,5 +101,5 @@ textures whole unless it turns streaming on. `rendering.textureBudget` picks the
 Automatic.
 
 `make benchmark ARGS='--set rendering.textureStreaming=on'` measures it, and
-`--set rendering.textureBudget=<MiB>` sets the budget ([benchmark](/tools/benchmark.md)). The heaps
+`--set rendering.textureBudget=<MiB>` sets the budget ([benchmark](../tools/benchmark.md)). The heaps
 count as texture memory in the GPU memory samples.

@@ -8,9 +8,9 @@ tags: [format, mesh, particles, io]
 
 # NIF particle systems
 
-This page covers the particle blocks inside a [NIF](/formats/nif.md) file: how many
+This page covers the particle blocks inside a [NIF](nif.md) file: how many
 particles, the emitter shape, the modifiers, and the shader and alpha links. See
-[particle playback](/rendering/particles.md) for the simulation.
+[particle playback](../rendering/particles.md) for the simulation.
 
 Reference: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml):
 `NiGeometry`, `NiParticles`, `NiParticleSystem`, `BSStripParticleSystem`, `NiGeometryData`,
@@ -39,7 +39,7 @@ So `NiPSysData` is the same for both Skyrim streams. The `NiGeometry` part of
 
 The chain is `NiAVObject -> NiGeometry -> NiParticles -> NiParticleSystem`.
 `BSStripParticleSystem` adds no fields. Both start with the shared `NiAVObject` fields (see
-[NIF](/formats/nif.md)): name, extra data refs, controller ref, flags, translation, 3x3
+[NIF](nif.md)): name, extra data refs, controller ref, flags, translation, 3x3
 rotation, scale, collision ref.
 
 The `NiGeometry` part on stream 100:
@@ -218,7 +218,7 @@ feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names a
 A NIF does not say which sequence plays first; the effect's behaviour graph plays them.
 OpenSky decodes the controllers once for the default pick and once for each sequence that
 feeds the system, so the graph can switch between them
-([particle playback](/rendering/particles.md#sequences)).
+([particle playback](../rendering/particles.md#sequences)).
 
 ## Parameter modifiers
 
@@ -343,7 +343,7 @@ uint32 generation pool sizes, and a Ref to the node whose children are the parti
 Ref to a modifier it drives. On the install, only
 `effects\dragoncrash\fxdragoncrashfurrow01.nif` uses them: three systems whose particles
 are rock `NiTriShape` meshes. OpenSky draws the pool's meshes at each particle of an
-effect ([particles](/rendering/particles.md#mesh-particles)); a placed one still draws
+effect ([particles](../rendering/particles.md#mesh-particles)); a placed one still draws
 billboards.
 
 ## Not read
@@ -358,7 +358,7 @@ billboards.
 
 OpenSky walks the scene graph from the footer roots. It adds up the `NiNode` transforms, stops
 at depth 64, and stops on loops. Like the mesh walk (see
-[NIF](/formats/nif.md)), it drops an `EditorMarker` subtree and a hidden subtree, and it
+[NIF](nif.md)), it drops an `EditorMarker` subtree and a hidden subtree, and it
 enters only the active child of a `NiSwitchNode`. A hidden object keeps its systems when
 something can show it later: a `NiVisController` on it, a sequence with a visibility track
 for its name, or an `hkVis:` extra data value for its name. A lightning bolt follows the same

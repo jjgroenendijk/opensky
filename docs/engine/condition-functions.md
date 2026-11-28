@@ -9,9 +9,9 @@ tags: [engine, conditions, runtime]
 # Condition functions
 
 These are the condition functions OpenSky can answer. How a list is evaluated is on
-[condition evaluation](/engine/conditions.md). The `CTDA` layout is on
-[conditions](/formats/conditions.md). The functions that read fights, equipment, motion,
-crime, and locations are on [condition functions on world state](/engine/condition-functions-world.md).
+[condition evaluation](conditions.md). The `CTDA` layout is on
+[conditions](../formats/conditions.md). The functions that read fights, equipment, motion,
+crime, and locations are on [condition functions on world state](condition-functions-world.md).
 
 "Stored" is the index in the plugin. The Creation Kit number is 4096 higher. Each function
 reads one snapshot in the context. A function whose snapshot is missing fails with a reason;
@@ -39,7 +39,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 59 | `GetStageDone` | `QUST`, stage | 1 when that stage was visited |
 | 60 | `GetFactionRankDifference` | `FACT`, actor | own rank minus the parameter actor's rank |
 | 62 | `IsRaining` | none | 1 when the current weather is rainy |
-| 65 | `GetLockLevel` | none | the reference's lock level ([locks](/engine/locks.md)) |
+| 65 | `GetLockLevel` | none | the reference's lock level ([locks](locks.md)) |
 | 67 | `GetInCell` | `CELL` | 1 when the reference stands in that cell |
 | 69 | `GetIsRace` | `RACE` | 1 when the actor's race matches |
 | 70 | `GetIsSex` | 0 male, 1 female | 1 when the actor has that sex |
@@ -112,10 +112,10 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 570 | `HasEquippedSpell` | casting source | 1 when that source holds a spell |
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
-| 576 | `GetEventData` | member, form or value | the story event's member ([story manager](/engine/story-manager.md)) |
+| 576 | `GetEventData` | member, form or value | the story event's member ([story manager](story-manager.md)) |
 | 580 | `IsBleedingOut` | none | 1 while the actor bleeds out; always 0 |
 | 590 | `IsInScene` | none | 1 while a playing scene holds the actor |
-| 594 | `GetIsFlying` | none | 1 while the actor flies ([dragon flight](/engine/dragon-flight.md)) |
+| 594 | `GetIsFlying` | none | 1 while the actor flies ([dragon flight](dragon-flight.md)) |
 | 606 | `GetKeywordDataForLocation` | `LCTN`, `KYWD` | the location's keyword data |
 | 608 | `GetKeywordDataForAlias` | location alias, `KYWD` | the keyword data of the alias's location |
 | 613 | `IsFurnitureAnimType` | animation type | 1 when the actor's marker has that type |
@@ -175,7 +175,7 @@ the object parameter 1 names, not the run-on reference.
 
 `GetIsGhost`, `GetIsAlerted`, `GetRestrained`, `IsBribedbyPlayer`, `GetPlayerTeammate`,
 `IsAllowedToFly`, `GetLocationCleared`, and the three keyword-data functions read what a
-Papyrus native stored ([script state](/engine/papyrus-script-state.md)). They answer exactly what
+Papyrus native stored ([script state](papyrus-script-state.md)). They answer exactly what
 the matching native reads back: an unset flag is 0, and unset keyword data is 0. So a flag the
 record sets but no script set reads 0, as `IsGhost` does. Keyword data is per location and
 keyword; a parent location's data is not inherited, because no source says it is. With no
@@ -186,7 +186,7 @@ script runtime wired, every one fails as unavailable.
 `IsSceneActionComplete` takes the action's `INAM` index, which the wiki calls the
 "SceneActionID". A scene that does not play answers 0, because a new run starts with no
 action done. `IsInScene` is true while a playing scene holds the actor, the same rule that
-keeps a held actor out of a second scene ([dialogue](/engine/dialogue.md)).
+keeps a held actor out of a second scene ([dialogue](dialogue.md)).
 
 ## Places
 
@@ -212,7 +212,7 @@ in an interior.
 The weather functions read the weather the sky is moving toward. The wiki says
 `GetIsCurrentWeather` "will return true as soon as the weather starts transitioning into the
 specified weather". `IsPleasant`, `IsRaining`, and `IsSnowing` read the `WTHR DATA`
-classification ([weather](/formats/weather.md)). Indoors no weather runs, so they fail as
+classification ([weather](../formats/weather.md)). Indoors no weather runs, so they fail as
 unavailable; the game keeps the outside weather.
 
 ## Inventory
@@ -228,7 +228,7 @@ count are right without building a table for every holder each frame.
 "initially disabled" flag in the REFR or ACHR header. A missing placement fails.
 
 `GetCurrentTime` reads the game clock. With a clock, the clock wins ([game
-clock](/engine/game-clock.md)).
+clock](game-clock.md)).
 
 `GetDayOfWeek` counts from the start date of a new game. UESP `Skyrim:Calendar`
 (<https://en.uesp.net/wiki/Skyrim:Calendar>) says a new game starts on the 17th of Last Seed,
@@ -237,7 +237,7 @@ notes one case OpenSky does not copy: loading a save before a new game keeps tha
 weekday.
 
 `GetStage` is the highest stage reached. `GetStageDone` is "this stage was visited"
-([runtime state](/engine/runtime-state.md)). A stage index above the uint16 range answers 0,
+([runtime state](runtime-state.md)). A stage index above the uint16 range answers 0,
 because no such stage can exist. `GetQuestCompleted` follows the fixed behavior. The
 Creation Kit wiki says it always returned 0 before patch 1.9.32.
 
@@ -249,7 +249,7 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `GetCombatState` reads the combat phase: 0 when the actor has not noticed the player or
   gave up searching, 1 when fighting, 2 when searching. The player has no combat machine: it
   fights while any actor fights it, and searches while the actors that engage it only search.
-  A dead actor is never in combat ([combat](/engine/combat.md)).
+  A dead actor is never in combat ([combat](combat.md)).
 - `IsTorchOut` and `IsShieldOut` read what the left hand holds out. OpenSky draws no
   torch, and a shield comes out only with a drawn weapon. So an actor whose weapon is
   sheathed, or an NPC that is not fighting, holds nothing out and both return 0. An NPC
@@ -265,18 +265,18 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `IsSprinting` and `IsSwimming` read the player's gait, like `IsSneaking`. An NPC fails as
   unavailable.
 - `IsInDangerousWater` reads the water the player's last step found
-  ([water physics](/engine/water-physics.md#dangerous-water)). An NPC fails as unavailable.
+  ([water physics](water-physics.md#dangerous-water)). An NPC fails as unavailable.
 - `IsEssential`, `IsProtected`, and `IsUnique` read the `ACBS` flags 0x02, 0x800, and 0x20 of
   the actor's own `NPC_` record (UESP "Skyrim Mod:Mod File Format/NPC_"), not a template's.
   A script's `SetEssential` is not read here yet. The player fails as unavailable.
-- `IsBleedingOut` reads the actor's bleedout state ([bleedout](/engine/ragdoll.md#bleedout)).
+- `IsBleedingOut` reads the actor's bleedout state ([bleedout](ragdoll.md#bleedout)).
 - `IsCommandedActor` returns 0. OpenSky has no commanded actors yet, and the `Actor` native of
   the same name answers the same.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.
 - `GetPairedAnimation` is 1 for both actors of a paired animation until it ends
-  ([paired animations](/engine/paired-animations.md#ending-a-pair)).
+  ([paired animations](paired-animations.md#ending-a-pair)).
 - `GetDead` reads the death flag, not health. The Creation Kit says: "This is more accurate
   than checking the actor's health because there are circumstances when the actor can die
   without losing all of their health."
@@ -301,7 +301,7 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 ## Furniture
 
 The furniture functions read how the actor uses a furniture marker. Only the idle runtime fills
-this data, when a package seats an actor ([Idle runtime](/engine/idle-runtime.md#furniture)).
+this data, when a package seats an actor ([Idle runtime](idle-runtime.md#furniture)).
 Every live context carries it, so a quest, a topic, and `Actor.GetSitState` read the same seat. A
 context with no idle runtime fails with the furniture reason.
 
@@ -335,7 +335,7 @@ context with no idle runtime fails with the furniture reason.
 - `GetFactionRankDifference` counts a non-member as -1. The wiki gives neither this value
   nor the order; the order follows its sentence ("the current actor and target actor").
 - A pair with no `RELA` record and no script rank has no answer. Acquaintance (rank 0) is a
-  real rank, so OpenSky does not assume it ([relationships](/formats/relationships.md)).
+  real rank, so OpenSky does not assume it ([relationships](../formats/relationships.md)).
 - `IsHostileToActor` has no Creation Kit page. xEdit gives the name and parameter.
   `Actor.pex` declares `bool IsHostileToActor(Actor akActor) native`. OpenSky answers with
   the same hostility rules the combat loop uses.
@@ -345,7 +345,7 @@ context with no idle runtime fails with the furniture reason.
   the calling actor's crime faction unless the factionID is specified"
   (<https://ck.uesp.net/wiki/GetCrimeGold>). A guard's arrest line runs it on the guard. No crime
   data, an unknown faction, or no faction at all fails. The violent and non-violent parts add up
-  to it ([crime](/engine/crime.md)).
+  to it ([crime](crime.md)).
 
 Not registered on purpose: `GetIsInFactionList` is not in xEdit's table. Four `GetPC*`
 faction functions (193, 195, 197, 199) need records of expulsion and faction crimes that

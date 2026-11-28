@@ -8,7 +8,7 @@ tags: [engine, assets, cache, audio]
 
 # Asset cache audio
 
-The [asset cache](/engine/asset-cache.md) stores no audio: a lossless ALAC copy decodes at
+The [asset cache](asset-cache.md) stores no audio: a lossless ALAC copy decodes at
 the same CPU cost as the shipped xWMA, so it loads no faster.
 
 AAC is smaller but lossy, so a lossy copy could only be used where it makes no audible

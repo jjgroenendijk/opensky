@@ -20,7 +20,7 @@ pages `/LAND`, `/LTEX`, `/TXST`. Checked against xEdit dev-4.1.6 `wbDefinitionsC
 ## LAND
 
 A `LAND` record sits in the temporary children group (type 9) of its cell. Real `LAND`
-records are almost always zlib-compressed (see [ESM container](/formats/esm.md)).
+records are almost always zlib-compressed (see [ESM container](esm.md)).
 
 A cell has a grid of 33 x 33 vertices. 32 squares of 128 game units cover the 4096-unit
 cell. Rows go from south to north. Columns go from west to east. Grid fields store rows one
@@ -109,15 +109,15 @@ the 10 vanilla plugins of the install has it: the record census of `make rank-ga
 | `MNAM` | FormID | Material (`MATT`) of the ground |
 | `GNAM` | FormID | A grass (`GRAS`). Repeats, in order |
 
-`GNAM` drives [grass placement](/engine/grass.md). See [grass records](/formats/grass.md).
+`GNAM` drives [grass placement](../engine/grass.md). See [grass records](grass.md).
 
 Exterior ground is not a collision mesh, so it has no Havok material. `MNAM` gives its
 material instead. For footsteps, OpenSky takes the texture with the most weight at a
-vertex and uses its material. See [material types](/formats/material-type.md).
+vertex and uses its material. See [material types](material-type.md).
 
 The decoder also reads `HNAM` (Havok friction and restitution, one byte each), `SNAM`
 (specular exponent, one byte), and `INAM` (Skyrim SE snow flag, uint32). Terrain uses only
-`INAM`, for the [snow ground](/engine/terrain.md#snow-ground) shading.
+`INAM`, for the [snow ground](../engine/terrain.md#snow-ground) shading.
 
 ## TXST
 
@@ -128,6 +128,6 @@ The decoder also reads `HNAM` (Havok friction and restitution, one byte each), `
 | `TX01` | zstring | Normal map, with gloss |
 
 Paths are relative to `Data/`, for example `textures\...`, and go through the
-[VFS](/formats/vfs.md). Terrain needs only diffuse and normal maps. The decoder also reads
+[VFS](vfs.md). Terrain needs only diffuse and normal maps. The decoder also reads
 `TX02` to `TX07` (environment mask, glow, height, environment, multilayer, and specular
 maps), `DODT` (36-byte decal data, shared with `IPCT`), and `DNAM` (uint16 flags).

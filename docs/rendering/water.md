@@ -12,10 +12,10 @@ tags: [rendering, water, metal]
 Water has two sources. An exterior cell with water gets one flat plane at its water height. A
 placed mesh whose shape uses `BSWaterShaderProperty` draws as water too, with the water type of
 its cell. Both draw in the water pass, after opaque, alpha-test, and grass geometry, and before
-the [blended shapes](/rendering/scene-drawing.md#blended-shapes). The pass tests depth without
+the [blended shapes](scene-drawing.md#blended-shapes). The pass tests depth without
 writing it and blends straight alpha.
 
-The record fields come from `WATR` ([exterior water records](/formats/water.md)). A cell with a
+The record fields come from `WATR` ([exterior water records](../formats/water.md)). A cell with a
 missing or unknown water type gets fixed fallback colors and a calm default shading. A placed
 water mesh in a cell without a water plane gets the same fallback.
 
@@ -43,7 +43,7 @@ water mesh in a cell without a water plane gets the same fallback.
 A river or creek moves its surface along a flow map. In the install, `Update.esm` gives 627
 exterior cells one of four water types with `FNAM` bit 3 set, such as `RiverWaterFlow`. Each
 of these types names `textures\water\riverflow.dds` in `NAM5`, the flow noise, and sets the
-flow-map scale at the end of `DNAM` to 1 ([water records](/formats/water.md)).
+flow-map scale at the end of `DNAM` to 1 ([water records](../formats/water.md)).
 
 - **Files.** Each cell has its own flow map, `textures\water\<plugin>\flow.<x>.<y>.dds`, a
   64 by 64 BGRA texture. The install has 641 of them under `skyrim.esm`. Red and green give the
@@ -75,7 +75,7 @@ To know how deep the water is under a pixel, the water reads the scene depth. A 
 encoder cannot sample its own depth attachment, so the pass splits:
 
 1. The scene pass starts on a stored depth target, as a split
-   [image-space grade](/rendering/image-space.md) does.
+   [image-space grade](image-space.md) does.
 2. Before the water, the encoder ends and the depth is copied to a texture the shader can read.
 3. A second encoder loads the color and depth and draws the water, and every later layer.
 
@@ -87,7 +87,7 @@ forward, is the water along the ray. Times the vertical part of the ray, it is t
 Shallow water shows the ground: there the alpha drops toward the `ANAM` opacity. Deep water, and
 water seen edge-on, is opaque. The split costs one depth copy and one encoder per frame with
 water or a soft effect in view. Soft effects read the same copy, so they fade where they meet
-the ground ([effect shapes](/formats/nif-materials.md#effect-shapes)); the copy does not hold
+the ground ([effect shapes](../formats/nif-materials.md#effect-shapes)); the copy does not hold
 the water itself. It can be turned off in Environment > Water; the water then uses a fixed middle
 depth and stays half see-through.
 
@@ -120,7 +120,7 @@ random place and time, if a random draw is below the rain intensity. A drop's ri
 When the camera is inside a water item's bounds and below its top, the frame fog becomes the
 water's under-water fog: the `DNAM` near and far planes, the fog amount as the maximum, and
 the deep colour. The water's `INAM` image space becomes the frame's baseline image space
-([image spaces](/formats/image-spaces.md#resolution)). In vanilla, `Update.esm` gives almost
+([image spaces](../formats/image-spaces.md#resolution)). In vanilla, `Update.esm` gives almost
 every water one shared image space, and the Dawnguard and Dragonborn waters their own.
 
 ## Screen-space reflections
@@ -157,7 +157,7 @@ water depth switch off, nothing is copied and the reflection stays a colour.
 - The game simulates displacement on a height grid. OpenSky draws closed-form rings with the
   `DNAM` displacement fields, so rings do not bounce off the shore or add up. The rain rings
   use OpenSky's own sizes, because the `DNAM` rain simulator is unused
-  ([water format](/formats/water.md#watr-colors-and-surface)).
+  ([water format](../formats/water.md#watr-colors-and-surface)).
 - The refraction unit, the ring shape, and the under-water fog colour are OpenSky's readings.
 - The under-water image space replaces the cell's or the weather's at once when the camera
   crosses the surface. Whether the game blends between the two is not known.

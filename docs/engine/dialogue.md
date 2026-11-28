@@ -11,10 +11,10 @@ tags: [engine, dialogue, conditions, quests, papyrus, runtime-state]
 
 The dialogue runtime decides which topics a speaker offers, which response wins inside each,
 what choosing one does, and what a save keeps. The record side (`DIAL`, `INFO`, `VTYP`) is on
-the [dialogue records](/formats/dialogue.md) page. The menu is on the
-[dialogue menu](/engine/dialogue-menu.md) page. The camera and speaker focus are on the
-[dialogue camera](/engine/dialogue-camera.md) page, and mouth movement on the
-[lip sync](/engine/lip-sync.md) page.
+the [dialogue records](../formats/dialogue.md) page. The menu is on the
+[dialogue menu](dialogue-menu.md) page. The camera and speaker focus are on the
+[dialogue camera](dialogue-camera.md) page, and mouth movement on the
+[lip sync](lip-sync.md) page.
 
 The runtime sits beside the world state, not inside it, like the quest runtime. The world state
 knows about keys, components, the change log, and snapshots, and nothing about records. The
@@ -23,7 +23,7 @@ runtime uses no AppKit and also builds into `OpenSkyCLI`.
 ## Selection rules
 
 The owning quest's dialogue conditions come first. They are the `QUST` `CTDA` entries before
-`NEXT` ([quest records](/formats/quest-records.md)), and they gate every response of every topic
+`NEXT` ([quest records](../formats/quest-records.md)), and they gate every response of every topic
 the quest owns. They run with the same subject, target, and alias quest as a response's own
 conditions. If they fail, every response of the topic is rejected with `conditionsFailed`, and
 the rules below are not checked. Most of them name the speaker's voice type or faction.
@@ -59,7 +59,7 @@ the rules below are not checked. Most of them name the speaker's voice type or f
    dictionary order would give the same world two different menus.
 
 Each response is checked with the speaker as subject, the player as target, and the topic's
-quest as the alias quest ([condition evaluation](/engine/conditions.md)).
+quest as the alias quest ([condition evaluation](conditions.md)).
 
 Greetings use the same rules, but are found by `DIAL` `SNAM` subtype `HELO`, not by category,
 because the player does not pick a greeting. `Skyrim.esm` has 297.
@@ -92,7 +92,7 @@ and exclusive, 13 exclusive, and 1 top-level and exclusive.
 
 Which branch a speaker is in is a world-state component, `dialogueBranch`, keyed by the
 speaker. Only an exclusive branch is stored, and a save keeps it in the `DLBS` chunk
-([world chunks](/formats/opensky-save-world-chunks.md)).
+([world chunks](../formats/opensky-save-world-chunks.md)).
 
 ## The trace
 
@@ -178,7 +178,7 @@ More response flags (`INFO` `ENAM`):
 | Bit | Effect |
 | --- | --- |
 | `0x10` | Refusal: the response is not marked as said, and its entry carries a refusal mark |
-| `0x200` | Force subtitle: the line skips the subtitle distance test ([dialogue menu](/engine/dialogue-menu.md#subtitles)) |
+| `0x200` | Force subtitle: the line skips the subtitle distance test ([dialogue menu](dialogue-menu.md#subtitles)) |
 | `0x400` | Can move while greeting: without it, the speaker stops moving when a greeting starts |
 | `0x800` | No lip file: the line plays with no lip-sync data |
 | `0x2000` | Audio output override: the voice plays through the `INFO`'s own output model |
@@ -197,14 +197,14 @@ themselves (`DialogueFollowerFollowTopic`, `DialogueFollowerWaitTopic`, the favo
 Their result scripts call `SetDoingFavor`. When that call changes an actor's favour state, the
 actor says its `SHOW` line on entry and its `FEXT` line on exit. Entry starts command mode, where
 the follower says `AGRE`, `REFU`, or `MREF` for the target the player picks
-([Follower commands](/engine/follower-commands.md)).
+([Follower commands](follower-commands.md)).
 
 ## Result scripts
 
 A dialogue result is a Papyrus fragment, not a record field. The Creation Kit compiles the two
 result boxes of a response into one script named `TIF_<editorID>_<formID>`. In shipped data it is
 usually `TIF__<formID>`, with two underscores, because most `INFO` records have no editor ID. The
-`VMAD` tail says which function belongs to which box ([VMAD](/formats/vmad.md)).
+`VMAD` tail says which function belongs to which box ([VMAD](../formats/vmad.md)).
 
 Dispatch follows quest stage fragments:
 
@@ -241,7 +241,7 @@ after template inheritance, and the speaker from the moment the conversation ope
 `GetIsAliasRef` compares the run-on reference with the filled alias table of the alias quest.
 
 The faction functions that guard and vendor lines depend on are on the
-[condition evaluation](/engine/conditions.md) page.
+[condition evaluation](conditions.md) page.
 
 ## Saving
 
@@ -249,7 +249,7 @@ Said-state is saved in its own `DLGS` chunk, not inside `RDLT`, and the speaker 
 `DLGT` chunk beside it. A component kind inside `RDLT` is
 versioned by the format version, so an older build would refuse the whole file instead of
 loading the rest. A session where nobody spoke writes no chunk
-([save chunks](/formats/opensky-save-actor-chunks.md)).
+([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 An entry is a key plus a `UInt32` count. The starting state is never written, and an entry that
 decodes as 0 is dropped. So a loaded world compares equal to the saved one.
@@ -276,10 +276,10 @@ describes the first three; how the others apply is OpenSky's reading of their na
 | `fIdleChatterCommentTimer`, `...Max` | 10 s, 20 s | After one NPC near the player says an idle line (`IDLE`), every NPC waits a seeded time in this window |
 | `fCommentOnPlayerActionsTimer` | 20 s | After a comment on the player, no NPC comments on the same kind of act for this long |
 | `fCommentOnPlayerKnockingThings` | 40 s | The same, for the player pushing a loose object (`KNOO`) |
-| `fBumpReactionSmallWaitTimer` | 3 s | One speaker's next bump line (`ACAC`); the bump rule is in [bump reactions](/engine/bump-reactions.md) |
+| `fBumpReactionSmallWaitTimer` | 3 s | One speaker's next bump line (`ACAC`); the bump rule is in [bump reactions](bump-reactions.md) |
 | `fSpeechDelay` | 0.1 s | A line said outside a conversation starts this long after it is chosen |
 | `fDialogSpeechDelaySeconds`, `fSubtitleSpeechDelay` | 2 s, 8 s | A line with no voice file stays up for its reading time, kept inside this window |
-| `fRandomSceneAgainMinTime`, `...MaxTime` | 10 s, 30 s | The wait before a scene flagged "Repeat while true" plays again ([scenes](/engine/scenes.md)) |
+| `fRandomSceneAgainMinTime`, `...MaxTime` | 10 s, 30 s | The wait before a scene flagged "Repeat while true" plays again ([scenes](scenes.md)) |
 
 `fCombatSpeakTauntChance` and `fAIMinGreetingDistance` are the CK wiki table values; the
 wiki's Scenes category also gives 150 units for the greeting distance
@@ -325,7 +325,7 @@ view changes no topic, line, or branch, and OpenSky reads none.
 
 - The greeting and idle line timers are shared by all NPCs, not kept per NPC, and idle lines do
   not check `PKDT` interrupt flag 0x80.
-- Scene topics are spoken only by the [scene runtime](/engine/scenes.md).
+- Scene topics are spoken only by the [scene runtime](scenes.md).
 - A topic row shows the chosen `INFO`'s own prompt (`RNAM`), and the shared target's prompt only
   when the `INFO` has none. No source says which the game shows.
 

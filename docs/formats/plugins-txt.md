@@ -15,7 +15,7 @@ plugins depends on this file.
 Reference: [libloadorder](https://github.com/Ortham/libloadorder), the load order library
 that LOOT and several mod managers use. It describes the enable flag and the text-file load
 order system. OpenSky has not seen a `plugins.txt` that the game itself wrote on this
-machine. See [environment](/tools/environment.md).
+machine. See [environment](../tools/environment.md).
 
 ## Format
 
@@ -87,7 +87,7 @@ Creation Club sells, not what is installed; on a stock install most of its entri
 ## Archive order
 
 Archives follow plugin order, so a mod's archive wins over the archives of every plugin
-before it. See [virtual file system](/formats/vfs.md).
+before it. See [virtual file system](vfs.md).
 
 OpenSky differs from the game in one case. An archive whose plugin is not in the load order
 still opens, at the bottom of the list. The game would ignore it. On macOS OpenSky often

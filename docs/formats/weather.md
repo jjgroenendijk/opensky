@@ -14,8 +14,8 @@ Three records drive the weather:
 - `REGN`: a region. It can replace the climate's weather list inside its area.
 
 A worldspace names its climate in `WRLD CNAM`. An exterior cell names its regions in
-`CELL XCLR`. See [record decoders](/formats/world-records.md) for those, and
-[weather runtime](/engine/weather.md) for how the weather is picked and blended.
+`CELL XCLR`. See [record decoders](world-records.md) for those, and
+[weather runtime](../engine/weather.md) for how the weather is picked and blended.
 
 Reference: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format),
 pages `/WTHR`, `/CLMT`, `/REGN`. `WTHR DATA` and `NAM0` were checked against xEdit
@@ -96,15 +96,15 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 | Field | Size | Meaning |
 | --- | --- | --- |
 | `LNAM` | 4 | Max cloud layers |
-| `MNAM` | 4 | Precipitation, an `SPGD` ([environment shading](/formats/environment-shading.md)) |
-| `NNAM` | 4 | Visual effect, an `RFCT` ([visual effects](/formats/visual-effects.md)) |
-| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement. xEdit shows `(raw - 127) / 1270`; the game's speed is in [weather](/engine/weather.md#clouds) |
+| `MNAM` | 4 | Precipitation, an `SPGD` ([environment shading](environment-shading.md)) |
+| `NNAM` | 4 | Visual effect, an `RFCT` ([visual effects](visual-effects.md)) |
+| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement. xEdit shows `(raw - 127) / 1270`; the game's speed is in [weather](../engine/weather.md#clouds) |
 | `PNAM` | 512 | Color per layer: 4 times of day, RGBA bytes |
 | `JNAM` | 512 | Alpha per layer: 4 floats |
 | `NAM1` | 4 | Disabled layers, one bit per layer |
 | `SNAM` | 8 | A sound and its type (0 default, 1 precipitation, 2 wind, 3 thunder); repeated |
 | `TNAM` | 4 | A sky `STAT`; repeated |
-| `IMSP` | 16 | 4 `IMGS`, one per time of day ([image spaces](/formats/image-spaces.md)) |
+| `IMSP` | 16 | 4 `IMGS`, one per time of day ([image spaces](image-spaces.md)) |
 | `HNAM` | 16 | 4 `VOLI`, one per time of day |
 | `NAM2`, `NAM3` | 16 | Sun and moon glare: 4 RGBA colors |
 | `MODL` | model group | Aurora mesh |
@@ -139,7 +139,7 @@ One `PNAM` on the install is 64 bytes (4 layers), from an older form version. A 
 
 The chances in `WLST` add up to 100. A `WLST` size that is not a multiple of 12 is ignored.
 UESP and xEdit do not say what the global does. OpenSky's choice is on the
-[weather runtime](/engine/weather.md) page.
+[weather runtime](../engine/weather.md) page.
 
 `TNAM`: sunrise begin, sunrise end, sunset begin, sunset end (uint8 each, times 10 gives
 minutes after midnight), volatility (0 to 100), and a moons byte. In the moons byte, bits
@@ -169,7 +169,7 @@ weather. The chance is a weight from 0 to 1. In `Skyrim.esm` it runs from 0.01 t
 
 `RDMO` is read in any area, because UESP says it "can appear with RDSA under same RDAT or on
 its own". A wrong size or a null link is skipped, and an earlier value stays. See
-[music records](/formats/music.md).
+[music records](music.md).
 
 `RDWT` or `RDSA` with a size that is not a multiple of 12, or outside its area type, is
 skipped. `RPLI` opens an area with its uint32 edge falloff, and each `RPLD` after it adds

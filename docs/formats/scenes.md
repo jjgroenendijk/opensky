@@ -23,12 +23,12 @@ install with a field census.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
-| `VMAD` | script data | Scripts and fragments, see [VMAD](/formats/vmad.md) |
+| `VMAD` | script data | Scripts and fragments, see [VMAD](vmad.md) |
 | `FNAM` | uint32 | Flags |
 | `PNAM` | FormID | Owner `QUST` |
 | `INAM` | uint32 | Last action index |
 | `VNAM` | 16 bytes | Actor behavior: death, combat, dialogue, observe combat (4 uint32) |
-| `CTDA` | condition | Scene conditions, see [conditions](/formats/conditions.md) |
+| `CTDA` | condition | Scene conditions, see [conditions](conditions.md) |
 
 ## Runs
 

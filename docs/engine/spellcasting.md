@@ -10,8 +10,8 @@ tags: [engine, magic, casting, spells, papyrus, conditions]
 # Spellcasting
 
 The caster knows spells, readies one to a hand, and casts it. A cast hands its effects to the
-[active effect runtime](/engine/magic.md). Spells aimed at something else are on the
-[spell delivery](/engine/spell-delivery.md) page.
+[active effect runtime](magic.md). Spells aimed at something else are on the
+[spell delivery](spell-delivery.md) page.
 
 The rules come from reading the install and from UESP: Magic Overview
 (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>), Magicka
@@ -21,7 +21,7 @@ Books (<https://en.uesp.net/wiki/Skyrim:Books>), and Mod File Format/BOOK
 
 ## The spellbook
 
-The spellbook is a world state component ([runtime state](/engine/runtime-state.md)). It holds one
+The spellbook is a world state component ([runtime state](runtime-state.md)). It holds one
 actor's known spells, the books it has read, the spell in each hand, and the game day each greater
 power was last used.
 
@@ -72,7 +72,7 @@ So the two share only what they collide over: hands. The spellbook runtime handl
 Readying a spell unequips the weapon or shield in that hand, and equipping a weapon unequips the
 spell in its hand.
 
-The hands a spell takes come from its `ETYP`, walked through the [EQUP graph](/formats/shouts-equip-slots.md)
+The hands a spell takes come from its `ETYP`, walked through the [EQUP graph](../formats/shouts-equip-slots.md)
 like a weapon's. One distinction matters here: `BothHands` and `EitherHand` name the same two parents
 and differ only in the `DATA` "use all parents" byte.
 
@@ -113,7 +113,7 @@ Fire and forget:
 
 Releasing before the charge is full casts nothing and costs nothing. Magicka is checked at begin and
 again at release, because it can fall in between: something can hit the caster during a half-second
-charge. The cost is the one the [spell records](/formats/magic-records.md) already computed, so a
+charge. The cost is the one the [spell records](../formats/magic-records.md) already computed, so a
 manual cost is respected.
 
 Concentration: begin starts the held cast. The cost is taken continuously (`cost x delta`), so the
@@ -132,7 +132,7 @@ right and left hands at the same time, resulting in a single, more powerful effe
 seems to be: 2.2x spell effectiveness for 2.8x spell cost".
 
 - The same spell must be readied in both hands, and the second hand must begin within 0.05 s of the
-  first ([casting graph](/engine/casting-graph.md#a-dual-cast)). OpenSky starts the first hand at
+  first ([casting graph](casting-graph.md#a-dual-cast)). OpenSky starts the first hand at
   once and joins the second to it, instead of holding the first press back.
 - A perk must pass `Can Dual Cast Spell` for the spell. Each vanilla school perk, such as
   `DestructionDualCasting`, sets it to 1 when `EPMagic_SpellHasSkill` names its school. Without
@@ -192,7 +192,7 @@ Nothing fails silently.
 | `unknownSpell` | A readied spell this load order no longer has |
 | `notCharged` | Released before the charge time |
 | `insufficientMagicka` | At begin, at release, and during a held cast |
-| `deliveryUnsupported` | A delivery OpenSky does not carry out ([spell delivery](/engine/spell-delivery.md)) |
+| `deliveryUnsupported` | A delivery OpenSky does not carry out ([spell delivery](spell-delivery.md)) |
 | `abilityNotCastable` | An ability is carried, not cast |
 | `powerAlreadyUsedToday` | The once-per-day rule |
 | `castingAnother` | A self Invisibility spell while the other hand casts |
@@ -208,7 +208,7 @@ of a ranged cast under water was observed.
 
 UESP: "Magicka will not regenerate while you are casting a spell." So a casting player stops only
 magicka; health and stamina keep going. An NPC follows `bRegenNPCMagickaDuringCast`, which is false
-in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#regeneration)).
+in `Skyrim.esm`, so it stops too ([regeneration](actor-value-store.md#regeneration)).
 
 ## Abilities and powers
 
@@ -218,7 +218,7 @@ constant effect, whatever its duration, with the source kind `ability`. Once a s
 are reconciled with the abilities each loaded actor knows: a new ability is applied, and a forgotten
 one is dispelled. A racial resistance therefore holds while the race keeps it. An entry with
 conditions, such as a night-only bonus, is suspended while they fail
-([conditions](/engine/magic.md#conditions)).
+([conditions](magic.md#conditions)).
 
 A greater power works once per game day. The spellbook records the whole day number each power was
 last used, and a second cast that day is refused. Lesser powers have no limit: "Unlike Greater
@@ -237,13 +237,13 @@ A held button becomes a begin edge and a release edge, so it does not restart th
 Unequipping during a cast cancels the charge.
 
 The graph is told a spell is out through hand type 9 (`spell`), the value `magicbehavior.hkx` reads
-([combat graph names](/engine/combat-graph-names.md)). `bWantCastLeft` and `bWantCastRight` are true
+([combat graph names](combat-graph-names.md)). `bWantCastLeft` and `bWantCastRight` are true
 while that hand casts, and `IsInCastState` is 1 while either does.
 
 ## Casting cues
 
 The events a cast raises in the behaviour graph are on the
-[casting graph events](/engine/casting-graph.md) page.
+[casting graph events](casting-graph.md) page.
 
 A released fire-and-forget hand waits for its spell-fire event before the spell leaves:
 `MRh_SpellFire_Event` for the right hand and `MLh_SpellFire_Event` for the left. The release clips
@@ -324,7 +324,7 @@ the actor's posed skeleton. An actor with no posed skeleton gets the light in fr
 
 ## Saving
 
-The spellbook goes in the `SPLB` chunk ([save chunks](/formats/opensky-save.md#chunks)). Readied
+The spellbook goes in the `SPLB` chunk ([save chunks](../formats/opensky-save.md#chunks)). Readied
 hands are saved, and casts are not. A readied spell is a choice the player made. A charge in
 progress is frame state, and restoring it would put the player back mid-cast with magicka already
 spent. Nothing rejects a spellbook on content. Duplicates, a hand naming an unknown spell, and a
@@ -332,14 +332,14 @@ used-power entry for a forgotten spell are all cleaned up by the component's ini
 
 ## Script surface
 
-Eight condition functions read a magic snapshot per actor ([conditions](/formats/conditions.md)).
+Eight condition functions read a magic snapshot per actor ([conditions](../formats/conditions.md)).
 
 `HasMagicEffect` and its keyword forms test whether an actor carries an effect a spell could apply,
 active or not. All four count every effect of the spells acting on the actor, so a carried ability,
 disease, or addiction counts even while its conditions keep it inactive.
 
 Twelve Papyrus natives reach the spellbook and casting, `RemoteCast` among them
-([spell natives](/engine/papyrus-spell-natives.md)).
+([spell natives](papyrus-spell-natives.md)).
 
 ## Spell names
 

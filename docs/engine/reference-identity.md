@@ -10,12 +10,12 @@ tags: [engine, world, identity, cell-scene, save-state]
 # Reference identity
 
 Every placed object needs an identity that stays the same for the whole session. The state stored
-against it is on the [world state store](/engine/runtime-state.md) page.
+against it is on the [world state store](runtime-state.md) page.
 
 ## Why a raw FormID is not enough
 
 A form ID depends on the load order. Its top byte indexes the defining plugin's own master list
-([FormID](/formats/formid.md)), so one raw value means different objects in different plugins. A
+([FormID](../formats/formid.md)), so one raw value means different objects in different plugins. A
 resolved form ID pairs the plugin name with the object ID, but the name is spelled however the
 `TES4` `MAST` field spelled it, and plugin file names ignore case on the game's original platform.
 So neither is safe as a dictionary key for a session.
@@ -40,7 +40,7 @@ wrong for a load order without that plugin. And it would make the player look li
 streamed reference that a cell build might try to draw. The sentinel sorts after every plugin key,
 needs no plugin, and survives the save file's generated-key tag unchanged. No index entry exists for
 this key, so no cell build sees it
-([Papyrus activation](/engine/papyrus-activation.md#the-players-handle)).
+([Papyrus activation](papyrus-activation.md#the-players-handle)).
 
 ## Order
 
@@ -81,7 +81,7 @@ children merged into an exterior cell by position, because they outlive the one 
 `ACHR` takes its tag from the group it came from. A record with a null or unresolvable form ID has no
 identity and is left out, not given a placeholder.
 
-The index is built once per cell on the build queue ([cell streaming](/engine/cell-streaming.md)) and
+The index is built once per cell on the build queue ([cell streaming](cell-streaming.md)) and
 travels with the built cell as a read-only value. It holds only value types, so it crosses to the
 main thread without locks. It is rebuilt on every load and dropped on eviction.
 
@@ -90,7 +90,7 @@ main thread without locks. It is rebuilt on every load and dropped on eviction.
 The cell composition searches the loaded exterior cells in turn and returns the first entry found.
 There are only a few loaded cells, and each lookup is a dictionary hit. The streamer adds the
 interior-first rule the rest of its queries follow: when an interior is active, it replaces the
-exterior composition and answers alone ([interiors](/engine/interiors.md)).
+exterior composition and answers alone ([interiors](interiors.md)).
 
 ## Spawned objects
 
@@ -116,7 +116,7 @@ placement by raw form ID, so a spawn needs one. The generated number goes into m
 `.generated(1)` becomes `FF000001`.
 
 `0xFF` is safe by construction. A full plugin's records are numbered by its position, below `0xFE`,
-and light plugins share `0xFE` ([FormID](/formats/formid.md#light-plugins)), so no plugin record
+and light plugins share `0xFE` ([FormID](../formats/formid.md#light-plugins)), so no plugin record
 has `0xFF`. Bethesda's
 own save format uses the same index for objects a save created, which agrees with this reasoning
 without being its source. A number past `00FFFFFF` has no form ID left, so the build drops the object
@@ -150,4 +150,4 @@ that draws the reference now. A build then follows one rule:
 
 Moving a reference back to its plugin cell drops the relocation. The same index answers `MoveTo`
 for a reference no loaded cell holds: its state is the plugin record with this session's deltas on
-top. The save writes relocations in the `RLOC` chunk ([save format](/formats/opensky-save.md)).
+top. The save writes relocations in the `RLOC` chunk ([save format](../formats/opensky-save.md)).

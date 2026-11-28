@@ -9,12 +9,12 @@ tags: [engine, conditions, runtime]
 # Condition evaluation
 
 This page explains how OpenSky answers "is this condition list true right now?". The
-`CTDA` layout is on [conditions](/formats/conditions.md). The functions and their special
-cases are on [condition functions](/engine/condition-functions.md).
+`CTDA` layout is on [conditions](../formats/conditions.md). The functions and their special
+cases are on [condition functions](condition-functions.md).
 
 The evaluator lives in `src/Sources/OpenSkyConditions/`, not beside the decoder. It needs runtime
 state that a format parser must never touch: globals, the game clock, and the runtime
-reference index ([runtime state](/engine/runtime-state.md)).
+reference index ([runtime state](runtime-state.md)).
 
 ## Comparing one condition
 
@@ -57,7 +57,7 @@ The run-on type picks the object that the function runs on.
   fights the nearest hostile living actor, and every hostile living actor fights the player.
   A dead actor fights nobody.
 - Event data (7): the reference member of the story-manager event that parameter 3 names, such
-  as `R1` ([story manager](/engine/story-manager.md#event-data)). Outside a walk there is no event,
+  as `R1` ([story manager](story-manager.md#event-data)). Outside a walk there is no event,
   and the lookup fails as `unresolvedReference`.
 - Linked reference, package data, and unknown values fail as `unsupportedRunOn`. That means a
   missing subsystem.
@@ -117,7 +117,7 @@ caller off the main actor builds it, holds no deferred snapshot.
 
 During play, the data snapshot carries the keyword, form list, and location stores, and
 each resident reference's current location: the location of the cell that holds it
-([cell link](/formats/locations.md#cell-link)). The stores are read in the load-order
+([cell link](../formats/locations.md#cell-link)). The stores are read in the load-order
 FormID space. Each evaluator first translates a record's FormIDs into that space.
 
 `ConditionRandom` is a SplitMix64 value type. The engine seeds it once per session. The same
@@ -142,7 +142,7 @@ Some choices keep two different answers apart:
 
 Every failure also goes into `ConditionTally`. The tally answers "which condition functions
 does OpenSky still need, and how often are they used?". It follows `AS2Tally` in the
-[ActionScript 2 runtime](/engine/as2-runtime.md). Each name table stops at 64 names, but the
+[ActionScript 2 runtime](as2-runtime.md). Each name table stops at 64 names, but the
 totals keep counting.
 
 An unknown function is a counted false, not an error. So adding a function never changes

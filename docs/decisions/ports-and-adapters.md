@@ -112,7 +112,7 @@ An adapter is complete when it is built. The scope builds it over the session's 
 coordinator, and the app keep no `wire...` or `install...` method, no `attach(world:)`-style
 setter, and no `<Name>Wiring` type, so the `late_setter_method`, `late_attached_world`, and
 `connection_step_type` structural rules hold everywhere, the app included
-([session scope](/decisions/session-scope.md)).
+([session scope](session-scope.md)).
 
 The scope reaches its ports and factories through two protocols, `SessionPortSet` and
 `GameSessionParts`, so it does not name the types that read it back (design rule 4). The scope

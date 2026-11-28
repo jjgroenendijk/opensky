@@ -15,7 +15,7 @@ building it.
 Source: a clean-room read of `SkyrimSE.exe` 1.7.104.0 and the compiled shaders in
 `Skyrim - Shaders.bsa`, 2026-11-06. The page holds behaviour only: no code, no names from the
 binary, and no setting names. The marks [confirmed], [likely], and [not found] mean the same as
-on [game screen effects](/rendering/game-screen-effects.md).
+on [game screen effects](game-screen-effects.md).
 
 ## Rain and snow
 
@@ -28,7 +28,7 @@ The `SPGD` data floats, in order: fall speed, spin speed (degrees per second), s
 centre offset minimum and maximum, starting spin range (degrees), subtexture columns and rows,
 type (0 rain, 1 snow), box size (4096 by default), and density (0 counts as 1). The texture is
 the record's `ICON` path. With no path, a soft smoke texture is used
-([environment shading](/formats/environment-shading.md)).
+([environment shading](../formats/environment-shading.md)).
 
 ### Geometry
 
@@ -120,7 +120,7 @@ A placed reference fades out past its fade distance and back in when it comes cl
 
 ## Particle spin and inherited velocity
 
-These are the NIF particle modifiers ([particles](/rendering/particles.md)).
+These are the NIF particle modifiers ([particles](particles.md)).
 
 - Spin on a new particle: a random axis is uniform on the sphere (`z = cos(theta)`, `theta` in
   [0, pi), and a random turn around `z`). The angle and the speed each get a uniform +-

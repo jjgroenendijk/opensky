@@ -14,7 +14,7 @@ feed, the vampire lord feed, the werewolf mauling, the mount. The clip file is n
 both actors: one actor's plain, such as `NPC Root [Root]`, and the other's with `2_`, such as
 `2_NPC Root [Root]`. Each graph state plays the clip through a `BSSynchronizedClipGenerator`,
 whose `m_SyncAnimPrefix` names the tracks that state reads
-([behavior clips](/engine/behavior-clips.md#clip-synchronization)).
+([behavior clips](behavior-clips.md#clip-synchronization)).
 
 The facts on this page were read from the install with `openskycli hkx` and
 `openskycli animation` (see [Checking it](#checking-it)).
@@ -38,7 +38,7 @@ toggled. Each event enters its own state, and each state reads its own half of t
 | `horsebehavior.hkx` | `pa_HorseEnter` | `MountSynced` |
 
 The mount goes the other way round: the rider takes `HorseEnter` and the horse
-`pa_HorseEnter` ([riding](/engine/riding.md)). Toggling `pa_` covers both.
+`pa_HorseEnter` ([riding](riding.md)). Toggling `pa_` covers both.
 [WARNING] The `pa_` rules are OpenSky's reading of the vanilla names and graphs.
 
 ## Starting a pair
@@ -77,9 +77,9 @@ from the vanilla idle tree and a clean-room read of the game.
    dead target; the clean-room read says false.
 4. The idle tree runs under `ActionRightPowerAttack` for a power attack, else under
    `ActionRightAttack`, with that answer as `ShouldAttackKill`. A left or dual strike uses its
-   own action ([attack input](/engine/attack-input.md#kill-moves)). The subject is the actor of
+   own action ([attack input](attack-input.md#kill-moves)). The subject is the actor of
    the action and the target is the action's target. A condition with a null reference reads
-   that target ([the other reference](/engine/conditions.md#the-other-reference)). The kill-move
+   that target ([the other reference](conditions.md#the-other-reference)). The kill-move
    roots sit before the attack idles, and their other conditions test the angle, the target's
    height, the `KillMove` global, and the last-enemy rule for the player.
 5. When the chosen idle is paired, the pair starts and the swing does not. Otherwise the swing
@@ -95,7 +95,7 @@ kill move on the player; the target must be able to die and the hit must kill.
 
 While either actor plays a kill
 move, it leaves the fight, and any other hit on it deals ten times its damage. A player kill
-move always shows the [kill cam](/engine/kill-cam.md).
+move always shows the [kill cam](kill-cam.md).
 
 ### The player as the victim
 
@@ -254,13 +254,13 @@ comes off. A pair whose end event never comes ends after `PairedAnimationCore.ma
 (30 s). [WARNING] The time limit is OpenSky's choice.
 
 While a pair plays, `GetPairedAnimation` is 1 for both actors
-([condition functions](/engine/condition-functions.md)). `IsInKillMove` is true when the
+([condition functions](condition-functions.md)). `IsInKillMove` is true when the
 pair's event starts with `pa_KillMove`. [WARNING] OpenSky's reading of the event names.
 
 ## Clips that store a NaN
 
 About 25 vanilla kill-move clips store a NaN on one translation track. OpenSky reads that part
-as its identity, so the clips play ([animation](/formats/hka-animation.md#vector-track)).
+as its identity, so the clips play ([animation](../formats/hka-animation.md#vector-track)).
 
 ## Checking it
 

@@ -9,7 +9,7 @@ tags: [format, swf, ui, shape, bitmap]
 # SWF shapes and bitmaps
 
 This page covers the shape tags and the bitmap tags in a SWF movie. The container is on
-[SWF](/formats/swf.md).
+[SWF](swf.md).
 
 References: Adobe SWF File Format Specification v19, chapter 6 "Shapes" (pp. 119-133),
 chapter 7 "Gradients" (pp. 134-136), chapter 8 "Bitmaps" (pp. 137-143), and the chapter

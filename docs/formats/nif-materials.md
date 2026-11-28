@@ -8,7 +8,7 @@ tags: [format, mesh, material, texture, rendering]
 
 # NIF materials
 
-A `BSTriShape` links a shader property and an alpha property (see [NIF](/formats/nif.md)).
+A `BSTriShape` links a shader property and an alpha property (see [NIF](nif.md)).
 These blocks start with the `NiObjectNET` fields only (name, extra data, controller), not
 the full node fields.
 
@@ -59,14 +59,14 @@ effects, cube map scale, two eye centres), and the hair shapes end with the tint
 A refraction shape bends the image behind it, such as the heat-haze dome in
 `fireplacewood01burning.nif` (flags 1 `0x82418309`, texture `VaporTileNormal_n.dds`). Its
 slot 0 texture is a normal map, so OpenSky loads it as the normal map and draws the shape
-in the [refraction pass](/rendering/surface-shading.md).
+in the [refraction pass](../rendering/surface-shading.md).
 
 A shape with the tree animation flag, such as a pine branch in `treepineforestdead01.nif`
 (flags 2 `0x22008031`), stores its wind weight in the vertex alpha. OpenSky sets that alpha
 to 1, so it does not cut the branch away.
 
 Which flag and slot turn on each lit-surface term is in "Lit-surface terms" below. How the
-renderer shades them is in [surface shading](/rendering/surface-shading.md).
+renderer shades them is in [surface shading](../rendering/surface-shading.md).
 
 ## Skin and face tints
 
@@ -84,7 +84,7 @@ Overlay: where the base is below 0.5 the result is `2 * base * tint`, otherwise
 `1 - 2 * (1 - base) * (1 - tint)`. A tint of 0.5 leaves the base as it is. The game blends in
 gamma space, so OpenSky converts the linear samples to gamma 2.2 for the blend. A baked
 FaceGen head, such as `facegeom\skyrim.esm\<id8>.nif`, names its tint at slot 6 as
-`facegendata\facetint\skyrim.esm\<id8>.dds` ([FaceGen paths](/formats/actors.md)).
+`facegendata\facetint\skyrim.esm\<id8>.dds` ([FaceGen paths](actors.md)).
 
 The skin colour is the `NPC_ QNAM` texture lighting colour, a Traits-tab field. OpenSky
 multiplies it into the vertex colours of the skin-tint shapes only, so the armour shapes in
@@ -155,7 +155,7 @@ light"), not a fact checked on data.
 
 A shape with this shader is a piece of placed water, such as a pool under a waterfall. OpenSky
 does not decode the block. The shape gets the engine water-surface material, and the
-[water pass](/rendering/water.md) draws it with the `WATR` look of its cell.
+[water pass](../rendering/water.md) draws it with the `WATR` look of its cell.
 
 ## BSSkyShaderProperty
 
@@ -295,7 +295,7 @@ Each (shader, alpha) pair becomes one material: texture keys, UV transform, alph
 glossiness, specular, double-sided, alpha blend and test, and the lit-surface terms with
 their textures and constants. Water and sky shaders get a
 plain fallback material, untextured but drawn. Effect shaders used by particles go to the
-particle path instead (see [NIF particle systems](/formats/nif-particles.md)).
+particle path instead (see [NIF particle systems](nif-particles.md)).
 
 ### Effect shapes
 
@@ -309,7 +309,7 @@ open-source NifSkope effect shader (`sk_effectshader.frag`):
 - Falloff: `smoothstep(stop, start, |N . V|)` mixes the stop opacity into the start opacity.
 
 A source texture that is a volume samples transparent black; see
-[volume textures](/formats/dds.md#volume-textures).
+[volume textures](dds.md#volume-textures).
 
 Vanilla palettes are 2D, for example `textures\effects\gradients\GradWhiteWater.dds` is
 512 x 128, so the second coordinate matters.
@@ -336,7 +336,7 @@ are OpenSky's reading of the Creation Kit wiki
 - Soft effect: the alpha fades in over the soft falloff depth in front of the scene behind
   the shape, so a smoke card shows no hard line where it crosses the ground.
 - Weapon blood: the shape draws only while its weapon is bloody
-  ([visual effects](/rendering/visual-effects.md)). Vanilla weapons, and even forks and
+  ([visual effects](../rendering/visual-effects.md)). Vanilla weapons, and even forks and
   knives, hold such a shape with `textures\blood\BloodEdge01.dds`.
 
 An additive shape (`NiAlphaProperty` with destination factor `ONE`) adds light to the frame.
@@ -371,7 +371,7 @@ at the window pixels (`.logs/issue-1501/run8/`):
 The active weathers' own night `Effect Lighting` colours are blue, for example
 `SkyrimClear` (0.08, 0.37, 0.58), so the glow does not take the active weather. The changes
 fall at the `SkyrimClimate` sunrise (05:30 to 10:00) and sunset (16:00 to 20:30) times,
-each widened by half an hour ([time-of-day blend](/engine/weather.md#time-of-day-blend)).
+each widened by half an hour ([time-of-day blend](../engine/weather.md#time-of-day-blend)).
 
 The emittance colour times its multiplier joins the light sum, with the sun, point, and
 ambient light, before the sum multiplies the diffuse texture. So the glow is
@@ -392,6 +392,6 @@ is 1. The two `SkyrimClear` image spaces grade the glow very differently:
 
 The night tint moves 80% of each colour toward its luminance times a grey, so a warm glow
 loses most of its red. The dusk tint is orange and weaker, so the orange stays. Run through
-the [image space grade](/rendering/image-space.md#hdr-tone-mapping) over a dark base, a glow
+the [image space grade](../rendering/image-space.md#hdr-tone-mapping) over a dark base, a glow
 of `0.25 * key` adds about (98, 41, 15) of 255 at dusk and (59, 52, 35) at night: the red
 falls by about 40%, and the colour turns from orange to yellow, as the game shows.

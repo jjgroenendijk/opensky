@@ -155,5 +155,5 @@ number is the index plus 4096:
 
 So a melee kill still ends at `ExitWeRanOutOfCams`. The melee paths sit under
 `PairedKillTest`, and its `GetPairedAnimation` is 1 only during a paired kill move
-([paired animations](/engine/paired-animations.md)). Combat starts no kill move yet, and
+([paired animations](../engine/paired-animations.md)). Combat starts no kill move yet, and
 `GetGraphVariableInt` does not read the kill-move variables.

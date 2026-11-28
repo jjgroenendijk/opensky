@@ -74,7 +74,7 @@ channel. The most common colour is the background, so coverage 0 means nothing v
 drawn. A view with no drawn instance or with coverage 0 is blank, and the command exits 1.
 
 The images show game assets, so they stay in `.logs/` and never go into a commit
-([run output](/tools/run-output.md)).
+([run output](run-output.md)).
 
 ## The same input gives the same image
 

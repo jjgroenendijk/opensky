@@ -15,7 +15,7 @@ A navmesh is the walkable surface actors find paths on. Two records hold it:
 - `NAVI` is one record per plugin. It lists every navmesh, where it is, and which navmeshes
   connect.
 
-See [navigation](/engine/navigation.md) for path finding.
+See [navigation](../engine/navigation.md) for path finding.
 
 ## References
 
@@ -45,7 +45,7 @@ Where the two sources disagree, xEdit was right. See "The parent cell rule".
 Header flags: bit 26 "AutoGen" and bit 31 "Navmesh Gen Cell". OpenSky reads neither.
 
 In `Skyrim.esm`, `NVNM` is often larger than 64 KB. So it comes through the `XXXX` size
-field (see [ESM container](/formats/esm.md)). A `NAVM` without `NVNM` is an error, because a
+field (see [ESM container](esm.md)). A `NAVM` without `NVNM` is an error, because a
 navmesh with no surface cannot be used.
 
 ## NVNM geometry

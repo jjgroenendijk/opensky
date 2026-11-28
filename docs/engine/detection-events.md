@@ -9,7 +9,7 @@ tags: [engine, stealth, detection, npc, audio]
 # Detection events
 
 An observer that cannot see a target can still notice a sound the target made. The game keeps
-one sound event per actor for this. The page belongs to [detection](/engine/detection.md),
+one sound event per actor for this. The page belongs to [detection](detection.md),
 which holds the formula.
 
 ## The event
@@ -52,7 +52,7 @@ which holds the formula.
 
   [WARNING] The game's fire step was also seen to make an event from the weapon's sound level at
   the shooter, right after the weapon's `SNAM` or `XNAM` fire sound
-  ([items](/formats/item-records.md#weap)). This may be the action sound below rather than an
+  ([items](../formats/item-records.md#weap)). This may be the action sound below rather than an
   event; which one it is was not settled.
 - These make no event: a weapon swing, a weapon hit, a drawn bow, a footstep, a jump, a door,
   and a trap other than through its explosion or projectile.
@@ -86,7 +86,7 @@ The reaction comes from the relationship rank, then the faction reactions refine
 | Below -1 | Enemy |
 
 An observer would be hostile to the player when it would attack the player by its own Aggression
-and reaction, or when it has an [aggro radius](/engine/aggro-radius.md) with a
+and reaction, or when it has an [aggro radius](aggro-radius.md) with a
 Warn/Attack or Attack distance above 0 and its reaction to the player is Neutral or Enemy.
 
 So a neutral guard never checks the player's sound while neither of them fights. The check of the
@@ -111,7 +111,7 @@ target's last sound event:
 An actor with an aggro radius has one more rule. When the player's event is less than 0.1 s old,
 lies inside the larger of the actor's Warn/Attack and Attack distances, and the actor does not
 already fight the player, the actor reacts at once, with no warning and no detection roll. It
-starts combat when it [would attack](/engine/aggro-radius.md) the player. An actor
+starts combat when it [would attack](aggro-radius.md) the player. An actor
 with Aggression 0 and Confidence 0 flees instead.
 
 ## In OpenSky
@@ -139,7 +139,7 @@ the player.
   `fSneakSoundLosMult`. When the place is in view, the fixed light level adds a sight term.
 - On a positive result an unaware observer becomes suspicious, the event is the place it
   searches, the pair's value becomes 0, and the target's
-  [stealth points](/engine/detection.md#stealth-points) wait. The points wait once for one
+  [stealth points](detection.md#stealth-points) wait. The points wait once for one
   event. The observer stays suspicious for as long as the event lasts.
 - Without a heard event, the observer checks the nearest of the target's flying projectiles
   within 1,024 units the same way, as a Normal sound at the projectile. It skips the scan for a

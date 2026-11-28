@@ -67,6 +67,6 @@ automatic door, and faces away from it.
   so a door never searches a second time, and the index would not change a result.
 - [WARNING] The landing is 150 units in front of every door, automatic doors too. The front is the
   door's own +Y axis. Both are not checked against the game
-  ([unverified values](/engine/unverified-values.md)).
+  ([unverified values](unverified-values.md)).
 - [WARNING] A target door counts as enabled from its own enable state only. An enable parent is not
   checked.

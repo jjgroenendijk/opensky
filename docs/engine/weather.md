@@ -8,10 +8,10 @@ tags: [engine, weather, sky, environment, wind]
 
 # Weather runtime
 
-Exterior weather comes from the [weather records](/formats/weather.md) (`WTHR`, `CLMT`, `REGN`),
+Exterior weather comes from the [weather records](../formats/weather.md) (`WTHR`, `CLMT`, `REGN`),
 the worldspace climate (`WRLD` `CNAM`), and the cell regions (`CELL` `XCLR`). The runtime picks a
 weather for the current worldspace. It cross-fades between weathers over time. It blends the four
-time-of-day keyframes of each weather by the hour from the [game clock](/engine/game-clock.md).
+time-of-day keyframes of each weather by the hour from the [game clock](game-clock.md).
 The result drives the sky colors, fog, directional ambient light, and sun tint.
 
 With no weather data, or no candidate for the worldspace, there is no weather. The renderer then
@@ -75,7 +75,7 @@ description is found.
 The `REGN` `RDWT` global is ignored.
 
 When a global changes, the system rerolls at once, so the weather follows it without waiting for
-the next reroll time. See [runtime state](/engine/runtime-state.md).
+the next reroll time. See [runtime state](runtime-state.md).
 
 ## Transitions
 
@@ -172,7 +172,7 @@ One resolved weather holds:
 
 A missing field resolves to zero or "off" and does not throw. Two resolved weathers are blended
 by linear interpolation during a transition, and the transition sets the precipitation strength.
-See [precipitation volumes](/rendering/precipitation.md).
+See [precipitation volumes](../rendering/precipitation.md).
 
 ## Wind
 
@@ -188,14 +188,14 @@ The weather applies only to exteriors. Interiors keep their `CELL` and `LGTM` li
 - The weather sky colors drive the sky shader.
 - Weather fog, ambient, sun tint, and directional ambient replace the camera fallback values.
 - The sun direction and the light direction follow the sun path of the
-  [celestial sky](/engine/celestial-sky.md). The weather sets only their colors.
+  [celestial sky](celestial-sky.md). The weather sets only their colors.
 - The textured sun and its glare replace the shader's drawn sun disc and glow once their
   textures load. With no weather, the sky takes the original procedural path, with a fixed sun.
 
 ## Clouds
 
 Each enabled cloud layer of the current weather draws on its shape of the cloud dome
-([weather record](/formats/weather.md)). A layer is skipped when its index is at or past `LNAM`,
+([weather record](../formats/weather.md)). A layer is skipped when its index is at or past `LNAM`,
 when `NAM1` disables it, or when it has no texture. Its colour and alpha blend from `PNAM` and
 `JNAM` by the same time-of-day weights as the sky. During a transition both weathers' layers
 draw, each faded by its share of the blend.

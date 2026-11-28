@@ -14,8 +14,8 @@ An NPC's combat AI runs several loops at the same time. Blocking and bashing are
 
 The AI runs these at the same time, every frame:
 
-- the movement loop ([close-range movement](/formats/combat-style.md#close-range-movement) and
-  [the other movement branches](/engine/combat-movement.md));
+- the movement loop ([close-range movement](../formats/combat-style.md#close-range-movement) and
+  [the other movement branches](combat-movement.md));
 - one action loop for each equipment slot.
 
 The item in a slot picks that slot's loop: a weapon runs the attack loop, a shield runs the block
@@ -24,7 +24,7 @@ shield attacks with its right hand and blocks with its left hand at the same tim
 A blocking NPC keeps circling, backing off, and advancing as its movement loop decides.
 
 Each hand has its own attack loop. A weapon in the left hand picks only attacks with the left-hand
-flag `0x8` ([attack data](/engine/attack-data.md#the-ais-pick)). A weapon in any other slot picks
+flag `0x8` ([attack data](attack-data.md#the-ais-pick)). A weapon in any other slot picks
 attacks with neither the bash nor the left-hand flag. So the AI does not alternate hands or roll
 for a hand: each hand rolls its own attack chance about four times a second, and keeps its own
 recovery times and its own time of its last attack.
@@ -66,7 +66,7 @@ flowchart TD
 ```
 
 Each pass rolls every chance again, so a waiting NPC rolls about four times a second. The chances
-are on the [combat style](/formats/combat-style.md#attack-and-bash-chances) page: the block chance
+are on the [combat style](../formats/combat-style.md#attack-and-bash-chances) page: the block chance
 and the block attack chance are `lerp(defensive, 0, 1)`, and the block chance is multiplied by
 `fCombatBlockChanceWeaponMult` (0.25) without a shield.
 
@@ -89,7 +89,7 @@ The target does not need to be attacking.
 `Df` is the style's defensive value. For some target states the game uses 0 instead.
 
 A block lasts the block time: a three-point lerp of 4, 8, and 10,000 s at `x = 2 * Df - 1`
-([three-point lerp](/formats/combat-style.md#the-general-block)). The block also wants to stop
+([three-point lerp](../formats/combat-style.md#the-general-block)). The block also wants to stop
 when the distance is above the block stop distance, which is checked at most once a second. The
 NPC lowers its guard only when both hold:
 
@@ -131,7 +131,7 @@ A bash starts only when all of these hold:
 - the item in the slot can bash;
 - the bash pick finds an attack.
 
-The bash pick is the [attack pick](/engine/attack-data.md#the-ais-pick) over the attacks with the
+The bash pick is the [attack pick](attack-data.md#the-ais-pick) over the attacks with the
 bash flag `0x2` and without the left-hand flag `0x8`. It uses the bash reach `fCombatBashReach`
 (141) and the same weights and multipliers as a swing. So the choice between `bashStart` and
 `bashPowerStart` is only this weighted roll. After the pick the target must be inside the attack's
@@ -162,5 +162,5 @@ differ:
   may start only while the NPC holds a one-handed melee weapon in each hand, and then lands both
   weapons.
 
-These values are OpenSky's ([unverified combat values](/engine/unverified-combat-values.md)).
+These values are OpenSky's ([unverified combat values](unverified-combat-values.md)).
 `openskycli game state assist` lists each styled fighter's guard and bashes under `guards`.

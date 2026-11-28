@@ -10,7 +10,7 @@ tags: [engine, papyrus, quests, aliases]
 # Papyrus quest scripts
 
 Quest state itself (running, stages, objectives, and alias fills) is on the
-[quest state](/engine/quest-state.md) page. This page is the Papyrus side that reads and writes it.
+[quest state](quest-state.md) page. This page is the Papyrus side that reads and writes it.
 
 ## Instances
 
@@ -59,16 +59,16 @@ A refused change becomes a native failure, and the call returns its declared def
 Absent on purpose, and left in the unimplemented tally: `Reset`, `IsStarting`, `IsStopping`,
 `GetAlias`, and `GetAliasedRef`. They need more alias support or a latent window OpenSky does not
 have. `SetActive` and `IsActive` keep a flag in the
-[script state](/engine/papyrus-script-state.md); no journal reads it yet.
+[script state](papyrus-script-state.md); no journal reads it yet.
 
 A method call on an instance runs under the script that declares the function. So
 `someQuest.SetStage(10)` reaches the `Quest` natives only when `Quest.pex` is loaded. That is why a
-script loads with its ancestors ([lazy script library](/engine/papyrus-world.md#lazy-script-library)).
+script loads with its ancestors ([lazy script library](papyrus-world.md#lazy-script-library)).
 
 ## Scene and story natives
 
 `Scene.Start`, `Scene.ForceStart`, `Scene.Stop`, and `Scene.IsPlaying` call the
-[scene runtime](/engine/scenes.md). `Keyword.SendStoryEvent` and `Keyword.SendStoryEventAndWait`
+[scene runtime](scenes.md). `Keyword.SendStoryEvent` and `Keyword.SendStoryEventAndWait`
 fire a `SCPT` event with the keyword and the call's location, actors, and values. Both return
 true when the walk started a quest. Scene begin, end, and phase fragments queue on the scene's
 fragment script like stage fragments.
@@ -77,20 +77,20 @@ fragment script like stage fragments.
 
 The Creation Kit compiles each stage fragment into a numbered function on the generated script. The
 `VMAD` tail's fragment table is the only record of which stage each function belongs to
-([VMAD](/formats/vmad.md)). When a stage goes from not reached to reached, each matching function is
-queued on the fragment script's instance through the ordinary queue. So the tick budget, one event
-at a time per instance, and global order apply to fragments as to `OnActivate`.
+([VMAD](../formats/vmad.md)). When a stage goes from not reached to reached, each matching function
+is queued on the fragment script's instance through the ordinary queue. So the tick budget, one
+event at a time per instance, and global order apply to fragments as to `OnActivate`.
 
 Each fragment belongs to one log entry (item) of its stage. "The script fragments will be run for
 all entries where the conditions pass" ([Quest Stages Tab](https://ck.uesp.net/wiki/Quest_Stages_Tab)),
 with the player as Subject. For example, `MQ101` stage 0 has five entries keyed on one global's
 value; value 0 is the normal start, and the others are debug starts, so one passes. A session
 without a condition evaluator runs the items with no conditions, or the first one. The same items
-write the log entry and apply Complete Quest and Fail Quest ([quest state](/engine/quest-state.md#stage-items)).
+write the log entry and apply Complete Quest and Fail Quest ([quest state](quest-state.md#stage-items)).
 
 All scripts on one quest are one object in the game. Here each script is its own instance, so a cast
 from one to another, such as `self as MQ101QuestScript` in a fragment, finds the sibling instance on
-the same form ([Papyrus VM](/engine/papyrus-vm.md)).
+the same form ([Papyrus VM](papyrus-vm.md)).
 
 A fragment naming a script the quest has no instance of is counted as
 `missingQuestFragmentInstance`. A function the script does not define is counted as
@@ -143,7 +143,7 @@ opening cells load, and the cart horses wait for this event before the opening c
 ## Where OpenSky differs
 
 - `Start`, and `SetStage` on a stopped quest, queue the start and wait for it
-  ([quest state](/engine/quest-state.md#starting-a-quest)).
+  ([quest state](quest-state.md#starting-a-quest)).
 - `SetStage` is latent: it returns once the fragments the call queued have run
   ([SetCurrentStageID - Quest](https://ck.uesp.net/wiki/SetCurrentStageID_-_Quest)). OpenSky
   checks this after each script step, so the caller resumes on the step after its fragments.
@@ -156,4 +156,4 @@ opening cells load, and the cart horses wait for this event before the opening c
 - A shut-down stage stops the quest. Its instances retire once the fragments that stage queued
   have run, unless the quest started again before that.
 - Quests start from the `.seq` start-game pass, from `Start`, from a start-up stage, or from the
-  [story manager](/engine/story-manager.md).
+  [story manager](story-manager.md).

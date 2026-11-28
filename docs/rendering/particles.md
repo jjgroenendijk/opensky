@@ -10,7 +10,7 @@ tags: [rendering, particles, metal, weather]
 # Particle playback
 
 NIF particle definitions become CPU simulations owned by the cell, drawn with one instanced call per
-system. Decoding is on the [NIF particle systems](/formats/nif-particles.md) page. The meaning of
+system. Decoding is on the [NIF particle systems](../formats/nif-particles.md) page. The meaning of
 emitters, modifiers, and `AlphaFunction` values comes from NifTools
 [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml). The runtime policies below are
 OpenSky choices, not known Creation Engine constants.
@@ -63,7 +63,7 @@ controller with no keys in that sequence keeps its own keys.
 ## Sequences
 
 An effect model's behaviour graph plays a NIF sequence with a `BGSGamebryoSequenceGenerator`
-([effect graphs](/engine/effect-graphs.md)). The hand effects of spells, for example, run
+([effect graphs](../engine/effect-graphs.md)). The hand effects of spells, for example, run
 `Magic\CastingBasic.hkx`, whose states play `mIntro`, `mCharge`, `mReady`, and `mCast`. The
 graph moves between these states on the actor's animation events, such as
 `MLh_SpellFire_Event`.
@@ -87,7 +87,7 @@ system whose live particles lie outside the view is not drawn. Its simulation st
 looks the same when it comes back into view.
 
 The fragment shader shades a particle like an effect shape that faces the eye
-([effect shapes](/formats/nif-materials.md#effect-shapes)): the system's base color, palette,
+([effect shapes](../formats/nif-materials.md#effect-shapes)): the system's base color, palette,
 falloff, soft effect, effect lighting, and point lights. The particle color is the vertex color
 and alpha. An effect shader takes it only when its `Vertex_Colors` flag (SLSF2 bit 5) is on:
 
@@ -111,7 +111,7 @@ in the fog color, because the sum already shows the fogged scene behind it.
 | Anything else, or none | Alpha | Smoke, steam, water |
 
 The alpha pipeline blends in linear light, unlike blended meshes
-([blending](/rendering/image-space.md#blending)).
+([blending](image-space.md#blending)).
 
 Placed and effect systems draw far to near, by the distance from the camera to the emitter
 origin. Inside an alpha or multiply system, the particles also draw far to near. Additive
@@ -129,7 +129,7 @@ and width, the end point and width, the colour, and the texture coordinate along
 | System | Bands |
 | --- | --- |
 | `BSStripParticleSystem` | One band through its particles in birth order, oldest first |
-| Rain | Each drop stretched along its velocity ([precipitation](/rendering/precipitation.md#streaks)) |
+| Rain | Each drop stretched along its velocity ([precipitation](precipitation.md#streaks)) |
 
 A strip's texture runs from its oldest end, U 0, to its newest, U 1. A rain streak's
 texture runs along the band in V, because the generated streak mask is tall. A strip
@@ -235,4 +235,4 @@ The renderer publishes the blended weather wind, and every live frame passes it 
 ## Not done
 
 - Sequences of placed objects: an object's graph does not play them yet
-  ([object animation](/engine/object-animation.md#where-opensky-differs)).
+  ([object animation](../engine/object-animation.md#where-opensky-differs)).

@@ -104,7 +104,7 @@ Every link resolves relative to the plugin that holds the weather or the cell. T
 a weighted sum of each numeric field. A slot that names nothing counts as neutral, so a
 weather that leaves one slot empty fades toward neutral at that time of day.
 
-The game blends the same way. It uses the [time-of-day weights](/engine/weather.md#time-of-day-blend)
+The game blends the same way. It uses the [time-of-day weights](../engine/weather.md#time-of-day-blend)
 of the sky colours, times the transition share of each weather: the outgoing weather's slots
 take `1 - share` of the same weights. Every numeric field is a plain weighted sum, the
 `HNAM` values, saturation, brightness, and contrast included. The tint amount and the tint

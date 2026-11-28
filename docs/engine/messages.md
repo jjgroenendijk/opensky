@@ -11,7 +11,7 @@ tags: [engine, ui, scripting]
 A `MESG` record is either a notification (one line at the top left of the HUD) or a message
 box (a modal window with buttons). Scripts show them with `Message.Show`,
 `Debug.Notification`, `Debug.MessageBox`, and `Message.ShowAsHelpMessage`. The record layout
-is on the [message records](/formats/messages.md) page.
+is on the [message records](../formats/messages.md) page.
 
 ## Building the text
 
@@ -21,13 +21,13 @@ is on the [message records](/formats/messages.md) page.
    the next one, in order. A missing argument is 0, as the defaults of `Show` are. `%%` is a
    percent sign. A `%` that starts no token stays as it is.
 3. A message whose `QNAM` names a quest gets its alias tags filled, such as
-   `<Alias=Target>`, with the same rules as [journal](/engine/journal.md) text.
+   `<Alias=Target>`, with the same rules as [journal](journal.md) text.
 4. A message box keeps only the buttons whose conditions pass, each with its `MESG` button
    index. A box with no visible button gets one OK button at index 0.
 5. Text is cut at 1,023 characters, the Creation Kit limit for a message box.
 
 Source: the Creation Kit wiki pages "Message" and "Show - Message", read through the
-Wayback Machine (see [environment](/tools/environment.md)). The wiki gives the token format
+Wayback Machine (see [environment](../tools/environment.md)). The wiki gives the token format
 and the limit. The nine-argument limit is the Papyrus signature of `Show`.
 
 ## Notifications
@@ -71,7 +71,7 @@ What counts as doing the event:
   not the one on screen.
 
 The count of times shown and the done flag per event are saved in the
-[`HELP` save chunk](/formats/opensky-save-world-chunks.md), so a done tutorial stays done after
+[`HELP` save chunk](../formats/opensky-save-world-chunks.md), so a done tutorial stays done after
 a load. OpenSky reports the `Jump`, `Sneak`, and `Activate` events from their keys, and the
 `Look` event when the pointer turns the view. The opening cart ride shows "Use [Look] to look
 around." with the `Look` event (`QF_MQ101_0003372B` calls `ShowAsHelpMessage` with it), so it

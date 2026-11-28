@@ -11,8 +11,8 @@ tags: [engine, inventory, barter, factions]
 A merchant is an actor with a vendor faction among its faction memberships. The faction's vendor
 block says where it sells from, when, and what. The source for every rule is the Creation Kit
 wiki's Faction page, Vendor tab (<https://ck.uesp.net/wiki/Faction>). The record fields are on
-the [factions](/formats/factions.md) page. The menus are on the
-[container and barter menus](/engine/barter.md) page.
+the [factions](../formats/factions.md) page. The menus are on the
+[container and barter menus](barter.md) page.
 
 | Field | Meaning |
 | --- | --- |
@@ -97,7 +97,7 @@ A merchant chest restocks `iDaysToRespawnVendor` game days (2) after it was last
 check runs when the vendor's barter opens: a due chest drops its runtime inventory and tempering,
 so it reads its leveled `CNTO` list again. The time each chest was stocked is the
 `vendorRestock` world-state component, which a save stores in the `VRST` chunk
-([world chunks](/formats/opensky-save-world-chunks.md)).
+([world chunks](../formats/opensky-save-world-chunks.md)).
 
 ## Stock, gold, and what a vendor takes in the game
 
@@ -132,7 +132,7 @@ Neither is part of the vendor faction. Both come from the load order:
 
 - The Speech perk Investor carries a quest-stage perk effect. Adding the perk sets that stage, and
   the dialogue it starts calls the investment scripts. Master Trader works the same way.
-- Trainers are dialogue that calls `Game.ShowTrainingMenu` ([training](/engine/training.md)).
+- Trainers are dialogue that calls `Game.ShowTrainingMenu` ([training](training.md)).
 
 ## The list
 

@@ -9,16 +9,16 @@ tags: [format, plugin, records, worldspace, cell, reference]
 # World records
 
 These records build a cell: the worldspace, the cell, and the base objects placed in it. The
-placed references are on [placed references](/formats/placed-references.md). Shared decode
-rules are on [record decoders](/formats/records.md).
-How a cell becomes a scene is on [cell scene](/engine/cell-scene.md).
+placed references are on [placed references](placed-references.md). Shared decode
+rules are on [record decoders](records.md).
+How a cell becomes a scene is on [cell scene](../engine/cell-scene.md).
 
 Sources: UESP "Skyrim Mod:Mod File Format" pages `/WRLD`, `/CELL`, `/STAT`,
 `/MSTT`, `/TREE`, `/FLOR`, `/FURN`, `/ACTI`, `/TACT`, `/CONT`, and `/DOOR`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), and xEdit `dev-4.1.6`
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/fd1e36020b2b5b6217e553dc0038983146a2e2dd/Core/wbDefinitionsTES5.pas).
-Water fields are on [water](/formats/water.md) and lighting fields on
-[lighting](/formats/lighting.md).
+Water fields are on [water](water.md) and lighting fields on
+[lighting](lighting.md).
 
 ## WRLD
 
@@ -39,7 +39,7 @@ Water fields are on [water](/formats/water.md) and lighting fields on
 landscape, `0x20` no sky, `0x40` fixed dimensions, `0x80` no grass. The other fields,
 such as `RNAM`, `MNAM`, `NAM0`/`NAM9`, and the LOD fields, are in
 [WRLD extras](#wrld-extras). A world children group with the exterior
-cells follows the record ([ESM](/formats/esm.md)).
+cells follows the record ([ESM](esm.md)).
 
 `PNAM` flags say which categories a child worldspace takes from its `WNAM` parent instead of
 its own fields. Source: xEdit `wbDefinitionsTES5.pas` (commit above), the `PNAM` flags of
@@ -90,14 +90,14 @@ that one when a cell has none.
 lists more. UESP notes that some records store one byte only.
 
 Record-header flags: `0x20000` Off Limits and `0x80000` Can't Wait. WRLD has the same Can't Wait
-bit. With it the player cannot wait or sleep there ([sleep and wait](/engine/sleep-wait.md)).
+bit. With it the player cannot wait or sleep there ([sleep and wait](../engine/sleep-wait.md)).
 
 `XCLC`: one cell is 4096 units wide. Some form-version-43 records have an 8-byte `XCLC`
 without the flags word. The high bits of the flags hold Creation Kit noise.
 
-`XOWN` and `XRNK` work as on a REFR ([placed references](/formats/placed-references.md)). A
+`XOWN` and `XRNK` work as on a REFR ([placed references](placed-references.md)). A
 reference in the cell without its own `XOWN` takes the cell's owner. That is why every crate in a
-shop is owned ([crime](/engine/crime.md)). In the vanilla install, every owned Whiterun interior has
+shop is owned ([crime](../engine/crime.md)). In the vanilla install, every owned Whiterun interior has
 a 4-byte `XOWN` and none has `XRNK`.
 
 Interior cells are in the CELL top group, in block groups (type 2) and sub-block groups
@@ -150,7 +150,7 @@ These placeable base objects share the fields that matter here:
 ACTI record-header bit 20 means `Ignore Object Interaction`. With it, the FURN bit 25, or
 DOOR automatic, the player cannot use the object directly. xEdit lines: ACTI 3297-3332, CONT
 4492-4521, DOOR 4908-4933, FURN 5205-5260, MSTT 5409-5437, TREE 10221-10253. CONT contents
-are on [item records](/formats/item-records.md).
+are on [item records](item-records.md).
 
 Sound fields by meaning:
 
@@ -202,7 +202,7 @@ experiment, 5 alchemy, 6 alchemy experiment, 7 smithing armor. The skill range i
 (One-Handed) to 23 (Enchanting). An unknown bench type or skill keeps its raw value.
 
 Which recipes a station offers comes from its keywords, not from the bench type. A recipe's
-`BNAM` names a keyword ([recipes](/formats/recipes.md)), and the station carries it in
+`BNAM` names a keyword ([recipes](recipes.md)), and the station carries it in
 `KWDA`. A forge is a create-object bench with `CraftingSmithingForge`.
 
 In the five masters, 47 FURN bases have a bench type other than none: 39 create object, 4
@@ -307,8 +307,8 @@ Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRecord(ACTI, ...)` and the reco
 | Record | Field | Type | Meaning |
 | --- | --- | --- | --- |
 | all | `OBND` | 12 bytes | Object bounds |
-| all | `MODL`, `MODT`, `MODS` | model group | See [records](/formats/records.md) |
-| all | `DEST` group | destruction | See [records](/formats/records.md) |
+| all | `MODL`, `MODT`, `MODS` | model group | See [records](records.md) |
+| all | `DEST` group | destruction | See [records](records.md) |
 | `ACTI`, `FURN`, `FLOR` | `PNAM` | 4 bytes | Marker color, RGBA |
 | `TACT` | `PNAM` | 4 bytes | Unnamed by xEdit; read like the marker color |
 | `ACTI`, `FURN`, `FLOR`, `TACT` | `FNAM` | uint16 | Flags |

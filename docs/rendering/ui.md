@@ -11,7 +11,7 @@ tags: [rendering, ui, metal, text, layout]
 
 The UI overlay is the last thing drawn in the scene encoder, after precipitation. So the window and
 the offscreen renderer both get it with no extra pass. The game's menus are vanilla SWF movies,
-drawn by the [SWF layer](/rendering/swf-layer.md) through the same atlas and blend. The overlay draws
+drawn by the [SWF layer](swf-layer.md) through the same atlas and blend. The overlay draws
 after the SWF layer, so it stays on top.
 
 ## Model
@@ -47,7 +47,7 @@ SWF glyphs go into the same atlas. A decoded SWF glyph becomes a `CGPath` with e
 drawn by the same code. The cache key has a source, system or SWF, so an SWF glyph never collides
 with a system glyph that has the same number. Callers keep SWF font keys unique per movie and font.
 A missing or undecoded font falls back to the system font. Font decoding is on the
-[SWF text](/formats/swf-text.md) page.
+[SWF text](../formats/swf-text.md) page.
 
 The atlas is one fixed-size texture shared by every movie. A host that swaps movies must give cells
 back, or the shelves fill and later movies draw no text. So each packed cell keeps its coverage

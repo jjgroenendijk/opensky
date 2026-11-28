@@ -12,7 +12,7 @@ An interior is cut into rooms. Doorways between rooms are portals. A room the ca
 see through a chain of portals is skipped, so its statics cost no draw work. This only saves
 time. The image must not change.
 
-The record fields are on the [placed references](/formats/placed-references.md#rooms-and-portals)
+The record fields are on the [placed references](../formats/placed-references.md#rooms-and-portals)
 page. The walk below is an OpenSky policy, not a copy of the game's method, which is not
 documented.
 

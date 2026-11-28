@@ -14,7 +14,7 @@ animation rig. Some clip files hold resource and reference-frame classes beside 
 
 Reference: [ret2end/HKX2Library](https://github.com/ret2end/HKX2Library) (MIT), commit
 `5156f4f2`, which lists every member of the Skyrim SE 64-bit classes with its offset. The
-[class signatures](/formats/hkx-class-signatures.md) page confirms that this Havok version
+[class signatures](hkx-class-signatures.md) page confirms that this Havok version
 matches. All integers are little-endian. Offsets are from the start of the object.
 
 ## Small types

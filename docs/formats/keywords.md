@@ -31,11 +31,11 @@ describes empty AACT records with no `EDID`. So OpenSky treats both fields as op
 
 An object record lists its keywords in two fields. `KSIZ` is the count. `KWDA` is a packed
 list of 4-byte FormIDs. OpenSky trusts `KWDA`, not `KSIZ`: it reads every whole FormID in
-`KWDA` and ignores a partial tail. See [record decoders](/formats/records.md) for the other
+`KWDA` and ignores a partial tail. See [record decoders](records.md) for the other
 item fields.
 
 A FormID in `KWDA` is relative to the plugin that holds the `KWDA`. See
-[FormID resolution](/formats/formid.md). Compare keywords by resolved identity or editor ID,
+[FormID resolution](formid.md). Compare keywords by resolved identity or editor ID,
 never by a hardcoded vanilla FormID.
 
 Examples from `Skyrim.esm`:

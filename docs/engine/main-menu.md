@@ -12,7 +12,7 @@ The title menu shows Continue, New, Load, and Quit. Continue shows only
 when a save exists and loads the newest one. Quit to Main Menu in the System menu returns
 here. The launcher's Play button opens the game on this menu, as the original game does.
 Developer mode opens in the world. Before the menu opens, the game plays the Bethesda logo
-movie, `BGS_Logo.bik` ([movies](/engine/movies.md)). The launcher's "Play the startup logo"
+movie, `BGS_Logo.bik` ([movies](movies.md)). The launcher's "Play the startup logo"
 setting turns it off.
 
 ## The vanilla movie
@@ -24,7 +24,7 @@ install with `openskycli swf movie-probe` and `swf action-list`:
   `MainListHolder/List_mc`. The list reacts to keys only while it has focus.
 - Each row clip (`Entry0` and up) has its own `onRollOver`, which selects the row, and
   `onPress`, which picks it. So the cursor goes to the movie as a stage point, and the
-  movie's hit test finds the row ([AS2 input](/engine/as2-input.md)). The rows sit at the
+  movie's hit test finds the row ([AS2 input](as2-input.md)). The rows sit at the
   right edge of the 1280 x 720 stage.
 - The engine fills the rows by calling the `sendMenuProperties` callback with 14 values.
   Flag 0 shows Quit. Flag 1 shows Continue and enables Load. Value 2 is the version text.
@@ -50,7 +50,7 @@ Differences from the game:
   after a yes. Otherwise Continue loads at once. Both questions show in the movie's own
   question panel, not in a message box: `sConfirmNew` is "Start a new game?" and
   `sConfirmContinue` is "Continue from your last saved game?". The pause menu's Quit list
-  reaches this menu ([system menu](/engine/system-menu.md#quit)).
+  reaches this menu ([system menu](system-menu.md#quit)).
 - When the player's settings file cannot be read, an OK box over the main menu says so, once,
   with `sCantLoadSettings`. When only its controls cannot be read, it says `sCantLoadControls`.
   The defaults are used in both cases.
@@ -60,7 +60,7 @@ Differences from the game:
 Behind the movie, the game draws the 3D logo `meshes\interface\logo\logo.nif` and the
 smoke `meshes\interface\intmenufogparticles.nif` on black. It does not use a cell: it
 builds the same small scene as a loading screen, with its own camera and lights
-([loading screens](/engine/loading-screens.md#the-games-scene)). OpenSky draws it through
+([loading screens](loading-screens.md#the-games-scene)). OpenSky draws it through
 the loading screen's cover layer, so the world is hidden.
 
 | Part | Value |
@@ -70,7 +70,7 @@ the loading screen's cover layer, so the world is hidden.
 | Logo | At the origin, turned 180 degrees about Z, scale 1; on a screen wider than 16:9 its scale shrinks by (16/9) / aspect |
 | Smoke | At the origin, turned -180 degrees about Z |
 | Light | The loading screen's three point lights; a black ambient light from every side |
-| Image space | The `LSIS` default object, `LoadScreenIS` ([loading screens](/engine/loading-screens.md#image-space)) |
+| Image space | The `LSIS` default object, `LoadScreenIS` ([loading screens](loading-screens.md#image-space)) |
 
 The logo has no inventory marker, so the 180-degree turn is all its rotation. Its bounds
 run from 4 to 43 on X, so after the turn it sits 26 units to the camera's left. In a
@@ -102,15 +102,15 @@ start picked before any cell loaded recentres the streamer on the move, so the l
 A new game:
 
 1. Clears the world state, the script instances, and the timers.
-2. Sets the clock to the vanilla start time ([game clock](/engine/game-clock.md)).
+2. Sets the clock to the vanilla start time ([game clock](game-clock.md)).
 3. Starts the quests the load order's `.seq` files list
-   ([story manager](/engine/story-manager.md)).
+   ([story manager](story-manager.md)).
 4. Starts `MQ101`, the opening quest, by its editor ID. Its record is not flagged to start
    with the game, and no `.seq` file or default object names it. [WARNING] How the game
    starts it is not confirmed; this is an observation of `Skyrim.esm`.
 5. Runs the quest's start-up stage. Its fragment moves the player to the reference in its
    `PlayerStartMarker` alias, on the cart near Helgen, with `ObjectReference.MoveTo`. The
-   fragment reads each alias with `GetRef` ([quests](/engine/papyrus-quests.md)).
+   fragment reads each alias with `GetRef` ([quests](papyrus-quests.md)).
 
 The screen stays covered from the choice of New until the player stands at the marker, and
 the player is then put back into walk mode. Until the quest's `MoveTo`, the cover is a dark
@@ -172,13 +172,13 @@ lasts as long on a slow machine. The quest script's waits run on game time, so o
 the gaps between the titles grow.
 
 The `MQ101` aliases that name unique actors fill from the location records ([quest
-state](/engine/quest-state.md), "What does not fill yet").
+state](quest-state.md), "What does not fill yet").
 
 OpenSky plays the opening cart ride. The player sits in a cart, in cart mode. The horses pull the
 carts with their riders from the start, through the Helgen gate, and into Helgen. The race menu
-then opens where `MQ101` calls `Game.ShowRaceMenu` ([race menu](/engine/race-menu.md)), in Helgen
+then opens where `MQ101` calls `Game.ShowRaceMenu` ([race menu](race-menu.md)), in Helgen
 after the cart scene, as in the game. `debug quest MQ101 75` in the [agent
-control](/tools/agent-control.md) runs the stage that opens the race menu.
+control](../tools/agent-control.md) runs the stage that opens the race menu.
 
 `MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded cells
 is looked up in the worldspace records of `Skyrim.esm`, off the main actor, and its cell loads
@@ -194,7 +194,7 @@ The `MQ101` fragment calls were read with the PEX disassembler into
 
 ## New game at a chosen place
 
-The launcher's Play, and `debug newgame` in the [agent control](/tools/agent-control.md), start
+The launcher's Play, and `debug newgame` in the [agent control](../tools/agent-control.md), start
 a new game at a place instead of the opening. The place is a named interior, a map marker, a
 cell by editor ID, or a grid cell. The launcher offers only the settlements: the map markers
 whose type is City, Town, Settlement, Orc Stronghold, a hold capital (such as Whiterun
@@ -261,7 +261,7 @@ calls were read with the action disassembler.
 - A save row has `text`, `fileNum`, `id`, `name`, `raceName`, `level`, `playTime`,
   `dateString`, `corrupt`, `obsolete`, and `flags`.
 - The picture is an `img://BGSSaveLoadHeader_Screenshot` image of 192 by 108 pixels
-  ([SWF image slots](/engine/as2-display-runtime.md)). The save thumbnail is scaled to it by
+  ([SWF image slots](as2-display-runtime.md)). The save thumbnail is scaled to it by
   nearest pixel. A save without one shows grey.
 - The menu opens after the save list is read, because the movie reads Continue and Load
   once when it starts.
@@ -279,7 +279,7 @@ calls were read with the action disassembler.
 
 Each save carries a `SUMM` chunk with the character name, level, race, location, and play
 time, and a `THMB` chunk with a 192 by 108 picture of the frame
-([save container](/formats/opensky-save.md)). The list reads only these chunks and skips
+([save container](../formats/opensky-save.md)). The list reads only these chunks and skips
 the rest by length, so a large save lists fast. Play time is real time, carried from the
 save that was loaded.
 

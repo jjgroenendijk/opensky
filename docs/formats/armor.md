@@ -10,7 +10,7 @@ tags: [format, plugin, actors, armor, outfit]
 
 An ARMO is one piece of armor or clothing. Its ARMA armatures hold the models that are drawn
 on a body. An OTFT is a default outfit. The NPC_ and RACE records that name them are on
-[actor records](/formats/actors.md). [Actor resolution](/engine/actor-resolution.md)
+[actor records](actors.md). [Actor resolution](../engine/actor-resolution.md)
 explains how OpenSky picks and draws the parts.
 
 Sources: UESP "Skyrim Mod:Mod File Format" pages `/ARMO`, `/ARMA`, and `/OTFT`
@@ -47,7 +47,7 @@ How the game uses them:
 
 On ARMO, `MODL` is a 4-byte ARMA FormID, not a path. `SkinNaked` has 25 of them. `MOD2` and
 `MOD4` are the ground and inventory models. Weapon and armor enchantment fields are on
-[record decoders](/formats/item-records.md).
+[record decoders](item-records.md).
 
 ## ARMA
 

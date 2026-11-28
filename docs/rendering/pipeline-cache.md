@@ -39,7 +39,7 @@ deleted, every pipeline compiles, and the launch saves a new archive.
 
 ## Where it lives
 
-The archive is in `pipelines/` inside the [asset cache](/engine/asset-cache.md) folder, so the
+The archive is in `pipelines/` inside the [asset cache](../engine/asset-cache.md) folder, so the
 one folder setting places both caches. It holds only OpenSky's own shaders, no game content.
 A process without a `default.metallib` in its bundle, such as a package test, gets no archive.
 
@@ -50,5 +50,5 @@ launcher's Graphics page has the same switch and clear button.
 
 To time a cold start, clear the cache on the Graphics page, then run
 `make benchmark ARGS='--preset quick'`. The app start in the result holds the renderer setup time
-([benchmark](/tools/benchmark.md)). `--set pipelineCache.enabled=off` compiles every pipeline
+([benchmark](../tools/benchmark.md)). `--set pipelineCache.enabled=off` compiles every pipeline
 without the archive.

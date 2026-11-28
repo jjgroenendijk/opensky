@@ -8,10 +8,10 @@ tags: [engine, menus, progression, perks, nif]
 
 # Perk sky
 
-Behind the [skills menu](/engine/skills-menu.md) movie the game draws a 3D sky: a dome
+Behind the [skills menu](skills-menu.md) movie the game draws a 3D sky: a dome
 of stars and nebulas, the eighteen constellations, and a star for every perk with lines
 between them. The movie draws only the text on top. OpenSky draws the sky as a
-[menu scene](/rendering/menu-scene.md).
+[menu scene](../rendering/menu-scene.md).
 
 ## Meshes
 
@@ -118,7 +118,7 @@ Every tree is drawn on the ring, not only the open one, as in the game.
   calls it and `SkyrimSE.exe` holds no string that names it, so OpenSky does not call it.
 - The movie's root rests on its `FadedOut` frame. On open, OpenSky plays the root's `FadeIn`
   label; the fade ends on the frame that calls `SetFadedIn`. The time the game starts the fade
-  is not known ([unverified values](/engine/unverified-values.md)).
+  is not known ([unverified values](unverified-values.md)).
 - On close, the movie's text goes at once. The sky then plays `CameraOutro` (0.633 s),
   which drops `CameraPosition` back to z = -3000, and the menu leaves when it ends. Keys
   do nothing during the move.

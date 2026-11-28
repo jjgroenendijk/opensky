@@ -18,7 +18,7 @@ Skyrim SE describes music with two records:
 The world picks a `MUSC` through four links. The most specific link wins: `CELL XCMO`,
 then the location's `LCTN NAM1`, then the region's `REGN RDMO`, then the worldspace default
 `WRLD ZNAM`. See
-[music runtime](/engine/music.md).
+[music runtime](../engine/music.md).
 
 ## Sources
 
@@ -70,7 +70,7 @@ means 1.26 dB. The highest value the editor allows is 10000 (100.00 dB).
 | `FNAM` | float32 list | Cue points in seconds |
 | `LNAM` | 12 bytes | float32 loop begin, float32 loop end, uint32 loop count |
 | `SNAM` | FormID list | Child `MUST` tracks (palette tracks) |
-| `CITC` | uint32 | Condition count. See [conditions](/formats/conditions.md) |
+| `CITC` | uint32 | Condition count. See [conditions](conditions.md) |
 | `CTDA` | condition | Conditions |
 
 `CNAM` is a hash, not a small number:
@@ -99,7 +99,7 @@ them only when it builds the playlist.
 | `LCTN` | `NAM1` | FormID of a `MUSC` (xEdit `wbDefinitionsTES5.pas` line 6506) |
 
 UESP says `RDMO` "can appear with RDSA under same RDAT or on its own". So OpenSky reads it
-in any region area. See [weather records](/formats/weather.md) for region areas. A null
+in any region area. See [weather records](weather.md) for region areas. A null
 FormID in any of the four links means "no music set here".
 
 ## Field sizes
@@ -127,7 +127,7 @@ The leading separator must be removed, not rejected. Most vanilla tracks are wri
 and `..`, so the path cannot leave the data root.
 
 The name in the record is often not the name of the file that ships. See
-[shipped-file resolution](/engine/music.md#finding-the-shipped-file).
+[shipped-file resolution](../engine/music.md#finding-the-shipped-file).
 
 ## Not used yet
 

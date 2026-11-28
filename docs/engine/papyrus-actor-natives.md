@@ -9,7 +9,7 @@ tags: [engine, papyrus, actors, combat, factions]
 
 # Papyrus actor and faction natives
 
-These natives reach the world through [the world bridge](/engine/papyrus-activation.md#the-world-bridge).
+These natives reach the world through [the world bridge](papyrus-activation.md#the-world-bridge).
 Each goes through the subsystem that owns the state, so a script's change reaches the journal, the
 dirty counts, and the save by the same path as any other change.
 
@@ -36,7 +36,7 @@ dirty counts, and the save by the same path as any other change.
 | `float GetActorValueMax(string)` | The value with every modifier and no damage | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool IsEssential()` | A script's `SetEssential` on the base, else the `ACBS` essential flag; false for the player | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `Race ActorBase.GetRace()`, `bool ActorBase.IsUnique()` | The race after "use traits" inheritance; the base record's own `ACBS` unique flag | [ActorBase Script](https://ck.uesp.net/wiki/ActorBase_Script) |
-| `bool IsBleedingOut()` | Whether the actor kneels in [bleedout](/engine/ragdoll.md#bleedout) | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
+| `bool IsBleedingOut()` | Whether the actor kneels in [bleedout](ragdoll.md#bleedout) | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool IsCommandedActor()` | False: OpenSky has no commanded actors | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool HasLOS(ObjectReference)` | The perception pair's line of sight; a pair perception does not track fails | [HasLOS - Actor](https://ck.uesp.net/wiki/HasLOS_-_Actor) |
 | `bool IsDetectedBy(Actor)` | Whether the other actor's pair with this one is detected | [IsDetectedBy - Actor](https://ck.uesp.net/wiki/IsDetectedBy_-_Actor) |
@@ -46,7 +46,7 @@ dirty counts, and the save by the same path as any other change.
 | `ResetHealthAndLimbs()` | Health back to its maximum; OpenSky has no limb damage | [ResetHealthAndLimbs - Actor](https://ck.uesp.net/wiki/ResetHealthAndLimbs_-_Actor) |
 
 `SetActorValue`, `ModActorValue`, `ForceActorValue`, and `GetLevel` are registered too. Their rules
-are on [actor values](/engine/actor-values.md) and [character leveling](/engine/character-leveling.md).
+are on [actor values](actor-values.md) and [character leveling](character-leveling.md).
 
 Both damage and restore use the magnitude of their argument. Both wiki pages say "Negative numbers
 will be converted to positive so -100 and 100 will have the same effect".
@@ -60,7 +60,7 @@ cell that is not loaded is found through its plugin placement, so a quest script
 alias in a hold the player has left and read the result back. A death there sets the dead flag
 and sends `OnDying` and `OnDeath`, but no body falls until the cell loads.
 
-Actor values are named by the vanilla table ([actor value names](/engine/actor-value-names.md)). A
+Actor values are named by the vanilla table ([actor value names](actor-value-names.md)). A
 name outside it is a tallied failure that names the value, never a zero.
 
 ## Stated gaps in the actor family
@@ -84,7 +84,7 @@ applied, so a handler that reads the target's health sees the blow.
 references. Their handles name the record and resolve to no instance, so a handler can compare and
 log them but cannot call a method on them. `abPowerAttack`, `abSneakAttack`, and `abBashAttack` are
 set by the player's power attacks, sneak attacks, and bashes; an NPC's plain swing sets none
-([combat](/engine/combat.md#script-events)).
+([combat](combat.md#script-events)).
 
 ## OnDying and OnDeath
 
@@ -100,7 +100,7 @@ caused, which is the wiki's default.
 
 ## Faction and relationship natives
 
-These sit on the faction model behind [hostility](/engine/hostility.md).
+These sit on the faction model behind [hostility](hostility.md).
 
 | Native | What it does | Source |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ way an `Actor` receiver does.
 
 A Papyrus signature is an interface that compiled mods already agree with: a wrong argument count
 is a script that stops working. The wiki has been partly unreachable
-([environment](/tools/environment.md)), and the shipped script cannot differ from the game. So a
+([environment](../tools/environment.md)), and the shipped script cannot differ from the game. So a
 real-data check loads the install's own `Actor.pex` and `Faction.pex` and compares, for each
 registered function, the name, the `native` flag, and the parameter count. It also confirms the
 functions left out on purpose are really absent, and prints their declared signatures.
@@ -143,7 +143,7 @@ The check changed two decisions the first time it ran:
 
 | Behavior | What OpenSky does | Why |
 | --- | --- | --- |
-| `Faction.SetReaction`, `Faction.ModReaction` | Not installed | No reachable source says whether they write the combat reaction or the `XNAM` modifier. `SetEnemy`, `SetAlly`, and `SetPlayerEnemy` are installed ([script state](/engine/papyrus-script-state.md#faction-reactions)) |
+| `Faction.SetReaction`, `Faction.ModReaction` | Not installed | No reachable source says whether they write the combat reaction or the `XNAM` modifier. `SetEnemy`, `SetAlly`, and `SetPlayerEnemy` are installed ([script state](papyrus-script-state.md#faction-reactions)) |
 | `Actor.ModFactionRank` on a non-member | No effect | The page says only that it "will not remove an actor from a faction". Joining would be a guess, and a wrong rank would stay in the save |
 | A scripted relationship rank | Stored per reference pair, not per `NPC_` base | The player is one side in nearly every vanilla call and has no base record here. Vanilla scripts name unique actors, so nothing seen tests the difference |
-| `RemoveFromFaction` on a crime faction | No effect | The crime faction comes from the place ([crime](/engine/crime.md)), so there is nothing to clear |
+| `RemoveFromFaction` on a crime faction | No effect | The crime faction comes from the place ([crime](crime.md)), so there is nothing to clear |

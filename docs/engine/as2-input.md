@@ -8,7 +8,7 @@ tags: [engine, swf, actionscript, ui, scaleform, input]
 
 # AS2 input and events
 
-This page covers how the [AS2 display runtime](/engine/as2-display-runtime.md) hears about the
+This page covers how the [AS2 display runtime](as2-display-runtime.md) hears about the
 world: events, input, focus, and timers.
 
 ## Events

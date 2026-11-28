@@ -10,8 +10,8 @@ tags: [format, nif, havok, physics, ragdoll, constraints]
 
 A `bhkRigidBody` holds the physics values of a body (mass, damping, friction) and links to
 its joints (constraints). This page covers those values and the joint layouts. The
-collision object, filters, and shapes are in [NIF Havok collision](/formats/nif-collision.md).
-See [dynamic rigid bodies](/engine/dynamic-bodies.md) and [ragdoll](/engine/ragdoll.md) for
+collision object, filters, and shapes are in [NIF Havok collision](nif-collision.md).
+See [dynamic rigid bodies](../engine/dynamic-bodies.md) and [ragdoll](../engine/ragdoll.md) for
 how they are simulated.
 
 Source: NifTools [`nif.xml`](https://github.com/niftools/nifxml/blob/develop/nif.xml),

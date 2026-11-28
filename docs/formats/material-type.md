@@ -32,7 +32,7 @@ LAND quadrant  -> LTEX -> LTEX.MNAM                 -> MATT
 ```
 
 After this step, the engine uses only the `MATT` FormID. See
-[footstep records](/formats/footstep.md) for the lower part of the chart.
+[footstep records](footstep.md) for the lower part of the chart.
 
 ## MATT
 
@@ -84,4 +84,4 @@ Creation Kit does not know. Such a surface uses the fallback.
 Exterior ground is a `LAND` record, not a collision mesh, so it has no Havok material. Each
 landscape texture names a material instead. `LTEX MNAM` is a `MATT` FormID (xEdit
 `wbFormIDCk(MNAM, 'Material Type', [MATT, NULL])`). See
-[terrain records](/formats/land.md) for the rest of `LTEX` and how texture layers stack.
+[terrain records](land.md) for the rest of `LTEX` and how texture layers stack.

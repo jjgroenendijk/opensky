@@ -8,7 +8,7 @@ tags: [format, plugin, audio]
 # Sound output and reverb records
 
 `SOPM` says how a sound reaches the speakers. `REVB` says how a room colors it. See
-[sound](/formats/sound.md) for the descriptors that use them.
+[sound](sound.md) for the descriptors that use them.
 
 Source: xEdit `dev-4.1.6`, commit `9fb0168`,
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)

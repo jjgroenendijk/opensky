@@ -22,7 +22,7 @@ baseline files, and updating the baselines after each refactor cost too much.
   `make` target. A check that needs GitHub runs there.
 - **`make check` and CI mirror each other.** Every lint check has the same step in
   `ci.yml`, as AGENTS.md requires. The `Lint` job is the required check on `main`
-  ([continuous integration](/tools/ci.md)).
+  ([continuous integration](../tools/ci.md)).
 - **No new suppression comments.** No `periphery:ignore` and no new `swiftlint:disable`.
   Fix the finding instead.
 
@@ -35,12 +35,12 @@ CI job runs weekly.
 | --- | --- | --- | --- |
 | Duplicated code | jscpd, `tools/lint/duplicates.sh` | Lint | Under a second, whole tree |
 | Unused code | Periphery, `make lint-index` | Health, CI | Index build plus about 1.5 min scan |
-| No adapter uses another ([Ports and adapters](/decisions/ports-and-adapters.md)) | `tools/lint-index/adapter-references.py`, `make lint-index` | Health, CI | Seconds after the index build |
-| A port has a second conformer or a test fake ([Ports and adapters](/decisions/ports-and-adapters.md#one-conformer)) | `tools/lint-index/single-conformers.py`, `make lint-index` | Health, CI | Seconds after the index build |
-| No member chain through more than three objects ([Design metrics](/decisions/design-metrics.md#rule-5-law-of-demeter)) | `tools/lint-index/member-chains.py`, `make lint-index` | Health, CI | Seconds after the index build |
-| No public declaration that no other module uses ([Design metrics](/decisions/design-metrics.md#rule-3-minimal-public-surface)) | `tools/lint-index/public-surface.py`, `make lint-index` | Health, CI | Seconds after the index build |
-| No cycle between types in different files ([Design metrics](/decisions/design-metrics.md#rule-4-no-cycles-between-types-across-files)) | `tools/lint-index/type-cycles.py`, `make lint-index` | Health, CI | Seconds after the index build |
-| No type that uses more than 40 others ([Design metrics](/decisions/design-metrics.md#rule-2-fan-out-per-type)) | `tools/lint-index/fan-out.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No adapter uses another ([Ports and adapters](ports-and-adapters.md)) | `tools/lint-index/adapter-references.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| A port has a second conformer or a test fake ([Ports and adapters](ports-and-adapters.md#one-conformer)) | `tools/lint-index/single-conformers.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No member chain through more than three objects ([Design metrics](design-metrics.md#rule-5-law-of-demeter)) | `tools/lint-index/member-chains.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No public declaration that no other module uses ([Design metrics](design-metrics.md#rule-3-minimal-public-surface)) | `tools/lint-index/public-surface.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No cycle between types in different files ([Design metrics](design-metrics.md#rule-4-no-cycles-between-types-across-files)) | `tools/lint-index/type-cycles.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No type that uses more than 40 others ([Design metrics](design-metrics.md#rule-2-fan-out-per-type)) | `tools/lint-index/fan-out.py`, `make lint-index` | Health, CI | Seconds after the index build |
 | Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build |
 | Comment length | `tools/lint/comment-length.sh` | Lint | Under a second |
 | File length | `tools/lint/file-length.sh`, `tools/lint/file-length.sh` | Lint, pre-commit hook | Under a second |
@@ -49,17 +49,17 @@ CI job runs weekly.
 | Each lint still catches a planted violation | `--self-check` of every `tools/lint/` script | Lint | Seconds, in parallel |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
 | No new `GameViewController` extensions | `syntax-rules.sh` | Lint | Part of the current lint |
-| Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | `syntax-rules.sh`, `module-graph` | Lint | Part of the current lint |
+| Architecture rules ([architecture styles](../engine/architecture.md#machine-checks)) | `syntax-rules.sh`, `module-graph` | Lint | Part of the current lint |
 | Module size | `tools/lint/module-size.sh`, `tools/lint/module-size.sh` | Lint | Under a second, whole tree |
-| Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `tools/lint/language-rules.sh` | Every build, CI | A few seconds for the self-check |
-| Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `tools/lint/error-handling.sh` | Lint, CI | Under a second, whole tree |
-| Deterministic game rules ([Deterministic game rules](/decisions/deterministic-rules.md)) | `tools/lint/deterministic-rules.sh`, `tools/lint/deterministic-rules.sh` | Lint, CI | Under a second, whole tree |
-| Random test order ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `tools/lint/test-order.sh`, `tools/lint/test-order.sh` | Lint, CI | Under a second, whole tree |
-| Coverage floors: parsers, game rules, pure cores ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make test PLAN=UnitTests COVERAGE=1` | After `make test`, CI | Seconds |
-| Diff coverage ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make test COVERAGE=1` | After `make test`, CI on a pull request | Seconds |
-| Design metrics on the index store, as a report until each count is zero ([Design metrics](/decisions/design-metrics.md)) | libIndexStore, `make design-index-report` | By hand | The index build, then seconds |
-| Abstractness, instability, and distance per module ([Design metrics](/decisions/design-metrics.md), rule 6) | `make module-metrics` | Weekly workflow | Seconds |
-| Natural type groups against the modules ([Design metrics](/decisions/design-metrics.md), rule 7) | libIndexStore, `make design-groups` | Weekly workflow | The index build, then about 20 seconds |
+| Swift language rules ([Swift language rules](language-rules.md)) | The compiler, `tools/lint/language-rules.sh` | Every build, CI | A few seconds for the self-check |
+| Error handling ([Error handling](error-handling.md)) | `tools/lint/error-handling.sh`, `tools/lint/error-handling.sh` | Lint, CI | Under a second, whole tree |
+| Deterministic game rules ([Deterministic game rules](deterministic-rules.md)) | `tools/lint/deterministic-rules.sh`, `tools/lint/deterministic-rules.sh` | Lint, CI | Under a second, whole tree |
+| Random test order ([Test order and coverage rules](test-coverage-rules.md)) | `tools/lint/test-order.sh`, `tools/lint/test-order.sh` | Lint, CI | Under a second, whole tree |
+| Coverage floors: parsers, game rules, pure cores ([Test order and coverage rules](test-coverage-rules.md)) | `llvm-cov`, `make test PLAN=UnitTests COVERAGE=1` | After `make test`, CI | Seconds |
+| Diff coverage ([Test order and coverage rules](test-coverage-rules.md)) | `llvm-cov`, `make test COVERAGE=1` | After `make test`, CI on a pull request | Seconds |
+| Design metrics on the index store, as a report until each count is zero ([Design metrics](design-metrics.md)) | libIndexStore, `make design-index-report` | By hand | The index build, then seconds |
+| Abstractness, instability, and distance per module ([Design metrics](design-metrics.md), rule 6) | `make module-metrics` | Weekly workflow | Seconds |
+| Natural type groups against the modules ([Design metrics](design-metrics.md), rule 7) | libIndexStore, `make design-groups` | Weekly workflow | The index build, then about 20 seconds |
 
 ## Duplicated code: jscpd
 
@@ -126,7 +126,7 @@ Settings:
 ## Module graph
 
 The rules, the layer list, and the exceptions are in
-[The Modular Architecture](/decisions/modular-architecture.md).
+[The Modular Architecture](modular-architecture.md).
 
 ## Comment length
 
@@ -195,7 +195,7 @@ bridge closure property with a default value.
 
 `GameViewController` keeps only the view, input, and the render loop, in
 `GameViewController.swift`. The game objects live in the session scope
-([session scope](/decisions/session-scope.md)). The structural rule
+([session scope](session-scope.md)). The structural rule
 `game_view_controller_extension` forbids `extension GameViewController` in any other
 file. The allowed file names are one regular expression
 in `tools/syntax-lint/Rules.swift`. It is a design rule for the future, not a list of old
@@ -212,7 +212,7 @@ The unit plan measures the `OpenSky` app target and the package modules. `make
 coverage-floor`, run after `make test`, fails when a parser module, a game-rule module,
 or a pure core file is under its floor, and `make test COVERAGE=1` fails a pull request whose
 new lines or functions no test ran.
-[Test order and coverage rules](/decisions/test-coverage-rules.md) gives each value and its
+[Test order and coverage rules](test-coverage-rules.md) gives each value and its
 reason.
 
 The floors cover the parsers, which read untrusted files, and the game rules, which are pure
@@ -226,4 +226,4 @@ pushes people to write tests that execute code without checking anything.
   project.
 - **Dependabot.** Renovate covers the GitHub Actions, the Swift packages, and the CI tool
   pins in one weekly pull request, and Dependabot cannot read the tool pins
-  ([CI](/tools/ci.md#dependency-updates)).
+  ([CI](../tools/ci.md#dependency-updates)).

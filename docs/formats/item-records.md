@@ -9,9 +9,9 @@ tags: [format, plugin, records, inventory, items]
 # Item records
 
 These records are things an actor can carry, plus container contents. The projectile an
-arrow launches is on [projectiles](/formats/projectiles.md). Shared decode rules are on
-[record decoders](/formats/records.md). The runtime is on
-[inventory and equipment](/engine/inventory-equipment.md).
+arrow launches is on [projectiles](projectiles.md). Shared decode rules are on
+[record decoders](records.md). The runtime is on
+[inventory and equipment](../engine/inventory-equipment.md).
 
 Sources: UESP "Skyrim Mod:Mod File Format" pages `/MISC`, `/KEYM`, `/SLGM`, `/APPA`,
 `/BOOK`, `/ALCH`, `/INGR`, `/WEAP`, `/AMMO`, `/CONT`, and `/ARMO`
@@ -42,7 +42,7 @@ Gems, ingots, tools, gold, and clutter. Only the shared fields and the 8-byte `D
 (line 8303).
 
 A `LIGH` with the "can be carried" flag, such as a torch, is an item too. Its name, value,
-and weight are in the [lighting records](/formats/lighting.md#ligh) page.
+and weight are in the [lighting records](lighting.md#ligh) page.
 
 ## KEYM, SLGM, and APPA
 
@@ -93,7 +93,7 @@ one of the three types, and every one resolves to an item.
 
 | field | type | meaning |
 | --- | --- | --- |
-| `DESC` | lstring | book text, from the `.dlstrings` table ([strings](/formats/strings.md)) |
+| `DESC` | lstring | book text, from the `.dlstrings` table ([strings](strings.md)) |
 | `CNAM` | lstring | inventory description |
 | `DATA` | 16 bytes | see below |
 | `INAM` | FormID | inventory art, a `STAT`; kept, and nothing reads it while the game runs |
@@ -130,12 +130,12 @@ food, `0x100` references persist).
 
 ALCH, INGR, SPEL, SCRL, and ENCH store effects as a run of fields, not a struct. `EFID`
 names the MGEF, the next `EFIT` holds its numbers, and any `CTDA` after that is a condition
-on that effect ([conditions](/formats/conditions.md)). Then the run repeats. xEdit: `wbEFID`
+on that effect ([conditions](conditions.md)). Then the run repeats. xEdit: `wbEFID`
 line 3832, `wbEFIT` 3834, `wbEffect` 4030.
 
 | field | type | meaning |
 | --- | --- | --- |
-| `EFID` | FormID | the MGEF ([magic records](/formats/magic-records.md)) |
+| `EFID` | FormID | the MGEF ([magic records](magic-records.md)) |
 | `EFIT` | 12 bytes | float32 magnitude, uint32 area, uint32 duration |
 | `CTDA` | 32 bytes | condition on this effect |
 
@@ -151,7 +151,7 @@ with magnitude 0.
 | `CRDT` | 16 or 24 bytes | critical hit data |
 | `EITM` | FormID | enchantment (`ENCH`) |
 | `EAMT` | uint16 | enchantment charge |
-| `ETYP` | FormID | equip slot (`EQUP`, see [shouts and equip slots](/formats/shouts-equip-slots.md)) |
+| `ETYP` | FormID | equip slot (`EQUP`, see [shouts and equip slots](shouts-equip-slots.md)) |
 | `CNAM` | FormID | template, another WEAP |
 | `INAM` | FormID | impact data set (`IPDS`) for a normal swing |
 | `BIDS` | FormID | impact data set (`IPDS`) for a shield bash |
@@ -182,11 +182,11 @@ weapon sounds. The name, enchantment, value, and `NNAM` stay this weapon's own.
 A weapon with "Can't Drop" set "cannot be disarmed and does not fall off when actor dies"
 (<https://ck.uesp.net/wiki/Weapons>). So a disarm effect leaves it in the hand, and a death
 never drops it. A non-playable weapon is hidden from the player
-([inventory menu](/engine/inventory-menu.md#row-list)).
+([inventory menu](../engine/inventory-menu.md#row-list)).
 
 Reach
 is a multiplier, not a distance: UESP gives melee reach as `fCombatDistance * NPCScale *
-WeaponReach` ([melee combat](/engine/melee-combat.md)).
+WeaponReach` ([melee combat](../engine/melee-combat.md)).
 
 `CRDT` changed in SSE. The size picks the layout, not the form version, so older mod records
 still read:
@@ -224,7 +224,7 @@ The item card shows a weapon's `DESC` as its effect text when it is not empty. O
 UESP calls `INAM` "Normal weapon swing impact set" and `BIDS` "Block bash impact data set".
 A null link on a weapon or armour means the hit makes no impact. That is normal in vanilla.
 Another bashing item uses the default object's impact set
-([armour](/formats/armor.md#armo)).
+([armour](armor.md#armo)).
 
 ## AMMO
 
@@ -232,7 +232,7 @@ Another bashing item uses the default object's impact set
 
 | offset | type | meaning |
 | --- | --- | --- |
-| 0x00 | FormID | projectile (`PROJ`, see [projectiles](/formats/projectiles.md)) |
+| 0x00 | FormID | projectile (`PROJ`, see [projectiles](projectiles.md)) |
 | 0x04 | uint32 | flags: `0x01` ignores weapon resistance, `0x02` not playable, `0x04` not a bolt |
 | 0x08 | float32 | damage |
 | 0x0C | uint32 | value |
@@ -242,7 +242,7 @@ Vanilla SSE gives every arrow weight 0.1, but the game treats arrows as weightle
 
 ## CONT contents
 
-A container has the placeable fields ([world records](/formats/world-records.md)) plus its
+A container has the placeable fields ([world records](world-records.md)) plus its
 contents:
 
 | field | type | meaning |
@@ -259,7 +259,7 @@ documented as a misplaced weight that is always 0.
 
 ## ARMO inventory fields
 
-The appearance fields are on [armor records](/formats/armor.md). Inventory fields: the
+The appearance fields are on [armor records](armor.md). Inventory fields: the
 8-byte `DATA`, keywords, `DNAM` (armor rating x 100, a uint32 of which only the low 16 bits
 are used), and `EITM` (enchantment). ARMO has no `EAMT`: xEdit builds both records' link
 from `wbEnchantment` and adds the charge only on WEAP. So enchanted armor has no charge.

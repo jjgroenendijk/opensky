@@ -10,7 +10,7 @@ tags: [formats, nif, animation, effects]
 
 A NIF can hold named animations, such as `Locked` and `Unlock` on a perk star. Each one
 is an `NiControllerSequence` block under the root's `NiControllerManager`. OpenSky reads
-them to play the interface effect meshes of the [perk sky](/engine/perk-sky.md).
+them to play the interface effect meshes of the [perk sky](../engine/perk-sky.md).
 
 Reference: niftools nif.xml (`NiControllerSequence`, `ControlledBlock`,
 `NiTransformInterpolator`, `EffectShaderControlledVariable`), for version 20.2.0.7 with
@@ -68,7 +68,7 @@ The controller type string names the target:
 
 The alpha test threshold changes only a shape whose material already uses an alpha test.
 A float extra data named `hkVis:<node>` shows or hides that node
-([NIF controllers](/formats/nif-controllers.md#what-opensky-does-with-them)).
+([NIF controllers](nif-controllers.md#what-opensky-does-with-them)).
 
 A shader controller's variable is not in the controlled block. It is the last 4 bytes of
 the controller block itself, after the 26-byte `NiTimeController` part (next controller,
@@ -110,7 +110,7 @@ target, so the node keeps its authored roll. The rigid turn builds the whole fra
 camera, with +Y toward camera up. The game's result for modes 0 and 3 is not yet compared.
 
 A rigid shape of a static draw turns in the vertex shader
-([scene drawing](/rendering/scene-drawing.md#billboard-shapes)), by the same rules.
+([scene drawing](../rendering/scene-drawing.md#billboard-shapes)), by the same rules.
 The billboards of a placed object that a behaviour graph or a sequence door moves turn
 too. Each billboard node becomes its own bone next to the graph's bones or the door's
 leaves, and rides the graph bone above it.

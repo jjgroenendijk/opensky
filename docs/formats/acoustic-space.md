@@ -10,7 +10,7 @@ tags: [format, plugin, audio, sound]
 
 An `ASPC` record gives an interior cell its ambient sound. The cell points at an ASPC
 through its `XCAS` field. The ASPC gives one ambient sound, and it can also borrow the sound
-area of a region (`REGN`). See [world SFX and ambience](/engine/world-sfx.md) for how the
+area of a region (`REGN`). See [world SFX and ambience](../engine/world-sfx.md) for how the
 sound is played.
 
 References: UESP [`ASPC`](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ASPC), and
@@ -24,7 +24,7 @@ lines 5401-5407.
 | `OBND` | object bounds | Skipped |
 | `SNAM` | FormID | Ambient sound, points at `SNDR` |
 | `RDAT` | FormID | Region whose sound area is borrowed, points at `REGN` |
-| `BNAM` | FormID | Reverb, points at `REVB`. Drives the room reverb ([reverb](/formats/sound-output-reverb.md)) |
+| `BNAM` | FormID | Reverb, points at `REVB`. Drives the room reverb ([reverb](sound-output-reverb.md)) |
 
 `SNAM`, `RDAT`, and `BNAM` are read only when they are exactly 4 bytes. Other sizes are
 ignored.
@@ -32,7 +32,7 @@ ignored.
 ## RDAT means two things
 
 `ASPC.RDAT` is a 4-byte FormID. `REGN.RDAT` has the same name but is an 8-byte area header
-(see [weather records](/formats/weather.md)). The two decoders read them separately.
+(see [weather records](weather.md)). The two decoders read them separately.
 
 The Creation Kit calls the ASPC field "Use Sound from Region (Interiors Only)". Interior
 cells have no regions of their own (`XCLR`). This field lets an interior use the sound area

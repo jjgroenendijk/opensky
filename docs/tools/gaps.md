@@ -83,7 +83,7 @@ A new settings reader adds its call to `GapsGatherer.settingsRead` and its file 
 `game_setting_reader` rule. A new shader flag reader adds the flag to `lightingRead` or
 `effectRead` when a draw term depends on it; decoding a flag alone does not count. A flag
 whose behaviour OpenSky has without a read goes in `lightingMatchedByDefault` or
-`effectMatchedByDefault`, with the reason in [NIF materials](/formats/nif-materials.md),
+`effectMatchedByDefault`, with the reason in [NIF materials](../formats/nif-materials.md),
 "Flags with no read".
 
 ### Perk entry points
@@ -118,7 +118,7 @@ lists the `BehaviorTally` feature gaps, bindings not applied, and clips not foun
 whose file name no archive holds is a note, not a row: the game cannot play it either. Some
 vanilla kill moves and scene walks name such clips. A condition that does not parse, or names
 a variable the graph lacks, is a note too, because the game blocks the transition the same way
-([behaviour state machines](/engine/behavior-state-machines.md)).
+([behaviour state machines](../engine/behavior-state-machines.md)).
 
 ### Menus and the AS2 runtime
 
@@ -132,7 +132,7 @@ and its faults, over all movies. A movie's own GameDelegate names are not in it,
 bridge answers them. A movie that needs its bridge before it does anything shows few gaps here.
 A name Flash does not define and the movie never set, such as a class name its prologue reads
 first, is not a row: Flash answers it with `undefined` too. A note counts these reads
-([AS2 runtime](/engine/as2-runtime.md#the-tally)).
+([AS2 runtime](../engine/as2-runtime.md#the-tally)).
 
 The SWF tag section counts every tag in every movie, nested sprites included. GFx extension
 tags (codes 1000 to 1009) take their names from JPEXS Free Flash Decompiler's GFx tag classes.
@@ -151,25 +151,25 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   `SoundPlay.X` counts as `SoundPlay.*`. An event counts as done when combat, archery, or
   ragdoll code observes it, a footstep (`FSTP` `ANAM`) answers it, or it asks for a sound, a
   camera shake, head tracking, or an animation object
-  ([animation events](/engine/animation-events.md)). An `ANIO` unload event (`BNAM`) counts
+  ([animation events](../engine/animation-events.md)). An `ANIO` unload event (`BNAM`) counts
   too. So does an event a graph of the clip's own folder waits for: a transition, an
   event-driven modifier, or another node that switches on it. So does an event the graph of an
   `ARTO` or `ARMA` model waits for, because an actor's events reach the graphs of the effects
-  and armour addons on it ([effect graphs](/engine/effect-graphs.md)). So does an event an archived
+  and armour addons on it ([effect graphs](../engine/effect-graphs.md)). So does an event an archived
   script passes as a string to `RegisterForAnimationEvent`, because the engine sends every
   graph event to the `OnAnimationEvent` of the scripts that registered for it. `Func.X` counts
   as done, because it sends `X` to the scripts. The folder is the one above
   `animations` or `behaviors`, so `canine\animations` meets `canine\behaviors wolf`. A
   footstep name that no tag can match, such as `FootFornt` or a tag with a line break after it,
   counts as done, because it plays nothing. So does an event the reference game was seen to
-  ignore ([events the game ignores](/engine/animation-events.md#events-the-game-ignores)).
+  ignore ([events the game ignores](../engine/animation-events.md#events-the-game-ignores)).
 - A graph variable counts as done when engine code sets or reads it, when a script sets it with
   `SetAnimationVariableBool`, `SetAnimationVariableInt`, or `SetAnimationVariableFloat`, or when
   its role is not "engine input". The census gives each variable one role, checked in this order:
   1. Engine input: a graph binds it to a member that takes a world position, such as
      `BSLookAtModifier.targetLocation`.
   2. Left at the graph's value by the game: the reference game was seen not to write it
-     ([variables left unwritten](/engine/actor-state-graph.md#variables-left-unwritten)).
+     ([variables left unwritten](../engine/actor-state-graph.md#variables-left-unwritten)).
   3. Computed by graph nodes: an expression assignment or a modifier output writes it.
   4. Read by nothing: no node, condition, or expression reads it, and no script reads it.
   5. Authored constant: a graph file gives it a non-zero start value.
@@ -180,7 +180,7 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   A variable a perk sets through Set Boolean Graph Variable counts as set, because the combat
   runtime writes it. So does an `iState_*` constant the engine reads, and a variable a state
   machine publishes through `isActive`, `currentStateId`, or its sync variable
-  ([actor state graph variables](/engine/actor-state-graph.md)).
+  ([actor state graph variables](../engine/actor-state-graph.md)).
 - A voice `.fuz` counts by the audio inside it. Its lip data counts in the lip sync section.
 
 ### Record fields
@@ -202,7 +202,7 @@ The section has two halves:
   such as `DOOR` and `ACTI`.
 
 A field the game does not use counts as done, such as a list count or a Creation Kit note
-([record data the game does not use](/formats/unused-record-data.md)).
+([record data the game does not use](../formats/unused-record-data.md)).
 
 A field is read when code in another engine module reads it, or when a declaration of the
 record module reads it and that declaration is read, such as a computed property another
@@ -287,4 +287,4 @@ What the check cannot see:
 - A game setting counts as read when a settings reader asks for it, or when the menus read it
   by prefix (`fStats`, the fast-travel and race menu texts). A setting the game never uses,
   such as a Fallout leftover, counts as done too
-  ([settings the game never uses](/formats/gmst.md#settings-the-game-never-uses)).
+  ([settings the game never uses](../formats/gmst.md#settings-the-game-never-uses)).

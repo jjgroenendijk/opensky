@@ -8,7 +8,7 @@ tags: [engine, crime, factions, inventory, runtime-state, save]
 
 # Bounty ledger and stolen goods
 
-This page covers what a [crime](/engine/crime.md) leaves behind: gold owed, a count, and stolen
+This page covers what a [crime](crime.md) leaves behind: gold owed, a count, and stolen
 goods.
 
 ## The bounty ledger
@@ -39,7 +39,7 @@ condition functions and two `Faction` natives each read one half, and `ModCrimeG
 `abViolent` flag. The Creation Kit wiki's [Crime](https://ck.uesp.net/wiki/Crime) page lists
 trespassing, pickpocketing, and theft under "Minor Crimes", and assault, murder, and escape under
 "Major Crimes". The major ones are the violent half. The page was read through the Wayback
-Machine ([environment](/tools/environment.md)).
+Machine ([environment](../tools/environment.md)).
 
 The total still answers "how much is owed", because `GetCrimeGold` and a guard's fine both mean
 the total. `SetCrimeGold` is documented as setting "the amount of non-violent crime gold", so
@@ -67,11 +67,11 @@ with one name and one FormID would be two identical controls acting on the same 
 inventory row reads `[stolen]` when the whole row is stolen, and `[n stolen]` when part of it is.
 
 A trade carries each side's split. Selling stolen goods gives the merchant stolen goods, and the
-gold that comes back is honest ([vendor factions](/engine/vendor-factions.md)).
+gold that comes back is honest ([vendor factions](vendor-factions.md)).
 
 ## Saving
 
-Three chunks in the [OpenSky save](/formats/opensky-save-actor-chunks.md):
+Three chunks in the [OpenSky save](../formats/opensky-save-actor-chunks.md):
 
 - `CRIM`: one entry per actor with a ledger, one row per faction, with the gold and the seven
   counts.

@@ -10,7 +10,7 @@ tags: [format, plugin, records, magic]
 
 An `ARTO` art object is a model that the magic system attaches to something: the hands of a
 caster, the body of a target, or an enchanted weapon. The record holds only the model and what
-kind of art it is. The effect that uses it is on [magic records](/formats/magic-records.md).
+kind of art it is. The effect that uses it is on [magic records](magic-records.md).
 
 Sources: UESP "Skyrim Mod:Mod File Format/ARTO"
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ARTO>) and xEdit `dev-4.1.6`

@@ -12,7 +12,7 @@ Skyrim SE plays its few movies, such as the startup logo `BGS_Logo.bik`, from Bi
 in `Data\Video`. A `.bik` file is a container: a header, tables for the audio tracks, a frame
 index, and then the frames. OpenSky reads the container itself and hands each packet to
 libavcodec, which holds the Bink video and audio decoders
-([ffmpeg decision](/decisions/ffmpeg-audio.md)). The player is in [movies](/engine/movies.md).
+([ffmpeg decision](../decisions/ffmpeg-audio.md)). The player is in [movies](../engine/movies.md).
 
 ## References
 

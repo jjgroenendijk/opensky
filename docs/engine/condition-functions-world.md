@@ -9,7 +9,7 @@ tags: [engine, conditions, runtime]
 
 # Condition functions on world state
 
-This page continues [condition functions](/engine/condition-functions.md). The same rules
+This page continues [condition functions](condition-functions.md). The same rules
 hold: "stored" is the index in the plugin, and the Creation Kit number is 4096 higher. A
 function whose snapshot is missing fails with a reason; it never guesses. Indices and
 parameter types come from xEdit `wbDefinitionsTES5.pas`. The meaning of each function comes
@@ -30,16 +30,16 @@ fight. The combat loop fills this for NPCs, and the melee state for the player.
   9 while nocking and drawing, 10 at full draw, and 12 on the release frame. This mapping is
   not yet confirmed in the game. A shield or weapon bash gives 6 for its whole length. After
   the contact frame, the swing's combo window gives 4 (next attack)
-  ([melee combat](/engine/melee-combat.md#combos)).
+  ([melee combat](melee-combat.md#combos)).
 - `IsPowerAttacking` is 1 during the player's power attack. OpenSky has no knock-down while
   alive, and `IsRecoiling` is 0. `GetKnockedStateEnum` is 0, the standing state.
 - `IsWeaponMagicOut` is 1 when a weapon or a spell is drawn. The player's draw follows its
   own clips. An NPC draws when it starts to fight or search, and sheathes when that ends. Each
   takes 0.5 seconds, in which the NPC is drawing or sheathing
-  ([unverified values](/engine/unverified-values.md)). A draw also waits while the NPC's graph
+  ([unverified values](unverified-values.md)). A draw also waits while the NPC's graph
   reports `IsEquipping`, its own output while the equip clip plays, for at most 2 more seconds.
   The NPC starts no attack or cast before the draw ends, nor while its graph reports
-  `IsAttackReady` false ([when an attack may start](/engine/actor-graphs.md#when-an-attack-may-start)).
+  `IsAttackReady` false ([when an attack may start](actor-graphs.md#when-an-attack-may-start)).
   The game does not read `IsEquipping` for this; OpenSky holds the draw on it because the node
   that writes `IsAttackReady` does not run during the draw. The weapon counts as out while drawn
   or sheathing, as for the player. The script read `IsWeaponDrawn` gives the same answer, and
@@ -74,12 +74,12 @@ its `UNAM` index. An actor that runs no package has no data, so each data functi
 - `GetSleeping` (49) is 3, "is sleeping", while the sleep procedure runs, and 0 otherwise.
   OpenSky has no lie-down or wake-up phase, so 1, 2, and 4 never occur.
 - `GetOffersServicesNow` (255) does not read the package. It is 1 while the actor has a vendor
-  faction with a buy and sell list ([offers services](/engine/vendor-factions.md#offers-services)).
+  faction with a buy and sell list ([offers services](vendor-factions.md#offers-services)).
 - `GetAllowWorldInteractions` (503) reads the `PKDT` interrupt flag bit 9, "World
   Interactions" (xEdit `wbPKDTInterruptFlags`).
 - `GetCurrentAIProcedure` (143) answers a number for the procedure the actor runs. The CK
   wiki says the numbers are not known (<https://ck.uesp.net/wiki/GetCurrentAIProcedure>), so
-  they were read in the [reference game](/tools/reference-game.md) (1.7.104), through the
+  they were read in the [reference game](../tools/reference-game.md) (1.7.104), through the
   bridge's `condition` line on actors in Whiterun:
 
   | Procedure | Answer |
@@ -94,7 +94,7 @@ its `UNAM` index. An actor that runs no package has no data, so each data functi
 ## Script-set actor state
 
 These read what a native or the dialogue stored in the actor's
-[script state](/engine/papyrus-script-state.md):
+[script state](papyrus-script-state.md):
 
 - `GetEquippedShout` (579) compares the shout `EquipShout` stored.
 - `IsInFavorState` (635) reads `SetDoingFavor`.
@@ -114,13 +114,13 @@ These read what a native or the dialogue stored in the actor's
 - `IsPlayersLastRiddenMount` (339) is the horse the player sat on last, kept after they get
   off.
 - `IsOnFlyingMount` (730) is 1 while the player sits on a dragon in the air
-  ([riding](/engine/riding.md)).
+  ([riding](riding.md)).
 - `IsHorseStolen` (282) is always 0. The Creation Kit wiki says the function does nothing
   (<https://ck.uesp.net/wiki/IsHorseStolen>).
-- `GetFlyingState` (633) is the flight phase, 0 to 5 ([dragon flight](/engine/dragon-flight.md)).
+- `GetFlyingState` (633) is the flight phase, 0 to 5 ([dragon flight](dragon-flight.md)).
   `CanFlyHere` (731) is 1 in an exterior. `GetIsCrashLandRequest` (646) and
   `GetIsHastyLandRequest` (647) are 1 while that dragon comes down with a crash or hasty landing
-  ([landings](/engine/dragon-flight.md#landings)). The flying patrol and fast travel (732, 733)
+  ([landings](dragon-flight.md#landings)). The flying patrol and fast travel (732, 733)
   are 0: OpenSky has neither.
 
 ## Crime
@@ -129,9 +129,9 @@ These read what a native or the dialogue stored in the actor's
   (657) read the crime state of the current frame.
 - `GetArrestedState` (656) is 1 for the player while a guard confronts them.
 - `GetTrespassWarningLevel` (144) counts the warnings the guard gave under its Guard
-  package ([package schedules](/engine/package-schedules.md#guard)).
+  package ([package schedules](package-schedules.md#guard)).
 - `IsGuard` (125) and `CanPayCrimeGold` (497) use the same guard faction rule as the arrest
-  dialogue ([crime](/engine/crime.md)).
+  dialogue ([crime](crime.md)).
 - `GetDaysInJail` (499) is the length of the last sentence served.
 - `IsOwner` (278) compares the run-on with the owner of the parameter reference.
 
@@ -140,7 +140,7 @@ These read what a native or the dialogue stored in the actor's
 - `GetShouldAttack` (66) uses the hostility rule of the combat loop.
 - `ShouldAttackKill` (678) is 1 when the attack now starting would kill its target
   (<https://ck.uesp.net/wiki/ShouldAttackKill>). Combat answers it only while it weighs a kill
-  move ([paired animations](/engine/paired-animations.md#kill-moves)); anywhere else it fails as
+  move ([paired animations](paired-animations.md#kill-moves)); anywhere else it fails as
   unavailable.
 - `IsInFriendStateWithPlayer` (638) is 1 when the relationship rank toward the player is
   at least 1 (Friend).
@@ -191,7 +191,7 @@ letter: 88 X, 89 Y, 90 Z.
 - `GetTargetHeight` (720) is the reference's height minus the run-on's, and 0 with no
   reference. `GetActivatorHeight` (680) is how far the other reference stands above the run-on.
 - A null reference parameter of these functions means
-  [the other reference](/engine/conditions.md#the-other-reference).
+  [the other reference](conditions.md#the-other-reference).
 
 ## Spells
 
@@ -207,9 +207,9 @@ letter: 88 X, 89 Y, 90 Z.
 - `EffectWasDualCast` (724) is 1 for an effect a dual cast applied. It is answered at apply time
   and in the per-second check of the effect's entry conditions.
 - `IsWardState` (602) compares its parameter with the actor's ward state: 0 none, 1 absorbing,
-  2 broken ([spell delivery](/engine/spell-delivery.md#defences) says where the values come from).
+  2 broken ([spell delivery](spell-delivery.md#defences) says where the values come from).
 - `EPAlchemyGetMakingPoison` (500), `IsPoison` (721), and `EPAlchemyEffectHasKeyword` (501)
-  read the brew in progress while Mod Alchemy Effectiveness runs ([alchemy](/engine/alchemy.md)).
+  read the brew in progress while Mod Alchemy Effectiveness runs ([alchemy](alchemy.md)).
   Outside a brew they fail as unavailable.
 
 ## Locations
@@ -226,7 +226,7 @@ letter: 88 X, 89 Y, 90 Z.
 ## Recorded events
 
 Some functions ask about something that happened earlier. The engine records it on the form
-when it happens, in the [script state](/engine/papyrus-script-state.md), and the function
+when it happens, in the [script state](papyrus-script-state.md), and the function
 reads it back.
 
 - `IsKiller` (408) is 1 when the run-on killed the parameter actor. The ragdoll step records
@@ -235,7 +235,7 @@ reads it back.
   OpenSky never resets the count; the game's reset rule is not documented.
 - `IsLastHostileActor` (674) is 1 when the run-on is the last actor that hit the player.
 - `GetDestroyed` (203) and `GetDestructionStage` (470) read the state the destruction
-  natives keep ([Papyrus destruction](/engine/papyrus-destruction.md)). An object no script
+  natives keep ([Papyrus destruction](papyrus-destruction.md)). An object no script
   damaged reads 0.
 
 ## Actor situation
@@ -251,7 +251,7 @@ reads it back.
   `IsAttackType` (697), `GetIsUsedItemType` (247),
   `GetPlayerAction` (305), `IsSmallBump` (274), and `GetLastBumpDirection` (642) read 0.
 - `GetBribeSuccess` (654) and `GetIntimidateSuccess` (655) follow the
-  [speech checks](/engine/speech-checks.md).
+  [speech checks](speech-checks.md).
 
 ## Dialogue lines
 

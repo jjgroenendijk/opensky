@@ -9,7 +9,7 @@ tags: [engine, physics, actors, collision]
 # Character shapes
 
 The game builds a character's collision shape from the `BBX` bound of its skeleton model, a
-`BSBound` extra data block on the root ([NIF extra data](/formats/nif-extra-data.md)). The bound
+`BSBound` extra data block on the root ([NIF extra data](../formats/nif-extra-data.md)). The bound
 is a centre and a half size on each axis, times the actor's scale. Source: a clean-room read of
 `SkyrimSE.exe`, 2026-11-07. The bounds below were read from the install.
 
@@ -35,7 +35,7 @@ player, OpenSky uses the human capsule of radius 18 and height 128. A skeleton w
 gets the game's half size of 25 on every axis, so an upright capsule of radius 25 and height 50.
 
 The bound is scaled by the reference scale times the actor's height
-([actor resolution](/engine/actor-resolution.md#height)).
+([actor resolution](actor-resolution.md#height)).
 
 ## Long bodies
 
@@ -67,7 +67,7 @@ collision the upright capsule sees, and the largest push back changes the move:
 So an escort horse stops with its nose at the prisoner cart instead of walking its head through
 it, and a low beam its legs pass under stops its back. The cart's bodies are on the props layer,
 and the game's character layer collides with the props layer, so the cart blocks a horse that
-does not tow it ([vehicles](/engine/vehicles.md)).
+does not tow it ([vehicles](vehicles.md)).
 
 `openskycli game state packages <ref>` shows the shape under `movement`: `capsuleRadius` and
 `capsuleHeight` for an upright body, and `endRadius`, `endOffset`, `bodyRadius`, `bodyHeight`,

@@ -9,15 +9,15 @@ tags: [engine, ai, combat, detection]
 # Aggro radius
 
 An actor that is not hostile can still warn a stranger near it and then attack. This page belongs
-to [combat behaviour](/engine/combat-behavior.md), and the check that starts it to
-[detection](/engine/detection.md).
+to [combat behaviour](combat-behavior.md), and the check that starts it to
+[detection](detection.md).
 
 The AI Data tab has an Aggro Radius Behavior box with three distances: Warn, Warn/Attack, and
 Attack (<https://ck.uesp.net/wiki/AI_Data_Tab>). A vanilla skeever is unaggressive and uses
 this rule, with 2,048 and 1,024 units for the two outer distances. So it attacks a player who
 stays near it, although its faction reaction to the player is neutral.
 
-The game runs the rule on each [detection](/engine/detection.md) result of 0 or more, so the
+The game runs the rule on each [detection](detection.md) result of 0 or more, so the
 actor must at least have noticed the target. The rule starts a warning when all of these hold:
 
 - the box is ticked;
@@ -107,7 +107,7 @@ player's teammate:
   and detects it. An actor with no such line, such as a skeever, stays silent.
 - `GetActorAggroRadiusViolated` returns 1 while the actor warns. `GetTrespassWarningLevel`
   returns the larger of a guard's count and this count.
-- An actor with Confidence 0 is provoked, and the normal [combat](/engine/combat-behavior.md)
+- An actor with Confidence 0 is provoked, and the normal [combat](combat-behavior.md)
   flee rule then makes it flee, whatever its Aggression. In the game only Aggression 0 with
   Confidence 0 flees at once; whether the game's combat then makes the other one flee too was
   not checked.

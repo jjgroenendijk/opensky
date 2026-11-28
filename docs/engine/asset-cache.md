@@ -102,7 +102,7 @@ because each write is a disk update and it made up a quarter of a warm lookup.
 ## Saved FormID indexes
 
 The `records/` folder holds one saved FormID index per plugin
-([format](/formats/esm.md#saved-formid-index)). The file name is a hash of the plugin's file
+([format](../formats/esm.md#saved-formid-index)). The file name is a hash of the plugin's file
 name, size, and modification time. A changed plugin, such as a mod update, gets a new file;
 the old one stays until the cache is cleared. A load order change needs nothing, because each
 index covers one plugin and the load order merge runs after it. A write goes to a temporary
@@ -136,7 +136,7 @@ directly. A larger block keeps less detail and uses less memory.
 The measure compares the top mip level. The GPU decodes every shipped level once; that image
 is the reference, because it is the image the renderer shows. The CPU DDS decoder cannot read
 BC5 and BC7, so it cannot be the reference. A candidate is encoded with astcenc
-([astcenc decision](/decisions/astcenc.md)) at its fastest effort and decoded again by
+([astcenc decision](../decisions/astcenc.md)) at its fastest effort and decoded again by
 astcenc on the CPU, which matches the GPU decode to within one step. Colour uses the RGB
 PSNR. A normal map uses the mean angle between the decoded normals. A colour texture with
 transparent texels has cut-out alpha, where a wrong edge shows as holes, so its alpha uses
@@ -158,7 +158,7 @@ High is High, Medium is Medium, and Low is Low.
 The cache does not store audio or animation. A lossless ALAC copy decodes at the same CPU
 cost as the shipped xWMA, so it loads no faster ("Where the cache helps"). The game reads every
 sound and animation from the archives, and a cache opened after an earlier build deletes the
-`audio` and `animation` folders. [Asset cache audio](/engine/asset-cache-audio.md) has the
+`audio` and `animation` folders. [Asset cache audio](asset-cache-audio.md) has the
 measurement that rules out lossy AAC copies.
 
 ## Per-kind settings
@@ -206,7 +206,7 @@ A check reads only the entry headers. It reports the cache as current, partly bu
 built, or stale. Stale wins, because a changed install or texture output needs a new
 conversion. The launcher shows the result as Ready, Needs conversion, or Not converted.
 
-`openskycli asset-optimisation build` runs a conversion without the app ([CLI](/tools/cli.md)). The
+`openskycli asset-optimisation build` runs a conversion without the app ([CLI](../tools/cli.md)). The
 app starts the same conversion from the launcher's Asset Optimisation page.
 
 ## Direct GPU loading
@@ -227,12 +227,12 @@ The fast loader runs only during a cell build:
 With parallel decode on, workers look up the cache entries of a build's new textures first.
 A texture the fast loader reads gets no CPU work there; its read still queues on the build
 thread. A texture with no entry, or one on an external disk, is filled on a worker
-([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
+([concurrency](../decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
 
 A texture loaded outside a cell build, or a texture with no current entry, takes the CPU path. The
 page calls this "Direct GPU loading", with one switch for textures, one for meshes, and one for "All
 disks". `make benchmark` measures it, and `ARGS='--set assetOptimisation.directLoad=off'` the path
-without it ([benchmark](/tools/benchmark.md)).
+without it ([benchmark](../tools/benchmark.md)).
 
 A texture read needs scratch memory, in requests from 16 KiB to 8 MiB. The queue's own
 allocator keeps that memory for the life of the queue, which added about 80 MB to the peak
@@ -309,7 +309,7 @@ so the answer holds on any Mac and there is no per-Mac advice.
   resource loading reads them straight into GPU memory ("Direct GPU loading" above).
   Sparse texture streaming (#881) can map single mip levels from the same layout.
 - Meshes: an entry holds ready vertex and index blocks, so fast resource loading can read
-  them straight into GPU buffers ([fast mesh loading](/engine/fast-mesh-loading.md)).
+  them straight into GPU buffers ([fast mesh loading](fast-mesh-loading.md)).
 - Collision, animation, and audio are CPU data.
 - Compiled render pipelines (#875) are the Metal compiler's output, not a game asset. They
   may share the cache folder, but the asset kinds and their settings do not cover them.

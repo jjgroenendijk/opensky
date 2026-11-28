@@ -8,7 +8,7 @@ tags: [format, plugin, ui]
 # Loading screen records
 
 `LSCR` is a loading screen: a model, a tip, and the conditions for showing it. How a screen
-shows during a transition is on the [loading screens](/engine/loading-screens.md) page.
+shows during a transition is on the [loading screens](../engine/loading-screens.md) page.
 
 Source: xEdit `dev-4.1.6`, commit `9fb0168`,
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)

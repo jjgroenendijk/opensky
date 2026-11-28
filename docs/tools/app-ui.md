@@ -9,11 +9,11 @@ tags: [tool, gui, ui, launcher]
 # Launcher and game window
 
 This page covers the app's own interface: the launcher and the window the game runs in. It is
-not the in-game UI, which is vanilla SWF movies ([SWF layer](/rendering/swf-layer.md)). The
+not the in-game UI, which is vanilla SWF movies ([SWF layer](../rendering/swf-layer.md)). The
 code is in `src/Sources/OpenSky/Launcher/` and `src/Sources/OpenSky/Shell/`.
 
 A behaviour a user must check while the game runs is reached through `openskycli game`
-([driving the game](/tools/cli.md)), not through app panels.
+([driving the game](cli.md)), not through app panels.
 
 ## Launcher
 
@@ -32,28 +32,28 @@ The app opens on the launcher. The launcher holds:
     install's settlements, picked in one menu with a heading for each worldspace. A saved
     start the menu lacks falls back to the main menu. A place start also sets the story
     state and the starting items, and the race menu opens
-    ([new game at a chosen place](/engine/main-menu.md#new-game-at-a-chosen-place)).
+    ([new game at a chosen place](../engine/main-menu.md#new-game-at-a-chosen-place)).
     Game files shows the game folder and only the
     asset optimisation state; each row opens Settings or the Asset Optimisation page.
   - Settings holds the game folder, the install check, plugins.txt, the string-table
     language, the Skyrim saves folder, the Survival Mode choice (off, on, or ask in a new
     game), and, under "Show details", the
-    [agent control](/tools/agent-control.md) switch and the reference game prefix. The
+    [agent control](agent-control.md) switch and the reference game prefix. The
     game folder is a load setting, so it sits with the others and not on the page a
     player starts from.
   - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
-    converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
+    converts, checks, and clears the [asset cache](../engine/asset-cache.md). Its rules live in
     `AssetCacheCoordinator` in `OpenSkyLoading`, shared by the pages through `LauncherContext`.
   - Graphics holds a preset, the base game's options, and the GPU features, such as the
-    [pipeline cache](/rendering/pipeline-cache.md) and
-    [texture streaming](/rendering/texture-streaming.md)
-    ([graphics options](/engine/graphics-options.md)). It writes the player settings file,
+    [pipeline cache](../rendering/pipeline-cache.md) and
+    [texture streaming](../rendering/texture-streaming.md)
+    ([graphics options](../engine/graphics-options.md)). It writes the player settings file,
     which the game reads when it starts.
-  - Benchmark picks the tour length and runs the [benchmark tour](/tools/benchmark.md) in the
+  - Benchmark picks the tour length and runs the [benchmark tour](benchmark.md) in the
     Play window, then shows the newest result as a chart and its summary.
   - Reference Game starts OpenSky and the Windows game side by side, from one save if asked,
     exports OpenSky's view to it, captures both, imports its newest save, and
-    shows the newest comparison pair ([reference game](/tools/reference-game.md)).
+    shows the newest comparison pair ([reference game](reference-game.md)).
   - Diagnostics opens the logs folder, copies a system report with the newest benchmark result,
     and opens the Benchmark page.
 

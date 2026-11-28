@@ -10,7 +10,7 @@ tags: [engine, camera, combat]
 
 A kill cam is a short scripted camera sequence after a killing blow. The game picks it from
 the `CPTH` camera path tree and plays the `CAMS` shots of the chosen path. The records and the
-walk that picks the shots are on the [camera records](/formats/camera-records.md#shot-selection)
+walk that picks the shots are on the [camera records](../formats/camera-records.md#shot-selection)
 page.
 
 ## When it plays
@@ -24,7 +24,7 @@ A kill cam plays when all of these are true:
 - A roll against `fKillCamBaseOdds` times the player's own chance passes. The install sets
   `fKillCamBaseOdds` to 1. This stands in for the game's kill cam frequency option.
 
-A player [kill move](/engine/paired-animations.md#kill-moves) starts its kill cam at once and
+A player [kill move](paired-animations.md#kill-moves) starts its kill cam at once and
 skips the odds and the last-enemy rule. The kill-move idle already tested the last enemy. The
 death at the end of the kill move starts no second kill cam.
 
@@ -58,7 +58,7 @@ flowchart TD
     C -- yes --> K[Kill cam follows the projectile]
 ```
 
-The target is the aim help target ([projectiles](/engine/projectiles.md#aim-help-in-the-game)), or
+The target is the aim help target ([projectiles](projectiles.md#aim-help-in-the-game)), or
 when there is none, the result of a wider search around the aim.
 
 The chance check passes at once when the target is 2500 units or more away, when its level is
@@ -90,7 +90,7 @@ A shot plays in stages, one per `CAMS` action group (shoot, fly, hit, zoom).
 - The eye follows the `NiCamera` in the shot's mesh. The mesh is authored around the
   anchor actor (`CAMS` location) in the actor's own frame, so OpenSky turns the track by the
   actor's heading and adds the actor's position. The track layout is on the
-  [NIF](/formats/nif.md#camera-animation) page.
+  [NIF](../formats/nif.md#camera-animation) page.
 - With `CAMS` flag 0x02, or with no track, the camera looks at the chest of the shot's target
   actor. Otherwise it looks down the track's own +X axis, the Gamebryo camera forward axis.
 - A stage lasts as long as its track: stop time minus start time. `CAMS` max time caps it,
@@ -106,7 +106,7 @@ A shot plays in stages, one per `CAMS` action group (shoot, fly, hit, zoom).
   wall.
 
 The cinematic pose writes on top of the active camera mode, like the
-[dialogue camera](/engine/dialogue-camera.md). When it ends, the player's own view comes back.
+[dialogue camera](dialogue-camera.md). When it ends, the player's own view comes back.
 A cinematic pose outranks a dialogue pose.
 
 ## Camera shake

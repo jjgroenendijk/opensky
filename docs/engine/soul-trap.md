@@ -51,7 +51,7 @@ A filled gem is stored in one of two ways:
   Grand and an empty Black Soul Gem" (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SLGM>).
   When the soul fills such a gem to its capacity, the empty gem is swapped for the filled record,
   so it stacks with the game's own filled gems.
-- Any other gem keeps the soul on its own [copy](/engine/item-copies.md). UESP notes that the
+- Any other gem keeps the soul on its own [copy](item-copies.md). UESP notes that the
   game's self-filled gems "do not stack properly", which is the same model.
 
 The HUD shows `sSoulCaptured`, or `sSoulGemTooSmall` when no carried gem holds the soul.

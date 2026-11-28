@@ -10,9 +10,9 @@ tags: [rendering, ui, swf, metal]
 # SWF render layer
 
 The SWF layer draws a movie's display list over the finished 3D frame. It is encoded in the scene
-pass just before the [screen-space UI](/rendering/ui.md) overlay, so that overlay stays on top.
-Tag decoding and frame 1 rules are on the [SWF container](/formats/swf.md) and
-[SWF display list](/formats/swf-display-list.md) pages. There is one main movie and an optional
+pass just before the [screen-space UI](ui.md) overlay, so that overlay stays on top.
+Tag decoding and frame 1 rules are on the [SWF container](../formats/swf.md) and
+[SWF display list](../formats/swf-display-list.md) pages. There is one main movie and an optional
 [overlay movie](#overlay-movie).
 
 ## The movie package
@@ -23,7 +23,7 @@ A package is built once when a movie is assigned:
   with a table of runs, one per fill.
 - Bitmaps upload as `rgba8Unorm` textures, and keep the decoder's premultiplied-alpha flag.
 - Gradient fills are baked into a ramp atlas, one 256-texel row per fill, mixed in the
-  gradient's interpolation mode ([SWF shapes](/formats/swf-shapes.md#gradients)).
+  gradient's interpolation mode ([SWF shapes](../formats/swf-shapes.md#gradients)).
 - Text is laid out in twips, so the layout does not depend on the viewport.
 - Per-draw uniform rings and glyph vertex rings have three slots. They are sized to the current
   command stream plus half again, at least 64, because a display list that ActionScript changes
@@ -113,14 +113,14 @@ blend mode 2, layer, 19 times, and 8, add, 6 times (`openskycli swf sweep`).
 ## A running movie
 
 The layer draws frame 1 until something runs the movie's ActionScript. The
-[AS2 display runtime](/engine/as2-display-runtime.md) produces the same command stream the static
+[AS2 display runtime](../engine/as2-display-runtime.md) produces the same command stream the static
 builder does, so drawing does not change. Only the source of the stream does.
 
 - Starting a movie runs every `DoInitAction`, then frame 1, then its `DoAction` blocks, and pushes
   the display list that made.
 - A tick pushes a new stream only when the tick changed something.
 - Injected input pushes whatever the movie changed, and answers whether the movie used the event.
-- A call into the movie, the engine side of the [GameDelegate bridge](/engine/as2-game-delegate.md),
+- A call into the movie, the engine side of the [GameDelegate bridge](../engine/as2-game-delegate.md),
   pushes the same way. A call can name a display path.
 - Several engine changes can be batched and pushed once. A failed GPU update sets the runtime's dirty
   flag again, so the same state can be tried again.
@@ -139,7 +139,7 @@ Text set at run time reaches the renderer as an override on the scene item, and 
 The renderer draws three movies, in this order:
 
 1. The HUD layer: `hudmenu.swf`, which stays loaded under every menu
-   ([HUD](/rendering/hud.md#the-hud-layer)). The HUD Opacity setting fades only this layer, and a
+   ([HUD](hud.md#the-hud-layer)). The HUD Opacity setting fades only this layer, and a
    loading screen hides it.
 2. The menu layer: the main movie, which the open menu's movie takes.
 3. The overlay, below.
@@ -149,7 +149,7 @@ The HUD layer has its own package and its own running movie, as the overlay does
 ## Overlay movie
 
 Some game menus show two movies at once. The book menu draws its pages from `book.swf` and its
-button bar from `bookmenu.swf` ([books](/engine/books.md#the-button-bar)). The overlay is that
+button bar from `bookmenu.swf` ([books](../engine/books.md#the-button-bar)). The overlay is that
 second movie:
 
 - It has its own package and its own running movie, built when it is set and freed when it is
@@ -180,5 +180,5 @@ for the same reason.
 
 Across all 53 vanilla movies, `openskycli swf render-sweep` renders frame 1 with no failures. Many
 vanilla menus are blank at frame 1, because their top-level content starts at alpha zero until
-ActionScript shows it ([SWF container](/formats/swf.md)). Captures stay in `.logs/`, because they
+ActionScript shows it ([SWF container](../formats/swf.md)). Captures stay in `.logs/`, because they
 contain game art.

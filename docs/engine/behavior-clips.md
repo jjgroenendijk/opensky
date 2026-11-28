@@ -8,9 +8,9 @@ tags: [engine, animation, havok, hkx, behavior]
 
 # Behavior clips and blending
 
-This page covers the pose side of the [behavior graph runtime](/engine/behavior-runtime.md): clips,
+This page covers the pose side of the [behavior graph runtime](behavior-runtime.md): clips,
 their events, and how poses mix. The clip data itself is on the
-[hka animation](/formats/hka-animation.md) page.
+[hka animation](../formats/hka-animation.md) page.
 
 ## Clips
 
@@ -58,8 +58,8 @@ The animation's own `hkaAnnotationTrack`s are the second source. They are not th
 even though the `m_isAnnotation` flag suggests it. Skyrim's movement clip generators have an empty
 `m_triggers`. `FootLeft` and `FootRight` are annotations inside `mt_walkforward.hkx` and its
 siblings, at 0.2333 s and 0.8 s of a walk cycle
-([byte layout](/formats/hka-animation.md#m_annotationtracks)). A runtime that reads only the
-trigger array walks in silence ([footstep sounds](/engine/footstep-sounds.md)).
+([byte layout](../formats/hka-animation.md#m_annotationtracks)). A runtime that reads only the
+trigger array walks in silence ([footstep sounds](footstep-sounds.md)).
 
 Both sources use the same crossing test. An annotation is a mark on the animation, not on the
 generator, so:
@@ -77,13 +77,13 @@ first foot mark each time.
 A graph that declares no event by the annotation's name does not react to it. This is not an error:
 one animation is played by behavior files that care about different marks. The name still leaves
 the update in `unboundEvents`, because the engine reads some annotations no graph declares, such as
-`SoundPlay.<editor ID>` ([animation events](/engine/animation-events.md)). A child graph's event
+`SoundPlay.<editor ID>` ([animation events](animation-events.md)). A child graph's event
 that its parent does not declare leaves the same way.
 
 One exception to the half-open interval applies to annotations only. The update that starts a clip
 covers the closed interval from its start time. Vanilla places marks on the first frame and means
 them: `1HM_Equip.hkx` has `BeginWeaponDraw` at 0.0. Under the half-open rule such a mark could never
-fire, and [melee combat](/engine/melee-combat.md) could not see a drawn weapon reach the hand. Later
+fire, and [melee combat](melee-combat.md) could not see a drawn weapon reach the hand. Later
 updates stay half-open, so a mark is never fired twice.
 
 `m_relativeToEndOfClip` applies to authored triggers only. It holds an offset from the end, not a
@@ -124,11 +124,11 @@ there, so the difference between its samples is not travel.
 because the wrapped generator is a plain `hkbClipGenerator`. A paired clip holds the tracks of
 both characters. `m_SyncAnimPrefix` names the partner's half: the horse's mount clip reads the
 tracks named `2_` plus a bone name, and the rider's graph reads the plain names. Each character
-maps the tracks to its own bones by name ([riding](/engine/riding.md)). Each half of a pair
+maps the tracks to its own bones by name ([riding](riding.md)). Each half of a pair
 enters its own state, with its own generator and prefix
-([paired animations](/engine/paired-animations.md)). The graph reports the generator's
+([paired animations](paired-animations.md)). The graph reports the generator's
 `m_fGetToMarkTime` and `m_bReorientSupportChar`, and the paired idle moves the partner to the
-mark over that time ([paired animations](/engine/paired-animations.md#reaching-the-mark)). A
+mark over that time ([paired animations](paired-animations.md#reaching-the-mark)). A
 mount does not use them: the player is linked to the mount's root for the whole clip.
 
 ## Blending
@@ -190,7 +190,7 @@ would drop every bone the author did not reach.
 ### Additive clips
 
 An additive clip stores a change per bone, not a pose. Its binding's `m_blendHint` is 1
-([hkaAnimationBinding](/formats/hka-animation.md#binding-layout-72-bytes)). The vanilla
+([hkaAnimationBinding](../formats/hka-animation.md#binding-layout-72-bytes)). The vanilla
 character graph uses them for body weight: `BodyWeightBlend` mixes `mt_idle.hkx` with the additive
 `mt_idle_skinny.hkx` and `mt_idlemuscularoffset.hkx`. Their tracks hold small turns and identity
 rotations, so played as a pose they lift the arms into a T-pose.

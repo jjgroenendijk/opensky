@@ -44,7 +44,7 @@ the legal boundary, is then read less.
 | Test tags, `.unlessPlanSkips`, and a `.disabled` trait that names an issue | `tools/lint/test-tags.sh` |
 | Random test order, no `.serialized` | `tools/lint/test-order.sh` |
 | A doc or script names only make targets that exist | `tools/lint/make-targets.sh` |
-| Docs links resolve and pages stay short | `tools/lint/docs-links.sh`, `tools/lint/docs-length.sh` |
+| Docs links are relative, resolve, and pages stay short | `tools/lint/docs-links.sh`, `tools/lint/docs-length.sh` |
 | Each `AGENTS.md` has its `CLAUDE.md` link; skills keep their format | `tools/lint/agent-files.sh` |
 | Formatting of Swift, Metal, C++, Python, and Markdown | `make format-check` (`tools/format/`) |
 

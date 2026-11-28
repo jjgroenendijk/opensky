@@ -10,10 +10,10 @@ tags: [engine, animation, audio, camera, behavior-graph]
 # Animation events
 
 An animation clip carries annotations: a time and a text, such as `0.4 SoundPlay.NPCHumanClap`
-([animation](/formats/hka-animation.md)). When playback passes the time, the text is raised as an
+([animation](../formats/hka-animation.md)). When playback passes the time, the text is raised as an
 event. The behaviour graph reacts to many of them itself. Combat, archery, ragdolls, and footsteps
-react to their own ([footstep sounds](/engine/footstep-sounds.md),
-[combat graph names](/engine/combat-graph-names.md)). The events on this page ask for a sound, a
+react to their own ([footstep sounds](footstep-sounds.md),
+[combat graph names](combat-graph-names.md)). The events on this page ask for a sound, a
 camera shake, or a head tracking change.
 
 The text is `<event>` or `<event>.<payload>`. The event part is compared without case, because the
@@ -34,9 +34,9 @@ Five runtimes raise annotations, and all five send them to `AnimationEventCoordi
 - the NPC idles. A player idle runs on the player's graph, so the idle runtime's copy of its
   events is not sent;
 - the object graphs, such as the sawmill and traps;
-- each NPC's and creature's own graph ([actor graphs](/engine/actor-graphs.md)). Its idle events
+- each NPC's and creature's own graph ([actor graphs](actor-graphs.md)). Its idle events
   are not sent again by the idle runtime;
-- the graphs of the effects on an actor ([effect graphs](/engine/effect-graphs.md)). Their
+- the graphs of the effects on an actor ([effect graphs](effect-graphs.md)). Their
   events count as the actor's.
 
 The coordinator first passes every event on to the graphs of the effects on its source, so a
@@ -45,7 +45,7 @@ hand effect hears its caster's release event.
 A graph declares only some of these names as events. The vanilla player graph declares about a
 hundred `SoundPlay` names, such as the weapon draw sounds its states raise, but not the clip-only
 ones such as the crossbow reload. So a graph passes on an annotation it does not declare, beside
-its own events, and the coordinator reads both ([behavior clips](/engine/behavior-clips.md)).
+its own events, and the coordinator reads both ([behavior clips](behavior-clips.md)).
 
 The action happens at the source's feet: the player's capsule, an NPC's moved or placed position,
 or an object's placed position. A source that is not loaded does nothing.
@@ -59,10 +59,10 @@ or an object's placed position. A source that is not loaded does nothing.
 | `SoundStop` | `SNDR` editor ID, maybe a node name | Ends that source's loop of the sound |
 | `SoundRelease` | `SNDR` editor ID, maybe a node name | Lets that loop finish its current pass, then end |
 | `SoundAnimationEnd` | any | Ends every loop the source started through these events |
-| `enum_idle`, `enum_aware`, `enum_attack`, `enum_hit`, `enum_death`, `enum_weapon`, `enum_movement`, `enum_awake` | none | Plays the actor's sound type of that name ([creature sounds](/engine/actor-sounds.md#sound-types)) |
+| `enum_idle`, `enum_aware`, `enum_attack`, `enum_hit`, `enum_death`, `enum_weapon`, `enum_movement`, `enum_awake` | none | Plays the actor's sound type of that name ([creature sounds](actor-sounds.md#sound-types)) |
 | `CameraShake` | Strength, such as `0.3` | Shakes the camera; a far source shakes it less |
 | `HeadTrackingOn`, `HeadTrackingOff` | none | Lets the head turn, or holds it forward |
-| `FlightLandingEffect`, `FlightForcefulLandStart`, `FlightCrashLand*` | none | Dust and touchdown of a landing dragon ([dragon flight](/engine/dragon-flight.md#clip-events)) |
+| `FlightLandingEffect`, `FlightForcefulLandStart`, `FlightCrashLand*` | none | Dust and touchdown of a landing dragon ([dragon flight](dragon-flight.md#clip-events)) |
 
 The editor ID of a `SoundPlay` event may also name a `SOUN` sound marker, which plays its
 descriptor. An actor's sound plays only when the actor is within the sound's audible distance
@@ -71,9 +71,9 @@ of the listener on each axis.
 The game tries each event in a fixed order and stops at the first that takes it: the sound
 events above, then a footstep tag, then the sound type events.
 
-A `SoundPlay` key means the same in a NIF text key ([NIF sequences](/formats/nif-sequences.md)).
+A `SoundPlay` key means the same in a NIF text key ([NIF sequences](../formats/nif-sequences.md)).
 A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which plays the same way
-([sequence doors](/engine/object-animation.md#sequence-doors)).
+([sequence doors](object-animation.md#sequence-doors)).
 A `SoundPlay` sound is attached to the source's root, so it follows the source as it moves. A
 `SoundPlayAt` payload is split at its dot: the first part is the descriptor, the second a node
 in the source's 3D. The sound attaches to that node and follows it, for example the end of a
@@ -98,7 +98,7 @@ skeleton key the player shows in the Thieves Guild
 
 The idle runtime runs these, because it holds the clip and the actor's skeleton. When an idle plan
 loads, it reads the annotations of its clips and resolves each named `ANIO` to a model and a bone,
-the same way as the prop the graph names ([idle runtime](/engine/idle-runtime.md#prop)).
+the same way as the prop the graph names ([idle runtime](idle-runtime.md#prop)).
 
 An actor shows one prop, so a drawn object replaces the graph's prop. The player has no playback
 of its own, so a player idle shows no object.
@@ -109,7 +109,7 @@ No record in the vanilla load order has those editor IDs, so nothing is drawn.
 ## Events the graph handles
 
 A behaviour graph raises an annotation that it declares as one of its own events
-([behavior clips](/engine/behavior-clips.md)). A transition, an event-driven modifier, or another
+([behavior clips](behavior-clips.md)). A transition, an event-driven modifier, or another
 node can wait for it, and the graph acts without the engine. Examples on the install:
 
 - `weaponDraw` and `weaponSheathe` in the equip clips switch modifiers in `0_master.hkx`.
@@ -117,7 +117,7 @@ node can wait for it, and the graph acts without the engine. Examples on the ins
 - `FlapThrustBegin` and `FlapThrustEnd` switch a modifier in the dragon graph.
 
 `make rank-gaps` counts such an event as done when a graph of the clip's own folder waits for it
-([gap report](/tools/gaps.md)). A graph of another folder does not count. A door graph waits for
+([gap report](../tools/gaps.md)). A graph of another folder does not count. A door graph waits for
 `Open`, but a dragon clip that carries `Open` is not played by a door.
 
 ## Release events
@@ -127,12 +127,12 @@ the clip throws it:
 
 - `MLh_SpellFire_Event` and `MRh_SpellFire_Event` release a fire-and-forget spell from the left or
   right hand, and `Spellfire` on the staff release clips releases a staff
-  ([spellcasting](/engine/spellcasting.md#casting-cues)).
-- `Voice_SpellFire_Event` on the exhale clip fires the shout ([shouts](/engine/shouts.md)), and
-  the dragon's breath ([dragon flight](/engine/dragon-flight.md)).
+  ([spellcasting](spellcasting.md#casting-cues)).
+- `Voice_SpellFire_Event` on the exhale clip fires the shout ([shouts](shouts.md)), and
+  the dragon's breath ([dragon flight](dragon-flight.md)).
 
 The magic and shout effect graphs, such as `dragonmouthfire.hkx`, hear the same events
-([effect graphs](/engine/effect-graphs.md)).
+([effect graphs](effect-graphs.md)).
 
 ## Function events
 
@@ -148,7 +148,7 @@ So the prefix only routes the event to the scripts. A script registered for the 
 `OnAnimationEvent`; with no registration, nothing happens.
 
 `make rank-gaps` also counts an event as done when a script registers for it, because the
-script VM delivers it ([gap report](/tools/gaps.md)).
+script VM delivers it ([gap report](../tools/gaps.md)).
 
 ## Footsteps no record answers
 
@@ -166,19 +166,19 @@ where the body faces, until `HeadTrackingOn`.
 
 - A source without the named bone plays a `SoundPlayAt` sound where it stands.
 - `CameraShake` lasts `CameraShake.defaultDuration`. The payload gives only the strength, and no
-  setting gives the length ([kill cam](/engine/kill-cam.md#camera-shake)).
+  setting gives the length ([kill cam](kill-cam.md#camera-shake)).
 
 ## Paired clips
 
 While an actor plays a half of a paired clip, such as a kill move, its events lose their
 `2_` or `NPC` prefix and act at that actor. So `2_SoundPlay` and `NPCSoundPlay` play the
 sound once, at the actor whose half sent it
-([paired animations](/engine/paired-animations.md#whose-event-is-it)).
+([paired animations](paired-animations.md#whose-event-is-it)).
 
 ## Not handled yet
 
 These annotations need a system OpenSky does not have. `make rank-gaps` lists them under "Animation
-events" ([gap report](/tools/gaps.md)).
+events" ([gap report](../tools/gaps.md)).
 
 - An NPC's cast release frame. An NPC's spell is timed by a clock and does not wait for
   `MLh_SpellFire_Event` or `MRh_SpellFire_Event`. The player's release does wait
@@ -189,16 +189,16 @@ events" ([gap report](/tools/gaps.md)).
 Some events reach no graph listener and no engine system. The game takes no action on them,
 so OpenSky does not either, and `make rank-gaps` counts them as done. A wolf fighting a bandit in the
 reference game was recorded through the bridge, observed 2026-11-04
-([reference game](/tools/reference-bridge-probes.md#recording-graph-variables)):
+([reference game](../tools/reference-bridge-probes.md#recording-graph-variables)):
 
 - `StartAnimationDriven`, sent by about 29 creature attack clips. The wolf sent it at the hit
   frame of each power attack, and its `bAnimationDriven` stayed 0 before and after. The graph
   variable, not the event, says whether the animation moves the actor
-  ([graph outputs](/engine/actor-state-graph.md#outputs-the-graph-publishes)).
+  ([graph outputs](actor-state-graph.md#outputs-the-graph-publishes)).
 - The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and
   `SyncF_Left`. The wolf sent them on each walk and run step. They mark points in the clip for
   the graph's own clip sync. OpenSky keeps blended clips in phase by their length instead
-  ([behavior clips](/engine/behavior-clips.md)).
+  ([behavior clips](behavior-clips.md)).
 - Creature sound cues with no `SoundPlay` prefix, such as `NPCScribAttack1`, `NPCDogIdleSniff`,
   and `BenthicAOE`, and the storm atronach's `L1_Start`, `L1_Stop`, `R1_Start`, and `R1_Stop`.
   The canine bite clip carries the cue of every canine at once: each wolf bite sent
@@ -209,4 +209,4 @@ reference game was recorded through the bridge, observed 2026-11-04
 
 A bare creature cue is still heard when it is a tag in the actor's own footstep set. A wolf's
 set answers `NPCWolfAttackA` and none of the dog cues, so it plays one sound
-([creature sounds](/engine/actor-sounds.md)).
+([creature sounds](actor-sounds.md)).

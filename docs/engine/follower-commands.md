@@ -38,7 +38,7 @@ Each step plays a Favors tab topic of the follower's dialogue:
 
 1. The follower's "I need you to do something" topic runs a result script that calls
    `SetDoingFavor`. The favour flag turns on, the follower says `SHOW`, and command mode starts
-   ([Dialogue](/engine/dialogue.md#favour-lines)). Holding the use key on the follower does the
+   ([Dialogue](dialogue.md#favour-lines)). Holding the use key on the follower does the
    same, without the conversation ([Holding the use key](#holding-the-use-key)).
 2. In command mode the use key does not activate the world. It gives the target under the
    crosshair to the follower instead. The crosshair reaches `fFavorRequestPickDistance` units.
@@ -151,7 +151,7 @@ The follower acts when it is 128 units from the target, which is OpenSky's choic
 
 A follower that cannot start its walk yet, as while it gets up from a seat or a workbench, is
 asked again each frame. After 10 seconds the order ends as unreachable
-([unverified values](/engine/unverified-values.md)). `openskycli game state favor` shows the
+([unverified values](unverified-values.md)). `openskycli game state favor` shows the
 wait as `pendingWalk`.
 
 ## Checking it

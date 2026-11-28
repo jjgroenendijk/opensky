@@ -11,9 +11,9 @@ tags: [engine, menu]
 The Tween Menu key (Tab) opens the Tween menu over the paused world. It has four entries:
 Skills at the top, Magic on the left, Items on the right, and Map at the bottom. Choosing an
 entry shuts the Tween menu and opens that menu, as its own key does: the
-[skills menu](/engine/skills-menu.md), the magic menu, the
-[inventory menu](/engine/inventory-menu.md), or the map. Tab or Esc shuts it again. In
-follower command mode, Tab only leaves that mode ([follower commands](/engine/follower-commands.md)).
+[skills menu](skills-menu.md), the magic menu, the
+[inventory menu](inventory-menu.md), or the map. Tab or Esc shuts it again. In
+follower command mode, Tab only leaves that mode ([follower commands](follower-commands.md)).
 
 A bar along the bottom shows the date line, the player's level, and how far the player is
 toward the next level. While a level waits to be applied, the Skills entry reads "LEVEL UP".
@@ -49,7 +49,7 @@ also has `HideMenu` and `ResetStatsButton`; OpenSky does not call them.
 In OpenSky, Tab and Esc both reach the engine, not the movie, because in Menu Mode the
 controlmap gives both keys to Cancel. OpenSky answers Cancel as the movie answers Tab: it plays the
 close animation and shuts the menu when the movie calls `CloseMenu`. Each entry's click area is an
-`InputRect` clip at alpha 0 above the entry ([AS2 input](/engine/as2-input.md)).
+`InputRect` clip at alpha 0 above the entry ([AS2 input](as2-input.md)).
 
 OpenSky also reads a level as waiting while an attribute pick is still owed, because a level is
 not finished until its pick is made.
@@ -98,12 +98,12 @@ last menu that uses it closes.
 | Saturation add | −0.15 | 0 |
 
 OpenSky holds it while the Tween, inventory, or magic menu is open, and stops it when the last of
-them closes ([unverified values](/engine/unverified-values.md)). `state frame` lists it under
+them closes ([unverified values](unverified-values.md)). `state frame` lists it under
 `imageSpaceModifiers` as `ISMTween`, `held`.
 
 Its duration is 1.0 s and its animated flag is off, and every multiply factor is 1. A modifier
 that is not animated most likely holds its time-0 values for as long as it is applied, with no
-fade ([image space](/rendering/image-space.md)).
+fade ([image space](../rendering/image-space.md)).
 
 ## Camera
 
@@ -121,4 +121,4 @@ highlighted entry. A clean-room read of `SkyrimSE.exe`, 2026-11-15, found:
 
 The read did not say which entry turns which way. OpenSky turns toward where the entry sits:
 up for Skills, left for Magic, right for Items, and down for Map
-([unverified values](/engine/unverified-values.md)).
+([unverified values](unverified-values.md)).

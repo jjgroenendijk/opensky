@@ -12,7 +12,7 @@ tags: [engine, swf, actionscript, ui, scaleform]
 `gfx.io.GameDelegate` is Scaleform's channel to the host, and vanilla uses it: 1,520 references
 across 38 of the 53 movies. OpenSky uses its shape instead of inventing a bridge, because the movies
 are not modified and a different bridge would mean they call into nothing. The interpreter is on the
-[AS2 runtime](/engine/as2-runtime.md) page.
+[AS2 runtime](as2-runtime.md) page.
 
 The delegate is ActionScript shipped inside each movie. In `startmenu.swf`,
 `_global.gfx.io.GameDelegate` has `call`, `receiveResponse`, `addCallBack`, `removeCallBack`,
@@ -23,7 +23,7 @@ rebuild it. It supplies the two ends the delegate reaches for.
 
 `ExternalInterface.call` and `fscommand` are player built-ins, so the engine provides them, and
 `GameDelegate.call` goes through the first. A registered Swift handler answers. An unregistered name
-is a logged no-op and a tally entry, the rule the [AS2 scope decision](/decisions/swf-as2-scope.md)
+is a logged no-op and a tally entry, the rule the [AS2 scope decision](../decisions/swf-as2-scope.md)
 set. `ExternalInterface` is installed both as a bare global and as
 `flash.external.ExternalInterface`, because AS2 spells it both ways.
 
@@ -57,12 +57,12 @@ its kind, not walked, because the log must not depend on an object graph that ma
 `openskycli swf action-run` brings one movie up, ticks it, and prints faults, missing names,
 registered classes, callbacks, the invoke log, and the display tree. `--dump-class` prints a
 registered class's constructor and prototype, and `--dump-proto` walks a node's whole prototype chain
-([CLI](/tools/cli.md)). All 53 vanilla movies bring up and tick with no fault and no unimplemented
+([CLI](../tools/cli.md)). All 53 vanilla movies bring up and tick with no fault and no unimplemented
 opcode, and register 305 classes.
 
 An unregistered GameDelegate name, such as `myLog`, is a tally entry and an unhandled invoke
 log row. CLIK fields and globals a movie reads before it sets them, such as `onButtonLoad`, are
-unset names, not missing ones ([AS2 runtime](/engine/as2-runtime.md#the-tally)). Menu data is
+unset names, not missing ones ([AS2 runtime](as2-runtime.md#the-tally)). Menu data is
 published only where a feature needs it.
 
 ### tweenmenu.swf
@@ -81,7 +81,7 @@ one-shot `_global` guard reads (`gfx`, `Shared`, `Components`).
 This is Skyrim's title screen, not the in-game system menu. Its 1,674-string pool has no
 `$SETTINGS`, and its rows are Continue, New, Load, Creations, Mods, Credits, Quit, and Help. The
 in-game system menu is `quest_journal.swf`, whose pool has `$SYSTEM`, `$SETTINGS`, `$CONTROLS`,
-`$SAVE`, `$LOAD`, `$QUIT`, and the settings tree ([system menu](/engine/system-menu.md)).
+`$SAVE`, `$LOAD`, `$QUIT`, and the settings tree ([system menu](system-menu.md)).
 
 `_root.CodeObj` is not a host object, though the bytecode only calls through it. The movie makes it
 itself: `StartMenu`'s constructor runs `_root.CodeObj = this.codeObj = new Object()` and installs
@@ -107,12 +107,12 @@ register functions before bring-up.
 ### inventorymenu.swf
 
 The movie brings up with no fault, but it places three characters it never defines. Until
-characters could be imported from other movies ([SWF container](/formats/swf.md)), the whole list
+characters could be imported from other movies ([SWF container](../formats/swf.md)), the whole list
 subtree created nothing and the movie had 11 nodes. With imports it has 373 nodes and 16 classes.
 `UpdateItem3D(true)` and `UpdateItem3D(false)` show and hide the turning item. No vanilla movie
 calls `EndItem3D`. The movie's `InventoryDefines` names the item card pages, the equip states, and
 the quantity limit, and the engine sends those numbers. It holds no category list, so the menu
-groups items by OpenSky's record families ([inventory menu](/engine/inventory-menu.md#list-data)).
+groups items by OpenSky's record families ([inventory menu](inventory-menu.md#list-data)).
 
 ### quest_journal.swf
 
@@ -129,4 +129,4 @@ Two details were found by driving it:
 - An objective row's state is plain `completed` and `failed` booleans. Setting them moves the entry
   clip from its `Normal` frame to `Completed` or `Failed`.
 
-A long journal paragraph overlaps the objective list below it ([journal](/engine/journal.md)).
+A long journal paragraph overlaps the objective list below it ([journal](journal.md)).

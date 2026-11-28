@@ -10,7 +10,7 @@ tags: [engine, ai, actors, packages, schedules, navigation]
 
 An AI package tells an actor what to do at a time of day, such as "sleep at home from 22:00".
 This page explains how OpenSky picks the current package for each loaded actor. The record is
-on the [packages](/formats/packages.md) page.
+on the [packages](../formats/packages.md) page.
 
 ## Guard
 
@@ -64,7 +64,7 @@ cheap in a crowd.
 ## Picking a package
 
 An actor's packages come from its `PKID` list. The list follows the template chain only when the
-AI packages template flag is set (see [actor records](/engine/actor-resolution.md#template-chain)).
+AI packages template flag is set (see [actor records](actor-resolution.md#template-chain)).
 A local empty list stays empty when the flag is clear.
 
 OpenSky walks the list in record order. It picks the first package whose `PSDT` schedule matches
@@ -119,7 +119,7 @@ input names of the vanilla templates.
 | Orbit | Walk eight points round a circle between the two radii, as a patrol |
 | Hover | Move to the place, raised by the height input, then finish |
 | Wander | Pick seeded random points in a radius, wait 1 second, repeat |
-| Sandbox | Timed activities in the place, and meals ([sandbox](/engine/sandbox.md)) |
+| Sandbox | Timed activities in the place, and meals ([sandbox](sandbox.md)) |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
 | Sit | Move to a free seat of the target furniture, then sit; done when seated |
@@ -130,10 +130,10 @@ input names of the vanilla templates.
 | LockDoors, UnlockDoors | Lock or unlock the load doors in the place that the actor owns |
 | Find | Look for matching references in the place; look again every 2 seconds |
 | Acquire | Walk to the item, pick it up; try the next item of the list when one fails |
-| Activate | Walk to the target, then activate it, as often as "Number to Activate" says ([activate procedure](/engine/activate-procedure.md)) |
+| Activate | Walk to the target, then activate it, as often as "Number to Activate" says ([activate procedure](activate-procedure.md)) |
 | Say | Speak one line of the topic, and finish when the line ends |
 | ForceGreet | Wait for the player in the trigger place, walk up, open the conversation |
-| DialogueActivate | Walk to the place. With the player as target, open the conversation; with an NPC, send `ADIA` and wait up to 20 s for a quest to answer, as in [random conversations](/engine/random-conversations.md#the-dialogueactivate-procedure) |
+| DialogueActivate | Walk to the place. With the player as target, open the conversation; with an NPC, send `ADIA` and wait up to 20 s for a quest to answer, as in [random conversations](random-conversations.md#the-dialogueactivate-procedure) |
 | Follow | Walk to the target each time it is out of range; sprint or sneak with it |
 | Escort | Walk to the place; stop while the escorted actor is too far behind |
 | Flee | Run to the place, or straight away from the threat until far enough |
@@ -155,7 +155,7 @@ Where OpenSky differs from the game:
   moves away from each other follower that stands closer. A running follower slows on its last
   leg, down to `fFollowRunMinSlowdownMultiplier` (0.75) of its running speed. The CK wiki table
   names both settings with no use, so both uses are OpenSky's reading.
-- A bumped actor leaves its package for a short time ([bump reactions](/engine/bump-reactions.md)).
+- A bumped actor leaves its package for a short time ([bump reactions](bump-reactions.md)).
 - Find sees only references that are loaded now.
 - Find selects by object type with the `PTDA` object type codes. Their names are not in an
   open spec. OpenSky reads them from how the vanilla templates use them: 10 furniture,
@@ -172,7 +172,7 @@ behavior, not a confirmed rule. That input is the last of the Patrol procedure's
 `BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
 
 A package whose "Ride Horse if possible?" input is true rides the actor's horse, when the actor
-has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the package, and its
+has one ([vehicles](vehicles.md#riders)). The horse then walks the package, and its
 arrivals move the rider's package on. The Travel and Patrol templates both have this input. It is
 found by its `BNAM` name in the template, because its index differs: 2 in Travel (`00016FAA`), 6
 in Patrol (`00017723`) and in `PatrolStaticPathing` (`0001722F`, the cart horses' template),
@@ -190,7 +190,7 @@ seeded generator as conditions.
 
 ## Procedure tree
 
-A template's branches form a tree ([packages](/formats/packages.md#procedure-tree)). OpenSky
+A template's branches form a tree ([packages](../formats/packages.md#procedure-tree)). OpenSky
 rebuilds it from the flat list and runs it. The branch rules come from the Creation Kit wiki
 page <https://ck.uesp.net/wiki/Category:Package_Templates>:
 
@@ -227,8 +227,8 @@ same with a bed's sleep marker. A template whose procedure tree holds "Sit" is a
 when the tree also holds "Wait", because the vanilla `SitTarget` tree is
 Sequence[Sit, Simultaneous[Sit, Wait]]. An Activate procedure with a furniture target also seats the
 actor, and ends once the actor sits, as in the opening's `ActivateSpecialFurniture` packages
-([activate procedure](/engine/activate-procedure.md#at-the-target)). Which seat the actor takes,
-and what sitting does, is in [furniture](/engine/furniture.md).
+([activate procedure](activate-procedure.md#at-the-target)). Which seat the actor takes,
+and what sitting does, is in [furniture](furniture.md).
 
 ## In a session
 
@@ -245,15 +245,15 @@ The actor's own tree waits, and a new one starts after the wait:
 
 - while a conversation or an arrest holds the actor,
 - while the actor fights. A package with the Ignore Combat flag keeps the actor out of
-  fights ([combat](/engine/combat.md#combat-state-is-derived)), so its tree runs on,
+  fights ([combat](combat.md#combat-state-is-derived)), so its tree runs on,
 - while the actor is dead, for good,
 - while the actor is a horse that walks its rider's package.
 
 A sandbox procedure does not walk while the idle runtime has sent the actor to an idle marker
-([idles](/engine/idle-runtime.md#marker-claim)). Its walk counts as done, so it waits and asks
+([idles](idle-runtime.md#marker-claim)). Its walk counts as done, so it waits and asks
 again, and the marker's idles play.
 
-A walk that gave up fails its tree, except a patrol's ([blocked](/engine/navigation.md#blocked-walks)).
+A walk that gave up fails its tree, except a patrol's ([blocked](navigation.md#blocked-walks)).
 After 10 s the tree starts again from its root, so the actor tries the walk again. How long
 the game waits was not found, so the 10 s are OpenSky's own.
 
@@ -270,7 +270,7 @@ volumes, so triggers see the actor with no extra code.
 
 ## Scene packages
 
-A scene's package action holds an actor ([scenes](/engine/scenes.md#package-actions)). While
+A scene's package action holds an actor ([scenes](scenes.md#package-actions)). While
 it holds one, the selector picks from the action's packages, not from the actor's `PKID` list,
 and picks again at once. When the action ends, the actor picks from its own list again.
 
@@ -321,7 +321,7 @@ which is the Creation Kit wiki's note on `OnPackageEnd`. A one-marker patrol has
 markers it skipped on the way round. A plain one drops them.
 
 The `MQ101` cart horse patrols are not repeatable, so the carts stop at the end of each leg. Their
-routes, and the gate triggers that move them on, are in [opening cart ride](/engine/opening-cart-ride.md).
+routes, and the gate triggers that move them on, are in [opening cart ride](opening-cart-ride.md).
 
 ## Package fragments
 
@@ -330,7 +330,7 @@ package runs its begin fragment when its tree starts and its end fragment when t
 machine completes. A failed machine runs no end fragment. The change fragment runs when the actor
 leaves the package, whether it completed or not: another package replaced it, or its scene or
 alias let the actor go, or a fight, a conversation, or death paused its tree. Each fragment
-gets the actor as `akActor`. Layout: [VMAD](/formats/vmad.md).
+gets the actor as `akActor`. Layout: [VMAD](../formats/vmad.md).
 
 The same three moments queue `OnPackageStart(akNewPackage)`, `OnPackageEnd(akOldPackage)`, and
 `OnPackageChange(akOldPackage)` on the actor's own scripts. Source: the Creation Kit wiki pages for
@@ -343,7 +343,7 @@ end fragments of the `MQ101` cart patrols set the stages that unload the carts t
 
 In the game, a walk to a target that moves is planned again once the target is more than the
 smaller of 0.75 × reach and 300 units from the walk's goal
-([activate procedure](/engine/activate-procedure.md#reach)).
+([activate procedure](activate-procedure.md#reach)).
 
 In OpenSky, a walk that ends reports its rest pose after the movement runtime stored its own state,
 so a listener may start the next move at once, as a patrol does at each marker. A report during the
@@ -352,7 +352,7 @@ runtime's update would be overwritten by that update's older copy.
 ## A walk whose path fails
 
 What the game does after a path fails, and how a patrol and an Activate procedure go on, is in
-[navigation](/engine/navigation.md#a-walk-whose-path-fails).
+[navigation](navigation.md#a-walk-whose-path-fails).
 
 ## Travel arrival
 
@@ -363,7 +363,7 @@ its path ends; one that cannot reach the area asks for the path again, with no t
 
 A Sequence goes on in the same update, up to 20 tree steps. In the shop template,
 Sequence[Travel, UnlockDoors, Simultaneous[Sandbox, KeepAnEyeOn]], the doors open in the update
-the Travel ends ([owners lock and unlock](/engine/crime.md#owners-lock-and-unlock)).
+the Travel ends ([owners lock and unlock](crime.md#owners-lock-and-unlock)).
 
 While the actor's cell is not loaded, the tree keeps running. Travel walks the actor over game
 time. An actor outdoors, or in no cell, whose position gives no path data is moved straight to
@@ -374,27 +374,27 @@ actor already in the area is only put on the navmesh where it stands. Earlier st
 again, and this pass never unlocks doors.
 
 OpenSky ends a walking Travel in its area on the actor's tick. It runs no trees while the cell
-is not loaded ([in OpenSky](/engine/unloaded-actors.md#in-opensky)), so a shopkeeper unlocks
+is not loaded ([in OpenSky](unloaded-actors.md#in-opensky)), so a shopkeeper unlocks
 once the shop is loaded and she stands in the Travel's area.
 
 ## Actors far from the player
 
 In the game, an actor's packages keep running while its cell is not loaded. It walks its path
 cell by cell through load doors, at a slower update rhythm, and a new game places each persistent
-actor where its package puts it at that hour. [Actors outside the loaded area](/engine/unloaded-actors.md)
+actor where its package puts it at that hour. [Actors outside the loaded area](unloaded-actors.md)
 has the levels, the update rhythm, time skips, and placement on arrival.
 
 OpenSky puts an unloaded persistent actor at its package's place once per low-level update,
 and has it step out of its house door when the place is loaded. It does not walk the path while
-unloaded ([in OpenSky](/engine/unloaded-actors.md#in-opensky)).
+unloaded ([in OpenSky](unloaded-actors.md#in-opensky)).
 
 ## Walking into another cell
 
 An actor that walks into another cell moves into that cell's references, the way `MoveTo` moves
-one ([reference identity](/engine/reference-identity.md#moved-references)). The cell it left is
+one ([reference identity](reference-identity.md#moved-references)). The cell it left is
 rebuilt without it. Without this, a horse that walked far from its plugin cell would vanish when
 that cell unloads. A vehicle follower, such as a cart, does the same when its pose enters
-another loaded cell ([vehicles](/engine/vehicles.md)).
+another loaded cell ([vehicles](vehicles.md)).
 
 OpenSky's choices: a line with no voice length lasts 3 s. A follower whose Morality cannot be
 read is treated as Morality 3, so it commits no crime.

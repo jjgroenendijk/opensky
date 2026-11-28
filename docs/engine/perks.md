@@ -8,7 +8,7 @@ tags: [engine, progression, perks, combat, magic, conditions, runtime-state]
 
 # Perks at runtime
 
-The record side is on the [perks](/formats/perks.md) page: what a `PERK` is, how its effect
+The record side is on the [perks](../formats/perks.md) page: what a `PERK` is, how its effect
 sections decode, and how entry points are indexed across the load order. This page covers who
 owns a perk, and what an owned perk does to a number.
 
@@ -19,7 +19,7 @@ gathers the owned effects and checks their conditions.
 
 The perk component stores a sorted list of owned `PERK` identities, and nothing else. Every
 change writes through the world state, so a new perk reaches the change log, the dirty counts,
-and the save exactly like a learned spell ([runtime state](/engine/runtime-state.md)). The
+and the save exactly like a learned spell ([runtime state](runtime-state.md)). The
 component is removed when it becomes empty.
 
 Two rules, as for the spellbook:
@@ -39,7 +39,7 @@ The player starts with no perks, because there is no `NPC_` record behind the pl
 
 Owned perks are saved in the `PRKS` chunk, one entry per actor with at least one perk. Only the
 identities are written. The rank is derived from the chain, and the abilities are granted again
-on load ([save chunks](/formats/opensky-save.md#chunks)).
+on load ([save chunks](../formats/opensky-save.md#chunks)).
 
 ## Ranks are chains, not numbers
 
@@ -103,7 +103,7 @@ known fact.
 
 Any entry point whose effects use one of the nine number functions can be evaluated. An unknown
 entry point ID evaluates to no change. What differs is whether a rule asks. The
-[perk entry points](/engine/perk-entry-points.md) page lists each rule that asks, and what it
+[perk entry points](perk-entry-points.md) page lists each rule that asks, and what it
 binds.
 
 ## Condition tabs and their subjects
@@ -130,7 +130,7 @@ not failed. The effect then applies more widely than the record asks, and the co
 often that happens. Failing the tab instead would turn off perks whose formula cannot name the
 subject yet, which is a worse and silent error.
 
-A bound tab is evaluated strictly by the normal [condition evaluator](/engine/conditions.md). An
+A bound tab is evaluated strictly by the normal [condition evaluator](conditions.md). An
 unimplemented function is false with a reason, and the effect does not apply.
 
 ### The live context
@@ -159,11 +159,11 @@ shape on UESP "Skyrim:Weapons":
 `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`.
 
 - Melee and archery: the strike terms, beside the fortify bonus
-  ([melee damage](/engine/melee-damage.md)).
+  ([melee damage](melee-damage.md)).
 - Blocking: the block fortify bonus times the `Mod Percent Blocked` result. A blow from an NPC and
   a blow from the player use the same code.
 - Spell cost: the `SPIT` half-cost perk, if the caster owns it, then `Mod Spell Cost` on what is
-  left ([magic](/engine/magic.md)).
+  left ([magic](magic.md)).
 
 ### One discount, written twice
 
@@ -182,7 +182,7 @@ with the `Add Activate Choice` function is one choice. Its condition tabs run on
 and on the target (UESP "Skyrim Mod:Mod File Format/PERK"). Vanilla uses it for vampire and
 werewolf feeding, Namira's ring, and the Harvest Blood quest.
 
-`EPF3` holds two flags and a fragment index ([perks](/formats/perks.md)):
+`EPF3` holds two flags and a fragment index ([perks](../formats/perks.md)):
 
 - "Run immediately": the choice runs on the press, with no menu.
 - "Replace default": the target's own action does not run.
@@ -204,7 +204,7 @@ these choices ("Perk Fragments", <https://ck.uesp.net/wiki/Perk_Fragments>), so 
 player's perks are asked.
 
 A choice runs the fragment that its index names in the perk's `VMAD` fragment table
-([VMAD](/formats/vmad.md)), as `Fragment_N(ObjectReference akTargetRef, Actor akActor)`. The
+([VMAD](../formats/vmad.md)), as `Fragment_N(ObjectReference akTargetRef, Actor akActor)`. The
 compiled `PRKF_VampireFeedBeds_000CF02C` script lists `akTargetRef` before `akActor`, which
 agrees with that order. A choice that names a spell (`EPFT` 4) also casts it on the target, with
 the player as the caster.
@@ -213,7 +213,7 @@ the player as the caster.
 
 An ability perk effect grants a `SPEL` while the perk is owned. A reconcile step makes the
 effects from perks match the owned perks. Each granted spell's effects are applied as constant
-[active effects](/engine/magic.md). Losing the perk removes exactly those.
+[active effects](magic.md). Losing the perk removes exactly those.
 
 It is a reconcile, not a hook on "add". Perks come from scripts, seeds, and loads, and a hook on
 each path is one missed call away from an effect that never goes away.
@@ -228,7 +228,7 @@ for example on a hit, and is not carried.
 ## Scripts and conditions
 
 - `Actor.AddPerk`, `Actor.RemovePerk`, and `Actor.HasPerk` are native functions
-  ([Papyrus VM](/engine/papyrus-vm.md)). A grant also updates abilities in the same call, so a
+  ([Papyrus VM](papyrus-vm.md)). A grant also updates abilities in the same call, so a
   perk from a script is saved like any other. A session with no perk data fails with a reason,
   instead of answering "no perks".
 - The `HasPerk` condition is stored index 448, Creation Kit 4544, with parameter 1 `ptPerk`. It is
@@ -240,9 +240,9 @@ for example on a hit, and is not carried.
 ## Not part of this system
 
 - Spending perk points and tree requirements belong to
-  [character leveling](/engine/character-leveling.md). `AddPerk` grants without cost, as the
+  [character leveling](character-leveling.md). `AddPerk` grants without cost, as the
   Creation Kit says. That is why the two layers are separate: quests, scripts, and races hand
   out perks that no tree gates.
-- Skill experience: [skill advancement](/engine/skill-advancement.md).
+- Skill experience: [skill advancement](skill-advancement.md).
 - The perk tree layout comes from `AVIF`
-  ([actor value information](/formats/actor-value-information.md)), not from `PERK`.
+  ([actor value information](../formats/actor-value-information.md)), not from `PERK`.

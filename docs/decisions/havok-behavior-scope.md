@@ -18,9 +18,9 @@ The direction was to reimplement Havok Behavior graphs, for vanilla movement fee
 mod compatibility, instead of a native state machine of our own. This page says what "reimplement"
 covers, and it was written after measuring the vanilla files.
 
-The packfile container ([HKX container](/formats/hkx-container.md)), `hkaSkeleton`
-([hkaSkeleton](/formats/hka-skeleton.md)), and clip sampling
-([hkaSplineCompressedAnimation](/formats/hka-animation.md)) give a rig and a clip. Nothing chose which
+The packfile container ([HKX container](../formats/hkx-container.md)), `hkaSkeleton`
+([hkaSkeleton](../formats/hka-skeleton.md)), and clip sampling
+([hkaSplineCompressedAnimation](../formats/hka-animation.md)) give a rig and a clip. Nothing chose which
 clip, or blended two of them. That is all a behavior graph does.
 
 ## Decision
@@ -36,7 +36,7 @@ would ship a player who moves correctly until they step into a river.
 First person is in scope with full arms, not a camera mode with the third-person graph behind it.
 The install ships a complete parallel set under `_1stperson\`: its own project file, character file,
 and 17 behavior files. The census shows it is a peer of the third-person set, not a subset
-([first person](/engine/first-person.md)).
+([first person](../engine/first-person.md)).
 
 Sourcing is clean-room. Class layouts come from independent open-source reimplementations,
 ret2end/HKX2Library (MIT), soulsmods/DSMapStudio HKX2 (MIT), and exyorha/hkxparse (MIT), and from
@@ -47,7 +47,7 @@ repeated here because behavior classes are the largest body of Havok layout the 
 reimplements.
 
 Evaluation is the goal. Ragdoll and physics classes next to behavior data are separate work
-([ragdoll](/engine/ragdoll.md)).
+([ragdoll](../engine/ragdoll.md)).
 
 ## Evidence: the census
 
@@ -55,7 +55,7 @@ The numbers come from a real-data census of every `.hkx` under `meshes\actors\ch
 report is derived from game content, so it stays in `.logs/`. Run it with
 `make test PLAN=RealData T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`, or
 inspect one file with `openskycli hkx <key>`. The layouts are on the [HKX behavior graph
-objects](/formats/hkx-behavior.md) page.
+objects](../formats/hkx-behavior.md) page.
 
 There were 2,654 files with no container parse failure, every one a 64-bit `hk_2010.2.0-r1`
 packfile: 2,609 animation, 35 behavior, 4 skeleton, 3 character, and 3 project files.
@@ -132,7 +132,7 @@ wrong bytes, and the real-data sweep asserts there are none across the install. 
 
 - The census bounds the vanilla set, not the modded one. A behavior mod can add a class none of the
   55 covers. So an unknown class is logged, counted, and degrades its node, and the graph does not
-  fail. This is the same stance the [AS2 scope](/decisions/swf-as2-scope.md) took for unimplemented
+  fail. This is the same stance the [AS2 scope](swf-as2-scope.md) took for unimplemented
   host APIs, for the same reason.
 - Decoding a class is not evaluating it. Correct layouts do not prove correct blend weights or
   transition timing.
@@ -142,7 +142,7 @@ wrong bytes, and the real-data sweep asserts there are none across the install. 
 
 ## References
 
-- [HKX behavior graph objects](/formats/hkx-behavior.md) and
-  [behavior node classes](/formats/hkx-behavior-nodes.md): the layouts and census figures.
-- [Behavior runtime](/engine/behavior-runtime.md): how the graph is evaluated.
-- [CLI](/tools/cli.md): `openskycli hkx`, the per-file census.
+- [HKX behavior graph objects](../formats/hkx-behavior.md) and
+  [behavior node classes](../formats/hkx-behavior-nodes.md): the layouts and census figures.
+- [Behavior runtime](../engine/behavior-runtime.md): how the graph is evaluated.
+- [CLI](../tools/cli.md): `openskycli hkx`, the per-file census.

@@ -11,14 +11,14 @@ tags: [engine, physics, havok, ragdoll, actors, animation, persistence]
 An actor whose health reaches zero raises the death events its behavior graph declares. When
 the graph reaches its ragdoll hand-off, the skeleton's Havok bone bodies are created at the pose
 the animation holds. The joints are then solved on the fixed physics step
-([ragdoll joint solver](/engine/ragdoll-solver.md)). The simulated bones write back through the
+([ragdoll joint solver](ragdoll-solver.md)). The simulated bones write back through the
 same pose path skinning reads. The corpse settles, its resting place is saved, and using it opens
 a container over its inventory.
 
 ## Death and the hand-off
 
 Every name here came from the behavior census over the local install
-([behavior runtime](/engine/behavior-runtime.md)):
+([behavior runtime](behavior-runtime.md)):
 
 | Direction | Names |
 | --- | --- |
@@ -44,14 +44,14 @@ A death whose graph never hands off costs one death component and no bodies. Tha
 visible way: the actor is dead and still standing, not dead in a pose the engine made up.
 
 The death events go to the player's graph only, though NPCs run graphs too
-([actor graphs](/engine/actor-graphs.md)). So no NPC graph takes them, and an NPC's hand-off happens
+([actor graphs](actor-graphs.md)). So no NPC graph takes them, and an NPC's hand-off happens
 at once. The two routes are counted separately, so a
 session can tell "the graph drove this" from "the engine had to".
 
 ## Writing the pose back
 
 The pose path ends in one skeleton-space matrix per bone name, which skinning reads
-([actor animation](/engine/actor-animation.md)). A simulated bone writes into the same table. The
+([actor animation](actor-animation.md)). A simulated bone writes into the same table. The
 scene keeps one ragdoll pose per corpse `ACHR`, laid over the clip's pose during the animation
 update. So a corpse reaches skinning through the same call as an idle animation, and the renderer
 knows nothing about physics.
@@ -68,7 +68,7 @@ rotation by spherical interpolation. After it, only the simulated pose is used.
 Death is its own world state component, beside actor values, not inside them. Current health is
 rewritten every regeneration step. Death is a latch that only a resurrection clears. It is saved
 in its own `DETH` chunk. A build that does not know the chunk skips it and loads the rest
-([save chunks](/formats/opensky-save-actor-chunks.md)).
+([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 The resting root transform is saved. The pose of each bone is not. 18 bodies is 144 floats per
 corpse, and each would have to survive a save, a load, and a cell rebuild.
@@ -82,7 +82,7 @@ would add a field to the component, not change its shape.
 
 There is no new menu and no new session type. A container session opens over any inventory
 owner. An `ACHR`'s inventory starts from its `NPC_` `CNTO` list, just like a chest's
-([interaction](/engine/interaction.md)). Opening the container menu with no chest under the
+([interaction](interaction.md)). Opening the container menu with no chest under the
 crosshair picks the nearest dead actor.
 
 It picks the nearest one, not the crosshair target, because an `ACHR` is not a usable target. The
@@ -91,7 +91,7 @@ prompt on actors would also appear on living ones.
 
 ## Behavior modifiers
 
-Three ragdoll modifier classes are decoded ([behavior node classes](/formats/hkx-behavior-nodes.md)):
+Three ragdoll modifier classes are decoded ([behavior node classes](../formats/hkx-behavior-nodes.md)):
 
 | Class | Status |
 | --- | --- |
@@ -176,7 +176,7 @@ neck stump) and slot 50 (`DecapitatedHeadAA`, the cap on the cut head).
 - The head keeps the head-only pieces and the cap.
 - The face, the head parts, and a piece on both sides, such as a hood, are drawn on both. Each
   side hides the triangles of the other side's partitions in `BSDismemberSkinInstance`
-  ([NIF skinning](/formats/nif-skinning.md)). The head side is body parts 30, 31, 41 to 44, 50,
+  ([NIF skinning](../formats/nif-skinning.md)). The head side is body parts 30, 31, 41 to 44, 50,
   55, 130 to 132, 141 to 143, and 150, from nif.xml `BSDismemberBodyPartType` and the CK wiki
   page above. The neck, 230, stays with the body. A mesh without partitions goes with the head
   when it is part of the face, and with the body when it is a worn piece.
@@ -260,9 +260,9 @@ removes the ragdoll and returns the body to its graph.
 
 A living actor can fall as a ragdoll and get up again. The rules come from a clean-room read of the
 game's behaviour; the graph names come from the install's character graph. Every knockdown goes
-through one path: a melee or explosion knockdown ([impulses](/engine/impulses.md)),
+through one path: a melee or explosion knockdown ([impulses](impulses.md)),
 `PushActorAway`, `KnockAreaEffect`, a cloak knock such as Shield Charge
-([magic archetypes](/engine/magic-archetypes.md#cloak-knock)), and a Grab Actor throw.
+([magic archetypes](magic-archetypes.md#cloak-knock)), and a Grab Actor throw.
 
 - A race with the "No Knockdowns" flag (RACE 0x400000) staggers instead.
 - The death ragdoll starts at the animated pose, or wakes if the actor already lies. Every body
@@ -275,7 +275,7 @@ through one path: a melee or explosion knockdown ([impulses](/engine/impulses.md
   (about 11 units a second), or after `fExplosionKnockStateExplodeDownTime` (15) seconds.
 - To get up, it stands over its pelvis, on its lowest body, and faces from its pelvis to its neck.
   The graph takes `GetUpStart`, which enters `GetUpFromRagdoll`. Its `iGetUpType` pose matcher
-  picks 1 on land and 2 in water ([actor state graph](/engine/actor-state-graph.md)).
+  picks 1 on land and 2 in water ([actor state graph](actor-state-graph.md)).
 - The ragdoll pose fades into the get-up clip over the `hkbGetUpModifier` duration, or over
   1 second when the graph runs none. Then the ragdoll ends and the hold lets the actor go.
 - An actor that dies while down stays a corpse.
@@ -286,7 +286,7 @@ through one path: a melee or explosion knockdown ([impulses](/engine/impulses.md
 
 [WARNING] The share of each limb is read from the game's part order and mapped to bone names by
 OpenSky, and the 1 second fallback is OpenSky's. Both are in the
-[unverified values](/engine/unverified-values.md).
+[unverified values](unverified-values.md).
 
 The player falls the same way. The view steps out of first person, the controls lock as they
 do in bleedout, and the player's own graph takes the two events. At the get-up the player stands

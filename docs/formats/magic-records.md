@@ -10,10 +10,10 @@ tags: [format, esm, magic, record]
 
 MGEF (magic effect) is the leaf record behind every `EFID` in a spell, scroll, enchantment,
 potion, or ingredient. SPEL (spell) and SCRL (scroll) are the two casting containers. ENCH
-(enchantment) is on [enchantments](/formats/enchantments.md). ALCH and
-INGR use the same effect list; see [item records](/formats/item-records.md). Shouts, words of
+(enchantment) is on [enchantments](enchantments.md). ALCH and
+INGR use the same effect list; see [item records](item-records.md). Shouts, words of
 power, leveled spells, dual-cast data, and equip slots are on
-[shouts and equip slots](/formats/shouts-equip-slots.md).
+[shouts and equip slots](shouts-equip-slots.md).
 
 Sources:
 
@@ -39,7 +39,7 @@ All integers and floats are little-endian. A zero FormID means "no link".
 | `SNDD` | packed 8-byte entries | uint32 sound kind + `SNDR` link |
 | `DNAM` | lstring | magic-item description |
 | `CTDA`/`CITC`/`CIS1`/`CIS2` | condition run | the effect's own conditions |
-| `VMAD` | variable | script attachments, decoded like other records ([scripts](/formats/vmad.md)) |
+| `VMAD` | variable | script attachments, decoded like other records ([scripts](vmad.md)) |
 
 `SNDD` holds 0 to 5 entries on the vanilla install (0, 8, 16, 24, 32, or 40 bytes). An empty
 `SNDD` is a valid empty list. A size that is not a multiple of 8 is malformed.
@@ -47,7 +47,7 @@ All integers and floats are little-endian. A zero FormID means "no link".
 ## MGEF DATA
 
 Every vanilla `DATA` is exactly 152 bytes. Actor-value fields are signed indices into the
-actor-value table (see [actor value information](/formats/actor-value-information.md)).
+actor-value table (see [actor value information](actor-value-information.md)).
 For example, 24 is `Health` and 44 is `Resist Magic`. The value `-1` means "no actor value".
 
 | offset | type | meaning |
@@ -75,7 +75,7 @@ For example, 24 is `Health` and 44 is `Resist Magic`. The value `-1` means "no a
 | `0x50` | uint32 | casting type |
 | `0x54` | uint32 | delivery |
 | `0x58` | int32 | second actor value |
-| `0x5C` | FormID | casting art ([`ARTO`](/formats/art-objects.md)) |
+| `0x5C` | FormID | casting art ([`ARTO`](art-objects.md)) |
 | `0x60` | FormID | hit-effect art (`ARTO`) |
 | `0x64` | FormID | impact data set |
 | `0x68` | float32 | skill-usage multiplier |
@@ -203,7 +203,7 @@ that vanilla stores in `SPIT`, over the 1,223 spells that do not set the manual-
 OpenSky uses the first. The other 132 spells do not follow from their effect list at all.
 For example, the stored cost of `DLC1nVampireEnhancements` is far from what its effects give.
 A spell with the manual-cost flag uses its `SPIT` cost. The ENCH page on UESP gives the same
-per-effect formula, so enchantments ([enchantments](/formats/enchantments.md)) use it too.
+per-effect formula, so enchantments ([enchantments](enchantments.md)) use it too.
 
 ## Vanilla counts
 

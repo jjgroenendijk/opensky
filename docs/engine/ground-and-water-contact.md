@@ -10,7 +10,7 @@ tags: [engine, movement, collision, water, swimming, game-behaviour]
 
 This page describes the game's rules for a character's body against the ground and in water.
 They hold for the player and for every NPC. The capsule, the collision queries, and OpenSky's
-own values are on the [walk mode](/engine/walk-mode.md) page.
+own values are on the [walk mode](walk-mode.md) page.
 
 Lengths are game units. The game's physics uses its own unit: 1 physics unit is 69.99 game
 units.

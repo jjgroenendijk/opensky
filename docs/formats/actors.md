@@ -8,10 +8,10 @@ tags: [format, plugin, actors, achr, npc, leveled, template, race, class, facege
 # Actor records
 
 These records place an actor, say what it looks like, and give its stats and AI settings.
-[Actor resolution](/engine/actor-resolution.md) explains how OpenSky combines them into a
-rendered actor. [Actor values](/engine/actor-values.md) explains how the stat fields become
+[Actor resolution](../engine/actor-resolution.md) explains how OpenSky combines them into a
+rendered actor. [Actor values](../engine/actor-values.md) explains how the stat fields become
 health, magicka, and stamina. Armor, armature, and outfit records are on
-[armor records](/formats/armor.md).
+[armor records](armor.md).
 
 Sources:
 
@@ -28,19 +28,19 @@ All integers and floats are little-endian.
 
 A placed NPC. It has the same shape as REFR and lives in the same CELL child groups. An
 ACHR that is persistent in a worldspace is stored under the worldspace persistent cell
-([ESM groups](/formats/esm.md#worldspace-persistent-cell)).
+([ESM groups](esm.md#worldspace-persistent-cell)).
 
 | field | type | meaning |
 | --- | --- | --- |
 | `NAME` | FormID | base `NPC_`; required |
 | `DATA` | float32[6] | position, then rotation in radians; required |
 | `XSCL` | float32 | scale; absent means 1.0 |
-| `VMAD` | struct | scripts; see [VMAD](/formats/vmad.md) |
+| `VMAD` | struct | scripts; see [VMAD](vmad.md) |
 
 Record-header flag `0x800` means "initially disabled": a script must enable the actor
 before it appears. Header flag `0x200` means "starts dead". The other fields, such as `XEZN`,
 patrol data, `XRGD`/`XRGB`, `XLCM`, `XESP`, `XOWN`, `XLCN`/`XLRL`, and `XLKR` (4 or 8 bytes),
-are read as on a REFR ([placed references](/formats/placed-references.md#other-refr-and-achr-fields)).
+are read as on a REFR ([placed references](placed-references.md#other-refr-and-achr-fields)).
 
 ## NPC_
 
@@ -58,7 +58,7 @@ are read as on a REFR ([placed references](/formats/placed-references.md#other-r
 | `PNAM` | FormID | head part (`HDPT`); repeated |
 | `DOFT` | FormID | default outfit (`OTFT`) |
 | `PKID` | FormID | AI package; repeated, in order |
-| `SNAM` | struct | faction membership; see [factions](/formats/factions.md) |
+| `SNAM` | struct | faction membership; see [factions](factions.md) |
 | `CRIF` | FormID | crime faction, the faction the actor reports crimes to |
 | `AIDT` | 20 bytes | AI data |
 | `VMAD` | struct | scripts |
@@ -92,7 +92,7 @@ More `ACBS` flags and what the game does with them:
 | `0x4` | Chargen face preset. The tint layers are kept at load only with this bit, or when `bUseFaceGenPreprocessedHeads:General` is off. Every `0x4` NPC of a race and sex, except the player's base, is one preset in the race menu |
 | `0x100` | The NPC has its own creature sounds. Reading `CSDT` or `CSDI` sets it, and `CSCR` clears it. Set: the sounds come from `CSDT`, `CSDI`, and `CSDC`; clear: from the `CSCR` NPC, one level deep |
 | `0x10000` | No blood on a hit: no screen blood when the player is hit, and no spatter or impact effect on the actor. `bDisableAllGore`, or the race flags `0x2000` and `0x4000` together, do the same |
-| `0x40000` | The bleedout threshold is the `ACBS` bleedout override ([bleedout](/engine/ragdoll.md#bleedout)) |
+| `0x40000` | The bleedout threshold is the `ACBS` bleedout override ([bleedout](../engine/ragdoll.md#bleedout)) |
 | `0x80000` | The actor uses the behaviour graph of the opposite sex, and the graph gets the opposite sex value (1 female, 0 male) |
 | `0x100000` | No facial animation: no expressions, blinking, or lip movement, and no expression change on a hit, at death, or from mood |
 
@@ -103,7 +103,7 @@ Template flags say which field groups come from the `TPLT` record: `0x0001` trai
 packages, `0x0040` model and animation, `0x0080` base data, `0x0100` inventory, `0x0200`
 script, `0x0400` default package list, `0x0800` attack data, `0x1000` keywords. The game
 never reads `0x0040`.
-[Actor resolution](/engine/actor-resolution.md) lists which fields each flag covers.
+[Actor resolution](../engine/actor-resolution.md) lists which fields each flag covers.
 
 `AIDT` uses Creation Kit names. UESP and xEdit agree on every offset.
 
@@ -127,7 +127,7 @@ distances. An actor without `AIDT` counts as unaggressive.
 ## LVLN and LVLI
 
 Leveled NPC and leveled item lists share one layout. LVSP (leveled spell) uses it too; see
-[shouts and equip slots](/formats/shouts-equip-slots.md).
+[shouts and equip slots](shouts-equip-slots.md).
 
 | field | type | meaning |
 | --- | --- | --- |
@@ -153,7 +153,7 @@ chance none.
 | `EDID` | zstring | editor ID |
 | `FULL` | lstring | name |
 | `WNAM` | FormID | default skin `ARMO` for an NPC_ without `WNAM` |
-| `BOD2`/`BODT` | struct | body template; see [armor records](/formats/armor.md) |
+| `BOD2`/`BODT` | struct | body template; see [armor records](armor.md) |
 | `DATA` | 128 or 164 bytes | form version 40 or 43 |
 | `MNAM`/`FNAM` | 0 bytes | marker: the next block is male or female |
 | `ANAM` | zstring | skeleton path for the current gender |
@@ -193,10 +193,10 @@ actor's scale.
 
 - Unarmed reach: an actor with no weapon, or with the built-in fists, reaches this far. It is not
   multiplied by `fCombatDistance` and never combines with a weapon's reach. `NordRace` reaches 96
-  units unarmed ([melee combat](/engine/melee-combat.md#reach-and-the-hit-volume)).
+  units unarmed ([melee combat](../engine/melee-combat.md#reach-and-the-hit-volume)).
 - Acceleration, deceleration, and angular acceleration: each is the time in seconds to reach run
   speed, to stop from it, or to reach the full turn rate
-  ([movement types](/formats/movement-types.md#acceleration)). A larger value ramps more slowly.
+  ([movement types](movement-types.md#acceleration)). A larger value ramps more slowly.
   In combat pathing the rates are multiplied by `fCombatPathingAccelerationMult`,
   `fCombatPathingDecelerationMult`, or `fCombatPathingRotationAccelerationMult` (2 each), which
   halves each time. The combat turn speed is at least 2.25 on the normalized scale, which is
@@ -228,7 +228,7 @@ More `DATA` flags:
 | `0x8000` | Head tracking through the behaviour graph | |
 | `0x10000` | Spell aim starts at the magic node | |
 | `0x40000` | Another collision layer for the body | |
-| `0x80000` | Health regenerates at the full rate in combat ([actor values](/engine/actor-values.md)) | Trolls, werewolf |
+| `0x80000` | Health regenerates at the full rate in combat ([actor values](../engine/actor-values.md)) | Trolls, werewolf |
 | `0x100000` | The actor's paths may open doors | |
 | `0x200000` | The player may talk to the actor, unless overridden | |
 | `0x800000` | Part of the pickpocket check | |
@@ -257,7 +257,7 @@ carry `MODL`, not `ANAM`. So each `ANAM` pairs with the marker just before it.
 For head data, `NAM0` opens a block, `MNAM` or `FNAM` picks the gender, and each `HEAD`
 names a default head part. An `HDPT` pairs each `NAM0` kind with the next `NAM1` path: 0 is
 the race morph, 1 is the expression TRI, 2 is the chargen morph. The `HDPT` `EDID` is the
-name of the baked `BSDynamicTriShape`. See [TRI](/formats/tri.md).
+name of the baked `BSDynamicTriShape`. See [TRI](tri.md).
 
 ### RACE sections
 
@@ -273,7 +273,7 @@ the fields in order and tracks the current section and sex:
 
 `MNAM` and `FNAM` switch the sex inside a section. An `MTYP` counts only with a `SPED` after it,
 and that `SPED` replaces the `MOVT`'s speeds for the race
-([movement types](/formats/movement-types.md)).
+([movement types](movement-types.md)).
 
 `TINL` is named "Total Number of Tints in List", and xEdit marks it "Needs Count Updated".
 On the install it equals the mask count plus the preset count on only 9 of 66 races; on
@@ -302,7 +302,7 @@ Fields beyond the ones above, read into the actor's details:
 | `DPLT`, `SOFT`, `CSCR`, `FTST` | FormID | Default package list, sleeping outfit, sound parent, head texture |
 
 The actor also reads the destruction, attack, and inventory groups; see
-[records](/formats/records.md).
+[records](records.md).
 
 How the game uses some of them:
 
@@ -313,13 +313,13 @@ How the game uses some of them:
   loud (`iSoundLevelVeryLoud`, 200), 4 none (0). The noise also starts the
   `fActorAlertSoundTimer` timer.
 - `ATKR` names an attack race. Its attacks merge with the NPC's own, matched by `ATKE` event
-  name ([attack data](/engine/attack-data.md#which-list-an-actor-uses)).
+  name ([attack data](../engine/attack-data.md#which-list-an-actor-uses)).
 - `ANAM` is a far-away model, an `ARMO`. `DNAM` byte 44 is its distance, a float clamped to
   65,535 and kept as a whole number. In a cell with the right flag, an actor further than this
   from the camera wears one `ANAM` item; a nearer actor has it taken off.
 - `QNAM` texture lighting: each float times 255 is kept as a byte.
 - `OBND` places a summon: its 2D radius is the room the summon needs
-  ([Summon Creature](/engine/magic-archetypes.md)).
+  ([Summon Creature](../engine/magic-archetypes.md)).
 
 ## CLAS
 

@@ -88,7 +88,7 @@ Each dependency is one of seven kinds. The kind decides how it arrives.
 | Session data | Record stores, game settings, texts resolved from `GMST` | An initializer parameter, often grouped in one value per coordinator |
 | Session object | The actor-value runtime, the streamer, the clip loader, the Papyrus VM | An initializer parameter, built earlier in the same scope |
 | Event | A spell hit, an idle's animation event, the audio engine start | A command the coordinator returns, or a handler in a declared event schedule |
-| Late asset | The player's behaviour graphs, idle clips | Requested at start and drained from a mailbox in the frame ([concurrency](/decisions/concurrency.md)) |
+| Late asset | The player's behaviour graphs, idle clips | Requested at start and drained from a mailbox in the frame ([concurrency](concurrency.md)) |
 | Live input | A player setting changed in the launcher, an agent command's argument | A method argument, or a port member read each time. Never stored as a dependency |
 
 A world adapter reads the session through its host protocol and holds the session scope
@@ -104,7 +104,7 @@ Two coordinators that need each other cannot both take the other in the initiali
 cycle in this order of preference:
 
 1. **A command.** The coordinator returns what it wants, and the app runs it. Most cross-domain
-   changes already work this way ([coordinators](/engine/coordinators.md#commands)).
+   changes already work this way ([coordinators](../engine/coordinators.md#commands)).
 2. **A port answered by an adapter.** The coordinator takes a port. The adapter that answers it
    holds the session scope `unowned` and asks the other coordinator at call time. The session
    scope builds its members as `lazy` properties, so an adapter may be built before the
@@ -117,7 +117,7 @@ A setter is never the way out of a cycle.
 ## Frame order and event order
 
 A frame hook is a `FrameSchedule` over a phase enum, and the enum order is the run order
-([architecture](/engine/architecture.md#isolation-per-subsystem)).
+([architecture](../engine/architecture.md#isolation-per-subsystem)).
 
 Each multicast event uses the same type with its own phase enum. A handler registers in its
 phase, and the enum order is the delivery order. One phase takes one handler, so a second
@@ -195,7 +195,7 @@ benchmark host, so the two never disagree when a window opens, swaps its game, o
 
 The `Papyrus` bridge's native families stay as they are. Each family is a value with optional
 closures, and a missing family answers nothing on purpose, so a native refuses instead of
-reading a half-wired family ([coordinators](/engine/coordinators.md)). The session scope fills
+reading a half-wired family ([coordinators](../engine/coordinators.md)). The session scope fills
 every family when it builds the bridge.
 
 The bridge's feature seams, such as its quest layer and its inventory, arrive together in one
@@ -241,7 +241,7 @@ Two more checks keep the design:
 
 The glue is the session, the session interface, and the adapter modules: the code that connects
 the features to the running game. Measured 2026-11-09, before the adapter tests and the port
-collapse of the single-conformer report ([Ports and adapters](/decisions/ports-and-adapters.md#one-conformer)):
+collapse of the single-conformer report ([Ports and adapters](ports-and-adapters.md#one-conformer)):
 32,789 lines of glue, against 33,336 lines in the interface modules it connects. Measured
 2026-11-10, after both: 32,967 lines of glue, against 33,325 lines in the interface modules.
 The tests and fakes live in `src/Tests`, so they add no glue. Removing the ports with one

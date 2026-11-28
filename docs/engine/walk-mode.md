@@ -12,12 +12,12 @@ tags: [engine, world, terrain, collision, movement, streaming, locomotion]
 Fly mode is the default developer camera. `F` (Toggle POV) cycles to walk mode (first person) and
 third person. In walk mode a player capsule owns the position and gravity. Mouse look and WASD with
 Shift work as in fly mode. `X` and `V` move up and down only in fly mode. The camera modes and the
-player body are on the [player camera and body](/engine/player-camera.md) page.
+player body are on the [player camera and body](player-camera.md) page.
 
 ## Terrain collision
 
 Each exterior cell keeps an immutable height field on the CPU, beside its terrain draws. It comes
-from the same data as rendering ([terrain](/engine/terrain.md)):
+from the same data as rendering ([terrain](terrain.md)):
 
 - `LAND` `VHGT` gives 33x33 heights, with the `XCLC` hidden quadrant mask.
 - A cell with no `LAND` in a child world that uses its parent's land data takes the parent's
@@ -36,7 +36,7 @@ A ground sample also names the ground's material. Each exterior cell resolves it
 into one `MATT` per terrain vertex: the heaviest-weighted texture at that vertex, from the same
 ordered blends the terrain shader uses. A sample reports the material of the nearest of the quad's
 four corners. Height blends across a face, but material does not: a surface is one material or the
-other ([material types](/formats/material-type.md)).
+other ([material types](../formats/material-type.md)).
 
 A world XY maps to its loaded cell by floor division. The exact east or north border belongs to
 the neighbor. Distant LOD never gives the player ground.
@@ -45,7 +45,7 @@ the neighbor. Distant LOD never gives the player ground.
 
 The controller owns the capsule bottom (feet), vertical velocity, the grounded flag, and the
 leftover step time. Its settings are fixed when the renderer is set up, from the
-[game settings](/formats/gmst.md) and movement types:
+[game settings](../formats/gmst.md) and movement types:
 
 | Setting | Value |
 | --- | --- |
@@ -69,7 +69,7 @@ Movement uses fixed steps. Frame time over 100 ms is dropped, and a remainder un
 over. Horizontal movement uses the level yaw, not the pitch. Diagonals are normalized.
 
 Sprint, sneak, and swim have no game setting. They come from the `MOVT` movement types
-([records](/formats/records.md)), found by editor ID across the load order, so a mod that changes
+([records](../formats/records.md)), found by editor ID across the load order, so a mod that changes
 sneaking changes it here. `fMoveCharRunBase` is not in `Skyrim.esm` and falls back to 370, which is
 exactly what `NPC_Default_MT` gives as its forward run.
 
@@ -99,14 +99,14 @@ In the game, a non-player actor with its 3D loaded is a character rigid body in 
 simulation (some actors, by a race or actor flag that is not known, use a proxy controller), and the
 floor holds it up through its contacts in the physics step. The player uses a
 proxy controller instead. Actors at the Middle-low and Low
-[process levels](/engine/ai-process-levels.md) have no 3D, so they have no collision shape; their
+[process levels](ai-process-levels.md) have no 3D, so they have no collision shape; their
 package moves are simple moves. OpenSky moves every walker with its own capsule controller and
 ground tests, described below. A long body such as a horse searches the world for shapes once per
 step for all its parts, and reads the ground twice under each end: where it stands and where it
 goes. On a marker walk those ground reads share one search per frame over the body's area. A large
 static triangle mesh is split into leaves of at most 64 triangles by where the
 triangles lie, so a test near one point meets few of them. In OpenSky an actor at a low process
-level has no package tree and no walk; the [unloaded actors](/engine/unloaded-actors.md) schedule
+level has no package tree and no walk; the [unloaded actors](unloaded-actors.md) schedule
 moves it with no collision.
 
 One bridge is where input, the behavior graph, and the controller meet. Its rules:
@@ -128,7 +128,7 @@ three seconds of walking moves the root bone 0.04 units in total. That is jitter
 root motion path stays, so data that does carry extracted motion drives the capsule.
 
 The path is chosen from the data, not from a measured distance. The clip evaluator reports root
-travel only for a clip whose file has extracted motion ([hka animation](/formats/hka-animation.md)).
+travel only for a clip whose file has extracted motion ([hka animation](../formats/hka-animation.md)).
 A clip with extracted motion that stands still for a step keeps control and reports no travel. An
 in-place clip never gains control, however far its root bone drifts. Both hold through a blend.
 
@@ -138,7 +138,7 @@ average jitter of about 1. But the test runs per 1/120 s step, so one step where
 and one moved the capsule backwards.
 
 A paused frame does nothing: no graph update, no event, and no movement
-([menu mode](/engine/menu-mode.md)).
+([menu mode](menu-mode.md)).
 
 ## Gaits, jump, and swim
 
@@ -170,16 +170,16 @@ stateDiagram-v2
 ```
 
 In the game a character runs on after a landing. How it gets there is only partly known
-([locomotion graph](/engine/locomotion-graph.md#how-the-game-drives-the-graph)): the landing itself
+([locomotion graph](locomotion-graph.md#how-the-game-drives-the-graph)): the landing itself
 sends only the land action, and the move-start action comes when the game's own movement state
 changes to moving. What changes that state after a landing was not found, so the re-raise after
 `JumpLandEnd` is OpenSky's way to match the result.
 
-Water height is `CELL` `XCLW` over the worldspace default ([sky and water](/engine/sky-water.md)).
+Water height is `CELL` `XCLW` over the worldspace default ([sky and water](sky-water.md)).
 Interiors report none: a vanilla interior places its water as geometry, not as a plane.
 
 Ground, slopes, gravity, swimming, floating, and leaving the water follow the game's rules on the
-[ground and water contact](/engine/ground-and-water-contact.md) page. The capsule height is the
+[ground and water contact](ground-and-water-contact.md) page. The capsule height is the
 body height those rules use. OpenSky adds three things of its own:
 
 - The step height above. The game has none: its capsule's round bottom rides over an edge.
@@ -200,7 +200,7 @@ fMoveWeightMin)`. The effect is `fMoveEncumEffect` (0.3) with a weapon drawn, an
 `fMoveEncumEffectNoWeapon` (0.15) without one. No plugin sets `fMoveWeightMin`, so it is 0. For
 example, 115 weight with a sword drawn leaves 70% of the run speed. The `SpeedMult` actor value
 scales every gait first: 120 moves at 1.2 times, and 0 counts as 100. NPCs follow the same rules
-([navigation](/engine/navigation.md#npc-path-following)).
+([navigation](navigation.md#npc-path-following)).
 
 An NPC turns at `fActorDefaultTurningSpeed` radians a second. A package with a preferred fast
 walk or jog moves at walk + (run - walk) x `fFastWalkInterpolationBetweenWalkAndRun` (0.15) or
@@ -239,19 +239,19 @@ with no material. Three paths set it, one for each way the capsule becomes groun
   is skipped, so a decoration with no material does not silence the step.
 - Step support: the material the step probe landed on, so a wooden stair sounds like wood.
 
-[Footstep sounds](/engine/footstep-sounds.md) read it once per frame.
+[Footstep sounds](footstep-sounds.md) read it once per frame.
 
 ## Collision response
 
 The game's rules for walkable slopes, steps, and staying on the ground are on the
-[ground and water contact](/engine/ground-and-water-contact.md) page.
+[ground and water contact](ground-and-water-contact.md) page.
 
 On terrain, grounded motion refuses a face steeper than the slope limit. An allowed rise snaps the
 feet to the drawn surface. Gravity and snap keep contact on the way down. A falling player stops
 when the feet cross the ground, at the exact sampled height with zero vertical velocity.
 
 Against meshes, the capsule queries the loaded cells' trees with the swept capsule's box
-([static collision](/engine/collision-world.md)). Each step is split into moves no longer than half
+([static collision](collision-world.md)). Each step is split into moves no longer than half
 the capsule radius, so thin surfaces cannot be skipped. The narrow phase handles triangle meshes,
 convex hull faces, boxes, spheres, and capsules. Up to eight of the deepest contacts push the
 capsule out. The rest of the motion stays, so the capsule slides along a wall. Steep normals block
@@ -265,7 +265,7 @@ capsule's center reaches it. A higher obstacle or a low ceiling fails the check,
 response wins. The same probe crosses from terrain to a mesh stair.
 
 A door or the first scene placement resets the whole controller state before the next step. Moving
-bodies collide through the same query ([dynamic bodies](/engine/dynamic-bodies.md)).
+bodies collide through the same query ([dynamic bodies](dynamic-bodies.md)).
 
 ## Border regions
 

@@ -8,7 +8,7 @@ tags: [engine, camera, player, rendering, locomotion]
 
 # Player camera and body
 
-The player capsule is on the [walk mode](/engine/walk-mode.md) page. This page covers where the eye
+The player capsule is on the [walk mode](walk-mode.md) page. This page covers where the eye
 is, and how the player's body is drawn.
 
 ## Camera modes
@@ -28,18 +28,18 @@ on it instead of falling. A spot under the world stands on the highest surface a
 the terrain, or with a surface above and no ground within 4,096 units below, such as below a
 city's streets (OpenSky's choice). Water deep enough to start a swim floats the player at the
 resting depth of a swimmer
-([ground and water contact](/engine/ground-and-water-contact.md#water)). A teleport ends with the
+([ground and water contact](ground-and-water-contact.md#water)). A teleport ends with the
 same placement. A teleport by cell grid stands on the higher of the terrain and the highest collision
 surface at the cell centre, because a city worldspace hides its terrain far below the streets.
 
 The dialogue camera is not a fourth mode. It overrides the view on top of the current mode and
-gives it back ([dialogue camera](/engine/dialogue-camera.md)). Two rules read the override, not the
+gives it back ([dialogue camera](dialogue-camera.md)). Two rules read the override, not the
 mode, because it moves the eye out of the player's head in any mode:
 
 - The first-person arms are hidden, because the camera is no longer the player's own. In first
   person the body stays hidden too, as in the game: the eye is just behind the head, so the head
   and helmet would fill the view. Only a camera that frames the player, such as the
-  [race menu](/engine/race-menu.md) portrait, draws the body in first person.
+  [race menu](race-menu.md) portrait, draws the body in first person.
 - The shared world field of view is used, not the first-person one, so every conversation is framed
   alike.
 
@@ -80,7 +80,7 @@ wall does to an eye.
 ## The player body
 
 The player resolves through the same template and appearance code as a placed `ACHR`
-([actor resolution](/engine/actor-resolution.md)). So slot masking, FaceGen, and equipment work with
+([actor resolution](actor-resolution.md)). So slot masking, FaceGen, and equipment work with
 no second copy. Two things differ:
 
 - The base record is named directly: `Skyrim.esm` `NPC_` `00000007`, editor ID `Player`. The player
@@ -89,7 +89,7 @@ no second copy. Two things differ:
 - The transform comes from the character controller, not from a record.
 
 The meshes are assembled on the cell build queue, because the builder and its mesh and texture
-caches live there ([concurrency](/decisions/concurrency.md)). An equipment or face change sends a
+caches live there ([concurrency](../decisions/concurrency.md)). An equipment or face change sends a
 request with a new generation number. The frame drains the finished assembly, binds it to the
 graph's skeleton and pose, and shows it. A result for an older generation is dropped, so moving a
 race menu slider quickly shows only the last face.
@@ -112,10 +112,10 @@ meshes are built. Walk mode yaw is measured counterclockwise from +X.
 
 First person does not draw the body, because the eye is inside its head. It draws the `_1stperson`
 arms instead, on a second skeleton at the eye, driven by a second graph
-([first person](/engine/first-person.md)). Fly mode draws the body, so a developer can fly around
+([first person](first-person.md)). Fly mode draws the body, so a developer can fly around
 the character. The body casts its shadow in every player mode, first person included.
 
-The pose comes from the behavior graph ([actor animation](/engine/actor-animation.md)). The graph is
+The pose comes from the behavior graph ([actor animation](actor-animation.md)). The graph is
 the vanilla `0_master.hkx`, with the character skeleton from `skeleton.hkx` and clips loaded on
 demand from the animation archive. It is attached to the running movement bridge once the scene
 provider exists. A bridge with no graph is a supported setup and queues nothing.

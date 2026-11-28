@@ -8,13 +8,13 @@ tags: [format, plugin, records, encounter-zone, collision, defaults, form-list, 
 
 # Record decoders
 
-A plugin ([ESM](/formats/esm.md)) is a list of records. This page gives the rules that every
+A plugin ([ESM](esm.md)) is a list of records. This page gives the rules that every
 record decoder follows, and the layouts of several small records. Other records have their
 own pages:
-[world records](/formats/world-records.md), [placed references](/formats/placed-references.md),
-[item records](/formats/item-records.md), [projectiles](/formats/projectiles.md),
-[quest records](/formats/quest-records.md), [actor records](/formats/actors.md),
-[magic records](/formats/magic-records.md), and the other pages under `docs/formats/`.
+[world records](world-records.md), [placed references](placed-references.md),
+[item records](item-records.md), [projectiles](projectiles.md),
+[quest records](quest-records.md), [actor records](actors.md),
+[magic records](magic-records.md), and the other pages under `docs/formats/`.
 
 The main sources are the UESP "Skyrim Mod:Mod File Format" pages, one per record
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), and xEdit `dev-4.1.6`
@@ -35,7 +35,7 @@ The main sources are the UESP "Skyrim Mod:Mod File Format" pages, one per record
 - When a later plugin overrides a record, the whole record is replaced. DOBJ is the one
   exception (below).
 - A FormID in a record is relative to the plugin that holds the record
-  ([FormID](/formats/formid.md)).
+  ([FormID](formid.md)).
 
 ## lstring
 
@@ -43,14 +43,14 @@ A display-text field ("lstring" on UESP) depends on the localized flag (`0x80`) 
 plugin's TES4 header:
 
 - Localized: the field is a uint32 string ID into a per-language
-  [string table](/formats/strings.md). The field picks the table: `FULL` uses `.strings`,
+  [string table](strings.md). The field picks the table: `FULL` uses `.strings`,
   long body text such as `DESC` and book text uses `.dlstrings`, and dialogue uses
   `.ilstrings`.
 - Not localized: the field is an inline zstring. OpenSky decodes it as UTF-8, else
-  windows-1252, else ISO 8859-1 ([string decoding](/decisions/string-decoding.md)).
+  windows-1252, else ISO 8859-1 ([string decoding](../decisions/string-decoding.md)).
 
 A table's path is `strings\<plugin stem>_<language>.<ext>`. The language comes from
-`[General] sLanguage` in the Skyrim INI files ([INI](/formats/ini.md)), then an optional
+`[General] sLanguage` in the Skyrim INI files ([INI](ini.md)), then an optional
 OpenSky setting. A missing or unknown value means `english`.
 
 ## FLST
@@ -80,7 +80,7 @@ lists give 152 entries that include it.
 ## GLOB
 
 A global is a named number that conditions, scripts, and records read. The runtime layer is
-on [runtime state](/engine/runtime-state.md). Sources: UESP `/GLOB` and xEdit
+on [runtime state](../engine/runtime-state.md). Sources: UESP `/GLOB` and xEdit
 `wbRecord(GLOB, 'Global', ...)`.
 
 | field | type | meaning |
@@ -170,12 +170,12 @@ Sources: UESP `/COLL` and xEdit `wbRecord(COLL, ...)`, lines 7614-7637.
 A `CNAM` whose size is not a multiple of 4 is malformed. The active load order has 55
 layers. All have 4-byte `DESC`, `BNAM`, `FNAM`, `GNAM`, and `INTV`. All but one have `CNAM`,
 with 1 to 41 links. PROJ `DATA` offset 0x58 can link to a COLL
-([projectiles](/formats/projectiles.md)).
+([projectiles](projectiles.md)).
 
 ## MOVT
 
 A movement type says how fast an actor moves in each direction. The player's gaits feed
-[walk mode](/engine/walk-mode.md). Sources: UESP `/MOVT` and xEdit `wbRecord(MOVT, ...)`.
+[walk mode](../engine/walk-mode.md). Sources: UESP `/MOVT` and xEdit `wbRecord(MOVT, ...)`.
 
 | field | type | meaning |
 | --- | --- | --- |
@@ -242,9 +242,9 @@ about 26.9, and a 2D radius of about 22.4. The readers:
 
 | Reader | Radius | Rule |
 | --- | --- | --- |
-| A dropped item | 3D | [Dropped items](/engine/dropped-items.md) |
-| A summoned actor | 2D | [Summon Creature](/engine/magic-archetypes.md) |
-| A large reference | 3D times the reference scale | [Large references](/engine/distant-lod.md#large-references) |
+| A dropped item | 3D | [Dropped items](../engine/dropped-items.md) |
+| A summoned actor | 2D | [Summon Creature](../engine/magic-archetypes.md) |
+| A large reference | 3D times the reference scale | [Large references](../engine/distant-lod.md#large-references) |
 | An activator as a package target | 3D, cut to a whole number | The package's target radius |
 
 No other reader uses `OBND` for `SOUN`, `IDLM`, `ADDN`, `EXPL`, `PROJ`, `HAZD`, or `ASPC`. A

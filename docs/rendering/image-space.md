@@ -10,7 +10,7 @@ tags: [rendering, image-space, weather]
 
 The image space pass is the last full-screen pass of a frame. It applies the color grade of
 the current place: saturation, brightness, contrast, tint, and fade. The record layout is in
-[image space records](/formats/image-spaces.md); this page covers the runtime.
+[image space records](../formats/image-spaces.md); this page covers the runtime.
 
 ## Data flow
 
@@ -24,10 +24,10 @@ the current place: saturation, brightness, contrast, tint, and fade. The record 
 
 Most grades read only the pixel they change. Those draw one fullscreen triangle inside the scene
 pass, and the shader reads the pixel from tile memory, so the frame needs no copy and keeps its
-depth [memoryless](/rendering/metal4-renderer.md). Blur, radial blur, motion blur, double
+depth [memoryless](metal4-renderer.md). Blur, radial blur, motion blur, double
 vision, and bloom read other pixels. For them the scene pass ends, the color is copied, and a second
 pass grades the copy. The
-[screen-space post effects](/rendering/post-effects.md) use the same split, and the composite
+[screen-space post effects](post-effects.md) use the same split, and the composite
 also runs when only they are on.
 
 ## HDR tone mapping
@@ -41,7 +41,7 @@ checked with capture pairs against the reference game.
 - **Measure.** Every 16th pixel in each direction adds its luminance, with the weights
   (0.2125, 0.7154, 0.0721), to two GPU counters per frame slot. The mean is a plain mean, not
   a log mean. The measured colour already holds the fog and the
-  [volumetric light](/rendering/post-effects.md#volumetric-light), as in the game.
+  [volumetric light](post-effects.md#volumetric-light), as in the game.
 - **Quarters.** The game measures the scene down to a 2 x 2 grid, so each screen quarter has
   its own mean, X, and Y. A pixel reads them blended, as a linear sampler reads a 2 x 2
   texture: one quarter's values up to its centre, then a mix towards the next quarter. So a
@@ -160,7 +160,7 @@ the centre: a strong streak. The VATS modifier (`VATSImod`) holds a radial stren
 - **Sunlight and sky scale.** The CK wiki calls both "non-imagespace". They apply with either
   target. The sun colour is multiplied by the sunlight scale; vanilla values are 2 to 2.7.
   The sky scale is added, not multiplied: the dome draws its weather colours times the scene
-  scale 1/1.2 ([output clamp](/rendering/surface-shading.md#output-clamp)), plus 1/1.2 times
+  scale 1/1.2 ([output clamp](surface-shading.md#output-clamp)), plus 1/1.2 times
   the sky scale, and the clouds add the same lift to their colour. Vanilla sky scales are
   small, such as 0.235 by day and 0.02 at night in clear weather, so the lift is a slight
   even brightening.
@@ -172,7 +172,7 @@ At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own l
 | Source | Strength |
 | --- | --- |
 | A spell hit on the player | 1, from the `MGEF` image-space modifier |
-| An explosion | 1 − (d / r)², d the distance to the camera and r the `EXPL` image-space radius; a zero radius plays at 1. A close blast also swaps in a fixed modifier at 1 ([explosion effects](/engine/explosion-effects.md)) |
+| An explosion | 1 − (d / r)², d the distance to the camera and r the `EXPL` image-space radius; a zero radius plays at 1. A close blast also swaps in a fixed modifier at 1 ([explosion effects](../engine/explosion-effects.md)) |
 | `ImageSpaceModifier.Apply(float afStrength = 1.0)` or `PopTo(ImageSpaceModifier, float)` | The script's strength, clamped to 0 to 1 |
 | `ImageSpaceModifier.ApplyCrossFade(float afFadeDuration = 1.0)` | Rises from 0 to 1 over the fade time, held until `Remove` or the global `RemoveCrossFade(float afFadeDuration = 1.0)`, which falls back to 0 over its own fade time |
 
@@ -181,7 +181,7 @@ player sees.
 
 The main menu and loading screen scenes do not use the world's image space. They draw through the
 `LSIS` default object's image space. OpenSky applies no modifier and no screen fade to them
-([loading screens](/engine/loading-screens.md#image-space)).
+([loading screens](../engine/loading-screens.md#image-space)).
 
 ## Low health
 
@@ -218,7 +218,7 @@ The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEn
   the full-screen blur is a 12-tap disc. Beside the game, Whirlwind Sprint and VATS showed no
   visible blur in OpenSky, only their tint. Motion blur follows only the camera's turn, not
   moving objects.
-- Depth of field draws as a [post effect](/rendering/post-effects.md#depth-of-field) when its
+- Depth of field draws as a [post effect](post-effects.md#depth-of-field) when its
   game option is on. Double vision is one ghost image offset to the side.
 - A cross-fade rises and falls linearly over its fade time. The curve is OpenSky's choice.
   Only one cross-faded modifier is held, as in the game, and a new one replaces it; the old

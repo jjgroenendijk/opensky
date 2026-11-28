@@ -15,7 +15,7 @@ Reference: UESP
 [Archive File Format](https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format). All
 integers are little-endian.
 
-Folder and file names follow the [string decoding](/decisions/string-decoding.md) policy.
+Folder and file names follow the [string decoding](../decisions/string-decoding.md) policy.
 Vanilla names are ASCII. Mod names may be UTF-8 or windows-1252. A name in the wrong
 encoding gives wrong characters, but the archive still opens. Lookups ignore case and
 separators, so such a name still finds itself.

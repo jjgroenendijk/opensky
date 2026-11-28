@@ -96,6 +96,6 @@ While the player holds an item whose carry weight is over 75, the player cannot 
 - The let-go rule for a heavier touching body is not built: no contact query reaches the held
   body yet. The stretch past 96 still lets go.
 - `openskycli game debug grab <ref>` turns the view to a reference and grabs it, and
-  `state grab` shows the hold ([game commands](/tools/game-commands.md)). The hold point is
+  `state grab` shows the hold ([game commands](../tools/game-commands.md)). The hold point is
   ahead of the view, so without the turn a reference off the crosshair is past the stretch
   limit at once. The hold lasts until `debug grab` with no reference or a press of Activate.

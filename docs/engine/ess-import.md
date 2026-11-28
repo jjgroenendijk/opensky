@@ -12,11 +12,11 @@ can onto OpenSky's own world state, and writes the result as an ordinary OpenSky
 it loads that save. So an import and a normal load share one restore path, and an import
 is never a second, half-tested way into the world.
 
-The reverse direction, a session written as a `.ess`, is [ESS export](/engine/ess-export.md).
-The file formats are on their own pages: [ESS](/formats/ess.md),
-[ESS change forms](/formats/ess-change-forms.md), and
-[ESS Papyrus](/formats/ess-papyrus.md). The OpenSky side is
-[OpenSky save](/formats/opensky-save.md).
+The reverse direction, a session written as a `.ess`, is [ESS export](ess-export.md).
+The file formats are on their own pages: [ESS](../formats/ess.md),
+[ESS change forms](../formats/ess-change-forms.md), and
+[ESS Papyrus](../formats/ess-papyrus.md). The OpenSky side is
+[OpenSky save](../formats/opensky-save.md).
 
 ## The saves folder
 
@@ -96,7 +96,7 @@ imports to the same keys.
 
 | Data | Why |
 | --- | --- |
-| The data of an actor with an AI process, after its animation part | Its process data has parts with no known layout, so the reader cannot find the end ([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)) |
+| The data of an actor with an AI process, after its animation part | Its process data has parts with no known layout, so the reader cannot find the end ([change forms](../formats/ess-change-forms.md#actor-data-after-the-animation-part)) |
 | Base attributes of an `NPC_` change, and anything after them | The layout is undocumented |
 | Changes to an actor base other than the player's | OpenSky keeps actor state on the placed actor |
 | A reference moved to another cell | OpenSky's transform override cannot move a reference between cells |
@@ -134,4 +134,4 @@ native in the save but is not native in the game cannot come back, and a variabl
 changed stops its function. Frames on objects that are no longer valid do not resume. A wait
 that is too long, and an update time too far in the past, become 1 second. Suspended stacks are
 kept in a queue and come back with it. Health and death sit after the actor's process data
-([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)).
+([change forms](../formats/ess-change-forms.md#actor-data-after-the-animation-part)).

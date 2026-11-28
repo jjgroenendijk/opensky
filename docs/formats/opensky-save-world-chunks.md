@@ -10,8 +10,8 @@ tags: [format, save, world-state, papyrus, inventory, quests]
 
 These chunks hold world, script, inventory, and quest state in an `.osav` file. The
 container, the key and cell encodings, and the error rules are on
-[OpenSky save](/formats/opensky-save.md). Actor chunks are on
-[save chunks: actors](/formats/opensky-save-actor-chunks.md).
+[OpenSky save](opensky-save.md). Actor chunks are on
+[save chunks: actors](opensky-save-actor-chunks.md).
 
 Rules for every chunk on this page:
 
@@ -31,7 +31,7 @@ plugin, so the save can be read without the game. An unknown type is `invalidVal
 ## CLOK: game clock
 
 Exactly 8 bytes: float64 `totalGameSeconds`, game seconds since the calendar start
-([game clock](/engine/game-clock.md)). A value that is not finite, or is negative, is
+([game clock](../engine/game-clock.md)). A value that is not finite, or is negative, is
 `invalidValue`. Without `CLOK`, the clock starts at the vanilla start date.
 
 ## PLOC: player place
@@ -70,7 +70,7 @@ tag, then the value:
 
 Object handles and arrays are written as `none`. The running VM gives them their identity,
 and it means nothing after a reload. So a restored script sees its compiled default
-([Papyrus VM](/engine/papyrus-vm.md)). An unknown value tag is `invalidValue`. A float that
+([Papyrus VM](../engine/papyrus-vm.md)). An unknown value tag is `invalidValue`. A float that
 is NaN or infinite is read as 0.0, because a mod script can divide by zero. Minimum sizes:
 16 bytes per instance, 5 bytes per variable.
 
@@ -88,14 +88,14 @@ One entry per armed timer slot: the instance's reference key, then:
 Real-time slots use seconds; game-time slots use game hours. `remaining` is relative to the
 save, not an absolute time, so time between saving and loading does not count. The slot
 byte is the raw value of `PapyrusUpdateTimerSlot`
-([Papyrus VM](/engine/papyrus-timers.md)). A slot above 3 is `invalidValue`. An
+([Papyrus VM](../engine/papyrus-timers.md)). A slot above 3 is `invalidValue`. An
 interval or remaining time that is negative or not finite is read as 0.0, so the timer fires
 on the next step. Minimum entry size: 26 bytes.
 
 ## PCAL: script calls
 
 The Papyrus calls that were running or waiting when the save was written
-([script state in a save](/engine/papyrus-world.md#script-state-in-a-save)). The chunk is
+([script state in a save](../engine/papyrus-world.md#script-state-in-a-save)). The chunk is
 left out when no call waits.
 
 A uint32 array count, then per array: string element type, uint32 value count, the values.
@@ -165,7 +165,7 @@ One entry per owner whose items differ from the plugins:
 | uint8 | paired | 1 when a second copy of `leftHand` is in the right hand |
 
 One row per item. Stolen and honest copies are added together here; the stolen part is in
-`STOL` ([actor chunks](/formats/opensky-save-actor-chunks.md)). A flag cannot be added to
+`STOL` ([actor chunks](opensky-save-actor-chunks.md)). A flag cannot be added to
 these rows, because the rows have no length and an older build would misread the whole
 chunk.
 
@@ -234,7 +234,7 @@ rejected.
 
 ## SCNS: playing scenes
 
-One entry per playing [scene](/engine/scenes.md). A scene that is not in the chunk is not
+One entry per playing [scene](../engine/scenes.md). A scene that is not in the chunk is not
 playing.
 
 | type | field | notes |
@@ -261,14 +261,14 @@ bytes per entry.
 
 ## SMQS: story-manager starts
 
-One entry per quest the [story manager](/engine/story-manager.md) started: the QUST key, the
+One entry per quest the [story manager](../engine/story-manager.md) started: the QUST key, the
 cell, a float64 game-seconds time of the last start, and a uint32 start count. Reset times and
 "do all before repeating" read them. A time that is not finite is rejected. Minimum size: 20
 bytes per entry.
 
 ## DLBS: exclusive dialogue branches
 
-One entry per speaker in an exclusive [dialogue](/engine/dialogue.md#branches) branch: the
+One entry per speaker in an exclusive [dialogue](../engine/dialogue.md#branches) branch: the
 speaker's key, the cell, and the uint32 FormID of the `DLBR`. The FormID is in the space of the
 base plugin the dialogue store reads, which does not depend on the load order. Minimum size: 12
 bytes per entry.
@@ -277,7 +277,7 @@ bytes per entry.
 
 One entry for the player: the player's key, the cell, a uint32 record count, then one record
 per input event, sorted by event name. A record is the event name as a string, a uint32
-count of times the [help message](/engine/messages.md#help-messages) showed, and a done
+count of times the [help message](../engine/messages.md#help-messages) showed, and a done
 byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per record.
 
 ## IDLP: playing idles
@@ -285,7 +285,7 @@ byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per r
 One entry per actor that plays an idle: the actor's key, the cell, the `IDLE` record as its
 plugin name (a string) and a uint32 object ID, then a byte, 1 when the idle's target key
 follows. The name keeps the record found when the load order changes. A load plays the idle
-again once the actor is loaded ([idle runtime](/engine/idle-runtime.md#what-a-save-keeps)).
+again once the actor is loaded ([idle runtime](../engine/idle-runtime.md#what-a-save-keeps)).
 Minimum size: 15 bytes per entry.
 
 ## TRNS: scripted moves
@@ -295,11 +295,11 @@ float32 vectors (the drawn position, the drawn rotation in radians, the target p
 target rotation), a float32 speed in units per second, a float32 rotation cap in radians per
 second (0 for none), and a byte, 1 once `OnTranslationAlmostComplete` was sent. A load goes on
 with the move from the saved pose
-([translation](/engine/papyrus-translation.md#a-move-in-a-save)). Size: 65 bytes per entry.
+([translation](../engine/papyrus-translation.md#a-move-in-a-save)). Size: 65 bytes per entry.
 
 ## SOCL: social state
 
-One entry per actor with [social](/engine/random-conversations.md#what-a-save-keeps) state:
+One entry per actor with [social](../engine/random-conversations.md#what-a-save-keeps) state:
 the key, the cell, and a flag byte. Bits 0, 1, and 2 mark the social timer, the
 recent-partner timer, and the time since a finder last reacted to the actor's body; each set
 bit adds one float64 of seconds, in that order. Bit 3 marks a conversation the actor started:
@@ -312,16 +312,16 @@ bytes per entry.
 
 One entry for the player: the player's key, the cell, a god mode byte, and a crime-report
 byte, each 1 for on. Scripts set them with `Debug.SetGodMode` and `Game.SetPlayerReportCrime`
-([session natives](/engine/papyrus-session-natives.md)). No entry means god mode is off and
+([session natives](../engine/papyrus-session-natives.md)). No entry means god mode is off and
 the player's crimes are reported. Size: 10 bytes per entry.
 
 ## MSTS: misc stats
 
 One entry for the player: the key, the cell, a uint32 stat count, then per stat its name as a
 string and an int32 value, sorted by name. The names are the
-[journal's stats](/engine/journal.md#stats-page). Three use lists follow, for the weapons, the
+[journal's stats](../engine/journal.md#stats-page). Three use lists follow, for the weapons, the
 spells, and the shouts the player used last: each a uint32 count, then that many keys, oldest
-first, at most 100 ([favourites](/engine/statistics.md#favourites)). Minimum size: 24 bytes per
+first, at most 100 ([favourites](../engine/statistics.md#favourites)). Minimum size: 24 bytes per
 entry, 6 per stat.
 
 ## QTRK: quest tracking
@@ -332,27 +332,27 @@ player tracks the quest. A quest with no entry was never shown. Size: 9 bytes pe
 ## SCRS: script state
 
 One entry per form a script changed through a native that has no other home, such as
-`SetGhost` or `FormList.AddForm` ([script state](/engine/papyrus-script-state.md)): the key,
+`SetGhost` or `FormList.AddForm` ([script state](../engine/papyrus-script-state.md)): the key,
 the cell, then four lists. Flags: a uint32 count, then per flag its name as a string and a
 byte, 1 for true. Values: a uint32 count, then a name and a float32. Form links: a uint32
 count, then a name and a key. Added forms: a uint32 count, then that many keys, in the order
 the script added them. Names are lowercased and sorted. Minimum size: 24 bytes per entry.
 
 Names that start with `engine:` hold engine state with no component of its own, on the player:
-the shout cooldown and a jail stay ([jail](/engine/jail.md#saving)).
+the shout cooldown and a jail stay ([jail](../engine/jail.md#saving)).
 
 ## CRST: cell resets
 
 One list for the player: per cell the player has left, the cell, then the game hour it left as
 a float64, in the cell order of `RDLT`. A cell with no entry has no reset pending
-([cell reset](/engine/cell-reset.md)). A cell entry that reads as absent, or an hour that is
+([cell reset](../engine/cell-reset.md)). A cell entry that reads as absent, or an hour that is
 not finite, is dropped. Minimum size: 13 bytes per entry.
 
 ## VRST: vendor restocks
 
 One list for the player: per merchant chest, its key, then the game hour it was last stocked
 as a float64, in key order. A chest with no entry counts as stocked at the next barter
-([vendor factions](/engine/vendor-factions.md)). An hour that is not finite is dropped.
+([vendor factions](../engine/vendor-factions.md)). An hour that is not finite is dropped.
 Minimum size: 15 bytes per entry.
 
 `SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `PRUL`, `MSTS`, `QTRK`, `SCRS`, `CRST`, and `VRST` merge
@@ -365,7 +365,7 @@ female), and the name as a string of at most 64 characters. The face follows: a 
 count and that many float32 `NAM9` sliders, a uint32 count and that many int32 `NAMA`
 values, a uint32 count and that many head part FormIDs, the hair color FormID (0 for none),
 a uint32 tint count with per tint a uint16 mask index, four color bytes, and a float32
-strength, then the float32 weight and height. See [race menu](/engine/race-menu.md).
+strength, then the float32 weight and height. See [race menu](../engine/race-menu.md).
 Minimum size: 12 bytes per entry.
 
 ## PCPX: player complexion
@@ -378,7 +378,7 @@ texture. It merges onto the `PIDN` face of the same key. Minimum size: 11 bytes 
 
 One entry per marker whose state is stored: the key, the cell, and one flag byte. Bit 0 is
 visible, bit 1 discovered, bit 2 can travel to; any other bit is rejected. See
-[world map](/engine/world-map.md). Minimum size: 9 bytes per entry.
+[world map](../engine/world-map.md). Minimum size: 9 bytes per entry.
 
 ## FOGM: local map fog
 
@@ -391,7 +391,7 @@ and per row.
 
 One entry for the player: the key, the cell, the map worldspace's editor ID as a string, then
 the marker's x, y, and z as float32. A value that is not finite is rejected. See
-[world map](/engine/world-map.md#custom-marker). Minimum size: 21 bytes per entry.
+[world map](../engine/world-map.md#custom-marker). Minimum size: 21 bytes per entry.
 
 `PIDN`, `PCPX`, `MRKS`, `FOGM`, and `PMRK` merge into the `RDLT` deltas by key, like the other
 component chunks.

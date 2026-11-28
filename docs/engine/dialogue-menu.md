@@ -11,7 +11,7 @@ tags: [engine, ui, dialogue, menu, interaction, swf]
 This page covers how the player talks to an NPC: the use key on an actor, the vanilla
 `interface\dialoguemenu.swf` listing that speaker's topics, the response text and its subtitle,
 and the input and pause rules around them. Which topics are offered is on the
-[dialogue](/engine/dialogue.md) page.
+[dialogue](dialogue.md) page.
 
 ## Talk targeting
 
@@ -22,14 +22,14 @@ key sends a talk event with the speaker's session-stable `ReferenceKey`. Dialogu
 
 ### Why actors are not in the collision trees
 
-The [interaction](/engine/interaction.md) ray tests the fixed collision of each cell. Actors are
+The [interaction](interaction.md) ray tests the fixed collision of each cell. Actors are
 not in it, and should not be. An actor has no placed collision, and it moves every frame. The
 collision trees are built once per cell, so putting actors in them would mean a rebuild each time
 someone took a step.
 
-Instead, talk targeting reuses the exact test [melee combat](/engine/melee-combat.md) uses: the
+Instead, talk targeting reuses the exact test [melee combat](melee-combat.md) uses: the
 closest distance between two segments. A view ray is a segment and an actor is a capsule, so one
-call gives the answer. [Detection](/engine/detection.md) line of sight was not used. It answers
+call gives the answer. [Detection](detection.md) line of sight was not used. It answers
 "can this observer see that actor", about one pair. Targeting has to rank every loaded actor
 against one ray.
 
@@ -63,7 +63,7 @@ breathing, walking, and being heard. So each menu declares a world rule when it 
 
 The world is paused while any open menu pauses it. So the system menu opened over a
 conversation still stops the world, and closing it gives the running world back
-([menu mode](/engine/menu-mode.md)).
+([menu mode](menu-mode.md)).
 
 This means the input route and the pause are separate. Held world keys are released when input
 moves to the menu, not when the world pauses. Otherwise a key held into a menu that does not pause
@@ -102,7 +102,7 @@ clips.
 
 Row fields are `text`, `topicIndex`, `topicIsNew`, and `responseHash`. The list draws a row
 through the entry clip's own `SetEntryText`, not by reading named fields. `topicIsNew` is true
-until the winning `INFO` has been said, read from its [said-state](/engine/dialogue.md#said-state).
+until the winning `INFO` has been said, read from its [said-state](dialogue.md#said-state).
 `responseHash` carries the winning `INFO` FormID.
 
 ## Who owns the selection
@@ -112,7 +112,7 @@ The movie's fourth state, `TRANSITIONING`, is left to the movie, because it only
 the others. A fourth engine state that copied an animation frame would be a second clock to keep
 in step.
 
-The engine owns the selection here, unlike the [journal](/engine/journal.md), where the movie
+The engine owns the selection here, unlike the [journal](journal.md), where the movie
 owns it. This follows from `SetSelectedTopic` above: the movie has no cursor to trust. The movie
 still gets every key, so its focus art and sounds still run.
 
@@ -141,7 +141,7 @@ speaker's crime faction: "\<CrimeGold\> will be text-replaced by the bounty amou
 (<https://ck.uesp.net/wiki/Creating_a_Custom_Crime_Faction>). A guard's pay row reads "I'll pay
 off my bounty. (25 gold)". `<BribeCost>` is the gold the speaker asks as a bribe
 (<https://ck.uesp.net/wiki/Tutorial:_Dialogue_Speech_Checks>), the same amount
-[speech checks](/engine/speech-checks.md) test, in whole gold. A tag nothing fills stays as
+[speech checks](speech-checks.md) test, in whole gold. A tag nothing fills stays as
 written, as the Creation Kit page says of a tag that fails to parse.
 
 ## Subtitles
@@ -185,8 +185,8 @@ length.
 | Pointer | Not routed |
 
 The pointer event carries a movement, but a movie hit test needs a stage position. So the
-dialogue menu ignores it, like the [inventory](/engine/inventory-menu.md) and
-[system](/engine/system-menu.md) menus.
+dialogue menu ignores it, like the [inventory](inventory-menu.md) and
+[system](system-menu.md) menus.
 
 ## A conversation
 
@@ -233,7 +233,7 @@ during another conversation closes it and opens its own.
 
 ## Movie entry points not used
 
-The [AS2 scope decision](/decisions/swf-as2-scope.md) requires every host function OpenSky does
+The [AS2 scope decision](../decisions/swf-as2-scope.md) requires every host function OpenSky does
 not implement to be a counted no-op, listed here:
 
 | Entry point | Why |
@@ -243,6 +243,6 @@ not implement to be a counted no-op, listed here:
 | `AdjustForPALSD` | Standard-definition TV layout. No use on macOS |
 
 Each response run is said in the speaker's voice, with lip movement, through the dialogue
-speech channel ([audio decoding](/engine/audio-decoding.md)). When a run's voice file plays to
+speech channel ([audio decoding](audio-decoding.md)). When a run's voice file plays to
 its end, the menu moves on as Accept does. A run with no voice file waits for Accept. Accept
 during a run cuts its voice off and starts the next one.

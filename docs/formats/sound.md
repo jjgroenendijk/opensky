@@ -61,7 +61,7 @@ How the game uses the other fields when the descriptor plays:
   The model also picks the routing: flag bit 0 with a non-zero second value routes through
   bit 4, flag bit 0 alone through bit 1, and no flag or no model through bit 2. The model's
   attenuation data goes to the player of the sound
-  ([output models](/formats/sound-output-reverb.md)).
+  ([output models](sound-output-reverb.md)).
 
 `LNAM` byte 3 is the rumble send: the low four bits drive one motor and the high four bits the
 other, each at the four-bit value times 1 percent of full strength
@@ -69,7 +69,7 @@ other, each at the four-bit value times 1 percent of full strength
 Kit calls it
 how much of the sound's level drives each motor
 ([Sound Descriptor](https://ck.uesp.net/wiki/Sound_Descriptor)). It applies only when the
-output model sets Allows Rumble ([output models](/formats/sound-output-reverb.md)).
+output model sets Allows Rumble ([output models](sound-output-reverb.md)).
 
 `BNAM`:
 
@@ -127,7 +127,7 @@ leading separator means "from the root" on Windows. It is not a drive. So OpenSk
 
 1. Removes a leading separator and an outer `Data\`.
 2. Adds `sound\` in front if it is missing.
-3. Applies the [VFS path rules](/formats/vfs.md): backslashes, lowercase, no unsafe parts.
+3. Applies the [VFS path rules](vfs.md): backslashes, lowercase, no unsafe parts.
 4. Drops a path that still has a `:`, because that is a drive path.
 
 A dropped path does not change the order of the others.

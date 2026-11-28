@@ -11,15 +11,15 @@ tags: [engine, crafting, inventory, conditions]
 A crafting station is a `FURN` base with workbench data (`WBDT`). Using it opens a crafting
 session. The session lists the recipes the station offers, says for each one whether the
 player can make it, and makes one on request. The session has no UI of its own, like a
-container session. The record layouts are on [recipes](/formats/recipes.md) and
-[world records](/formats/world-records.md).
+container session. The record layouts are on [recipes](../formats/recipes.md) and
+[world records](../formats/world-records.md).
 
 ## Which recipes a station offers
 
 A recipe's `BNAM` names a keyword. A station offers every recipe whose keyword is in the
 station's `KWDA`. The bench type does not decide this. A station whose keywords name no recipe,
 opens a session with no recipes. An alchemy lab (bench type alchemy or alchemy experiment)
-brews from ingredients instead ([alchemy](/engine/alchemy.md)). Enchanting uses its own system,
+brews from ingredients instead ([alchemy](alchemy.md)). Enchanting uses its own system,
 not `COBJ`.
 
 The use key raises a crafting activation event beside the plain interaction event. The
@@ -69,7 +69,7 @@ After the write, the session reports one skill use for the station's `WBDT` skil
 base value of one made item. The three numbers are the settings `fConstructibleSkillUseConst`,
 `fConstructibleSkillUseMult`, and `fConstructibleSkilluseExp`. The `AVIF` skill-use
 multiplier and offset then turn the amount into experience
-([skill advancement](/engine/skill-advancement.md)). A bench with no skill reports nothing.
+([skill advancement](skill-advancement.md)). A bench with no skill reports nothing.
 
 ## Tempering
 
@@ -99,17 +99,17 @@ without a string table the UESP names above stay. A level past the sixth reads a
 with the extra levels, such as `Legendary +1`.
 
 Quality is stored per copy, apart from the item counts, in the owner's
-[item copies](/engine/item-copies.md). The save keeps the levels in the `TMPR` chunk
-([save chunks](/formats/opensky-save-actor-chunks.md)).
+[item copies](item-copies.md). The save keeps the levels in the `TMPR` chunk
+([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 The player's weapon damage adds the bonus of the best held copy, because the equipped set
 names a base item, not a copy. In the same way, the armour step of combat adds the bonus of the
-best worn copy to its rating ([combat](/engine/combat.md)).
+best worn copy to its rating ([combat](combat.md)).
 
 Quality belongs to the copy. Every move carries the levels of the copies it moves: a take, a
 drop into the world and the pick-up again, a container, a gift, and a trade. The lowest copies
 leave first, so the owner keeps the best one, which an equip wears. A merchant prices a tempered
-copy at the UESP value multiplier `1 + level / 6`. A [cell reset](/engine/cell-reset.md) of a
+copy at the UESP value multiplier `1 + level / 6`. A [cell reset](cell-reset.md) of a
 container clears the quality of the copies it held, because its contents go back to the
 plugin's.
 
@@ -149,7 +149,7 @@ Using a station opens `Interface\craftingmenu.swf` over the session. The engine 
 `<sArmorSmithing>: <sSmithingMenuDescription>` at an armor table, and
 `<sAlchemy>: <sAlchemyMenuDescription>` at an alchemy lab. The lists are
 `/Menu/InventoryLists/CategoriesListHolder/List_mc` and `.../ItemsListHolder/List_mc`, the
-same list class as the [inventory menu](/engine/inventory-menu.md#list-data). At a forge OpenSky
+same list class as the [inventory menu](inventory-menu.md#list-data). At a forge OpenSky
 shows the recipes the player can make now, all recipes, and then one tab per category that has
 a recipe. An improve bench has one tab: `sArmor` ("ARMOR") at an armour table and `sWeapons`
 ("WEAPONS") at a grindstone. The alchemy lab's ingredient tab is `sIngredients` ("INGREDIENTS").
@@ -192,7 +192,7 @@ names below were read from `interface\craftingmenu.swf`.
   armour table, `sAlchemyMenuDescription` at a lab, and `sEnchantMenuDescription` at an
   enchanter.
 - The card is `/Menu/ItemInfoHolder/ItemInfo`. Its `itemInfo` setter takes the same object as
-  the [inventory's item card](/engine/inventory-menu.md#item-card). The menu's `FadeInfoCard(true)`
+  the [inventory's item card](inventory-menu.md#item-card). The menu's `FadeInfoCard(true)`
   then fades the card in, and `FadeInfoCard(false)` fades it out.
 - `FadeInfoCard` also shows or hides the line under the card,
   `.../AdditionalDescriptionHolder/AdditionalDescription`, unless the menu's
@@ -240,7 +240,7 @@ Exit is `sExit` everywhere. Each question box has `sYes` and `sNo`:
 - Leaving an alchemy lab always asks `sQuitAlchemy`. Leaving an arcane enchanter asks
   `sQuitEnchanting` once an item, enchantment, or soul gem is chosen.
 - The aux key (Y) clears the chosen ingredients at a lab. At an enchanter it opens the
-  [text entry box](/engine/text-entry.md) under `sEnterItemName`; the name goes on the item
+  [text entry box](text-entry.md) under `sEnterItemName`; the name goes on the item
   made.
 
 The lab's "two chosen ingredients" stands in for the game's "the chosen ingredients make a

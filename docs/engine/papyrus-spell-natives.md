@@ -8,8 +8,8 @@ tags: [engine, papyrus, magic]
 
 # Papyrus spell natives
 
-These natives sit on [spellcasting](/engine/spellcasting.md) and [active effects](/engine/magic.md),
-through [the world bridge](/engine/papyrus-activation.md#the-world-bridge).
+These natives sit on [spellcasting](spellcasting.md) and [active effects](magic.md),
+through [the world bridge](papyrus-activation.md#the-world-bridge).
 
 Which natives are registered was measured, not chosen. The native census over the install's
 compiled scripts ranks every native by call sites, and the magic head of that list is what is
@@ -37,7 +37,7 @@ registered. The counts are the References column.
 calls them waits until the call returns. The cast itself still applies at once, as the cast page
 says: "This function casts the spell instantaneously." So a script that casts and then reads
 `HasMagicEffect` sees the effect. The other natives here are delayed: they return on the next
-frame ([native timing](/engine/papyrus-vm.md#native-timing)).
+frame ([native timing](papyrus-vm.md#native-timing)).
 
 ## Where each goes
 

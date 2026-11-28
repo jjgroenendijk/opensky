@@ -10,7 +10,7 @@ tags: [engine, magic, shouts, behaviour-graph, perks]
 # Shouts
 
 A shout (`SHOU`) has up to three words of power (`WOOP`). Each word has its own spell and its
-own recovery time ([shout records](/formats/shouts-equip-slots.md)). The player shouts with the
+own recovery time ([shout records](../formats/shouts-equip-slots.md)). The player shouts with the
 shout key: a tap shouts the first word, and a longer hold shouts more of the unlocked words.
 
 ## Sources
@@ -29,7 +29,7 @@ shout key: a tap shouts the first word, and a longer hold shouts more of the unl
 ## What the player knows
 
 The Papyrus shout natives keep the player's words and shouts in the script state ([script
-state](/engine/papyrus-script-state.md#words-and-shouts)).
+state](papyrus-script-state.md#words-and-shouts)).
 
 - A shout is known when `Actor.AddShout` gave it, or when one of its words is known.
 - Words unlock in order. The shout can use the words from the first one up to the first locked
@@ -38,7 +38,7 @@ state](/engine/papyrus-script-state.md#words-and-shouts)).
   spends.
 
 The Shouts section also shows how fast the world and the player run while a Slow Time effect is
-on the player ([Slow Time](/engine/magic-archetypes.md#world)).
+on the player ([Slow Time](magic-archetypes.md#world)).
 
 ## Magic menu
 
@@ -110,12 +110,12 @@ motor plays on the left handle and the small one on the right; a pad with one ac
 stronger of the two. The frequency setting is used as the strength, which is OpenSky's reading.
 `openskycli game state player` shows the last rumble under `lastRumble`, with its `cause`
 (`shout` or `weapon`), and the sound motors under `soundRumble`. Weapons and sounds rumble too
-([sound mix](/engine/sound-mix.md#rumble)).
+([sound mix](sound-mix.md#rumble)).
 
 ## Where OpenSky differs from the game
 
 - A save keeps the time left of the cooldown, on the player's script state
-  ([SCRS](/formats/opensky-save-world-chunks.md#scrs-script-state)), not its full length. The
+  ([SCRS](../formats/opensky-save-world-chunks.md#scrs-script-state)), not its full length. The
   readout after a load shows the time left as the length.
 - When no graph raises `Voice_SpellFire_Event` within 1.5 s of the release, the spell fires
   anyway. This keeps a shout working on a body with no graph. The game has no such wait.

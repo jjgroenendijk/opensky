@@ -8,9 +8,9 @@ tags: [engine, animation, combat, player]
 # Dragon flight
 
 A dragon flies in two cases. A dragon nobody rides flies when its fight is in the air stage
-([combat behaviour](/engine/combat-behavior.md#flying-combat)), or when agent control orders a
+([combat behaviour](combat-behavior.md#flying-combat)), or when agent control orders a
 take-off. A dragon the player rides flies from the moment the rider is seated
-([riding](/engine/riding.md)). Both use one set of flight rules. In both cases, the rules move the
+([riding](riding.md)). Both use one set of flight rules. In both cases, the rules move the
 body and its behavior graph only plays the clips.
 
 ## Phases
@@ -112,7 +112,7 @@ crash (UESP "Skyrim:Dragon" describes dying dragons crashing down), and Dragonre
 | Slowest landing speed | 300 units/s | OpenSky |
 
 The dragon movement types have a 40-byte `SPED`, 10 floats
-([records](/formats/records.md)). `Dragon_Flying_MT` runs at 7,400; OpenSky flies at the walk
+([records](../formats/records.md)). `Dragon_Flying_MT` runs at 7,400; OpenSky flies at the walk
 speed, because circling at 7,400 needs a turn circle wider than the orbit.
 
 The OpenSky numbers cannot be read from data. The flight height, the climb, and the landing speed
@@ -282,7 +282,7 @@ with the rider's orders and the breath step.
   (`FlyStopInjuredSafe`).
 - [INFO] The flight heights, the climb rate, the radii, the switch cone, and the breath
   timing are OpenSky's numbers. The lock range and what ends a lock are the game's
-  ([combat assist](/engine/combat-assist.md#flying-mount-lock)).
+  ([combat assist](combat-assist.md#flying-mount-lock)).
 - [INFO] The rider's spell rule is OpenSky's, built from the UESP list.
 - OpenSky writes `MoveDirZ` itself, not `MovementDirection`, and steers with its own circle and
   climb numbers, not the game's smoothed curve.

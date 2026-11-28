@@ -10,13 +10,13 @@ tags: [engine, papyrus, interaction, runtime-state]
 # Papyrus activation and world natives
 
 This page covers how scripts hear about the world and how natives change it. The VM is on the
-[Papyrus VM](/engine/papyrus-vm.md) page and the engine loop on the
-[world runtime](/engine/papyrus-world.md) page.
+[Papyrus VM](papyrus-vm.md) page and the engine loop on the
+[world runtime](papyrus-world.md) page.
 
 ## The player's handle
 
 The player is not a plugin reference here, so its identity is `ReferenceKey.player`
-([reference identity](/engine/reference-identity.md)). It is the activator recorded on an
+([reference identity](reference-identity.md)). It is the activator recorded on an
 activation and the `akActionRef` a script receives.
 
 A reference with scripts is passed as its live instance handle, the same one `VMAD` properties bind
@@ -44,9 +44,9 @@ decides when:
 
 A flag on the parent passes the original activator to the children instead of the parent; which
 flag is not known. A child with "parent activate only" refuses any activator that is not one of its
-parents, player or NPC. [Traps](/engine/traps.md) has the details.
+parents, player or NPC. [Traps](traps.md) has the details.
 
-The use key goes through [interaction](/engine/interaction.md). The handler maps the event's form ID
+The use key goes through [interaction](interaction.md). The handler maps the event's form ID
 to a `ReferenceKey`, records the activation with the player as activator, and queues `OnActivate`.
 The open flag is set only for a door-style open action.
 
@@ -57,7 +57,7 @@ with the actor as argument 0. The player's own occupancy resolves to `ReferenceK
 NPC passes its own key. These events are not an activation chain: occupancy comes from the
 streamer's per-frame test, not from scripts, so a handler cannot cause another edge. They never use
 the recursion cap. Where occupancy comes from is on the
-[collision world](/engine/collision-world.md) and [trigger volumes](/engine/trigger-volumes.md)
+[collision world](collision-world.md) and [trigger volumes](trigger-volumes.md)
 pages.
 
 While an actor stays inside, `OnTrigger(akActionRef)` repeats every 0.5 s of unpaused time, from
@@ -112,7 +112,7 @@ is argument 0, or the player when the argument is missing, `None`, or a handle w
 identity. It returns false only when the recursion cap refused it.
 
 `GlobalVariable` writes round short and long globals on every write
-([global variables](/engine/global-variables.md)). `GetValueInt` truncates toward zero and saturates
+([global variables](global-variables.md)). `GetValueInt` truncates toward zero and saturates
 at the `Int32` bounds. Reads fail for an unknown global, because zero is a value a script would act
 on. Writes do not fail, because with no global store the first write creates the override.
 

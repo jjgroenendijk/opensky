@@ -28,7 +28,7 @@ shape, so the box is centred on the reference. Only the part under the reference
 water.
 
 A cell with no land to measure gets a box 4096 units deep
-([unverified values](/engine/unverified-values.md)).
+([unverified values](unverified-values.md)).
 
 Where boxes overlap, the highest surface wins for swimming. A loose body takes the forces of one
 box per frame.
@@ -55,7 +55,7 @@ it, and its length is not known, so reading stops there.
 
 [WARNING] The centre, point, and radius of kind 1 and 3 currents are read as Havok units, like the
 velocities. No vanilla reference stores one, so this is not checked
-([unverified values](/engine/unverified-values.md)).
+([unverified values](unverified-values.md)).
 
 A non-zero last float in the first vector turns x into a speed around the centre and y into a
 speed away from it.
@@ -94,10 +94,10 @@ maximum speed, so a swimmer cannot outrun its own stroke by riding a current. Th
 not limited. The angular current does not turn actors.
 
 [WARNING] The maximum speed is the actor's swim speed while it swims and its run speed otherwise.
-The game's exact choice is not known ([unverified values](/engine/unverified-values.md)).
+The game's exact choice is not known ([unverified values](unverified-values.md)).
 
 A current faster than the knockdown speed also knocks the actor down once as it enters
-([impulses](/engine/impulses.md)).
+([impulses](impulses.md)).
 
 Not done yet:
 

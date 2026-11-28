@@ -8,15 +8,15 @@ tags: [engine, world, terrain, rendering, esm]
 
 # Terrain mesh build
 
-A [LAND](/formats/land.md) record becomes up to four terrain patches, one per cell quarter. Each
+A [LAND](../formats/land.md) record becomes up to four terrain patches, one per cell quarter. Each
 patch has a base texture and up to eight blended layers. The splat pipeline draws them under the
-cell's objects ([scene drawing](/rendering/scene-drawing.md)).
+cell's objects ([scene drawing](../rendering/scene-drawing.md)).
 
 ## Grid
 
 An exterior cell is 4096 units wide: 32 quads of 128 units, so a 33 x 33 vertex grid. Vertex
 (column c, row r) is at `(c * 128, r * 128, height)`, with +X east, +Y north, +Z up
-([coordinates](/decisions/coordinates.md)). Row 0 is the south edge and column 0 the west edge.
+([coordinates](../decisions/coordinates.md)). Row 0 is the south edge and column 0 the west edge.
 The height is used as the decoder gives it. It is already scaled by 8.
 
 - Normals: `VNML` bytes divided by 127, then normalized. A missing or zero normal is up (0, 0, 1).
@@ -46,7 +46,7 @@ For each quarter:
 A land texture resolves through `LTEX` `TNAM` to `TXST` `TX00`. The path is normalized the same
 way as NIF texture paths, so terrain and objects share one texture cache. A quadrant with no
 `BTXT` draws the default ground texture, the same as a null `LTEX`
-([LAND](/formats/land.md#texture-layers)); Helgen has such quadrants. A base texture whose
+([LAND](../formats/land.md#texture-layers)); Helgen has such quadrants. A base texture whose
 link is broken gives the fallback material. A broken layer is dropped with its weight, and the
 other weights stay in line. The cell summary counts drawn and dropped layers.
 
@@ -107,11 +107,11 @@ separate full-screen pass draws it, and its formula is not known, so OpenSky doe
 
 OpenSky's noise is its own simplex noise, so the sparkles fall in other places than the game's,
 at the same density. The same rim and sparkles light a mesh under a snow directional material
-([surface shading](/rendering/surface-shading.md#directional-materials)).
+([surface shading](../rendering/surface-shading.md#directional-materials)).
 
 The game also turns ambient occlusion off where the snow mask is above zero. OpenSky does the
 same: an opaque pixel with snow stores 0 in the scene colour's alpha, and the
-[occlusion pass](/rendering/post-effects.md#ambient-occlusion) leaves such a pixel as it is.
+[occlusion pass](../rendering/post-effects.md#ambient-occlusion) leaves such a pixel as it is.
 
 ## Placement
 
@@ -119,7 +119,7 @@ The cell's south-west corner goes to `(gridX * 4096, gridY * 4096, 0)`. So a ver
 real world position, in the same frame as reference positions. Terrain feeds the cell's bounds
 like any other object.
 
-[Grass](/engine/grass.md) uses the same height triangles, colors, hidden quarters, and layer
+[Grass](grass.md) uses the same height triangles, colors, hidden quarters, and layer
 blending. One source of truth keeps grass on the ground, and off textures that were painted
 over.
 
@@ -128,7 +128,7 @@ over.
 An exterior cell with no `LAND` in a child worldspace whose `PNAM` sets `0x01` (use land data)
 takes the parent worldspace's `LAND` at the same grid cell first. The city worlds, such as
 Whiterun and Riften, have no `LAND` of their own, so their ground is Tamriel's
-([world records](/formats/world-records.md)).
+([world records](../formats/world-records.md)).
 
 An exterior cell with no `LAND` and no such parent `LAND` gets a flat 33 x 33 plane at the
 worldspace's default land height, the first float of `WRLD` `DNAM`. Tamriel's is -27000. If `DNAM`
@@ -143,4 +143,4 @@ edges match exactly. So neighbor cells join with no gaps, and streaming can drop
 shared row instead of averaging.
 
 `openskycli render --neighbors` draws a cell with its 8 neighbors, to check the joins
-([CLI](/tools/cli.md)).
+([CLI](../tools/cli.md)).

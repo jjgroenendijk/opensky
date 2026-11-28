@@ -24,7 +24,7 @@ Form.UnregisterForUpdateGameTime() native
 on each of them. OpenSky registers all six under all three scripts, and each one arms the timer of
 the calling script instance.
 
-The timer registry sits beside the [VM scheduler](/engine/papyrus-vm.md#scheduler), not inside it.
+The timer registry sits beside the [VM scheduler](papyrus-vm.md#scheduler), not inside it.
 A timer has an interval and a slot, never a suspended call.
 
 ## Slots
@@ -51,7 +51,7 @@ step.
 
 ## Firing
 
-A due slot queues its event through the [event queue](/engine/papyrus-world.md#event-queue) at
+A due slot queues its event through the [event queue](papyrus-world.md#event-queue) at
 activation depth 0. Slots due on the same step queue in registration order.
 
 The game relays an event to every script on the object
@@ -81,7 +81,7 @@ containment follows. A script that leaves the world with its cell does not carry
 unseen. Persistent instances keep theirs, because they are never retired.
 
 Timers of persistent instances are saved in the `PTMR` chunk, apart from `PSCR`, because a timer is
-not a variable ([save chunks](/formats/opensky-save-world-chunks.md)). Each entry stores the time
+not a variable ([save chunks](../formats/opensky-save-world-chunks.md)). Each entry stores the time
 left, not a deadline, and a restore starts it from the current tick and game hour. So time between
 save and load never counts. A saved timer for an instance the session does not hold is counted as
 `unknownSaveTimerTarget`, not a fault. Timers restore after instances, because each timer names its

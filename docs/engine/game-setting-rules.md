@@ -10,7 +10,7 @@ tags: [engine, game-settings, ai, combat, physics]
 
 Each section gives the rule that one game setting, or one small group, takes part in. The
 values are those of `Skyrim.esm`, read with `openskycli gmst list`. A rule that OpenSky runs is
-linked to its page. The other rules wait for their system; the [gap report](/tools/gaps.md)
+linked to its page. The other rules wait for their system; the [gap report](../tools/gaps.md)
 lists their settings until then.
 
 ## Arriving at a furniture or marker
@@ -34,7 +34,7 @@ heading before it starts the enter animation.
 For example, a package with radius 0 targets a chair. The actor has arrived within 150 units of
 it, and must face within 10 degrees of the marker's heading. The Creation Kit wiki gives the
 same table of radii ([Category:Package Templates](https://ck.uesp.net/wiki/Category:Package_Templates)).
-See [furniture](/engine/furniture.md).
+See [furniture](furniture.md).
 
 ## Dialogue mode with the player
 
@@ -44,7 +44,7 @@ starts a line to the player, or a dialogue with the player starts, the countdown
 It falls with real time. At 0 the actor leaves dialogue mode and goes back to its package.
 
 So an actor waits up to 60 s after its last line before it walks off. See
-[dialogue mode](/engine/dialogue-mode.md).
+[dialogue mode](dialogue-mode.md).
 
 ## The aim of an NPC with a bow
 
@@ -58,7 +58,7 @@ turn  = random in 0 ... 360                         degrees around the aim line
 ```
 
 With `fBowNPCSpreadAngle` 4, an archer with skill 50 shoots up to 2 degrees off. An archer with
-skill 100 or more shoots straight. See [archery](/engine/archery.md).
+skill 100 or more shoots straight. See [archery](archery.md).
 
 ## The wait between detection idle lines
 
@@ -70,7 +70,7 @@ detection subtypes use `fCombatDetectionDialogueMinElapsedTime` and `...MaxElaps
 
 The Creation Kit wiki says the same in its
 [Detection Tab](https://ck.uesp.net/wiki/Detection_Tab) page. See
-[combat detection dialogue](/engine/combat-detection-dialogue.md).
+[combat detection dialogue](combat-detection-dialogue.md).
 
 ## When combat music starts
 
@@ -98,7 +98,7 @@ plays, a near group keeps it going while it is inside `fCombatMusicNearCombatOut
 
 For example, with a player strength of 100, enemies with a total strength of 120 give 0.83, so
 the music starts. A total of 80 gives 1.25, so weak enemies start no music. The strengths are on
-the [combat strength](/engine/combat-strength.md) page.
+the [combat strength](combat-strength.md) page.
 
 ## How often a threat ratio changes
 
@@ -119,7 +119,7 @@ power = 1 - (d / radius)^2     inside the radius, else 0
 If the power is above `fExplosionImageSpaceSwapPower` (0.75), and the explosion's flag "Ignore
 Image Space Swap" is off, the game hides the explosion's model and applies a full-strength image
 space modifier instead. With a radius of 300, that happens inside 150 units. See
-[explosion effects](/engine/explosion-effects.md).
+[explosion effects](explosion-effects.md).
 
 ## The strength of a speaker's expression
 
@@ -151,7 +151,7 @@ force = fZKeyMaxForce x scale                                            100 x s
 The scale runs from `fZKeyMaxForceScaleHigh` (1) for a light object to
 `fZKeyMaxForceScaleLow` (0.2) for a heavy one. A mass of 75 gives a scale of 0.6 and a force of
 60. A mass of 150 or more gives 20, so a heavy object hangs behind the hand. Telekinesis does
-not use these settings. See [grab](/engine/grab.md).
+not use these settings. See [grab](grab.md).
 
 ## A killing blow that breaks a body part
 
@@ -172,7 +172,7 @@ cuts it off. With E 100, a roll of 0 to 74 explodes it and no roll cuts it off.
 
 | Setting | Rule |
 | --- | --- |
-| `sContractedDisease` | When the player gains a disease spell, the HUD shows the setting, a space, the disease name, and a full stop: "You have contracted Rockjoint." Only for the player. See [diseases](/engine/diseases.md) |
+| `sContractedDisease` | When the player gains a disease spell, the HUD shows the setting, a space, the disease name, and a full stop: "You have contracted Rockjoint." Only for the player. See [diseases](diseases.md) |
 | `sRandomDoorTeleportFailureMessage` | A door with a random teleport list and no fixed destination picks a destination when it is used. If none is found, the activation fails with this message |
 | `sDefaultCubeMap` | Water with cube-map reflections in an interior uses the cell's water environment map (`CELL XWEM`). If the cell has none, it uses this texture |
 | `sRefAttachNodeName` | A reference attached to another one (`REFR XATR`) hangs below the node with this name, `REF_ATTACH_NODE`, in the parent's model, and moves with it |

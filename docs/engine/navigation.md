@@ -8,8 +8,8 @@ tags: [engine, world, navigation, navmesh, streaming, pathfinding, rendering, ov
 
 # Runtime navigation
 
-Navigation turns the decoded [navmesh](/formats/navmesh.md) into a graph that can be searched,
-and moves NPCs along the paths it finds. The graph follows [cell streaming](/engine/cell-streaming.md).
+Navigation turns the decoded [navmesh](../formats/navmesh.md) into a graph that can be searched,
+and moves NPCs along the paths it finds. The graph follows [cell streaming](cell-streaming.md).
 
 ## Loaded graph
 
@@ -83,7 +83,7 @@ At most eight NPCs move at once. A mover exists only after a path is found. An a
 target has no capsule, controller, or work.
 
 Each mover has a standard actor capsule and its own walk controller. It uses the same 120 Hz steps,
-terrain, collision, slope rules, and sliding as the player ([walk mode](/engine/walk-mode.md)). A
+terrain, collision, slope rules, and sliding as the player ([walk mode](walk-mode.md)). A
 long frame is clamped to 100 ms, so it cannot jump.
 
 - The mover turns toward the next waypoint, at most one full turn per second.
@@ -98,14 +98,14 @@ long frame is clamped to 100 ms, so it cannot jump.
   graph state names: `iState` 60 is `iState_HorseDefault`, so a horse uses the `MOVT` named
   `HorseDefault`, walk 125.11 and run 450. Without a graph state, the race's own walk type
   (`RACE` `WKMV`) is used, then the default `NPC_Default_MT`, walk 80.1 and run 370 ([actor state
-  graph](/engine/actor-state-graph.md#how-the-game-picks-istate)).
+  graph](actor-state-graph.md#how-the-game-picks-istate)).
 - A race can replace a type's speeds: an `MTYP` with a `SPED` after it in the `RACE` record gives
   that race its own speeds for that type. Example: `ChickenRace` walks `Chicken_Default_MT` at
   34.71 and runs at 251.94.
 - The speeds are multiplied in this order:
-  1. the actor's scale times its [height](/engine/actor-resolution.md#height);
+  1. the actor's scale times its [height](actor-resolution.md#height);
   2. the size of `SpeedMult` over 100, where 0 counts as 100;
-  3. on a run only, the worn weight share of [walk mode](/engine/walk-mode.md#speed). The run
+  3. on a run only, the worn weight share of [walk mode](walk-mode.md#speed). The run
      never drops below the walk. Example: a run of 450 and a walk of 125 at share 0.7 give 315.
   An actor that cannot run walks instead. The player cannot run over its carry weight. An NPC
   has no carry weight check.
@@ -132,7 +132,7 @@ long frame is clamped to 100 ms, so it cannot jump.
   point. The arc peaks 32 units above the higher end. It takes the horizontal distance over the
   run speed, between 0.35 and 1.2 seconds. The controller starts again at the landing.
 - In water, the mover swims by the player's rule
-  ([ground and water contact](/engine/ground-and-water-contact.md#water)), with float level 1.6.
+  ([ground and water contact](ground-and-water-contact.md#water)), with float level 1.6.
   It walks out where the ground rises under it. A swimmer uses the swim gait and the swim speed,
   and reaches a waypoint on the bed below it.
 - Walkers steer around each other, and around the player and standing NPCs. Actors are not
@@ -187,7 +187,7 @@ the gate. The horse stands behind it and asks for the same point again until the
 
 OpenSky keeps its own stuck rule above: two seconds without progress, one new search, then the
 walk gives up. A Patrol then walks to the same point again on the next update. Other procedures
-fail as [package schedules](/engine/package-schedules.md#in-a-session) describes.
+fail as [package schedules](package-schedules.md#in-a-session) describes.
 
 ## A walk whose path fails
 
@@ -201,7 +201,7 @@ is moved to that point as soon as the point is off screen, or after 5 seconds.
 
 A patrol walks to the same point again ([blocked walks](#blocked-walks)). The
 Activate procedure plans the path again on later updates, with no time-out
-([activate procedure](/engine/activate-procedure.md#a-blocked-path)). Whether a travel package ends
+([activate procedure](activate-procedure.md#a-blocked-path)). Whether a travel package ends
 after a failure was not found.
 
 ## Position and triggers
@@ -216,7 +216,7 @@ After a load the movement runtime is empty, so it is the saved transform, and on
 placed `ACHR`.
 
 The published heading follows the placement rule: `angleZ` turns clockwise from north
-([player camera](/engine/player-camera.md)). A walk direction is an angle counter-clockwise from
+([player camera](player-camera.md)). A walk direction is an angle counter-clockwise from
 +X, so the heading is a quarter turn minus the walk angle. An actor that walks east is drawn
 facing east.
 
@@ -239,13 +239,13 @@ Movement and animation meet in one value: actor, direction, gait, yaw, and frame
 writable transform, so a later combat or package system can use it without becoming a second owner
 of movement. The app plays `mt_walkforward.hkx` or `mt_runforward.hkx` for the actor's gender. The
 clips play in place while the capsule moves the actor. Combat clips still interrupt and return
-([actor animation](/engine/actor-animation.md)).
+([actor animation](actor-animation.md)).
 
 Movers are capped at eight, with a 2 ms CPU budget for all of them in a 16.67 ms frame. Why NPCs
 use in-place clips instead of full behavior graphs was measured, not guessed: eight vanilla
 behavior graphs cost more than the whole 2 ms budget even in an optimized build, before
 collision, paths, triggers, or drawing. The clip drive uses a small part of the budget.
-`make test PLAN=Perf` measures both ([testing](/testing.md)).
+`make test PLAN=Perf` measures both ([testing](../testing.md)).
 
 ## Debug overlay
 
@@ -259,7 +259,7 @@ flicker against the ground. Both toggles are off by default.
 The overlay pass draws triangles, then lines, with premultiplied alpha and a read-only
 "less or equal" depth test. It runs after the 3D scene and before the UI, both on screen and
 offscreen. It draws at most 65,536 primitives per frame, and counts what it drew and dropped.
-`openskycli render --navmesh-overlay` captures it ([CLI](/tools/cli.md)).
+`openskycli render --navmesh-overlay` captures it ([CLI](../tools/cli.md)).
 
 ## What the game does the same way
 

@@ -17,7 +17,7 @@ A creature makes two kinds of sound besides its steps:
 
 A wolf's bite clip sends bare event names, such as `NPCWolfAttackA`. The canine bite clip
 sends the cue of every canine at once: `NPCWolfAttackA`, `NPCDogAttack`, `NPCDogHuskyAttack`,
-and `NPCDogDeathHoundAttackA` ([animation events](/engine/animation-events.md#events-the-game-ignores)).
+and `NPCDogDeathHoundAttackA` ([animation events](animation-events.md#events-the-game-ignores)).
 
 These names are also `FSTP` tags. The install holds 191 `FSTP` records, and many carry a
 creature cue as their tag. For example, `NPCWolfAttackAFootstep` (`Update.esm`) has the tag
@@ -31,14 +31,14 @@ A creature's footstep set (`FSTS`) lists only its own cues:
 | `NPCDogFootWalkFootstepSet` | `Dawnguard.esm` | `NPCDogAttack`, `NPCDogAttackPower` |
 
 So the event goes through the same route as a step: OpenSky looks the name up in the actor's
-own set ([footstep sounds](/engine/footstep-sounds.md)). The wolf's set has no
+own set ([footstep sounds](footstep-sounds.md)). The wolf's set has no
 `NPCDogAttack`, so a wolf plays one bite sound, not four.
 `openskycli footstep --set NPCWolfFootWalkFootstepSet`
 prints each cue with its sound file.
 
 An event name that no `FSTP` record carries as a tag plays nothing, even when an `SNDR` has
 that editor ID. Only an event of the form `SoundPlay.<editor ID>` names a sound directly
-([animation events](/engine/animation-events.md#events)). For example, the scrib
+([animation events](animation-events.md#events)). For example, the scrib
 (`DLC2AshHopperRace`) sends `NPCScribAttack1` when it bites. An `SNDR` of that name exists,
 but no `FSTP` has the tag, and the scrib's set `NPCScribFootWalkFootstepSet` holds only its
 steps. So the scrib's bite makes no sound, in the game and in OpenSky.

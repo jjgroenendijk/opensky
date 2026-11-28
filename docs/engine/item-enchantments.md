@@ -11,8 +11,8 @@ tags: [engine, magic, enchantments, combat, inventory]
 
 A weapon's enchantment fires on whatever it hits and spends charge. A worn item's enchantment grants
 its effects while it is worn. A fortify effect from either one moves a damage number. The records are
-on the [enchantment records](/formats/enchantments.md) page. An enchantment the player made at an
-enchanter acts the same way; [enchanting](/engine/enchanting.md) says how it is made.
+on the [enchantment records](../formats/enchantments.md) page. An enchantment the player made at an
+enchanter acts the same way; [enchanting](enchanting.md) says how it is made.
 
 ## Three shapes
 
@@ -41,7 +41,7 @@ Two numbers, both decoded, and no invented formula:
 - Full charge is the weapon's own `EAMT`. `ARMO` has no such field, which fits a worn enchantment
   spending nothing.
 - One use costs the enchantment's cost: the written `ENIT` value under the manual cost flag, and the
-  auto-calculated total otherwise ([spell records](/formats/magic-records.md)).
+  auto-calculated total otherwise ([spell records](../formats/magic-records.md)).
 
 So the number of uses is `floor(EAMT / cost)`. UESP's Generic Magic Weapons page prints a
 "Charge/Cost = Uses" column for every generated magic weapon, as "base values, equivalent to the
@@ -80,7 +80,7 @@ of each soul: 250 petty, 500 lesser, 1000 common, 2000 greater, and 3000 grand
 (<https://en.uesp.net/wiki/Skyrim:Souls>). A black soul counts as grand. A gem with the
 `ReusableSoulGem` keyword, such as Azura's Star, empties and stays. The game lets the player pick
 the gem. A recharge gives Enchanting experience by the soul's size
-([enchanting](/engine/enchanting.md#experience)).
+([enchanting](enchanting.md#experience)).
 
 Soul Squeezer adds 250 to every soul through `Mod Soul Gem Recharge` (49), as an add-value entry in
 the install. UESP describes it the same way: "This treats all souls as having 250 larger size when
@@ -89,23 +89,23 @@ used for recharging" (<https://en.uesp.net/wiki/Skyrim:Enchanting>).
 Soul Siphon recharges the killer's weapon at a killing blow. `Mod Soul Pct Captured to Weapon` (78)
 is a set-value entry of 0.05, and its target tab requires `HasKeyword ActorTypeNPC == 0` on the
 victim. So the data itself leaves people out, which matches UESP: "Death blows to creatures, but not
-people". The weapon gets that share of the victim's soul charge, sized as [soul trap](/engine/soul-trap.md)
+people". The weapon gets that share of the victim's soul charge, sized as [soul trap](soul-trap.md)
 sizes it. UESP says it does not work with staves, so a staff is skipped. OpenSky does not know
 which weapon dealt the blow, so the killer's first equipped weapon that is short of charge gets it.
 
 ## Where charge is stored
 
-Charge is kept on the weapon's best held [item copy](/engine/item-copies.md). Two of the same
+Charge is kept on the weapon's best held [item copy](item-copies.md). Two of the same
 enchanted sword each have their own charge, and a hit spends the first one. A full copy stores
 nothing. An item the owner does not hold, as in a test with no inventory, keeps its charge per base
-item in the owner's enchanted item component ([runtime state](/engine/runtime-state.md)). That
+item in the owner's enchanted item component ([runtime state](runtime-state.md)). That
 component also holds the effects each worn item applied. A charge an older save kept per base item
 is read, then moved onto the copy at the next hit or recharge.
 
 ## A landed hit
 
 A contact enchantment applies through the same code as a landed spell
-([spell delivery](/engine/spell-delivery.md)): each hostile entry is scaled by the target's
+([spell delivery](spell-delivery.md)): each hostile entry is scaled by the target's
 resistances and handed to the effect runtime. Only the charge is added.
 
 The area rule is the spell rule too. The struck actor gets every entry. An entry with an `EFIT`
@@ -183,7 +183,7 @@ The magnitudes are percentage points, as the effects' own descriptions say: "One
 &lt;mag&gt;% more damage with your shield" (<https://en.uesp.net/wiki/Skyrim:Fortify_Block>). The
 multiplier is `1 + points / 100`, with points added first: the actor value is one sum, and UESP's
 example (four 40% items give +160%) adds. Where each one lands is on the
-[melee damage](/engine/melee-damage.md) and [projectiles](/engine/projectiles.md) pages.
+[melee damage](melee-damage.md) and [projectiles](projectiles.md) pages.
 
 Not read here: `Melee Damage` (34) and `Unarmed Damage` (35) are flat point adds, not
 percentages, and `Attack Damage Mult` (154) is the value vanilla perks write. Adding a flat value
@@ -192,7 +192,7 @@ into a multiplier would be a different formula.
 ## Saving
 
 A copy's charge goes in the `ICPY` chunk with the rest of the copy. The worn effect lists, and any
-charge kept per base item, go in the `ECHG` chunk ([save chunks](/formats/opensky-save-actor-chunks.md)).
+charge kept per base item, go in the `ECHG` chunk ([save chunks](../formats/opensky-save-actor-chunks.md)).
 
 ## Where it shows
 

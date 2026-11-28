@@ -13,7 +13,7 @@ graph for each press, hold, and release. Pressing both buttons at almost the sam
 dual press.
 
 OpenSky builds the melee part for a weapon in the left hand
-([melee combat](/engine/melee-combat.md#the-left-hand)). The left punch, the repeated power
+([melee combat](melee-combat.md#the-left-hand)). The left punch, the repeated power
 attacks of a long hold, and the wait for both buttons after a dual press are not built.
 
 ## The actions
@@ -97,4 +97,4 @@ sends the Left, Right, or Dual Power Attack for the hand it was armed for. Relea
 No kill move rule depends on the hand. Each hand's attack runs the idle tree under its own
 action: `ActionLeftAttack`, `ActionLeftPowerAttack`, `ActionDualAttack`, and
 `ActionDualPowerAttack` beside the two right-hand ones. The kill moves for each hand are idle data in
-`Skyrim.esm`, such as the `KillMoveDualWieldA` idle ([paired animations](/engine/paired-animations.md#kill-moves)).
+`Skyrim.esm`, such as the `KillMoveDualWieldA` idle ([paired animations](paired-animations.md#kill-moves)).

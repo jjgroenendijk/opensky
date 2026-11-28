@@ -11,8 +11,8 @@ tags: [format, plugin, dialogue, dial, info, vtyp, npc, localization]
 - `INFO`: one possible answer to a topic, with its conditions and spoken lines.
 - `VTYP`: a voice type, for example `MaleNord`. It names the folder of voice files.
 
-See [dialogue runtime](/engine/dialogue.md) for topic choice and conditions,
-[conditions](/formats/conditions.md) for `CTDA`, and [actor records](/formats/actors.md)
+See [dialogue runtime](../engine/dialogue.md) for topic choice and conditions,
+[conditions](conditions.md) for `CTDA`, and [actor records](actors.md)
 for templates.
 
 ## Sources
@@ -34,7 +34,7 @@ The sources disagree in two places:
 - `INFO NAM1` is an `ilstring`, not a `dlstring`. UESP says ILSTRINGS holds spoken lines,
   and DLSTRINGS holds books and journal text. A vanilla `NAM1` ID resolves in
   `skyrim_english.ilstrings` and not in the DLSTRINGS table. See
-  [string tables](/formats/strings.md).
+  [string tables](strings.md).
 
 ## DIAL
 
@@ -67,7 +67,7 @@ Dragonborn flying-mount codes, such as `FMAT`, have no setting.
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID |
-| `VMAD` | struct | Scripts and result fragments. See [VMAD](/formats/vmad.md) |
+| `VMAD` | struct | Scripts and result fragments. See [VMAD](vmad.md) |
 | `DATA` or `ENAM` | struct | Flags and reset time, below |
 | `TPIC` | FormID | Previous topic |
 | `PNAM` | FormID | Previous `INFO` |
@@ -121,7 +121,7 @@ female. The editor ID is the name of the voice file folder.
 
 `NPC_ VTCK` is a `VTYP` FormID. It belongs to the "use traits" template group, with gender,
 race, skin, and head parts. So a template NPC can supply it. See
-[actor records](/formats/actors.md).
+[actor records](actors.md).
 
 ## Errors
 

@@ -95,4 +95,4 @@ view.
 ## Where to see it
 
 `openskycli game debug channel <mode>` picks the channel, and `openskycli game debug overlay
-<layer> on|off` turns one layer on or off ([agent control](/tools/agent-control.md)).
+<layer> on|off` turns one layer on or off ([agent control](../tools/agent-control.md)).

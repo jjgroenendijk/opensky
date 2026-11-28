@@ -7,13 +7,13 @@ tags: [format, save, ess, papyrus]
 
 # Skyrim save Papyrus table
 
-Global data table type 1001 in the [save body](/formats/ess.md) holds the Papyrus script
+Global data table type 1001 in the [save body](ess.md) holds the Papyrus script
 engine's state: its strings, the scripts it loaded, every script instance with its
 variables, arrays, and the stacks that were running.
 
 Reference: UESP
 [Save File Format/Papyrus](https://en.uesp.net/wiki/Skyrim_Mod:Save_File_Format/Papyrus).
-Types are listed in [ESS](/formats/ess.md#basic-types).
+Types are listed in [ESS](ess.md#basic-types).
 
 ## Strings and ids
 
@@ -95,5 +95,5 @@ file version 1, and 21 zero array counts. The save file version is not confirmed
 
 ## Confirmed on real data
 
-Not yet: see [ESS](/formats/ess.md#confirmed-on-real-data). The first real-data run must
+Not yet: see [ESS](ess.md#confirmed-on-real-data). The first real-data run must
 check the id width and how often the stack read stops early.

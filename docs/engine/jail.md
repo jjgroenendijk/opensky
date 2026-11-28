@@ -8,7 +8,7 @@ tags: [engine, crime, factions]
 
 # Jail
 
-A guard's arrest can end in jail ([guards and arrest](/engine/guard-response.md)). This page
+A guard's arrest can end in jail ([guards and arrest](guard-response.md)). This page
 covers what happens from the jail door to release or escape.
 
 Sources: the Creation Kit wiki pages "Creating a Custom Crime Faction",
@@ -17,7 +17,7 @@ and UESP "Skyrim:Crime", Going to Jail.
 
 ## The faction's jail links
 
-A crime faction names its jail in five `FACT` fields ([factions](/formats/factions.md)):
+A crime faction names its jail in five `FACT` fields ([factions](../formats/factions.md)):
 
 | Field | Creation Kit name | Use |
 | --- | --- | --- |
@@ -132,7 +132,7 @@ The faction's `WAIT` marker field is not used for this.
 ## Saving
 
 A save keeps the stay on the player's script state
-([SCRS](/formats/opensky-save-world-chunks.md#scrs-script-state)): the faction, the gold, the
+([SCRS](../formats/opensky-save-world-chunks.md#scrs-script-state)): the faction, the gold, the
 days, the marker, the chest, and the outfit. The cell of the arrest is not kept. After a load the
 cell the player stands in counts as the jail cell.
 

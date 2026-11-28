@@ -210,7 +210,7 @@ The whole tour also gets a `frameTime` and `gpuTime` over every measured frame.
 
 Each scene is an `OSSignposter` interval in the `Benchmark` category, so an Instruments trace
 shows where each scene starts and ends. `make profile` records one
-([testing](/testing.md), Profiling).
+([testing](../testing.md), Profiling).
 
 ## Load time
 
@@ -251,7 +251,7 @@ app, for a measurement of the builds alone.
 Each load pass, and each arrival, splits its time into phases. A phase counts only its own
 time. A mesh load that reads an archive gives the read to `archive`, and the rest to `mesh`.
 A read inside a parallel decode stays in that decode's phase, because several workers read at
-once ([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
+once ([concurrency](../decisions/concurrency.md#parallel-decode-inside-a-cell-build)).
 
 | Phase | What it holds |
 | --- | --- |
@@ -259,11 +259,11 @@ once ([concurrency](/decisions/concurrency.md#parallel-decode-inside-a-cell-buil
 | `texture` | DDS parsing and the GPU texture upload |
 | `mesh` | NIF parsing, flattening, and GPU buffer building, terrain included |
 | `collision` | Static collision, trigger volumes, and dynamic bodies |
-| `gpuRead` | Waiting at the end of a build for its direct GPU reads ([asset cache](/engine/asset-cache.md#direct-gpu-loading)). A result from before this phase has no `gpuReadMS` |
+| `gpuRead` | Waiting at the end of a build for its direct GPU reads ([asset cache](../engine/asset-cache.md#direct-gpu-loading)). A result from before this phase has no `gpuReadMS` |
 | `recordIndex` | First-use record indexes: the load order's FormID index, and the index of each record type a build reads (`STAT`, `TXST`, `LIGH`, `WRLD`, and so on) |
 | `actorIndex` | First-use actor indexes: the template and look resolvers over `NPC_`, `RACE`, `ARMO`, and their lists |
 | `cellLookup` | First-use cell lookups: a worldspace's exterior cells by grid, and its persistent references |
-| `lodBrightness` | Fitting a worldspace's terrain LOD brightness curve from sampled cells ([surface shading](/rendering/surface-shading.md#albedo)) |
+| `lodBrightness` | Fitting a worldspace's terrain LOD brightness curve from sampled cells ([surface shading](../rendering/surface-shading.md#albedo)) |
 | `other` | Everything else: per-cell record decoding, actors, lighting, setup |
 
 The four first-use phases run once per builder, so a warm pass shows them near zero. A result

@@ -91,7 +91,7 @@ context, because it reads every feature's runtime. Papyrus has `ScriptCoordinato
 the natives their collaborators. `WorldRenderControls` in `src/Sources/OpenSkyWorld/Session/` holds
 the renderer and streamer controls that agent control uses. It has no core, because it only reads
 and writes the renderer. `GameSessionScope` in the app builds every adapter and
-coordinator over the session stage ([session scope](/decisions/session-scope.md)).
+coordinator over the session stage ([session scope](../decisions/session-scope.md)).
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and
@@ -115,7 +115,7 @@ When the adapter owns the coordinator, or the port is the view controller itself
 coordinator keeps the port as `weak let`, and the app builds it in a `lazy var`. The lint rule
 `late_attached_world` fails a late-attach method, such as `attach(world:)`, in a package
 module or the app. How the other dependencies reach a coordinator, and the lint rules that keep late
-setters out, are in [session scope](/decisions/session-scope.md).
+setters out, are in [session scope](../decisions/session-scope.md).
 
 An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
 protocol lists only the coordinators and values that adapter reads. `GameViewController`
@@ -204,7 +204,7 @@ port. Example: `VendorCoreTests` covers every refusal with values, and
 
 ## Module rules
 
-These follow from [The Modular Architecture](/decisions/modular-architecture.md):
+These follow from [The Modular Architecture](../decisions/modular-architecture.md):
 
 - A coordinator imports its own module, lower package modules, and other features'
   `Interface` modules. It never imports another feature's implementation module.
@@ -233,4 +233,4 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 
 Do not add a new `GameViewController+X` file for new logic. The lint rule
 `game_view_controller_extension` fails an extension of the view controller outside its own
-files ([code-health automation](/decisions/code-health-automation.md)).
+files ([code-health automation](../decisions/code-health-automation.md)).

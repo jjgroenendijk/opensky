@@ -14,7 +14,7 @@ level. Source: UESP "Skyrim:Trainers" (<https://en.uesp.net/wiki/Skyrim:Trainers
 
 `CLAS` `DATA` byte `0x04` is the skill, as the actor value index minus 6. Byte `0x05` is the
 level the trainer teaches up to. A level of 0 means the class trains nothing
-([actor records](/formats/actors.md)). UESP lists three trainer levels: up to 50, 75, and 90.
+([actor records](../formats/actors.md)). UESP lists three trainer levels: up to 50, 75, and 90.
 
 The game opens training from the trainer's dialogue: the topic's script fragment calls
 `Game.ShowTrainingMenu` (see [training menu](#training-menu)).
@@ -59,7 +59,7 @@ Use` perk entry point, raises the skill one level, and keeps at most just under 
 level's cost as progress. The skill level banks character experience like any other skill
 level.
 
-The session count is saved in its own `PTRN` chunk ([save format](/formats/opensky-save.md)).
+The session count is saved in its own `PTRN` chunk ([save format](../formats/opensky-save.md)).
 
 ## Training menu
 

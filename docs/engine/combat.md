@@ -9,23 +9,23 @@ tags: [engine, combat, hostility, combat-ai, npc, music, persistence]
 
 # Combat loop
 
-The combat loop ties the pieces of a fight together: [melee combat](/engine/melee-combat.md),
-[archery](/engine/archery.md), [death and ragdoll](/engine/ragdoll.md),
-[actor values](/engine/actor-values.md), [detection](/engine/detection.md),
-[navigation](/engine/navigation.md), [package schedules](/engine/package-schedules.md),
-[dynamic bodies](/engine/dynamic-bodies.md), and [music](/engine/music.md).
+The combat loop ties the pieces of a fight together: [melee combat](melee-combat.md),
+[archery](archery.md), [death and ragdoll](ragdoll.md),
+[actor values](actor-values.md), [detection](detection.md),
+[navigation](navigation.md), [package schedules](package-schedules.md),
+[dynamic bodies](dynamic-bodies.md), and [music](music.md).
 
 Related pages:
 
-- [Hostility](/engine/hostility.md): how records decide whether one actor attacks another.
-- [Combat behavior](/engine/combat-behavior.md): the per-actor machine that approaches, attacks,
+- [Hostility](hostility.md): how records decide whether one actor attacks another.
+- [Combat behavior](combat-behavior.md): the per-actor machine that approaches, attacks,
   blocks, flees, searches, and gives up, and the hit reactions.
 
 ## Hostility
 
 Each actor has one hostility value: `neutral` (the start) or `hostile`, meaning it has a quarrel
 with the player. It is stored as a world state component, so it is logged, counted, and saved like
-every other write ([runtime state](/engine/runtime-state.md)). There is no `dead` value. Death is
+every other write ([runtime state](runtime-state.md)). There is no `dead` value. Death is
 its own component, and a second copy of the same fact would have to be kept in step.
 
 The stored value is the session's explicit override: a record of something that already happened.
@@ -36,7 +36,7 @@ Two things write it:
 2. A script's `StartCombat`.
 
 Everything else is derived from the records each time it is asked
-([hostility](/engine/hostility.md)). With no game data loaded, there is nothing to derive from, and
+([hostility](hostility.md)). With no game data loaded, there is nothing to derive from, and
 the stored override alone answers.
 
 ## Entering a fight
@@ -83,7 +83,7 @@ read as "nobody else was fighting".
 
 ## Allies
 
-A summoned or reanimated actor serves its caster ([magic archetypes](/engine/magic-archetypes.md)).
+A summoned or reanimated actor serves its caster ([magic archetypes](magic-archetypes.md)).
 The CK wiki puts it "under the caster's control". The loop calls such an actor an ally.
 
 - The player's ally is calm toward the player, and the player's blows do not turn it.
@@ -103,7 +103,7 @@ The CK wiki puts it "under the caster's control". The loop calls such an actor a
 ## NPC foes
 
 An NPC fights another NPC as well as the player. The rule is the game's
-[hostility test](/engine/hostility.md#aggression-draws-the-weapon): an actor attacks on sight the
+[hostility test](hostility.md#aggression-draws-the-weapon): an actor attacks on sight the
 actors its aggression and reaction make it hostile to, and it is hostile to a target that fights it,
 unless it counts that target an Ally or a Friend.
 
@@ -116,7 +116,7 @@ unless it counts that target an Ally or a Friend.
 - Perception tracks each such pair. When the observer detects its foe, it fights it.
 - An actor that an NPC fights, fights back. It engages without having to see the attacker.
 - A calm actor that helps an ally fighting an NPC fights that NPC too, through Assistance
-  ([Confidence and Assistance](/engine/combat-behavior.md#confidence-and-assistance)).
+  ([Confidence and Assistance](combat-behavior.md#confidence-and-assistance)).
 - An actor that fights the player picks the nearest of the player, the player's allies it has seen,
   and its NPC foe. While it has a foe, a player it has not detected does not pull it away.
 - The player is in combat only while an actor fights the player or the player's allies. A fight
@@ -124,7 +124,7 @@ unless it counts that target an Ally or a Friend.
 - `openskycli game state actors` shows each actor's combat `target`.
 
 The range is an OpenSky value. The game checks detection every 1 to 2 seconds per
-actor ([detection](/engine/detection-schedule.md#who-runs-detection-in-the-game)).
+actor ([detection](detection-schedule.md#who-runs-detection-in-the-game)).
 
 ## Who an assisting actor fights
 
@@ -206,7 +206,7 @@ would help that NPC too.
 ## Starting and stopping from a script
 
 `StartCombat(Actor akTarget)` and `StopCombat()` are `Actor` natives
-([Papyrus actor natives](/engine/papyrus-actor-natives.md)). Both go through the combat loop, not
+([Papyrus actor natives](papyrus-actor-natives.md)). Both go through the combat loop, not
 straight to the component, so a script's fight enters by the same door as the player's.
 
 - `StartCombat` engages the actor at once and records the target.
@@ -230,7 +230,7 @@ them, but cannot call a method on them.
 
 Deaths come from the death latch in the ragdoll runtime.
 
-The condition side reads the same state ([conditions](/formats/conditions.md)). `GetCombatState`
+The condition side reads the same state ([conditions](../formats/conditions.md)). `GetCombatState`
 reads the behavior phase, not stored hostility: 0 for an actor that hates the player but has not
 noticed them, 1 while fighting, and 2 while searching. Run-on type 3 (combat target) resolves as
 above: the player fights the nearest hostile living actor, and every engaged living actor fights the
@@ -258,7 +258,7 @@ not position.
 ## Combat music
 
 Combat is a game system state, not a location. So entering combat selects a `MUSC` directly and
-leaves the [music](/engine/music.md) precedence chain below it alone.
+leaves the [music](music.md) precedence chain below it alone.
 
 - Entering combat picks the first `MUSC` whose editor ID starts with `MUSCombat` (ignoring case),
   ordered by form ID so it is the same on every run. It remembers what it interrupted.
@@ -270,7 +270,7 @@ leaves the [music](/engine/music.md) precedence chain below it alone.
 
 ## What a save keeps
 
-Hostility goes in `CBTS` and faction memberships in `FCTN` ([actor chunks](/formats/opensky-save-actor-chunks.md)).
+Hostility goes in `CBTS` and faction memberships in `FCTN` ([actor chunks](../formats/opensky-save-actor-chunks.md)).
 `CBTS` holds only the explicit override, never the derived answer. Saving a derived answer would
 freeze a decision the next load should make again: a plugin that changes a faction relation must
 change who is angry. An unknown hostility byte loads as neutral.
@@ -293,14 +293,14 @@ shows the last fall under `lastFall`.
 ## Limits
 
 - NPCs do not power attack, bash, or dodge. The player power attacks, sneak attacks, and bashes.
-- Actors cast only spells, and only the deliveries [magic](/engine/magic.md) carries out. Powers,
+- Actors cast only spells, and only the deliveries [magic](magic.md) carries out. Powers,
   lesser powers, and shouts are skipped.
 - No group tactics or morale.
 - The dialogue filter and the stored hostility override are relative to the player only.
 - An NPC swings the first weapon it has equipped, with its `WEAP` damage and reach and its
   tempering, as the player's weapon is read. With none it swings unarmed. An NPC with a bow shoots
-  ([archery](/engine/archery.md#npc-archers)).
+  ([archery](archery.md#npc-archers)).
 - A combat event aimed at an NPC, such as a stagger from the player's swing, goes to that NPC's
-  behaviour graph ([actor graphs](/engine/actor-graphs.md)). An NPC that runs no graph, or whose
+  behaviour graph ([actor graphs](actor-graphs.md)). An NPC that runs no graph, or whose
   graph lacks the event, answers false, and the trace says it did not play. The combat loop's own
-  reactions are single clips ([actor animation](/engine/actor-animation.md)).
+  reactions are single clips ([actor animation](actor-animation.md)).

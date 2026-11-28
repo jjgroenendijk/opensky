@@ -56,7 +56,7 @@ launcher's Launch page shows both as checkboxes in its New game group.
 
 `OPENSKY_SURVIVAL_MODE` (`on`, `off`, or `ask`) wins over both settings for one run.
 `openskycli game launch --survival-mode` sets it, and its default is `off`
-([agent control](/tools/agent-control.md)).
+([agent control](../tools/agent-control.md)).
 
 Before the scripts run in each frame, OpenSky reads the globals:
 

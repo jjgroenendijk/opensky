@@ -47,7 +47,7 @@ The `_A` weathers, such as `SkyrimClear_A`, carry an aurora model.
 | `fStarsRotateXAxis`, `Y`, `Z` | -0.09, 0.35, 1 | The axis the stars turn about |
 | `fAuroraFadeInStart`, `fAutoraFadeIn` | 19, 20 | Hours the aurora fades in |
 | `fAuroraFadeOutStart`, `fAutoraFadeOut` | 5 (CK default), 6 | Hours the aurora fades out |
-| `fWeatherTransAccel` | 16 | See [weather scripts](/engine/weather.md#scripts) |
+| `fWeatherTransAccel` | 16 | See [weather scripts](weather.md#scripts) |
 
 Two settings are spelled "Autora" in the game. The game has no setting for the sun's size, so the
 sun card is 0.12 and the glare card 1.0 across, as tangents at full glare. These are OpenSky values.
@@ -150,7 +150,7 @@ The sky objects draw after the sky gradient and before the cloud layers, so clou
 They follow the camera and use no depth test. The order is stars, aurora, sun glare, sun, moons.
 Stars, aurora, sun, and glare add light; a moon covers what is behind it. A star or aurora
 shape shades as any effect mesh does: base colour, greyscale palette, view-angle falloff, and
-vertex colour and alpha ([NIF materials](/formats/nif-materials.md)). It skips the soft fade and
+vertex colour and alpha ([NIF materials](../formats/nif-materials.md)). It skips the soft fade and
 the scene light, since nothing lies behind the sky. Before each moon,
 `textures\sky\moonshadow.dds` paints the sky colour back where the moon will be, so stars do
 not show through its dark side. The colour is the weather's sky-lower to sky-upper colour by the
@@ -162,7 +162,7 @@ count under `sky`. `openskycli render --weather <WTHR> --time-of-day <hour>` pri
 `[INFO] sky` line.
 
 A sky mesh's shader controllers play on the renderer's animation time, so the aurora streaks
-scroll ([shader property controllers](/formats/nif-controllers.md#shader-property-controllers)).
+scroll ([shader property controllers](../formats/nif-controllers.md#shader-property-controllers)).
 
 The moon texture is added in the weather's moon glare colour (`NAM0` index 16) times the
 moon's alpha, over its shadow card. In `SkyrimClear` that colour is (255, 165, 125) at night

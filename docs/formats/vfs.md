@@ -42,7 +42,7 @@ The first archive opened has the lowest priority.
    of the vanilla Skyrim SE 1.6 lists.
 2. Archives named after plugins. For each `.esm`, `.esp`, or `.esl` in `Data/`, OpenSky
    opens `<plugin>.bsa`, then `<plugin> - Textures.bsa`, when they exist. UESP describes
-   this automatic loading. Plugins go in [load order](/formats/plugins-txt.md), so a mod's
+   this automatic loading. Plugins go in [load order](plugins-txt.md), so a mod's
    archive wins over the archives of every plugin before it. A plugin not in the load order
    keeps its archive at the bottom of the list. The plugins.txt page explains why.
 
@@ -55,7 +55,7 @@ menu previews.
 ## Opening and errors
 
 - An archive reads its tables on the first lookup, not when the VFS is built. File data is
-  read only when asked for (see [BSA](/formats/bsa.md)).
+  read only when asked for (see [BSA](bsa.md)).
 - A broken archive is logged once and skipped from then on. Lookups fall through to the
   archives below it. This is never fatal, because mods sometimes ship broken files.
 - A broken file inside a good archive gives an error to the caller. The lookup does not

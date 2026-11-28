@@ -9,7 +9,7 @@ tags: [format, plugin, water, cell, worldspace]
 
 OpenSky draws exterior water as one flat plane per cell. This page lists the record fields
 it reads for that plane. The record container is described in
-[ESM/ESP plugin container](/formats/esm.md).
+[ESM/ESP plugin container](esm.md).
 
 Sources:
 
@@ -88,7 +88,7 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 200 | float32 | Sun sparkle magnitude |
 | 204 | float32 | Sun specular magnitude |
 | 224 | float32 | Sun sparkle power |
-| 228 | float32 | Flowmap scale (232-byte size only; [flow maps](/rendering/water.md#flow-maps)) |
+| 228 | float32 | Flowmap scale (232-byte size only; [flow maps](../rendering/water.md#flow-maps)) |
 
 These offsets follow the field order of the UESP WATR page and xEdit dev-4.1.6
 `wbDefinitionsTES5.pas`. xEdit names the rest of `DNAM`, and OpenSky does not read it:
@@ -108,7 +108,7 @@ defaults, so the rain rings use OpenSky's own sizes. The
 [Creation Kit WaterType page](https://ck.uesp.net/wiki/WaterType) describes neither the
 texture blend nor the specular and depth fields. The fields around `DNAM`, such as
 opacity, flags, material, sounds, velocities, and noise texture paths, are read as xEdit dev-4.1.6
-names them. The [water renderer](/rendering/water.md) uses `ANAM` opacity and `NAM0` linear
+names them. The [water renderer](../rendering/water.md) uses `ANAM` opacity and `NAM0` linear
 velocity. A cell with a missing or unknown `WATR` gets fixed fallback colors.
 
 Vanilla values (Skyrim.esm, 2026-10-08): wind directions lie in 0...360, wind speeds in

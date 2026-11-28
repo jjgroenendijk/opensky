@@ -12,7 +12,7 @@ Many natives set something that no OpenSky runtime models yet. `Actor.SetGhost` 
 no system reads the ghost flag, but a script may read it back with `IsGhost`. OpenSky keeps such
 values in one world-state component, `ScriptedReferenceState`, on the form the script changed. A
 `Game` function keeps its value on the player. The `SCRS` save chunk stores the component
-([world chunks](/formats/opensky-save-world-chunks.md#scrs-script-state)).
+([world chunks](../formats/opensky-save-world-chunks.md#scrs-script-state)).
 
 The component has four parts:
 
@@ -49,12 +49,12 @@ Signatures and defaults are from the Creation Kit wiki script pages, for example
 `GetCrimeFaction` answers a faction a script set before the `CRIF` of the actor's base.
 
 Condition functions read some of these flags too, such as `GetIsGhost` and
-`GetKeywordDataForLocation` ([condition functions](/engine/condition-functions.md#script-state)).
+`GetKeywordDataForLocation` ([condition functions](condition-functions.md#script-state)).
 
 The engine writes some entries itself, for conditions that ask about the past: the killer of
 an actor, the player's friendly hits, the last actor that hit the player, and the destruction
-progress ([recorded events](/engine/condition-functions-world.md#recorded-events),
-[Papyrus destruction](/engine/papyrus-destruction.md)).
+progress ([recorded events](condition-functions-world.md#recorded-events),
+[Papyrus destruction](papyrus-destruction.md)).
 
 ## Record flags
 
@@ -79,7 +79,7 @@ neutral instead. `SetAlly` has the same shape, and a true flag makes that side a
 The reaction is a value and a form link on the faction's state, so the save keeps it. After
 each change, and after a load, the faction runtime receives every scripted reaction. A
 scripted reaction wins over the `XNAM` relation of the record, in the hostility derivation
-and in `GetReaction` ([hostility](/engine/hostility.md)).
+and in `GetReaction` ([hostility](hostility.md)).
 
 ## Words and shouts
 
@@ -89,7 +89,7 @@ player, and `Game.IsWordUnlocked` reads the second. `UnlockWord` also teaches th
 `EquipShout`, `UnequipShout`, and `GetEquippedShout` keep the shouts an actor knows and wears.
 They count the shouts the actor's record gives as well as the ones a script added.
 `RemoveShout` answers whether the actor knew the shout, and takes it off when it was equipped.
-The [shout runtime](/engine/shouts.md) reads them to know which words the player may shout.
+The [shout runtime](shouts.md) reads them to know which words the player may shout.
 
 ## Ownership
 
@@ -98,7 +98,7 @@ has one owner at a time, so setting one clears the other. A `None` argument clea
 
 The crime check reads the owner a script set on a reference before the reference's own `XOWN`,
 and the owner a script set on an interior cell before the cell's `XOWN`
-([crime](/engine/crime.md#ownership)). So `SetActorOwner` with the player's base makes taking an
+([crime](crime.md#ownership)). So `SetActorOwner` with the player's base makes taking an
 item no theft. A faction owner set by a script needs rank 0.
 
 `GetActorOwner` and `GetFactionOwner` answer the script's owner first. With no script owner, a
@@ -113,7 +113,7 @@ for the rest. For `EnablePlayerControls` every default is true. Only an argument
 changes its group. `IsMovementControlsEnabled` and the seven other reads answer the stored state.
 
 While the player bleeds out, movement, fighting, sneaking, and activate are locked. A dead player
-has every group locked (see [Player death](/engine/ragdoll.md#player-death)).
+has every group locked (see [Player death](ragdoll.md#player-death)).
 
 A locked group drops its input before anything handles it, with no message. Activate is the one
 exception. When a script locked activate and also set the third argument of `Game.SetInChargen`
@@ -136,7 +136,7 @@ Activate shows the message once every 5 s.
 `Revert` removes every added form. The `FormList` reads see the plugin entries first, then the
 added forms. `LeveledItem`, `LeveledActor`, and `LeveledSpell` keep `AddForm` and `Revert` the same
 way, and each added entry keeps its level and, for `LeveledItem`, its count. The leveled roll
-reads the added entries ([leveled lists](/engine/leveled-lists.md#script-changes)).
+reads the added entries ([leveled lists](leveled-lists.md#script-changes)).
 
 ## Where OpenSky differs
 

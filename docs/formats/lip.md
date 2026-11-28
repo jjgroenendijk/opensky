@@ -8,11 +8,11 @@ tags: [format, audio, voice, dialogue, facefx, animation]
 
 # FaceFX lip animation (.lip)
 
-A voice file (`.fuz`, see [FUZ](/formats/fuz.md)) may hold a `.lip` block next to the
+A voice file (`.fuz`, see [FUZ](fuz.md)) may hold a `.lip` block next to the
 audio. Mods also ship it as a loose `.lip` file beside a `.xwm`. It is a FaceFX animation:
 a short header, then a compressed grid of float values. The grid has 30 frames per second,
 and each frame has one value per slot. On a humanoid head, slots drive the
-[FaceGen TRI targets](/formats/tri.md) of the mouth, eyes, and brows, and the turn of the
+[FaceGen TRI targets](tri.md) of the mouth, eyes, and brows, and the turn of the
 head.
 
 ## Sources and confidence
@@ -113,6 +113,6 @@ slot unused.
 
 Morph weights are clamped to 0 to 1. Brow values reach 1.34 in vanilla files. The head
 angles keep their sign and turn the neck and head on top of the clip and of
-[head tracking](/engine/head-tracking.md).
+[head tracking](../engine/head-tracking.md).
 
 The 8-slot creature grids decode, but drive nothing.

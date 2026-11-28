@@ -16,7 +16,7 @@ A `FACT` record holds four things under one editor ID:
 - for a merchant faction: what its shop sells, and when.
 
 An actor joins a faction through the `NPC_ SNAM` field, which gives the faction and a rank.
-See [combat](/engine/combat.md) for hostility and [crime](/engine/crime.md) for bounties.
+See [combat](../engine/combat.md) for hostility and [crime](../engine/crime.md) for bounties.
 
 References: UESP [FACT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FACT) and
 [NPC_](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_); xEdit `dev-4.1.6`,
@@ -137,10 +137,10 @@ vanilla load order there are none, so both readings agree. The count stays so th
 that disagrees shows up, instead of giving a radius in the tens of thousands.
 
 `PLVD` is a location type, one value whose meaning depends on the type, and a signed
-radius. The type list is shared with package locations (see [packages](/formats/packages.md)).
+radius. The type list is shared with package locations (see [packages](packages.md)).
 OpenSky keeps the middle value raw.
 
-The `CITC`/`CTDA` conditions at the end (see [conditions](/formats/conditions.md)) must be
+The `CITC`/`CTDA` conditions at the end (see [conditions](conditions.md)) must be
 true for the vendor to trade.
 
 ## NPC_ SNAM: membership
@@ -157,13 +157,13 @@ The rank is signed. Vanilla uses negative ranks for members without a rank title
 
 The list comes from a template when the `ACBS` flag "use factions" (`0x0004`) is set and the
 record has a `TPLT`. A record without the flag keeps its own list, even when it is empty.
-See [actors](/formats/actors.md).
+See [actors](actors.md).
 
 ## Runtime membership
 
 `SNAM` gives the factions an actor starts in. Scripts and quests then add, remove, and
 promote. OpenSky stores the current memberships per actor and saves them in the `FCTN`
-chunk of the [OpenSky save](/formats/opensky-save-actor-chunks.md).
+chunk of the [OpenSky save](opensky-save-actor-chunks.md).
 
 Design choices:
 

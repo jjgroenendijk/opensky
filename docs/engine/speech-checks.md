@@ -54,6 +54,6 @@ built-in default from the [CK settings list](https://ck.uesp.net/wiki/Category:S
 | `fIntimidateConfidenceMultBrave` | 1.5 |
 | `fIntimidateConfidenceMultFoolhardy` | 100, so a foolhardy NPC is all but fearless |
 
-A won check teaches Speech ([skill advancement](/engine/skill-advancement.md)).
+A won check teaches Speech ([skill advancement](skill-advancement.md)).
 
 With no settings or no gold count, both conditions fail with the speech reason.

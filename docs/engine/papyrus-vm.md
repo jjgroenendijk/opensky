@@ -9,7 +9,7 @@ tags: [engine, papyrus, virtual-machine, bytecode]
 
 # Papyrus virtual machine
 
-OpenSky runs the typed instructions the [PEX decoder](/formats/pex.md) produces. Three types make
+OpenSky runs the typed instructions the [PEX decoder](../formats/pex.md) produces. Three types make
 the core, and none of them knows about the world:
 
 - `PapyrusRuntime` owns the script library, instances, opaque object handles, the native registry,
@@ -19,11 +19,11 @@ the core, and none of them knows about the world:
 - `PapyrusScheduler` moves suspended calls forward only from injected fixed steps and game clock
   samples.
 
-The [Papyrus world runtime](/engine/papyrus-world.md) puts this core inside the engine loop. The
-world natives are on the [activation](/engine/papyrus-activation.md),
-[actor and faction](/engine/papyrus-actor-natives.md), [spell](/engine/papyrus-spell-natives.md),
-[timer](/engine/papyrus-timers.md), [quest](/engine/papyrus-quests.md), and
-[session](/engine/papyrus-session-natives.md) pages.
+The [Papyrus world runtime](papyrus-world.md) puts this core inside the engine loop. The
+world natives are on the [activation](papyrus-activation.md),
+[actor and faction](papyrus-actor-natives.md), [spell](papyrus-spell-natives.md),
+[timer](papyrus-timers.md), [quest](papyrus-quests.md), and
+[session](papyrus-session-natives.md) pages.
 
 Language rules come from the Creation Kit wiki: the
 [Papyrus category](https://ck.uesp.net/wiki/Category:Papyrus), the
@@ -64,7 +64,7 @@ private variable with the same name, and a function reads the scope of its own s
 its own script declares no such name, lookup walks up the parent chain. The install needs this: the
 shipped `PressurePlate` writes `::Type_var`, which only its parent `TrapTriggerBase` declares. The
 initial-values table replaces the first match from child to parent after checking the type. This is
-the seam [VMAD binding](/formats/vmad.md) uses: it resolves direct object form IDs and uses the
+the seam [VMAD binding](../formats/vmad.md) uses: it resolves direct object form IDs and uses the
 automatic backing variable name stored in the PEX.
 
 ## Frames and execution
@@ -148,10 +148,10 @@ installs these families:
 | World families: `ObjectReference`, `GlobalVariable`, `Game`, `Quest`, `Actor`, `Faction`, `Spell` | Fail with a reason, so the declared default is used |
 
 Without a world, every world native fails with a reason. With one, they act through
-[the world bridge](/engine/papyrus-activation.md#the-world-bridge). The world families are on the
-pages linked at the top, and also in [crime](/engine/crime.md), [barter](/engine/barter.md),
-[perks](/engine/perks.md), [skill advancement](/engine/skill-advancement.md), and
-[character leveling](/engine/character-leveling.md).
+[the world bridge](papyrus-activation.md#the-world-bridge). The world families are on the
+pages linked at the top, and also in [crime](crime.md), [barter](barter.md),
+[perks](perks.md), [skill advancement](skill-advancement.md), and
+[character leveling](character-leveling.md).
 
 `Game.AddPerkPoints` is vanilla: the install's `Game.pex` declares it native.
 `Game.GetPerkPoints` and `Game.ModPerkPoints` are SKSE functions: the Creation Kit wiki declares
@@ -160,7 +160,7 @@ script. OpenSky aims to support SKSE at the script level, never at the binary le
 `Game.SetPerkPoints` is SKSE too; a negative count gives 255, as the wiki says. All of them refuse
 when the session runs no character leveling, because zero would read as a player who spent every
 point. `Actor.SetDoingFavor` is bound to the dialogue runtime: entering and leaving favour mode says
-the speaker's Favors tab lines ([dialogue](/engine/dialogue.md#favour-lines)).
+the speaker's Favors tab lines ([dialogue](dialogue.md#favour-lines)).
 
 The corpus census found no string native that can be answered honestly without the world, and
 string basics are opcodes, not natives. So they stay visible as unknowns instead of getting

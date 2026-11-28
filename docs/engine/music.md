@@ -8,13 +8,13 @@ tags: [engine, audio, music, playlists]
 
 # Music playlists
 
-The music system turns the [music records](/formats/music.md) into music that follows the
-streamed world. It has two parts, like [world sound effects](/engine/world-sfx.md):
+The music system turns the [music records](../formats/music.md) into music that follows the
+streamed world. It has two parts, like [world sound effects](world-sfx.md):
 
 - a selection step with no audio device, which picks a playlist from a context;
 - a music director on the main actor, which owns the playing sources.
 
-Playback and gain ramps are on the [world audio](/engine/audio.md) page.
+Playback and gain ramps are on the [world audio](audio.md) page.
 
 ## Choosing a music type
 
@@ -28,7 +28,7 @@ CELL XCMO  ->  LCTN NAM1 (the cell's location)
 ```
 
 The cell's location is its `XLCN` link, else the location whose cell list holds the exterior
-cell ([locations](/formats/locations.md)). Only the location's own `NAM1` counts, not its
+cell ([locations](../formats/locations.md)). Only the location's own `NAM1` counts, not its
 parents'. No open source states the order or the inheritance, so both come from the data. In
 `Skyrim.esm`, 8 of 638 `LCTN` records have a `NAM1`. They are dungeons, such as `MzulftLocation`
 with `MUSDungeon`, and farms with `_NONE`. A child location repeats its parent's `NAM1`
@@ -70,7 +70,7 @@ returns to exactly that selection, without selecting again. So a fight that star
 with the town's playlist. A cell crossed during the fight changes what combat will return to, but
 does not interrupt the fight music. A load order with no combat playlist keeps the current music and
 says why. The `MUSCombat` prefix has the same limits as the town prefix. See
-[combat](/engine/combat.md).
+[combat](combat.md).
 
 ### Scripted music
 
@@ -114,7 +114,7 @@ A clean-room read of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) gave 
   scripts, through `MusicType.Add()`, which OpenSky already runs.
 - `DCMS` plays when a location turns cleared and has the `LocTypeClearable` keyword
   (`DOBJ` `KWDO`). A location is cleared when it has at least one boss reference (`LRTB`)
-  and every boss reference is done ([cleared locations](/engine/cleared-locations.md)).
+  and every boss reference is done ([cleared locations](cleared-locations.md)).
 - `DTMS` plays only if its `MUSC` has the "Plays One Selection" flag.
 
 `MUSSpecialSuccess` has the flags "Plays One Selection", "Abrupt Transition", and "Ducks Current
@@ -209,7 +209,7 @@ matter only when two playlists can play at once.
 ## Finding the shipped file
 
 A music path is the name the record gives, normalized
-([path resolution](/formats/music.md#path-resolution)). On the shipped install, that name is not
+([path resolution](../formats/music.md#path-resolution)). On the shipped install, that name is not
 a file that exists. This is observed, not documented: all 242 distinct `MUST` `ANAM` and `BNAM`
 names in `Skyrim.esm` end in `.wav`, but all 269 archive entries under `music\` are `.xwm`.
 Vanilla `SNDR` sounds are the other way: they really are `.wav`, and need no rule.

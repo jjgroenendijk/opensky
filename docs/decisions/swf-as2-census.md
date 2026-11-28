@@ -9,7 +9,7 @@ tags: [decision, swf, as2, ui, scaleform, census]
 
 # ActionScript 2 census of the vanilla menus
 
-This page holds the measurement behind the [AS2 runtime scope](/decisions/swf-as2-scope.md). The
+This page holds the measurement behind the [AS2 runtime scope](swf-as2-scope.md). The
 numbers come from `openskycli swf action-sweep`, run over all 53 vanilla `Interface/*.swf` movies.
 Its output is derived from game content, so it stays in `.logs/`. Run it with
 `make run-cli ARGS="swf action-sweep"`.

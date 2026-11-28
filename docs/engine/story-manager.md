@@ -10,8 +10,8 @@ tags: [engine, quests, conditions, papyrus, runtime-state]
 
 The story manager starts quests when something happens in the game, such as a kill or a
 change of location. Each kind of event has a tree of nodes; the record layout is on the
-[story manager records](/formats/story-manager.md) page. This page also covers the start-game
-pass, which starts the quests listed in the [`.seq` files](/formats/seq.md).
+[story manager records](../formats/story-manager.md) page. This page also covers the start-game
+pass, which starts the quests listed in the [`.seq` files](../formats/seq.md).
 
 Sources: the Creation Kit wiki, <https://ck.uesp.net/wiki/Story_Manager>, "SM Event Node",
 "SM Branch Node", and "SM Quest Node", and xEdit `dev-4.1.6` `wbEventMemberEnum` for the event
@@ -54,7 +54,7 @@ vanilla trees the conditions that matter use the Event Data run-on.
 
 A condition with run-on type 7 (event data) runs on the reference member its parameter 3
 names. `GetEventData` (576) compares a member with a form (`IsID`), reads a value, or tests
-the keyword ([conditions](/engine/conditions.md)). Outside a walk, both fail as unresolved.
+the keyword ([conditions](conditions.md)). Outside a walk, both fail as unresolved.
 
 ## Events OpenSky fires
 
@@ -98,14 +98,14 @@ when it has no `R1`.
 | `QSTR` | A script starts a stopped quest with `Start()` or `SetStage()` | `Q1` the quest |
 
 `KILL` crime status is 0 (not murder), 1 (murder), or 2 (murder that cost crime gold). A death
-is murder when the player struck the victim first ([crime](/engine/crime.md)). The rank is the
+is murder when the player struck the victim first ([crime](crime.md)). The rank is the
 victim's rank toward the killer, 0 when no relationship names the pair. The crime type is 0
 steal, 1 pickpocket, 2 trespass, 3 assault, 4 murder, 5 escape from jail, 6 werewolf. The
 acquire type is 1 steal, 2 buy, 3 pickpocket, 4 pick up, 5 container, 6 dead body. The remove type
 is 4
 dropped, 5 given (sold), 6 put in a container.
 
-`ADIA`, `AHEL`, and `DEAD` come from the [social pass](/engine/random-conversations.md).
+`ADIA`, `AHEL`, and `DEAD` come from the [social pass](random-conversations.md).
 `TRES` leaves `L1` unset, so it gets the location of the witness, or of the player on entry.
 `QSTR` walks no event node. OpenSky sends it when the queued start has finished.
 
@@ -116,7 +116,7 @@ checked every 30 frames.
 
 `PFIN`, `INFC`, `CURE`, and `QSTR` have no node in `Skyrim.esm`, so they start nothing there;
 they fire for mods. `STIJ` (served time) has no vanilla node either, but it fires when a
-sentence is served ([jail](/engine/jail.md)). `AFAV`, `LOCK`, `BRIB`, `INTM`, `FLAT`, and `PRFV`
+sentence is served ([jail](jail.md)). `AFAV`, `LOCK`, `BRIB`, `INTM`, `FLAT`, and `PRFV`
 reach a quest only from a script, as in the game.
 
 ### Which events the game sends
@@ -130,18 +130,18 @@ The game itself sends these events, each from the system named:
 | `CLOC` | An actor's location change |
 | `SCPT` | `SendStoryEvent` and `SendStoryEventAndWait`, which fail with an error before the start-up quests are set up |
 | `ADIA` | Dialogue, including a conversation one NPC starts with another |
-| `AHEL` | A new head-tracking target ([hellos in passing](/engine/random-conversations.md#hellos-in-passing-ahel)) |
+| `AHEL` | A new head-tracking target ([hellos in passing](random-conversations.md#hellos-in-passing-ahel)) |
 | `AIPL`, `REMP` | An item added to or removed from the player |
 | `CRFT` | Alchemy, enchanting, and smithing, both making and improving |
-| `INFC`, `CURE` | A disease added to or removed from any actor, the player or not. `INFC` only when the actor did not have it and did not resist it ([diseases](/engine/diseases.md)). Data: `R1` the actor, `F1` the disease |
+| `INFC`, `CURE` | A disease added to or removed from any actor, the player or not. `INFC` only when the actor did not have it and did not resist it ([diseases](diseases.md)). Data: `R1` the actor, `F1` the disease |
 | `NVPE` | The player gets a shout it did not know, or any actor gets a voice power spell. Data: `R1` the actor, `F1` the shout or voice power |
-| `DEAD` | An actor reacts to a body it detects ([finding a body](/engine/random-conversations.md#finding-a-body-dead)) |
+| `DEAD` | An actor reacts to a body it detects ([finding a body](random-conversations.md#finding-a-body-dead)) |
 | `SKIL`, `LEVL` | A skill level, and a player level |
 | `CHRR` | A relationship rank change, by a script or by the game |
 | `PFIN` | The player pays a fine, before the gold is taken and the bounty cleared. Data: `R1` the player, `R2` the guard in the conversation, `F1` the crime faction, `V1` the bounty |
 | `JAIL`, `STIJ`, `ESJA` | Going to jail, serving time, and escaping |
 | `TRES` | A trespass, in two ways below |
-| `ADCR` | A crime when it becomes final ([crime reports](/engine/crime-reports.md)) |
+| `ADCR` | A crime when it becomes final ([crime reports](crime-reports.md)) |
 | `ARRT` | An arrest |
 | `CAST` | A spell cast |
 | `QSTR` | A quest start that is not immediate, below. Data: `Q1` the quest |
@@ -160,7 +160,7 @@ through `SendStoryEvent` from a script.
 `QSTR` is the story manager's own way to start a quest later. The start goes into the story
 manager's queue, and when the queue reaches it, the quest starts at once, without a walk of the
 event nodes. The queue spreads its work over frames. What the script sees while it waits, and
-what each call answers, is on the [quest state](/engine/quest-state.md#starting-a-quest) page.
+what each call answers, is on the [quest state](quest-state.md#starting-a-quest) page.
 These starts go through `QSTR`:
 
 - `Quest.Start()` from a script. It is latent: the script waits for the start. An event-scoped
@@ -187,7 +187,7 @@ flowchart LR
 ```
 
 OpenSky sends the same events from play. A start that a script asks for waits in a queue of
-its own and runs on later frames ([quest state](/engine/quest-state.md#starting-a-quest)). `QSTR`
+its own and runs on later frames ([quest state](quest-state.md#starting-a-quest)). `QSTR`
 is sent when that start has finished, only for the record and for mods.
 
 ## Papyrus events for a started quest
@@ -227,7 +227,7 @@ the three DLC, and the two free Creation Club plugins.
 The story manager keeps, per quest it started, the time of the last start and a count. The
 reset time and "do all before repeating" read them. The world-state component is
 `storyManager`, keyed by the `QUST`, and a save stores it in the `SMQS` chunk
-([world chunks](/formats/opensky-save-world-chunks.md)).
+([world chunks](../formats/opensky-save-world-chunks.md)).
 
 ## Observed on the install
 

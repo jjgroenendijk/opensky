@@ -11,13 +11,13 @@ tags: [format, havok, hkx, animation]
 An HKX file is a Havok binary packfile. Skyrim SE uses it for skeletons (`skeleton.hkx`),
 animation clips, behaviors, and ragdolls. This page covers only the container: the header,
 the section table, the fixup tables, and the class names. The objects inside have their own
-pages: [hkaSkeleton](/formats/hka-skeleton.md) and
-[hkaSplineCompressedAnimation](/formats/hka-animation.md).
+pages: [hkaSkeleton](hka-skeleton.md) and
+[hkaSplineCompressedAnimation](hka-animation.md).
 
-`openskycli hkx <key>` prints the container of a file (see [CLI](/tools/cli.md)).
+`openskycli hkx <key>` prints the container of a file (see [CLI](../tools/cli.md)).
 
 A `.hkt` file is not a packfile. It is a Havok binary tagfile, on its own page:
-[HKT binary tagfile](/formats/hkt-tagfile.md).
+[HKT binary tagfile](hkt-tagfile.md).
 
 ## References
 

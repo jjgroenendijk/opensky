@@ -9,10 +9,10 @@ tags: [format, save, ess]
 # Skyrim save actor process data
 
 An actor that has an AI process writes its process data right after the animation part of its
-change form ([change forms](/formats/ess-change-forms.md#actor-data-after-the-animation-part)). The
+change form ([change forms](ess-change-forms.md#actor-data-after-the-animation-part)). The
 data has no length in front. Some parts are not decoded, so a reader cannot always find its end.
 
-Types are as in [ESS](/formats/ess.md#basic-types). A `refID` is the usual 3 bytes, and 3 zero
+Types are as in [ESS](ess.md#basic-types). A `refID` is the usual 3 bytes, and 3 zero
 bytes mean none. A string is a `uint16` length and the characters, with no terminator. A
 "relative time" is a `float32` game time saved as the stamp minus the current game time.
 
@@ -115,7 +115,7 @@ Which procedure type number marks which package is not known.
 ## High block
 
 The values named here are the ones the conversation and idle rules use
-([random conversations](/engine/random-conversations.md#what-a-save-keeps)).
+([random conversations](../engine/random-conversations.md#what-a-save-keeps)).
 
 1. `uint8` busy talking.
 2. 2 `uint8`, `uint16`, 4 bytes, 4 bytes.

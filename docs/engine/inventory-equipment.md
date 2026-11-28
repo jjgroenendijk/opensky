@@ -12,10 +12,10 @@ This page covers how the item systems work together as one game loop: walk to an
 open a container, move items, equip, buy, sell, drop, save, and load. The parts are on their own
 pages:
 
-- item and container records: [item records](/formats/item-records.md);
-- the inventory component: [runtime state](/engine/runtime-state.md);
-- taking and dropping world items: [interaction](/engine/interaction.md);
-- the menus: [inventory menu](/engine/inventory-menu.md) and [barter](/engine/barter.md).
+- item and container records: [item records](../formats/item-records.md);
+- the inventory component: [runtime state](runtime-state.md);
+- taking and dropping world items: [interaction](interaction.md);
+- the menus: [inventory menu](inventory-menu.md) and [barter](barter.md).
 
 ## The loop
 
@@ -45,7 +45,7 @@ does not change.
 A stack is keyed by the base FormID and the stolen flag, so stolen and honest copies of one item
 are two stacks. The menu shows them as one row. A copy can also differ by its temper level, its
 trapped soul, its enchantment charge, or an enchantment made at a table. Those live in a separate
-list per item ([item copies](/engine/item-copies.md)); copies not in the list are plain.
+list per item ([item copies](item-copies.md)); copies not in the list are plain.
 
 ## Grants
 
@@ -68,7 +68,7 @@ into an open merchant chest adds to its stock.
 `XOWN` and `XRNK` are decoded on each reference. For the crosshair target, OpenSky works out
 whether taking it would be theft for the player now. This uses the reference's owner, the cell's
 owner, and the player's faction ranks. It also shows the bounty if someone sees the take. See
-[crime and bounty](/engine/crime.md).
+[crime and bounty](crime.md).
 
 There are four answers. None is left blank:
 
@@ -124,7 +124,7 @@ teammate never wears armour it is given, and a dismissed follower goes back to i
 next run. This comes from a clean-room read of `SkyrimSE.exe` on 2026-11-24.
 
 OpenSky runs the routine after a trade with a follower, and builds every NPC's starting set from it:
-its outfit and its best carried weapon ([carried items](/engine/actor-resolution.md#carried-items)).
+its outfit and its best carried weapon ([carried items](actor-resolution.md#carried-items)).
 The armour rating is the record's own, without temper, skill, or perks. The weapon's damage is the
 record's base damage. A tie on either pick keeps the first item found, whatever the counts.
 
@@ -138,7 +138,7 @@ does no animation, audio, or script work.
 
 Which hands a weapon fills does not come from a bit field on the item. It comes from the `WEAP`
 `ETYP` link, resolved through the `EQUP` records of the same plugin
-([shout records](/formats/shouts-equip-slots.md)):
+([shout records](../formats/shouts-equip-slots.md)):
 
 | Slot | Hands |
 | --- | --- |
@@ -174,19 +174,19 @@ hands:
 A spell's `ETYP` needs one difference a weapon's never did. `BothHands` and `EitherHand` name the
 same two parents. They differ only in the "use all parents" byte of `DATA`, because the player
 chooses the hand for a spell. The slot table keeps the two apart for spells, and still gives the
-one fixed answer for weapons. Casting is on the [magic](/engine/magic.md) page.
+one fixed answer for weapons. Casting is on the [magic](magic.md) page.
 
 ## Carry weight
 
 The player is over-encumbered when the carried weight is above the `CarryWeight` actor value ([UESP
 Carry Weight](https://en.uesp.net/wiki/Skyrim:Carry_Weight)). Worn armour counts at its perk weight
-([perk entry points](/engine/perk-entry-points.md#armour-weight)). An over-encumbered player can
+([perk entry points](perk-entry-points.md#armour-weight)). An over-encumbered player can
 only walk: run and sprint fall back to walking. The HUD shows `sOverEncumbered` once, when the state
-starts. Fast travel is refused too ([world map](/engine/world-map.md)). The check runs every frame,
+starts. Fast travel is refused too ([world map](world-map.md)). The check runs every frame,
 so dropping an item or raising the actor value lifts the state at once.
 
 ## Not done yet
 
 - A dropped object with a simulated Havok body falls and settles
-  ([dynamic rigid bodies](/engine/dynamic-bodies.md)). One without a dynamic body stays where
+  ([dynamic rigid bodies](dynamic-bodies.md)). One without a dynamic body stays where
   it was placed.

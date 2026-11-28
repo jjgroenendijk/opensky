@@ -11,7 +11,7 @@ tags: [engine, ui, menu, map]
 ## Map markers
 
 Map markers are `REFR` records with marker data (`XMRK`, `FNAM`, `FULL`, `TNAM`) in a
-worldspace's persistent cell ([placed references](/formats/placed-references.md)). Each
+worldspace's persistent cell ([placed references](../formats/placed-references.md)). Each
 marker keeps a `mapMarker` world-state component with three flags: visible, discovered,
 and can travel to. Without a component the `FNAM` flags apply.
 
@@ -48,7 +48,7 @@ The map selects the visible marker nearest its center, like the game's cursor.
 ## Quest targets
 
 The targets come from the displayed, unfinished objectives of every tracked quest
-([journal](/engine/journal.md#tracked-quests)). Each objective `QSTA` target names an alias;
+([journal](journal.md#tracked-quests)). Each objective `QSTA` target names an alias;
 the alias's reference gives the place. A reference held in a container follows the holder, up
 to 8 holders deep. An actor's place is where it stands now, and a moved object's place is
 where it was moved to, not where the plugin placed it.
@@ -69,7 +69,7 @@ and the other `GetStage MQ105 >= 10`, so only one shows at a time.
 The player can place one marker of their own on the world map. The game calls it
 `sPlayerSetMarkerName`, "Custom Destination". It is kept in the `playerSetMapMarker` component
 on the player, with the editor ID of the map worldspace, and saved in the `PMRK` chunk
-([save chunks](/formats/opensky-save-world-chunks.md#pmrk-custom-map-marker)). A marker placed
+([save chunks](../formats/opensky-save-world-chunks.md#pmrk-custom-map-marker)). A marker placed
 in another worldspace, such as Solstheim, stays hidden on the Tamriel map.
 
 The install's `controlmap.txt` binds `PlacePlayerMarker` in its `Map Menu` context to P (scan
@@ -87,7 +87,7 @@ menu is open. The key aims at the map centre, because OpenSky keeps the mouse fo
   "Place Marker".
 
 The 5% aim and the order of the two questions are OpenSky's choice
-([unverified values](/engine/unverified-values.md)).
+([unverified values](unverified-values.md)).
 
 The map movie also shows the player's own position as the last marker, labelled
 `sCurrentLocation` ("Current Location"), on the world map and the local map, as observed in

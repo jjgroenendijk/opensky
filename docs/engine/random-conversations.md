@@ -9,9 +9,9 @@ tags: [engine, ai, dialogue, story-manager]
 # Random conversations and NPC social events
 
 NPCs in the game talk to each other, say hello in passing, watch a fight, and react to a dead
-body. Talking, hellos, and bodies each send a [story-manager](/engine/story-manager.md) event,
+body. Talking, hellos, and bodies each send a [story-manager](story-manager.md) event,
 and vanilla quests start from them: `ADIA` (actor dialogue), `AHEL` (actor hello), and `DEAD`
-(dead body). The quest then plays the conversation as a [scene](/engine/scenes.md) or a line.
+(dead body). The quest then plays the conversation as a [scene](scenes.md) or a line.
 The engine itself says nothing between two NPCs: with no quest to answer `ADIA`, no line plays.
 
 Sources: the Creation Kit pages "Scene" (section "Controlling Random Conversations"),
@@ -23,11 +23,11 @@ An actor's current package decides what it may do. The package `PKDT` interrupt 
 
 | Flag | Meaning |
 | --- | --- |
-| 0x01 | Hellos to the player ([dialogue](/engine/dialogue.md#speech-timers)) |
+| 0x01 | Hellos to the player ([dialogue](dialogue.md#speech-timers)) |
 | 0x02 | Random conversations, and hellos in passing |
 | 0x04 | Observe combat behaviour |
 | 0x08 | Greet corpse behaviour |
-| 0x80 | Idle chatter ([dialogue](/engine/dialogue.md#speech-timers)) |
+| 0x80 | Idle chatter ([dialogue](dialogue.md#speech-timers)) |
 
 An actor with no package takes part in nothing. A sandbox package whose "Allow Conversation"
 option is on sets flag 0x02 on the running package when the procedure starts. Sandboxing adds
@@ -120,7 +120,7 @@ result goes back to both actors:
 The 20 s wait belongs only to `DialogueActivate` and the In Game Dialogue package, which send
 their own `ADIA`.
 
-When the answering quest's [scene](/engine/scenes.md#conversation-scenes) is about to begin, the
+When the answering quest's [scene](scenes.md#conversation-scenes) is about to begin, the
 game checks both actors again by the partner rules above. A failed check stops the scene. A
 partner that is in another dialogue makes the game try again after 1 s.
 
@@ -196,7 +196,7 @@ actor, and `R2` the target. It does not use the greeting distance or timers of h
 player.
 
 The head-tracking target is chosen by the rules on the
-[head tracking](/engine/head-tracking.md#the-default-target) page.
+[head tracking](head-tracking.md#the-default-target) page.
 
 `AHEL` fires only when the new target differs from the old one, so an NPC greets another NPC in
 passing only while the player is not a valid target.
@@ -214,7 +214,7 @@ and:
 The watcher gets its actor base's spectator override package when it has one, otherwise a
 Spectator package, unless it already runs a Guard-type package. A watcher in a scene does not
 change package: the scene is told instead, and the scene's "observing combat" flags decide
-whether it pauses or ends ([scenes](/engine/scenes.md#actor-behaviour-flags)).
+whether it pauses or ends ([scenes](scenes.md#actor-behaviour-flags)).
 
 A watcher is not free for a random conversation, because its new package has no flag 0x02.
 
@@ -288,7 +288,7 @@ The finder does not stay at the body: there is no stay timer and no idle there.
 For each high-process actor, the save keeps the idle chatter timer, the time of the last
 conversation step, the recent-partner timer, the social timer, the waiting request, the greeting
 timers, the partner, and whether it is in a conversation
-([actor process data](/formats/ess-actor-process.md#high-block)). The recent-partner list itself
+([actor process data](../formats/ess-actor-process.md#high-block)). The recent-partner list itself
 is not saved. Each body keeps its 20 s timer.
 
 OpenSky keeps the social timer, the recent-partner timer, each body's timer, and a running

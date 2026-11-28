@@ -10,7 +10,7 @@ tags: [format, mesh, skinning, skeleton, geometry]
 
 A skinned mesh moves with a skeleton. Each vertex has up to four bones and weights. This
 page covers the skin blocks that a `BSTriShape` links to through its skin ref (see
-[NIF](/formats/nif.md)). See [actor animation](/engine/actor-animation.md) for how the pose
+[NIF](nif.md)). See [actor animation](../engine/actor-animation.md) for how the pose
 is applied.
 
 Reference: NifTools
@@ -34,7 +34,7 @@ Links a shape to its bind data and partitions.
 and a uint16 body part ID (nif.xml `BodyPartList`, `BSDismemberBodyPartType`). Partition N
 names the body part of `NiSkinPartition` partition N. When the counts match and the partitions
 hold every triangle of the shape, OpenSky draws the triangles in partition order and keeps each
-partition's range, so a cut can hide one body part (see [ragdoll](/engine/ragdoll.md#decapitation)).
+partition's range, so a cut can hide one body part (see [ragdoll](../engine/ragdoll.md#decapitation)).
 `openskycli nif <path>` prints the ranges as `body parts`.
 
 ## NiSkinData

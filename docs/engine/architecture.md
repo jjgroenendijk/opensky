@@ -25,7 +25,7 @@ names them, so a design discussion or a review can point at one rule.
 A feature uses another feature only through its `Interface` module. The app and `openskycli`
 build the implementations and pass them in. `tools/lint/module-graph.sh` checks the rules.
 
-[The Modular Architecture](/decisions/modular-architecture.md) has the rules, the layers, and
+[The Modular Architecture](../decisions/modular-architecture.md) has the rules, the layers, and
 the exceptions. This page does not repeat them.
 
 ## Functional core, imperative shell
@@ -54,7 +54,7 @@ Where it does not apply:
   shape.
 - A small runtime with almost no logic does not need a separate core.
 
-A coordinator follows this style too: a pure core and a thin shell. [Coordinators](/engine/coordinators.md)
+A coordinator follows this style too: a pure core and a thin shell. [Coordinators](coordinators.md)
 has the rule and the two shapes a core can take. A core lives in a file whose name ends in
 `Core`, such as `VendorCore.swift`. The lint rule `pure_core_side_effect` fails such a file
 when it imports AppKit, Metal, or an audio framework, or reads a clock such as `Date()`.
@@ -105,7 +105,7 @@ to 30.34 move them.
 
 Where it does not apply: view code and input handling stay in the app.
 
-[Coordinators](/engine/coordinators.md) has the pattern, the module rules, and the steps to
+[Coordinators](coordinators.md) has the pattern, the module rules, and the steps to
 move a domain.
 
 ## Data-oriented layout
@@ -120,7 +120,7 @@ The same goes for work whose inputs change only at load: a sort, a template reso
 union. Do it when the inputs change and store the result, not on every frame.
 
 Where it applies: only a per-frame loop where a measurement, such as an Instruments Time
-Profiler run, shows a cost. [Profiling](/testing.md#profiling) says how to record one.
+Profiler run, shows a cost. [Profiling](../testing.md#profiling) says how to record one.
 
 Where it does not apply: everything else. Code that runs once per cell load or once per user
 action stays in the clearest shape. A layout change without a measurement is a performance
@@ -134,7 +134,7 @@ threads is a `nonisolated` `Sendable` value type, for example `SkinningPalette`.
 mutable state off the main thread uses `Mutex`, as in `WorldAudioEngine`.
 
 Simulation stays on the main actor. Reading and decoding files runs off it.
-[Concurrency](/decisions/concurrency.md) gives the isolation each subsystem uses and how a
+[Concurrency](../decisions/concurrency.md) gives the isolation each subsystem uses and how a
 loaded asset reaches the frame loop. Do not add a new
 `@unchecked Sendable` class or `Task.detached`. A new `DispatchQueue` needs a row on that page.
 
@@ -151,7 +151,7 @@ declared order.
 
 ## Machine checks
 
-Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
+Every rule on this page and in [Coordinators](coordinators.md) has a check in
 `make check` and CI. The adapter rule needs the index store a build writes, so it runs in
 `make lint-index` and the weekly `Index checks` CI job. The structural rules are in `tools/syntax-lint/`.
 
@@ -172,11 +172,11 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | The Papyrus bridge gains collaborators only through a native family | `syntax-rules.sh` `papyrus_loose_closure` |
 | A system joins the frame only through a `FrameSchedule` phase | `syntax-rules.sh` `frame_callback_property` |
 | No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `src/Sources/` | `syntax-rules.sh` `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
-| A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | `syntax-rules.sh` `new_dispatch_queue` |
-| A module stays below 30,000 source lines | `tools/lint/module-size.sh` ([Module size](/tools/modules.md#module-size)) |
-| A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `tools/lint/language-rules.sh` ([Swift language rules](/decisions/language-rules.md)) |
-| A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `tools/lint/error-handling.sh` ([Error handling](/decisions/error-handling.md)) |
-| Tests run in random order: every plan shuffles and no suite is serialized | `tools/lint/test-order.sh` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
-| Game-rule modules, pure cores, and parsers keep their coverage floor, and new package code ran in a test | `make test PLAN=UnitTests COVERAGE=1`, `make test COVERAGE=1` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
-| Game rules read no hidden random source or clock, package modules hold no global mutable state or singletons except the allowed switches and sinks, and no module uses the system notification centre | `tools/lint/deterministic-rules.sh` ([Deterministic game rules](/decisions/deterministic-rules.md)) |
+| A new `DispatchQueue` has a row in [Concurrency](../decisions/concurrency.md) | `syntax-rules.sh` `new_dispatch_queue` |
+| A module stays below 30,000 source lines | `tools/lint/module-size.sh` ([Module size](../tools/modules.md#module-size)) |
+| A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `tools/lint/language-rules.sh` ([Swift language rules](../decisions/language-rules.md)) |
+| A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `tools/lint/error-handling.sh` ([Error handling](../decisions/error-handling.md)) |
+| Tests run in random order: every plan shuffles and no suite is serialized | `tools/lint/test-order.sh` ([Test order and coverage rules](../decisions/test-coverage-rules.md)) |
+| Game-rule modules, pure cores, and parsers keep their coverage floor, and new package code ran in a test | `make test PLAN=UnitTests COVERAGE=1`, `make test COVERAGE=1` ([Test order and coverage rules](../decisions/test-coverage-rules.md)) |
+| Game rules read no hidden random source or clock, package modules hold no global mutable state or singletons except the allowed switches and sinks, and no module uses the system notification centre | `tools/lint/deterministic-rules.sh` ([Deterministic game rules](../decisions/deterministic-rules.md)) |
 | An interface module publicly imports only lower modules and interfaces, and no file uses `@_exported import` | `tools/lint/module-graph.sh` rule 11 |

@@ -18,10 +18,10 @@ and drops it when the effect ends. Sources: the Creation Kit wiki pages
 
 ## Where the start and the end come from
 
-[Active effects](/engine/magic.md) live in the world-state store, one list per actor. Each effect has
+[Active effects](magic.md) live in the world-state store, one list per actor. Each effect has
 a per-actor application number. Every change to the list is a journal entry. Each frame, the
 Papyrus bridge reads the active-effect entries since the last frame, like the
-[item events](/engine/papyrus-world.md#item-events):
+[item events](papyrus-world.md#item-events):
 
 - A number in the new list but not in the old one is an effect that started.
 - A number in the old list but not in the new one is an effect that ended, by expiry or by a dispel.
@@ -63,7 +63,7 @@ own `ObjectReference` script, and they never pair with a form or alias script as
 | `MagicEffect.GetAssociatedSkill` | The skill name of `MGEF` `DATA` magic skill, or `""` |
 
 The update-timer natives on `ActiveMagicEffect` work as on `Form`
-([timers](/engine/papyrus-timers.md)).
+([timers](papyrus-timers.md)).
 
 ## Where OpenSky differs from the game
 

@@ -112,7 +112,7 @@ The reflection joins the frame with the weight
 ## Water flow maps
 
 A flow map moves the water normal along a direction that changes over the surface. OpenSky
-reads the flow map fields but does not use them ([water](/rendering/water.md)). All facts here
+reads the flow map fields but does not use them ([water](water.md)). All facts here
 are [confirmed] from the water shader.
 
 - A per-vertex flow scale `s` sets a grid with one cell every `1/(64 s)` in flow map UV. Four
