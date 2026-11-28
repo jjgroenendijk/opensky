@@ -300,6 +300,22 @@ setting that the masters do not override.
 The lead and the noise above also hold for spells: a fire-and-forget spell has a variance of 0.5,
 and a concentration spell 0.
 
+The aim point replaces the launch direction only when the `PROJ` lacks the No Combat Aim Correction
+flag (`0x400`). With the flag, the shot keeps the direction the shooter's own aim gave it. Both
+weapon shots and spells check the flag. More rules of the aim point:
+
+- A beam or a flame projectile has infinite speed for the aim, so it gets no lead.
+- The aim plans a lobber's arc with gravity 1 times world gravity, whatever its `PROJ` gravity says.
+  Every other kind uses its `PROJ` gravity.
+- With gravity, the flight time for the lead is the horizontal distance divided by the speed times
+  the cosine of the launch angle, not the straight distance divided by the speed.
+- The explosion radius for the aim is the larger of the `PROJ` explosion's radius and the spell's
+  area times 22. Above `fCombatAimProjectileGroundMinRadius` (128), the aim point is the target's
+  feet, not the middle of its capsule.
+- The noise also moves the point toward a second body point, by a random share (0 to 1) of the
+  variance times the gap between the two points. From the middle point, the second point is the upper
+  or the lower one at random.
+
 The player's shots get no spread. The game also skips the spread under an "exact aim" flag of the AI;
 what sets it was not found, so OpenSky never sets it.
 

@@ -183,13 +183,16 @@ At most 15 stuck projectiles stay in the world. A new one removes the oldest. An
 3 arrows stuck in it, and a fourth replaces the oldest. Each one is removed after 10 seconds of
 real time. These are only for show.
 
-Activating a projectile in the world:
+Activating a projectile in the world needs an actor as the activator:
 
+- With the `PROJ` flag Can Be Disabled (`0x20`), and while the projectile is not disabled yet, it
+  is disabled first. Its sound in flight stops, the `PROJ` disable sound plays where it is, and its
+  explosion timer and proximity trigger stop, so it never goes off.
 - With the `PROJ` flag Can Be Picked Up (`0x40`), the prompt is "Take", or "Steal" when it is
   owned, then the name, then "(count)" when the count is 2 or more. The `AMMO` is placed where the
-  projectile is, with the same owner, and the activator picks it up. The normal theft rules apply.
-  There is no roll.
-- With the `PROJ` flag Can Be Disabled (`0x20`), the projectile is disabled.
+  projectile is, with the same rotation, cell, and owner, and the activator activates it. The
+  normal theft rules apply. There is no roll. Then the projectile is removed.
+- Both steps can run on one activation. With neither flag, the activation does nothing.
 
 An arrow that hits an actor joins its inventory on a roll of 0 to 99 below the chance. A
 non-playable `AMMO` never joins.
