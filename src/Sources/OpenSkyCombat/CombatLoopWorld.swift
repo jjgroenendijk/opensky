@@ -102,7 +102,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// `key`'s current Stamina, or nil when it has no actor values.
     func combatStamina(of key: ReferenceKey) -> Float?
     /// An attack's knockdown: pushes `target` down away from `source`.
-    func knockDownCombatTarget(_ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float)
+    func knockDownCombatTarget(
+        _ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult: Float
+    )
     /// The Disease spell `attacker`'s race attacks carry, or nil.
     func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey?
     /// `target`'s disease resistance, or nil when it has no actor values.

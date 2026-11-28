@@ -120,6 +120,12 @@ struct ImpulseRuntimeTests {
         )
     }
 
+    @Test func aKnockdownWithAStaggerFactorFallsBackToThePlainKnockdown() {
+        let knocked = world.knockDown(.player, from: SIMD3(1, 2, 3), magnitude: 4, staggerMult: 0.5)
+        #expect(knocked)
+        #expect(world.downs.map(\.1) == [SIMD3(1, 2, 3)])
+    }
+
     @Test func aBodyThatFallsIntoWaterSplashesOnce() {
         let runtime = ImpulseRuntime(world: world)
         world.bodies = [body(at: SIMD3(0, 0, 20), fall: 100)]

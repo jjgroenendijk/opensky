@@ -54,7 +54,7 @@ struct CombatAssistPartsTests {
         #expect(loop.combatAttacks(of: Self.foe).isEmpty)
         #expect(loop.combatStamina(of: Self.foe) == 40)
         #expect(loop.combatStamina(of: .player) == nil)
-        loop.knockDownCombatTarget(Self.foe, from: .zero, magnitude: 10)
+        loop.knockDownCombatTarget(Self.foe, from: .zero, magnitude: 10, staggerMult: 1)
     }
 
     @Test func autoAimLeavesOutTheMountThePlayerRides() throws {

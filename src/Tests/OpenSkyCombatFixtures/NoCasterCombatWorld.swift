@@ -18,7 +18,7 @@ extension NoCasterCombatWorld {
     }
 
     public func knockDownCombatTarget(
-        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float
+        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float, staggerMult _: Float
     ) {}
 
     public func lookCombatActor(_: ReferenceKey, at _: ReferenceKey?, seconds _: Float?) {}

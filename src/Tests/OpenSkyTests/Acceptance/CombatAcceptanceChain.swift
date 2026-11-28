@@ -116,6 +116,8 @@ final class CombatAcceptanceChain {
         CombatAcceptanceWorld.opponentX, CombatAcceptanceWorld.startY,
         CombatAcceptanceWorld.floorHeight
     )
+    /// The opponent's heading, which a turn of the combat loop sets.
+    var opponentHeading: Float = .pi
     /// Death state the seam writes and reads back, mirrored into `store` so a
     /// save carries it.
     var deathStates: [ReferenceKey: ActorDeathState] = [:]

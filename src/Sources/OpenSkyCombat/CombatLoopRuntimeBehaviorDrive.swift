@@ -293,14 +293,12 @@ extension CombatLoopRuntime.BehaviorDrive {
     ) -> Bool {
         let settings = owner.settings
         let direction = owner.facing(from: actor.feet, toward: target.feet, fallback: actor.yaw)
-        if
-            let attack = owner.pickedAttacks[actor.key],
-            !NPCAttackPick.isInCone(
-                attack.data, heading: actor.yaw, directionToTarget: direction, mult: 1
-            )
-        {
-            return false
-        }
+        // A swing without attack data uses the default 35 degree strike angle.
+        let attack = owner.pickedAttacks[actor.key]?.data ?? RaceAttack.Properties()
+        guard
+            NPCAttackPick.isInCone(
+                attack, heading: actor.yaw, directionToTarget: direction, mult: 1
+            ) else { return false }
         let volume = MeleeSwing.volume(
             feet: actor.feet,
             capsule: actor.capsule,

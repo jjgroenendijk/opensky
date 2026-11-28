@@ -58,7 +58,10 @@ struct CombatNPCBlowLanding {
                 let knockdown = attack?.data.knockdown, knockdown > 0,
                 world.combatHealth(of: target) > 0
             {
-                world.knockDownCombatTarget(target, from: feet, magnitude: knockdown)
+                world.knockDownCombatTarget(
+                    target, from: feet, magnitude: knockdown,
+                    staggerMult: damage.strike.staggerMultiplier
+                )
             }
         }
         if damage.wasBlocked {

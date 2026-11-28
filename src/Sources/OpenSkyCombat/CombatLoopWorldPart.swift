@@ -136,9 +136,11 @@ final class CombatLoopWorldPart: CombatSharedPart, CombatLoopWorld {
     }
 
     func knockDownCombatTarget(
-        _ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float
+        _ target: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult: Float
     ) {
-        shared.explosions.impulses?.world?.knockDown(target, from: source, magnitude: magnitude)
+        shared.explosions.impulses?.world?.knockDown(
+            target, from: source, magnitude: magnitude, staggerMult: staggerMult
+        )
     }
 
     func noteCombatHitReaction(_ report: HitReactionReport) {

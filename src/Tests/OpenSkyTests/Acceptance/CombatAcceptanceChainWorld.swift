@@ -3,6 +3,7 @@
 // chain's real state, so the route integrates the four runtimes. Impacts and
 // sounds are dropped: a SNDR needs the install.
 
+import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
@@ -226,10 +227,16 @@ extension CombatAcceptanceChain: NoCasterCombatWorld {
         [CombatActorObservation(
             key: Self.opponent,
             feet: opponentFeet,
-            heading: .pi,
+            heading: opponentHeading,
             isDead: ragdolls.isDead(Self.opponent),
             name: "Opponent"
         )]
+    }
+
+    func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
+        let offset = point - opponentFeet
+        guard key == Self.opponent, offset.x != 0 || offset.y != 0 else { return }
+        opponentHeading = CombatActorObservation.heading(fromYaw: atan2(offset.y, offset.x))
     }
 
     func combatHostility(of key: ReferenceKey) -> ActorHostility {
