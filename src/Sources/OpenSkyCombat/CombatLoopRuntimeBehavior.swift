@@ -291,6 +291,12 @@ extension CombatLoopRuntime {
             inputs.weaponOut = owner.drawState(of: actor.key) == .drawn
                 && world.combatGraphIsAttackReady(actor.key) ?? true
             inputs.targetIsStaggered = owner.behaviors[target.key]?.phase == .staggered
+            inputs.actorRadius = actor.capsule.radius * actor.scale
+            inputs.targetVelocity = owner.targetTracks[target.key]?.velocity ?? .zero
+            let player = world.combatPlayer
+            inputs.targetIsPlayer = target.key == player.key
+            inputs.targetYaw = inputs.targetIsPlayer ? player.facing
+                : world.combatActor(key: target.key)?.yaw
             return inputs
         }
     }

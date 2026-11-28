@@ -235,12 +235,22 @@ through their templates.
 ## Where OpenSky differs
 
 OpenSky rolls the attack chance every 0.25 s in reach, with the staggered-target and last-attack
-terms. These parts are not built yet:
+terms. A melee actor with a combat style runs the in-range moves: back off, circle, and fall back,
+with their chances, angles, distances, and waits. These parts are not built yet:
 
-- An actor without a combat style waits a fixed attack interval instead of rolling. In the game
-  such an actor uses the default style.
+- An actor without a combat style waits a fixed attack interval and makes no close-range moves.
+  In the game such an actor uses the default style.
+- The out-of-range and out-of-position choices: distant circle, surround, reposition, strafe,
+  and falling back to a ranged weapon.
+- Some move checks: a circle ending once its path point is within half the reach of the target,
+  a fallback cancelled 1.5 radii off its path point or by the angle bands, and the 64-unit navmesh
+  tolerance. The per-fighter distance is taken as 0.
+- A move has arrived within 32 units of its point, and fails after 5 s; a target moves away above
+  1 unit a second. These values are OpenSky's
+  ([unverified combat values](/engine/unverified-combat-values.md)).
 - The blocking terms of the attack chance: an NPC holds its guard for a fixed time, then attacks.
 - The block loop: OpenSky rolls the block chance once per gap between attacks.
-- The close-range moves: back off, circle, fall back, distant circle, and strafe.
 - Bashes and their chances.
 - The flanking flag and the dual-wield flag.
+
+`openskycli game state assist` lists each styled fighter's move under `closeMoves`.

@@ -155,6 +155,13 @@ nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     var weaponOut = true
     /// The target is staggered, which changes the attack chance.
     var targetIsStaggered = false
+    /// The actor's own radius, scaled, which sets the least circle arc and fallback.
+    var actorRadius: Float = 0
+    /// The target's yaw, or nil when unknown; its velocity, from its track.
+    var targetYaw: Float?
+    var targetVelocity = SIMD3<Float>.zero
+    /// The target is the player, against whom the circle angle is smaller.
+    var targetIsPlayer = false
 
     init(
         actorPosition: SIMD3<Float>,
@@ -203,13 +210,16 @@ nonisolated enum CombatMovementCommand: Equatable, Sendable {
     case investigate(SIMD3<Float>)
     /// Get away from the target.
     case flee(SIMD3<Float>)
+    /// Walk to a point near the target: a back off, circle, or fallback.
+    case reposition(SIMD3<Float>)
     /// Stop where you are.
     case hold
 
     /// The point this command paths to, or nil for `hold`.
     var destination: SIMD3<Float>? {
         switch self {
-        case let .approach(point), let .investigate(point), let .flee(point): point
+        case let .approach(point), let .investigate(point), let .flee(point),
+             let .reposition(point): point
         case .hold: nil
         }
     }

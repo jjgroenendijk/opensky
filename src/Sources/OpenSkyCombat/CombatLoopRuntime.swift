@@ -324,6 +324,11 @@ public final class CombatLoopRuntime: CombatControlling {
 
     /// Parks one machine without losing its counts, for an actor that died or
     /// whose cell unloaded. A charge in flight is dropped with it.
+    /// No path reaches `key`'s close-range move. Returns the circle's other side to try.
+    func refuseCloseMove(of key: ReferenceKey) -> SIMD3<Float>? {
+        behaviors[key]?.refuseCloseMove()
+    }
+
     public func parkBehavior(of key: ReferenceKey) {
         if behaviors[key]?.pendingCast != nil {
             world?.cancelCombatCast(by: key)

@@ -27,6 +27,12 @@ struct AgentAssistReadout {
                 "power": .bool(pick.isPowerAttack), "knockdown": .init(pick.knockdown)
             ]
         }
+        let moves = readout.closeMoves.map { moves -> AgentJSON in
+            [
+                "actor": key(moves.actor), "current": moves.current.map(AgentJSON.string) ?? .null,
+                "started": .init(moves.started)
+            ]
+        }
         let threats = readout.threats.map { threat -> AgentJSON in
             [
                 "id": .init(threat.id), "source": threat.source.map(key) ?? .null,
@@ -46,6 +52,7 @@ struct AgentAssistReadout {
         return [
             "attackTracks": .array(tracks),
             "attackPicks": .array(picks),
+            "closeMoves": .array(moves),
             "autoAim": readout.autoAim.map {
                 ["target": key($0.target.key), "rightHandIsFree": .bool($0.rightHandIsFree)]
             } ?? .null,

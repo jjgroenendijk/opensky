@@ -156,7 +156,12 @@ extension CombatLoopRuntime.BehaviorDrive {
             world.stopCombatMovement(of: actor)
             return
         }
-        world.moveCombatActor(actor, to: destination, pace: pace)
+        guard
+            !world.moveCombatActor(actor, to: destination, pace: pace),
+            case .reposition = command else { return }
+        if let other = owner.refuseCloseMove(of: actor) {
+            world.moveCombatActor(actor, to: other, pace: pace)
+        }
     }
 
     /// The contact step: sweep the actor's reach at its target and apply

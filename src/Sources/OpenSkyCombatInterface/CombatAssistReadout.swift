@@ -41,8 +41,23 @@ nonisolated public struct CombatAssistReadout: Equatable, Sendable {
         }
     }
 
+    /// One fighter's back off, circle, or fall back moves.
+    nonisolated public struct CloseMoves: Equatable, Sendable {
+        public var actor: ReferenceKey
+        /// `backOff`, `circle`, or `fallBack`; nil between moves.
+        public var current: String?
+        public var started: Int
+
+        public init(actor: ReferenceKey, current: String?, started: Int) {
+            self.actor = actor
+            self.current = current
+            self.started = started
+        }
+    }
+
     public var tracks: [Track] = []
     public var attackPicks: [AttackPick] = []
+    public var closeMoves: [CloseMoves] = []
     /// The target the player's last shot turned toward. Nil when it turned to none.
     public var autoAim: ProjectileAimPick?
     public var threats: [DangerThreat] = []

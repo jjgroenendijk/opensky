@@ -29,6 +29,9 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     public var avoidThreatChance: Float = 0.2
     /// The `CSME` multipliers the attack pick weighs by.
     public var attackWeights = NPCAttackWeights()
+    /// `CSCR` circle and fallback multipliers, 0 to 1.
+    public var circleMultiplier: Float = 0.2
+    public var fallbackMultiplier: Float = 0.2
     /// The style's editor ID, for the readout.
     public var name: String?
 
@@ -77,6 +80,8 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         )
         avoidThreatChance = style.value(.avoidThreatChance) ?? avoidThreatChance
         attackWeights = NPCAttackWeights(style: style)
+        circleMultiplier = style.value(.circleMultiplier) ?? circleMultiplier
+        fallbackMultiplier = style.value(.fallbackMultiplier) ?? fallbackMultiplier
         flight.hoverTime = style.value(.hoverTime) ?? flight.hoverTime
         flight.groundAttackTime = style.value(.groundAttackTime) ?? flight.groundAttackTime
         flight.perchAttackChance = style.value(.perchAttackChance) ?? flight.perchAttackChance
@@ -151,6 +156,9 @@ nonisolated extension CombatBehaviorSettings {
         settings.attackChance = tuning.attackChance()
         settings.staggeredAttackMult = max(
             tuning.attackWeights.attackStaggered, tuning.attackWeights.powerAttackStaggered
+        )
+        settings.closeRange = CombatCloseRangeRanges().settings(
+            circle: tuning.circleMultiplier, fallback: tuning.fallbackMultiplier
         )
         return settings
     }

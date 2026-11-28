@@ -15,6 +15,15 @@ nonisolated extension CombatBehaviorPhase {
 }
 
 nonisolated extension CombatBehaviorMachine {
+    mutating func advanceStaggered() -> CombatBehaviorStep {
+        guard phaseSeconds >= settings.staggerSeconds else { return unchanged() }
+        // Straight to spacing rather than to a fresh gap: the distance check at
+        // the top of `advanceSpacing` sends it back to approaching if the target
+        // used the stagger to walk away.
+        enter(.spacing)
+        return unchanged()
+    }
+
     /// A step that closes on the target, at the pace of its distance band.
     mutating func approach(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         var step = unchanged()

@@ -123,6 +123,9 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     public var attackRollSeconds: Float = 0.25
     /// What the attack chance is multiplied by against a staggered target.
     public var staggeredAttackMult: Float = 1
+    /// The back off, circle, and fall back moves in reach. A combat style sets them; nil
+    /// holds still between attacks.
+    public var closeRange: CombatCloseRangeSettings?
 
     /// The shipping numbers.
     public static let standard = CombatBehaviorSettings()

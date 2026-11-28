@@ -27,6 +27,11 @@ nonisolated extension CombatAISettings {
         settings.shoutToleranceRadians = Self.nonNegative(shoutToleranceDegrees) * .pi / 180
         settings.shoutRetrySeconds = Self.nonNegative(shoutRetryDelaySeconds)
         settings.flight = flight(style: style.flight)
+        if let tuning {
+            settings.closeRange = closeRange.settings(
+                circle: tuning.circleMultiplier, fallback: tuning.fallbackMultiplier
+            )
+        }
         return settings
     }
 
