@@ -141,6 +141,9 @@ nonisolated extension CombatBehaviorMachine {
     /// The mover took or refused the advance's path.
     public mutating func noteAdvance(reached: Bool) {
         paths.noteAdvance(reached: reached)
+        if !reached, flankLoop.move?.kind == .chase {
+            flankLoop.refused()
+        }
     }
 
     /// The path move under way, for the readout.

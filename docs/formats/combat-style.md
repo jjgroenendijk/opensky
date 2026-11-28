@@ -258,7 +258,8 @@ with their chances, angles, distances, and waits. These parts are not built yet:
 - An actor without a combat style rolls its block chance once per gap between attacks and never
   bashes. A styled actor runs the block loop and bashes
   ([combat blocking](/engine/combat-blocking.md#in-opensky)).
-- The flanking flag ([flanking](/engine/combat-movement.md#flanking)) and the dual-wield flag.
+- The dual-wield flag. It only changes the NPC's equipment choice, which OpenSky does not have
+  yet. The flanking flag runs the [flanking loop](/engine/combat-movement.md#in-opensky).
 
 `openskycli game state assist` lists each styled fighter's move under `closeMoves`, and its guard
 and bashes under `guards`.

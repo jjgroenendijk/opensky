@@ -63,6 +63,8 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     var blockLoop = CombatBlockLoop()
     /// The surround, distant circle, and strafe moves of a styled actor.
     var paths = CombatPathMoves()
+    /// The stalk and flank moves of a style with the flanking flag.
+    var flankLoop = CombatFlankLoop()
     /// The hand whose roll passed, for an actor that rolls per hand. It keeps through a combo.
     var attackHand: MeleeStrikeHand?
 
@@ -96,6 +98,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         shoutCooldown = max(0, shoutCooldown - seconds)
         blockLoop.tick(seconds)
         paths.tick(seconds)
+        flankLoop.tick(seconds)
         advanceFlight(seconds: seconds, inputs: inputs)
         var step = advance(inputs)
         // A released cast cleared `pendingCast` itself, so what is left here is
@@ -209,6 +212,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         }
         if let option = inputs.castableSpell(settings: settings), castsFromRange(inputs) {
             return backOff(inputs) ?? startCast(option)
+        }
+        if let flanking = advanceFlanking(inputs) {
+            return flanking
         }
         if let outOfRange = advanceOutOfRange(inputs) {
             return outOfRange
@@ -375,6 +381,9 @@ nonisolated extension CombatBehaviorMachine {
         if next != phase {
             closeMoves = CombatCloseMoveLoop(startedCount: closeMoves.startedCount)
             paths.entering(next)
+            if [.fleeing, .searching, .idle, .disengaged].contains(next) {
+                flankLoop.reset()
+            }
         }
         keepBlockLoop(entering: next)
         phase = next

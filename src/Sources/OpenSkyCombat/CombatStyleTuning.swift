@@ -34,6 +34,10 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
     public var fallbackMultiplier: Float = 0.2
     /// `CSLR`, the strafe multiplier, 0 to 1.
     public var strafeMultiplier: Float = 0.2
+    /// `CSCR` flank distance and stalk time, 0 to 1, and `DATA` flag 0x02.
+    public var flankDistance: Float = 0.2
+    public var stalkTime: Float = 0.2
+    public var flanks = false
     /// The `CSME` bash values.
     public var bash = CombatBashTargetMults()
     /// The style's editor ID, for the readout.
@@ -87,6 +91,9 @@ nonisolated public struct CombatStyleTuning: Equatable, Sendable {
         circleMultiplier = style.value(.circleMultiplier) ?? circleMultiplier
         fallbackMultiplier = style.value(.fallbackMultiplier) ?? fallbackMultiplier
         strafeMultiplier = style.strafeMultiplier ?? strafeMultiplier
+        flankDistance = style.value(.flankDistance) ?? flankDistance
+        stalkTime = style.value(.stalkTime) ?? stalkTime
+        flanks = (style.flags ?? 0) & 0x02 != 0
         bash.bash = style.value(.bashMultiplier) ?? bash.bash
         bash.recoil = style.value(.bashRecoilMultiplier) ?? bash.recoil
         bash.attack = style.value(.bashAttackMultiplier) ?? bash.attack
@@ -175,6 +182,9 @@ nonisolated extension CombatBehaviorSettings {
         )
         settings.movement = CombatMovementSettings(circle: tuning.circleMultiplier)
         settings.strafe = CombatStrafeSettings(strafe: tuning.strafeMultiplier)
+        settings.flank = tuning.flanks ? CombatFlankSettings(
+            stalkTime: tuning.stalkTime, flankDistance: tuning.flankDistance
+        ) : nil
         return settings
     }
 }
