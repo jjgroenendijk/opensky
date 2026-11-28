@@ -2,6 +2,7 @@
 // stored values and actions are recorded, so a whole fight runs without a
 // renderer, window, or game data.
 
+import Foundation
 @testable public import OpenSkyActorsInterface
 @testable public import OpenSkyBehavior
 @testable public import OpenSkyCombat
@@ -84,6 +85,9 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var staminas: [ReferenceKey: Float] = [:]
     /// Each knockdown pushed, as (target, magnitude), in order.
     public private(set) var knockdowns: [(target: ReferenceKey, magnitude: Float)] = []
+    public private(set) var knockdownStaggerMults: [Float] = []
+    /// A turn faces the actor at its point at once, as the mover does over a few frames.
+    public var turnsActors = true
 
     public init() {}
 
@@ -352,6 +356,19 @@ extension FakeCombatWorld {
 
     public func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
         turns[key] = point
+        guard turnsActors, let index = actors.firstIndex(where: { $0.key == key }) else { return }
+        let previous = actors[index]
+        let offset = point - previous.feet
+        guard offset.x != 0 || offset.y != 0 else { return }
+        actors[index] = CombatActorObservation(
+            key: previous.key,
+            feet: previous.feet,
+            capsule: previous.capsule,
+            heading: CombatActorObservation.heading(fromYaw: atan2(offset.y, offset.x)),
+            scale: previous.scale,
+            isDead: previous.isDead,
+            name: previous.name
+        )
     }
 
     public func combatAimPoint(
@@ -460,9 +477,10 @@ extension FakeCombatWorld {
     }
 
     public func knockDownCombatTarget(
-        _ target: ReferenceKey, from _: SIMD3<Float>, magnitude: Float
+        _ target: ReferenceKey, from _: SIMD3<Float>, magnitude: Float, staggerMult: Float
     ) {
         knockdowns.append((target, magnitude))
+        knockdownStaggerMults.append(staggerMult)
     }
 
     public func combatAttackDisease(of attacker: ReferenceKey) -> ReferenceKey? {

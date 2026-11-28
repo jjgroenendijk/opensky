@@ -90,6 +90,12 @@ extension EffectsWorldAdapter {
         bodyImpulses.knockDown(actor, from: source, magnitude: magnitude)
     }
 
+    public func knockDown(
+        _ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult: Float
+    ) -> Bool {
+        bodyImpulses.knockDown(actor, from: source, magnitude: magnitude, staggerMult: staggerMult)
+    }
+
     public func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>, knockdown: Bool) -> Bool {
         bodyImpulses.knockActor(actor, velocity: velocity, knockdown: knockdown)
     }

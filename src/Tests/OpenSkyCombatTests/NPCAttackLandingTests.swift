@@ -42,6 +42,7 @@ struct NPCAttackLandingTests {
             to: .player, random: &random
         )
         #expect(world.knockdowns.map(\.magnitude) == [40])
+        #expect(world.knockdownStaggerMults == [1])
         _ = landing.land(
             from: (CombatLoopFixture.opponent, .zero),
             weapon: (.unarmed, Self.attack("attackPowerStart", knockdown: 0)),
@@ -65,39 +66,53 @@ struct NPCAttackLandingTests {
         #expect(world.knockdowns.first?.magnitude == 25)
     }
 
+    /// The damage the first blow deals. With `movesBehind`, the player steps behind the
+    /// opponent once the swing is chosen, which is the pick for a race attack and the
+    /// windup for a plain swing.
+    private static func firstBlow(attack: RaceAttack.Properties?, movesBehind: Bool) -> Float? {
+        let (runtime, world) = CombatLoopFixture.session()
+        world.actors = [CombatActorObservation(
+            key: CombatLoopFixture.opponent, feet: CombatLoopFixture.closeFeet,
+            heading: -.pi / 2, name: "Opponent"
+        )]
+        world.turnsActors = false
+        if let attack {
+            world.raceAttacks[CombatLoopFixture.opponent] = [
+                RaceAttack(properties: attack, event: "attackStart")
+            ]
+        }
+        CombatLoopFixture.engage(runtime, world)
+        func chosen() -> Bool {
+            attack == nil ? runtime.behaviors[CombatLoopFixture.opponent]?.phase == .windup
+                : runtime.pickedAttacks[CombatLoopFixture.opponent] != nil
+        }
+        var elapsed: Float = 0
+        while !chosen(), elapsed < 10 {
+            CombatLoopFixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds)
+            elapsed += CombatLoopRuntime.fixedStepSeconds
+        }
+        if movesBehind {
+            world.player = MeleeAttacker(key: .player, feet: SIMD3(120, 0, 0), facing: 0)
+        }
+        while runtime.behaviors[CombatLoopFixture.opponent]?.contactCount ?? 0 < 1, elapsed < 10 {
+            CombatLoopFixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds)
+            elapsed += CombatLoopRuntime.fixedStepSeconds
+        }
+        return world.damage[.player]
+    }
+
     /// A swing whose target stepped out of its cone after the pick misses at contact.
     @Test func aBlowLandsOnlyInsideTheStrikeAngleAtContact() {
-        func firstBlow(movesBehind: Bool) -> Float? {
-            let (runtime, world) = CombatLoopFixture.session()
-            world.actors = [CombatActorObservation(
-                key: CombatLoopFixture.opponent, feet: CombatLoopFixture.closeFeet,
-                heading: -.pi / 2, name: "Opponent"
-            )]
-            var data = RaceAttack.Properties()
-            data.attackChance = 1
-            data.strikeAngle = 30
-            world.raceAttacks[CombatLoopFixture.opponent] = [
-                RaceAttack(properties: data, event: "attackStart")
-            ]
-            CombatLoopFixture.engage(runtime, world)
-            var elapsed: Float = 0
-            while runtime.pickedAttacks[CombatLoopFixture.opponent] == nil, elapsed < 10 {
-                CombatLoopFixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds)
-                elapsed += CombatLoopRuntime.fixedStepSeconds
-            }
-            if movesBehind {
-                world.player = MeleeAttacker(key: .player, feet: SIMD3(120, 0, 0), facing: 0)
-            }
-            while
-                runtime.behaviors[CombatLoopFixture.opponent]?.contactCount ?? 0 < 1,
-                elapsed < 10
-            {
-                CombatLoopFixture.run(runtime, seconds: CombatLoopRuntime.fixedStepSeconds)
-                elapsed += CombatLoopRuntime.fixedStepSeconds
-            }
-            return world.damage[.player]
-        }
-        #expect(firstBlow(movesBehind: false) != nil)
-        #expect(firstBlow(movesBehind: true) == nil)
+        var data = RaceAttack.Properties()
+        data.attackChance = 1
+        data.strikeAngle = 30
+        #expect(Self.firstBlow(attack: data, movesBehind: false) != nil)
+        #expect(Self.firstBlow(attack: data, movesBehind: true) == nil)
+    }
+
+    /// A swing without attack data lands only inside the default 35 degree cone.
+    @Test func aPlainSwingLandsOnlyInsideTheDefaultCone() {
+        #expect(Self.firstBlow(attack: nil, movesBehind: false) != nil)
+        #expect(Self.firstBlow(attack: nil, movesBehind: true) == nil)
     }
 }

@@ -41,6 +41,8 @@ public final class CombatCastingChain {
     /// 16.4's and a fake that walked would be simulating it.
     public var playerFeet = SIMD3<Float>()
     public var casterFeet = SIMD3<Float>(1200, 0, 0)
+    /// The caster's heading, which a turn of the combat loop sets.
+    public var casterHeading: Float = 0
     public var casterIsDead = false
     public var hostility: [ReferenceKey: ActorHostility] = [CombatCastingChain.caster: .hostile]
 
@@ -136,7 +138,7 @@ extension CombatCastingChain: CombatLoopWorld {
     }
 
     public func knockDownCombatTarget(
-        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float
+        _: ReferenceKey, from _: SIMD3<Float>, magnitude _: Float, staggerMult _: Float
     ) {}
 
     public func combatIsTeammate(_: ReferenceKey) -> Bool {
@@ -217,8 +219,15 @@ extension CombatCastingChain: CombatLoopWorld {
 
     public func combatActors() -> [CombatActorObservation] {
         [CombatActorObservation(
-            key: Self.caster, feet: casterFeet, isDead: casterIsDead, name: "Caster"
+            key: Self.caster, feet: casterFeet, heading: casterHeading, isDead: casterIsDead,
+            name: "Caster"
         )]
+    }
+
+    public func turnCombatActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
+        let offset = point - casterFeet
+        guard key == Self.caster, offset.x != 0 || offset.y != 0 else { return }
+        casterHeading = CombatActorObservation.heading(fromYaw: atan2(offset.y, offset.x))
     }
 
     public func combatHostility(of key: ReferenceKey) -> ActorHostility {

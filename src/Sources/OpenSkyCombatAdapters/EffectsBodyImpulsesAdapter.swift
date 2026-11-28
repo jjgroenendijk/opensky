@@ -118,16 +118,28 @@ extension EffectsBodyImpulsesAdapter {
         game.combatWorld.health(of: actor)
     }
 
-    /// Every knockdown lands here. A "No Knockdowns" race staggers instead. An actor
-    /// with no ragdoll, and the player, slides on its capsule at the knock's speed.
     public func knockDown(
         _ actor: ReferenceKey,
         from source: SIMD3<Float>,
         magnitude: Float
     ) -> Bool {
+        knockDown(actor, from: source, magnitude: magnitude, staggerMult: 1)
+    }
+
+    /// Every knockdown lands here. A "No Knockdowns" race staggers instead, at the force
+    /// after the incoming stagger perk entries, at most 1. An actor with no ragdoll, and
+    /// the player, slides on its capsule at the knock's speed.
+    public func knockDown(
+        _ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult: Float
+    ) -> Bool {
         guard magnitude.isFinite, magnitude != 0 else { return false }
         if races.hasNoKnockdowns(actor) {
-            return game.magicWorld.staggerActor(actor, magnitude: 1)
+            return game.magicWorld.staggerActor(
+                actor, magnitude: Self.noKnockdownStagger(
+                    force: magnitude,
+                    staggerMult: staggerMult
+                )
+            )
         }
         let downTime = game.combat.impulses?.settings.knockdownTime
             ?? ImpulseSettings.vanilla.knockdownTime
@@ -139,6 +151,12 @@ extension EffectsBodyImpulsesAdapter {
         guard simd_length(away) > Self.sameSpot else { return false }
         let speed = magnitude * GameplayImpulse.havokScale
         return knockActor(actor, velocity: simd_normalize(away) * speed, knockdown: true)
+    }
+
+    /// The stagger a "No Knockdowns" race takes instead of a knockdown.
+    public static func noKnockdownStagger(force: Float, staggerMult: Float) -> Float {
+        let stagger = abs(force) * (staggerMult.isFinite ? max(0, staggerMult) : 1)
+        return min(stagger, 1)
     }
 
     /// A push along the ground on the actor's capsule.

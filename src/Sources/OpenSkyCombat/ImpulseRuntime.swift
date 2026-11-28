@@ -35,6 +35,12 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     /// Knocks an actor down, away from `source`, with `magnitude` in Havok metres a second.
     @discardableResult
     func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float) -> Bool
+    /// The same, for a target that may stagger instead: `staggerMult` is the incoming
+    /// stagger perk entries' factor.
+    @discardableResult
+    func knockDown(
+        _ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult: Float
+    ) -> Bool
     func actorHealth(of actor: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
     func applyPhysicsDamage(_ amount: Float, to actor: ReferenceKey) -> Bool
@@ -48,6 +54,13 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
 }
 
 extension ImpulseWorld {
+    @discardableResult
+    public func knockDown(
+        _ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float, staggerMult _: Float
+    ) -> Bool {
+        knockDown(actor, from: source, magnitude: magnitude)
+    }
+
     public func waterContacts(_: [WaterSample]) {}
     public func playCollision(_: BodyCollision) {}
 }

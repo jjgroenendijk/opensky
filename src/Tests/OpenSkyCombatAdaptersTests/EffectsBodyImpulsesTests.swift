@@ -81,8 +81,16 @@ struct EffectsBodyImpulsesTests {
         #expect(!adapter.knockDown(Self.actor, from: .zero, magnitude: 0))
         host.fakeRagdoll.knockDownResult = true
         #expect(adapter.knockDown(Self.actor, from: .zero, magnitude: 2))
+        #expect(adapter.knockDown(Self.actor, from: .zero, magnitude: 2, staggerMult: 0.5))
         host.fakeRagdoll.knockDownResult = false
         #expect(!adapter.knockDown(Self.actor, from: .zero, magnitude: 2))
+    }
+
+    @Test func aNoKnockdownsRaceStaggersAtTheForceAfterItsPerksAtMostOne() {
+        #expect(EffectsBodyImpulsesAdapter.noKnockdownStagger(force: 0.4, staggerMult: 1) == 0.4)
+        #expect(EffectsBodyImpulsesAdapter.noKnockdownStagger(force: 40, staggerMult: 1) == 1)
+        #expect(EffectsBodyImpulsesAdapter.noKnockdownStagger(force: 40, staggerMult: 0) == 0)
+        #expect(EffectsBodyImpulsesAdapter.noKnockdownStagger(force: 0.5, staggerMult: .nan) == 0.5)
     }
 
     @Test func aKnockMovesAnNPCThroughTheStreamer() {

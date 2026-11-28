@@ -87,6 +87,7 @@ struct AggroRadiusTests {
 
     @Test func anActorThatFacesAwayOrOnlySuspectsGivesItsWarningInSilence() {
         let (runtime, world) = Fixture.session(feet: SIMD3(500, 0, 0))
+        world.turnsActors = false
         world.aggroRadii[Fixture.opponent] = radius
         world.awareness[Fixture.opponent] = .detected(at: .zero)
         Fixture.run(runtime, seconds: AggroRadiusRule.warnInterval + 0.5)
