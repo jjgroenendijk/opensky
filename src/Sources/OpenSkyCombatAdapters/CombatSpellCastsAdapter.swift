@@ -150,6 +150,7 @@ extension CombatSpellCastsAdapter {
             )
             option.scriptDelay = spell.effects.compactMap(\.effect?.effect.data)
                 .filter { $0.archetype == .script }.map(\.scriptAIDelay).max()
+            option.score = NPCSpellRating.score(of: spell, range: option.range)
             return CombatSpellCandidate(
                 option: option,
                 isSpell: spell.spellType == .spell,

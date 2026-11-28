@@ -126,6 +126,17 @@ struct CombatGameSettingsBehaviorTests {
         #expect(inputs.castableSpell(settings: settings) == Fixture.fireball)
     }
 
+    @Test func theBestRatedSpellWinsOverACostlierOne() {
+        var rated = Fixture.fireball
+        rated.score = 40
+        var costly = CombatSpellOption(spell: .generated(150), cost: 60, range: 3000)
+        costly.score = 10
+        let inputs = Fixture.inputs(
+            distance: 1000, casting: Fixture.casting(magicka: 100, [costly, rated])
+        )
+        #expect(inputs.castableSpell(settings: Fixture.alwaysCasting) == rated)
+    }
+
     @Test func aFlyingActorCirclesAndDoesNotSwingInTheAir() {
         let settings = Fixture.neverCasting
         var inputs = Fixture.inputs()

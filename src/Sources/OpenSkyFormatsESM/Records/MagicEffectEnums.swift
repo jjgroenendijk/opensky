@@ -141,6 +141,14 @@ nonisolated public enum MagicEffectArchetype: Hashable, CustomStringConvertible,
         self = Self.known[rawValue] ?? .unknown(raw: rawValue)
     }
 
+    /// The archetype's number in `MGEF DATA`.
+    public var number: UInt32 {
+        if case let .unknown(raw) = self {
+            return raw
+        }
+        return Self.rawValues[self] ?? UInt32.max
+    }
+
     public var description: String {
         guard case let .unknown(raw) = self else {
             return Self.names[Self.rawValues[self] ?? UInt32.max] ?? "unknown"

@@ -42,11 +42,10 @@ nonisolated extension CombatBehaviorInputs {
         return strikingDistance(settings: settings) * max(1, settings.weaponRangeHoldMult)
     }
 
-    /// The spell this actor would cast now: the costliest it can afford and reach, ties
-    /// by spell order. Cost stands in for strength, because no record ranks spells.
-    /// Nil when nothing qualifies.
+    /// The spell this actor would cast now: the best rated it can afford and reach, then
+    /// the costliest, then by spell order. Nil when nothing qualifies.
     func castableSpell(settings: CombatBehaviorSettings) -> CombatSpellOption? {
-        Self.costliest(casting.options.filter {
+        Self.strongest(casting.options.filter {
             $0.cost <= casting.magicka && distance <= min($0.range, settings.spellRangeCap)
         })
     }
@@ -55,7 +54,7 @@ nonisolated extension CombatBehaviorInputs {
     func healSpell(settings: CombatBehaviorSettings) -> CombatSpellOption? {
         guard healthFraction.isFinite, healthFraction < settings.restoreHealthFraction
         else { return nil }
-        return Self.costliest(casting.heals.filter { $0.cost <= casting.magicka })
+        return Self.strongest(casting.heals.filter { $0.cost <= casting.magicka })
     }
 
     /// The first shout that reaches the target, or nil.
@@ -84,8 +83,8 @@ nonisolated extension CombatBehaviorInputs {
         return SIMD3(direction.x, direction.y, 0)
     }
 
-    private static func costliest(_ options: [CombatSpellOption]) -> CombatSpellOption? {
-        options.sorted { ($0.cost, $1.spell) > ($1.cost, $0.spell) }.first
+    private static func strongest(_ options: [CombatSpellOption]) -> CombatSpellOption? {
+        options.sorted { ($0.score, $0.cost, $1.spell) > ($1.score, $1.cost, $0.spell) }.first
     }
 
     /// A point `fleeDistance` away along target-to-actor, turned by `turn` radians. Turned,

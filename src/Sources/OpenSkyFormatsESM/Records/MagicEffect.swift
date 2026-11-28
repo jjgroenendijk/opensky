@@ -93,7 +93,7 @@ nonisolated public struct MagicEffectData: Equatable, Sendable {
     public let imageSpaceModifier: FormID?
     public let perkToApply: FormID?
     public let castingSoundLevel: UInt32
-    let scriptAIScore: Float
+    public let scriptAIScore: Float
     /// After an NPC casts a spell with a Script effect, it waits this long before another.
     public let scriptAIDelay: Float
 
